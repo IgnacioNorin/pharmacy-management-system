@@ -1,0 +1,21 @@
+## Visual Studio
+.vs/
+bin/
+obj/
+packages/
+*.user
+*.suo
+*.userosscache
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# SQL Server files
+*.mdf
+*.ldf
+
+# Sensitive files
+*ConnectionStrings.config
