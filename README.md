@@ -1,8 +1,8 @@
-# 💊 Pharmacy Management System
+ Pharmacy Management System
 
 Sistema de gestión integral para farmacias que incluye punto de venta (POS), control de inventario, gestión de clientes, proveedores y reportes.
 
-## 🚀 Características
+ Características
 
 - **Punto de Venta (POS):** Registro rápido de ventas y gestión de transacciones
 - **Inventario:** Control de stock, alertas de productos bajos
@@ -11,20 +11,20 @@ Sistema de gestión integral para farmacias que incluye punto de venta (POS), co
 - **Reportes:** Reportes de ventas, inventario y análisis
 - **Usuarios:** Sistema de autenticación y roles
 
-## 🛠️ Tecnologías
+ Tecnologías
 
 - **Framework:** .NET Framework 4.8
 - **Lenguaje:** C#
 - **UI:** Windows Forms
 - **Base de datos:** SQL Server 2019
 
-## 📋 Requisitos
+ Requisitos
 
 - Visual Studio 2019 o superior
 - .NET Framework 4.8
 - SQL Server 2019
 
-## 🔧 Instalación
+ Instalación
 
 1. Clona el repositorio:
 ```bash
