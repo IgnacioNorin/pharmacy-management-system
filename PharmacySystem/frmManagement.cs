@@ -211,6 +211,11 @@ namespace PharmacySystem
                 .ToList()
                 .FindIndex(c => string.Equals((string)c.Value, objeto.currencyCulture, StringComparison.OrdinalIgnoreCase));
             cbocurrency.SelectedIndex = currencyIndex >= 0 ? currencyIndex : 0;
+
+            // Currency only changes formatting, never converts stored amounts, so it's locked
+            // once there is real sales/purchase history to avoid making past records display
+            // under a currency they were never actually recorded in.
+            cbocurrency.Enabled = !StoreService.Instance.HasOperationalData();
             #endregion
 
         }

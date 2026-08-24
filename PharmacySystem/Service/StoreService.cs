@@ -70,8 +70,44 @@ namespace PharmacySystem.Logical
             return obj;
         }
 
+        // True once the pharmacy has real sales or purchases on record. Used to lock the
+        // currency setting: switching it doesn't convert any stored amount, it only changes
+        // how numbers are formatted, so allowing it after real operations exist would make
+        // every historical price/total/report display under a currency that was never
+        // actually used for them.
+        public bool HasOperationalData()
+        {
+            using (SqlConnection oConnection = new SqlConnection(Connection.CN))
+            {
+                try
+                {
+                    SqlCommand cmd = new SqlCommand(
+                        "SELECT CASE WHEN EXISTS (SELECT 1 FROM sale) OR EXISTS (SELECT 1 FROM purchase) THEN 1 ELSE 0 END",
+                        oConnection);
+                    cmd.CommandType = CommandType.Text;
+
+                    oConnection.Open();
+                    return Convert.ToInt32(cmd.ExecuteScalar()) == 1;
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    // Fail closed: if this can't be verified, assume there is operational data
+                    // so a currency change is never silently let through on a DB hiccup.
+                    return true;
+                }
+            }
+        }
+
         public bool UpdateStore(Store obj)
         {
+            Store currentStore = ListStore();
+            bool isChangingCurrency = !string.Equals(currentStore?.currencyCulture, obj.currencyCulture, StringComparison.OrdinalIgnoreCase);
+            if (isChangingCurrency && HasOperationalData())
+            {
+                return false;
+            }
+
             bool result = true;
             using (SqlConnection oConnection = new SqlConnection(Connection.CN))
             {
