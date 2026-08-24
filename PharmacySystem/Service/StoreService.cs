@@ -78,7 +78,7 @@ namespace PharmacySystem.Logical
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.AppendLine("UPDATE store SET document_number = @document,");
+                    sb.AppendLine("UPDATE store SET document_store = @document,");
                     sb.AppendLine("company_name = @company_name,");
                     sb.AppendLine("email = @email,");
                     sb.AppendLine("phone = @phone,");
