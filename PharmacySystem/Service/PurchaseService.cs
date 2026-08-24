@@ -42,40 +42,53 @@ namespace PharmacySystem.Logical
             {
                 try
                 {
-                    StringBuilder sb = new StringBuilder();
-
                     oConnection.Open();
 
                     SqlTransaction objTransacion = oConnection.BeginTransaction();
 
-
-                    sb.AppendLine("DECLARE @id_purchase int = 0");
-                    sb.AppendLine(string.Format("INSERT INTO purchase(person_id,supplier_id, total_amount, document_type, document_number) values({0}, {1}, '{2}', '{3}','{4}')"
-                        ,purchase.oPerson.idPerson, purchase.oSupplier.idSupplier, CultureInfoHelper.CultureInfoConverterDecimal(purchase.totalAmount), purchase.documentType, purchase.documentNumber));
-                        
-                    sb.AppendLine("SET @id_purchase = SCOPE_IDENTITY()");
-                    foreach (PurchaseDetail pd in purchase.oPurchaseDetail)
-                    {
-                        sb.AppendLine(string.Format("INSERT INTO purchase_detail(purchase_id,product_id,stock,purchase_price, sale_price, total_amount) values({0},{1},{2},'{3}','{4}','{5}')", 
-                            "@id_purchase",pd.oProduct.idProduct,pd.quantity,CultureInfoHelper.CultureInfoConverterDecimal(pd.purchasePrice), 
-                            CultureInfoHelper.CultureInfoConverterDecimal(pd.salePrice), CultureInfoHelper.CultureInfoConverterDecimal(pd.total)));
-
-                        sb.AppendLine(string.Format("UPDATE product SET stock = (stock + {0}) , purchase_price = '{1}', sale_price = '{2}' , date_expired = '{3}' WHERE id = {4}", 
-                            pd.quantity, CultureInfoHelper.CultureInfoConverterDecimal(pd.purchasePrice),CultureInfoHelper.CultureInfoConverterDecimal(pd.salePrice),DateHelper.FormatDateBackend(pd.expirationDate),pd.oProduct.idProduct));
-
-                    }
-                    sb.AppendLine("SELECT @id_purchase");
-
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    cmd.CommandType = CommandType.Text;
-                    cmd.Transaction = objTransacion;
                     try
                     {
-                        int idPurchase = 0; 
-                        int.TryParse(cmd.ExecuteScalar().ToString(), out idPurchase);
-                 
+                        string insertPurchaseQuery = "INSERT INTO purchase(person_id, supplier_id, total_amount, document_type, document_number) " +
+                            "VALUES (@person_id, @supplier_id, @total_amount, @document_type, @document_number); " +
+                            "SELECT SCOPE_IDENTITY();";
+
+                        SqlCommand cmdPurchase = new SqlCommand(insertPurchaseQuery, oConnection, objTransacion);
+                        cmdPurchase.Parameters.AddWithValue("@person_id", purchase.oPerson.idPerson);
+                        cmdPurchase.Parameters.AddWithValue("@supplier_id", purchase.oSupplier.idSupplier);
+                        cmdPurchase.Parameters.AddWithValue("@total_amount", purchase.totalAmount);
+                        cmdPurchase.Parameters.AddWithValue("@document_type", purchase.documentType);
+                        cmdPurchase.Parameters.AddWithValue("@document_number", purchase.documentNumber);
+
+                        int idPurchase = 0;
+                        int.TryParse(cmdPurchase.ExecuteScalar()?.ToString(), out idPurchase);
+
                         if (idPurchase != 0)
                         {
+                            string insertDetailQuery = "INSERT INTO purchase_detail(purchase_id, product_id, stock, purchase_price, sale_price, total_amount) " +
+                                "VALUES (@purchase_id, @product_id, @stock, @purchase_price, @sale_price, @total_amount)";
+
+                            string updateProductQuery = "UPDATE product SET stock = (stock + @quantity), purchase_price = @purchase_price, sale_price = @sale_price, date_expired = @date_expired WHERE id = @product_id";
+
+                            foreach (PurchaseDetail pd in purchase.oPurchaseDetail)
+                            {
+                                SqlCommand cmdDetail = new SqlCommand(insertDetailQuery, oConnection, objTransacion);
+                                cmdDetail.Parameters.AddWithValue("@purchase_id", idPurchase);
+                                cmdDetail.Parameters.AddWithValue("@product_id", pd.oProduct.idProduct);
+                                cmdDetail.Parameters.AddWithValue("@stock", pd.quantity);
+                                cmdDetail.Parameters.AddWithValue("@purchase_price", pd.purchasePrice);
+                                cmdDetail.Parameters.AddWithValue("@sale_price", pd.salePrice);
+                                cmdDetail.Parameters.AddWithValue("@total_amount", pd.total);
+                                cmdDetail.ExecuteNonQuery();
+
+                                SqlCommand cmdUpdateProduct = new SqlCommand(updateProductQuery, oConnection, objTransacion);
+                                cmdUpdateProduct.Parameters.AddWithValue("@quantity", pd.quantity);
+                                cmdUpdateProduct.Parameters.AddWithValue("@purchase_price", pd.purchasePrice);
+                                cmdUpdateProduct.Parameters.AddWithValue("@sale_price", pd.salePrice);
+                                cmdUpdateProduct.Parameters.AddWithValue("@date_expired", pd.expirationDate);
+                                cmdUpdateProduct.Parameters.AddWithValue("@product_id", pd.oProduct.idProduct);
+                                cmdUpdateProduct.ExecuteNonQuery();
+                            }
+
                             objTransacion.Commit();
                             result = true;
                         }

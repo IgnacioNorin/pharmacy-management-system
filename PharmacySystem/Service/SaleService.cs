@@ -124,8 +124,10 @@ namespace PharmacySystem.Logical
             {
                 try
                 {
-                    string query = string.Format("UPDATE product SET stock = (stock {0} {1}) WHERE id = {2}", subtract ? "-" : "+", amount, idproduct);
-                    SqlCommand cmd = new SqlCommand(query.ToString(), oConnection);
+                    string query = string.Format("UPDATE product SET stock = (stock {0} @amount) WHERE id = @idproduct", subtract ? "-" : "+");
+                    SqlCommand cmd = new SqlCommand(query, oConnection);
+                    cmd.Parameters.AddWithValue("@amount", amount);
+                    cmd.Parameters.AddWithValue("@idproduct", idproduct);
                     cmd.CommandType = CommandType.Text;
                     oConnection.Open();
                     cmd.ExecuteNonQuery();
@@ -150,47 +152,50 @@ namespace PharmacySystem.Logical
             {
                 try
                 {
-                    StringBuilder sb = new StringBuilder();
                     oConnection.Open();
                     SqlTransaction objTransacion = oConnection.BeginTransaction();
 
-
-                    sb.AppendLine("DECLARE @sale_id int = 0");
-                    sb.AppendLine(string.Format("INSERT INTO sale(document_type,document_number,user_id,document_client,name_client, total_amount, amount_received, change_amount) VALUES('{0}',({1}),{2},'{3}','{4}','{5}','{6}','{7}')"
-                        , obj.typeDocument
-                        , "SELECT RIGHT('000000' + CAST((SELECT count(*) + 1 FROM sale) AS VARCHAR), 6)"
-                        , obj.oPerson.idPerson
-                        , obj.documentClient
-                        , obj.nameClient
-                        , CultureInfoHelper.CultureInfoConverterDecimal(obj.totalPay)
-                        , CultureInfoHelper.CultureInfoConverterDecimal(obj.payWith)
-                        , CultureInfoHelper.CultureInfoConverterDecimal(obj.change)));
-
-                    sb.AppendLine("SET @sale_id = SCOPE_IDENTITY()");
-                    foreach (SaleDetail dv in obj.oSaleDetail)
-                    {
-                        sb.AppendLine(string.Format("INSERT INTO sale_detail(sale_id, product_id, stock, sale_price, subtotal) values({0},{1},{2},'{3}','{4}')",
-                            "@sale_id", dv.oProduct.idProduct, dv.amount, CultureInfoHelper.CultureInfoConverterDecimal(dv.salePrice), CultureInfoHelper.CultureInfoConverterDecimal(dv.subtotal)));
-                    }
-                    sb.AppendLine("SELECT @sale_id");
-
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    cmd.CommandType = CommandType.Text;
-                    cmd.Transaction = objTransacion;
                     try
                     {
+                        string insertSaleQuery = "INSERT INTO sale(document_type, document_number, user_id, document_client, name_client, total_amount, amount_received, change_amount) " +
+                            "VALUES (@document_type, (SELECT RIGHT('000000' + CAST((SELECT count(*) + 1 FROM sale) AS VARCHAR), 6)), @user_id, @document_client, @name_client, @total_amount, @amount_received, @change_amount); " +
+                            "SELECT SCOPE_IDENTITY();";
+
+                        SqlCommand cmdSale = new SqlCommand(insertSaleQuery, oConnection, objTransacion);
+                        cmdSale.Parameters.AddWithValue("@document_type", obj.typeDocument);
+                        cmdSale.Parameters.AddWithValue("@user_id", obj.oPerson.idPerson);
+                        cmdSale.Parameters.AddWithValue("@document_client", obj.documentClient);
+                        cmdSale.Parameters.AddWithValue("@name_client", obj.nameClient);
+                        cmdSale.Parameters.AddWithValue("@total_amount", obj.totalPay);
+                        cmdSale.Parameters.AddWithValue("@amount_received", obj.payWith);
+                        cmdSale.Parameters.AddWithValue("@change_amount", obj.change);
+
                         int idSale = 0;
-                        int.TryParse(cmd.ExecuteScalar().ToString(), out idSale);
+                        int.TryParse(cmdSale.ExecuteScalar()?.ToString(), out idSale);
 
                         if (idSale != 0)
                         {
+                            string insertDetailQuery = "INSERT INTO sale_detail(sale_id, product_id, stock, sale_price, subtotal) " +
+                                "VALUES (@sale_id, @product_id, @stock, @sale_price, @subtotal)";
+
+                            foreach (SaleDetail dv in obj.oSaleDetail)
+                            {
+                                SqlCommand cmdDetail = new SqlCommand(insertDetailQuery, oConnection, objTransacion);
+                                cmdDetail.Parameters.AddWithValue("@sale_id", idSale);
+                                cmdDetail.Parameters.AddWithValue("@product_id", dv.oProduct.idProduct);
+                                cmdDetail.Parameters.AddWithValue("@stock", dv.amount);
+                                cmdDetail.Parameters.AddWithValue("@sale_price", dv.salePrice);
+                                cmdDetail.Parameters.AddWithValue("@subtotal", dv.subtotal);
+                                cmdDetail.ExecuteNonQuery();
+                            }
+
                             objTransacion.Commit();
                             result = idSale;
                         }
                         else
                         {
                             objTransacion.Rollback();
-                            result = idSale;
+                            result = 0;
                         }
 
                     }
