@@ -2,6 +2,7 @@
 using DocumentFormat.OpenXml.Presentation;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Wordprocessing;
+using PharmacySystem.Helpers;
 using PharmacySystem.Logical;
 using PharmacySystem.Model;
 using PharmacySystem.Validators;
@@ -202,6 +203,14 @@ namespace PharmacySystem
             txtemail.Text = objeto.email;
             txtphone.Text = objeto.phone;
             txtaddress.Text = objeto.address;
+
+            cbocurrency.DataSource = CultureInfoHelper.SupportedCurrencies.ToList();
+            cbocurrency.DisplayMember = "Text";
+            cbocurrency.ValueMember = "Value";
+            int currencyIndex = CultureInfoHelper.SupportedCurrencies
+                .ToList()
+                .FindIndex(c => string.Equals((string)c.Value, objeto.currencyCulture, StringComparison.OrdinalIgnoreCase));
+            cbocurrency.SelectedIndex = currencyIndex >= 0 ? currencyIndex : 0;
             #endregion
 
         }
@@ -553,6 +562,7 @@ namespace PharmacySystem
  
 
             Store store = StoreService.Instance.ListStore();
+            string selectedCurrency = ((ComboBoxItem)cbocurrency.SelectedItem).Value.ToString();
             bool isSuccess;
             isSuccess = StoreService.Instance.UpdateStore(new Store()
             {
@@ -561,12 +571,17 @@ namespace PharmacySystem
                 email = txtemail.Text,
                 phone = txtphone.Text,
                 address = txtaddress.Text,
+                currencyCulture = selectedCurrency,
             });
+            if (isSuccess)
+            {
+                CultureInfoHelper.SetCurrency(selectedCurrency);
+            }
             if (store == null && isSuccess) {
 
                 MessageBox.Show("Se guardaron los datos ingresados", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            else if (store != null && isSuccess) 
+            else if (store != null && isSuccess)
             {
                 MessageBox.Show("Se actualizaron los datos ingresados exitosamente", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }

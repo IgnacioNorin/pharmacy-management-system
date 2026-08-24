@@ -164,11 +164,11 @@ namespace PharmacySystem.Logical
                             string companyName = row["company_name"].ToString();
                             string typeDocument = row["document_type"].ToString();
                             string numberDocument = row["document_number_employee"].ToString();
-                            string totalAmount = CultureInfoHelper.FormatAsEcuadorCurrency(Convert.ToDecimal(row["total_amount"]));
+                            string totalAmount = CultureInfoHelper.FormatAsCurrency(Convert.ToDecimal(row["total_amount"]));
                             string nameProduct = row["name"].ToString();
                             string quantity = row["stock"].ToString();
-                            string pricePurchase = CultureInfoHelper.FormatAsEcuadorCurrency(Convert.ToDecimal(row["purchase_price"]));
-                            string priceSale = CultureInfoHelper.FormatAsEcuadorCurrency(Convert.ToDecimal(row["sale_price"]));
+                            string pricePurchase = CultureInfoHelper.FormatAsCurrency(Convert.ToDecimal(row["purchase_price"]));
+                            string priceSale = CultureInfoHelper.FormatAsCurrency(Convert.ToDecimal(row["sale_price"]));
 
                             dtFinal.Rows.Add( datePurchase, idSupplierTemp, 
                                             companyName, typeDocument, 

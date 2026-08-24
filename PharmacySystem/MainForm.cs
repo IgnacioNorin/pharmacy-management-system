@@ -1,4 +1,5 @@
-﻿using PharmacySystem.Logical;
+﻿using PharmacySystem.Helpers;
+using PharmacySystem.Logical;
 using PharmacySystem.Model;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,8 @@ namespace PharmacySystem
 
         private void MainForm_Load(object sender, EventArgs e)
         {
+            CultureInfoHelper.SetCurrency(StoreService.Instance.ListStore()?.currencyCulture);
+
             lbluser.Text = oPerson.name;
             if (oPerson.oPersonType.idPersonType == 2)
             {
