@@ -101,6 +101,7 @@ namespace PharmacySystem.Logical
                     }
                             catch (Exception e)
                     {
+                        Logger.LogError(e);
                         objTransacion.Rollback();
                         result = false;
                     }
@@ -108,6 +109,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     result = false;
                 }
             }
@@ -180,6 +182,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     dt = new DataTable();
                     dtFinal = new DataTable();
                 }
@@ -223,6 +226,7 @@ namespace PharmacySystem.Logical
             
             catch (Exception ex)
             {
+                Logger.LogError(ex);
                 sum_obj = 0;
             }
         }
@@ -261,6 +265,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     sum_obj = 0;
                 }
             }
@@ -300,6 +305,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     sum_obj = 0;
                 }
             }
@@ -339,6 +345,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     sum_obj = 0;
                 }
             }
@@ -365,9 +372,9 @@ namespace PharmacySystem.Logical
                     sb.AppendLine("AND pu.supplier_id = CASE @supplier_id WHEN '0' THEN pu.supplier_id WHEN 0 THEN pu.supplier_id ELSE @supplier_id END");
 
                     SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    cmd.Parameters.AddWithValue("@fechainicio", startDate);
-                    cmd.Parameters.AddWithValue("@fechafin", endDate);
-                    cmd.Parameters.AddWithValue("@idproveedor", idSupplier);
+                    cmd.Parameters.AddWithValue("@startDate", startDate);
+                    cmd.Parameters.AddWithValue("@endDate", endDate);
+                    cmd.Parameters.AddWithValue("@supplier_id", idSupplier);
                     cmd.CommandType = CommandType.Text;
                     using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                     {
@@ -378,6 +385,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     sum_obj = 0;
                 }
             }
