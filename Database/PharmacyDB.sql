@@ -305,6 +305,12 @@ GO
 ALTER TABLE [dbo].[sale_detail] CHECK CONSTRAINT [FK__DETALLE_V__IdVen__571DF1D5]
 GO
 
+-- SEED DATA
+INSERT INTO [dbo].[state_product] (id, name, description) VALUES (1, 'Activo', 'Producto disponible para la venta')
+GO
+INSERT INTO [dbo].[state_product] (id, name, description) VALUES (0, 'Inactivo', 'Producto dado de baja')
+GO
+
 -- STORED PROCEDURES
 CREATE PROC [dbo].[sp_create_category]
 @description VARCHAR(50),
@@ -411,7 +417,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
     SET @result = 0;
-    IF NOT EXISTS (SELECT DISTINCT 1 FROM purchase_detail WHERE product_id = @id_product)
+    IF NOT EXISTS (SELECT 1 FROM purchase_detail WHERE product_id = @id_product)
+       AND NOT EXISTS (SELECT 1 FROM sale_detail WHERE product_id = @id_product)
     BEGIN
         DELETE FROM product WHERE id = @id_product;
         SET @result = 1;
