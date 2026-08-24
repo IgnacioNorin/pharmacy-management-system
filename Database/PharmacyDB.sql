@@ -159,6 +159,7 @@ CREATE TABLE [dbo].[store](
     [email] [varchar](50) NULL,
     [phone] [varchar](50) NULL,
     [address] [varchar](50) NULL,
+    [currency_culture] [varchar](10) NULL,
     PRIMARY KEY CLUSTERED ([id] ASC)
 )
 GO
@@ -253,6 +254,8 @@ GO
 ALTER TABLE [dbo].[supplier] ADD CONSTRAINT [DF__PROVEEDOR__Estad__4F7CD00D] DEFAULT ((1)) FOR [status]
 GO
 ALTER TABLE [dbo].[supplier] ADD CONSTRAINT [DF__PROVEEDOR__Fecha__5070F446] DEFAULT (getdate()) FOR [date_created]
+GO
+ALTER TABLE [dbo].[store] ADD CONSTRAINT [DF__STORE__CurrencyC] DEFAULT ('es-EC') FOR [currency_culture]
 GO
 
 -- FOREIGN KEYS

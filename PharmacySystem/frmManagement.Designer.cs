@@ -87,6 +87,8 @@
             this.label19 = new System.Windows.Forms.Label();
             this.txttaxid = new System.Windows.Forms.TextBox();
             this.label20 = new System.Windows.Forms.Label();
+            this.cbocurrency = new System.Windows.Forms.ComboBox();
+            this.label24 = new System.Windows.Forms.Label();
             this.label15 = new System.Windows.Forms.Label();
             this.tabManagement.SuspendLayout();
             this.tabProduct.SuspendLayout();
@@ -704,6 +706,8 @@
             this.tabStore.Controls.Add(this.label19);
             this.tabStore.Controls.Add(this.txttaxid);
             this.tabStore.Controls.Add(this.label20);
+            this.tabStore.Controls.Add(this.cbocurrency);
+            this.tabStore.Controls.Add(this.label24);
             this.tabStore.Controls.Add(this.label15);
             this.tabStore.Location = new System.Drawing.Point(4, 25);
             this.tabStore.Name = "tabStore";
@@ -733,16 +737,40 @@
             this.label23.Size = new System.Drawing.Size(59, 15);
             this.label23.TabIndex = 59;
             this.label23.Text = "Dirección";
-            // 
+            //
+            // label24
+            //
+            this.label24.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.label24.AutoSize = true;
+            this.label24.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.label24.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label24.Location = new System.Drawing.Point(510, 397);
+            this.label24.Name = "label24";
+            this.label24.Size = new System.Drawing.Size(55, 15);
+            this.label24.TabIndex = 61;
+            this.label24.Text = "Moneda:";
+            //
+            // cbocurrency
+            //
+            this.cbocurrency.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.cbocurrency.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.cbocurrency.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbocurrency.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cbocurrency.FormattingEnabled = true;
+            this.cbocurrency.Location = new System.Drawing.Point(513, 415);
+            this.cbocurrency.Name = "cbocurrency";
+            this.cbocurrency.Size = new System.Drawing.Size(247, 23);
+            this.cbocurrency.TabIndex = 62;
+            //
             // btnSaveStore
-            // 
+            //
             this.btnSaveStore.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.btnSaveStore.BackColor = System.Drawing.Color.WhiteSmoke;
             this.btnSaveStore.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnSaveStore.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnSaveStore.Image = global::PharmacySystem.Properties.Resources.save32;
             this.btnSaveStore.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnSaveStore.Location = new System.Drawing.Point(513, 408);
+            this.btnSaveStore.Location = new System.Drawing.Point(513, 458);
             this.btnSaveStore.Name = "btnSaveStore";
             this.btnSaveStore.Size = new System.Drawing.Size(247, 38);
             this.btnSaveStore.TabIndex = 58;
@@ -930,6 +958,8 @@
         private System.Windows.Forms.Label label20;
         private System.Windows.Forms.Label label21;
         private System.Windows.Forms.Label label22;
+        private System.Windows.Forms.Label label24;
+        private System.Windows.Forms.ComboBox cbocurrency;
         private System.Windows.Forms.Button btnSaveStore;
         private System.Windows.Forms.DataGridView dgdatacategory;
         private System.Windows.Forms.TextBox txtindexcategory;

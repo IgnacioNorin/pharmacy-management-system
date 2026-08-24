@@ -40,7 +40,7 @@ namespace PharmacySystem.Logical
             {
                 try
                 {
-                    SqlCommand cmd = new SqlCommand("SELECT id,document_store, company_name, email, phone, address FROM store WHERE id = 1", oConnection);
+                    SqlCommand cmd = new SqlCommand("SELECT id,document_store, company_name, email, phone, address, currency_culture FROM store WHERE id = 1", oConnection);
                     cmd.CommandType = CommandType.Text;
 
                     oConnection.Open();
@@ -54,7 +54,8 @@ namespace PharmacySystem.Logical
                                 companyName = dr["company_name"].ToString(),
                                 email = dr["email"].ToString(),
                                 phone = dr["phone"].ToString(),
-                                address = dr["address"].ToString()
+                                address = dr["address"].ToString(),
+                                currencyCulture = dr["currency_culture"] == DBNull.Value ? null : dr["currency_culture"].ToString()
                             };
                         }
                     }
@@ -82,15 +83,17 @@ namespace PharmacySystem.Logical
                     sb.AppendLine("company_name = @company_name,");
                     sb.AppendLine("email = @email,");
                     sb.AppendLine("phone = @phone,");
-                    sb.AppendLine("address = @address");
+                    sb.AppendLine("address = @address,");
+                    sb.AppendLine("currency_culture = @currency_culture");
                     sb.AppendLine("WHERE id = 1");
-                    
+
                     using (SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection)) {
                         cmd.Parameters.AddWithValue("@document", obj.document);
                         cmd.Parameters.AddWithValue("@company_name", obj.companyName);
                         cmd.Parameters.AddWithValue("@email", obj.email);
                         cmd.Parameters.AddWithValue("@phone", obj.phone);
                         cmd.Parameters.AddWithValue("@address", obj.address);
+                        cmd.Parameters.AddWithValue("@currency_culture", (object)obj.currencyCulture ?? DBNull.Value);
                         cmd.CommandType = CommandType.Text;
                         oConnection.Open();
                         cmd.ExecuteNonQuery();

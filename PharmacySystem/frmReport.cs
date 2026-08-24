@@ -97,9 +97,9 @@ namespace PharmacySystem
             {
                 dtSale.Rows.Add(null, null);
                 dtSale.Rows.Add(null, null, null, null, null, null, "Total:", 
-                                CultureInfoHelper.FormatAsEcuadorCurrency(sumTotalPay),
-                                CultureInfoHelper.FormatAsEcuadorCurrency(sumAmountReceived),
-                                CultureInfoHelper.FormatAsEcuadorCurrency(sumChangeAmount));
+                                CultureInfoHelper.FormatAsCurrency(sumTotalPay),
+                                CultureInfoHelper.FormatAsCurrency(sumAmountReceived),
+                                CultureInfoHelper.FormatAsCurrency(sumChangeAmount));
                 dgdatasale.DataSource = dtSale;
             }
         }
@@ -126,10 +126,10 @@ namespace PharmacySystem
             {
                 dtPurchase.Rows.Add(null, null);
                 dtPurchase.Rows.Add(null, null, null, null, "Total:", 
-                                CultureInfoHelper.FormatAsEcuadorCurrency(sumTotalAmount), null,
+                                CultureInfoHelper.FormatAsCurrency(sumTotalAmount), null,
                                 sumQuantityProduct.ToString(), 
-                                CultureInfoHelper.FormatAsEcuadorCurrency(sumPurchasePrice),
-                                CultureInfoHelper.FormatAsEcuadorCurrency(sumSalePrice));
+                                CultureInfoHelper.FormatAsCurrency(sumPurchasePrice),
+                                CultureInfoHelper.FormatAsCurrency(sumSalePrice));
 
 
                 dgdatapurchase.DataSource = dtPurchase;

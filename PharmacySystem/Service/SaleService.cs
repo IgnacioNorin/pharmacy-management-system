@@ -264,9 +264,9 @@ namespace PharmacySystem.Logical
                             string nameVendor = row["name"].ToString();
                             string idDocumentClient = row["document_client"].ToString();
                             string nameClient = row["name_client"].ToString();
-                            string totalPay = CultureInfoHelper.FormatAsEcuadorCurrency(Convert.ToDecimal(row["total_amount"]));
-                            string amountReceived = CultureInfoHelper.FormatAsEcuadorCurrency(Convert.ToDecimal(row["amount_received"]));
-                            string changeAmount = CultureInfoHelper.FormatAsEcuadorCurrency(Convert.ToDecimal(row["change_amount"]));
+                            string totalPay = CultureInfoHelper.FormatAsCurrency(Convert.ToDecimal(row["total_amount"]));
+                            string amountReceived = CultureInfoHelper.FormatAsCurrency(Convert.ToDecimal(row["amount_received"]));
+                            string changeAmount = CultureInfoHelper.FormatAsCurrency(Convert.ToDecimal(row["change_amount"]));
 
                             dtFinal.Rows.Add(dateRegister, typeDocument,
                                             numberDocument, idDocument,

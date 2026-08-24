@@ -237,9 +237,9 @@ namespace PharmacySystem
                 row.Cells["NombreProducto"].Value = txtnameproduct.Text.Trim();
                 row.Cells["Cantidad"].Value = txtamount.Text.Trim();
                 row.Cells["FechaVencimiento"].Value = DTPexpireddate.Value.ToShortDateString();
-                row.Cells["PrecioCompra"].Value = CultureInfoHelper.FormatAsEcuadorCurrency(pricePurchase);
-                row.Cells["PrecioVenta"].Value = CultureInfoHelper.FormatAsEcuadorCurrency(priceSale);
-                row.Cells["SubTotal"].Value = CultureInfoHelper.FormatAsEcuadorCurrency(subTotal);
+                row.Cells["PrecioCompra"].Value = CultureInfoHelper.FormatAsCurrency(pricePurchase);
+                row.Cells["PrecioVenta"].Value = CultureInfoHelper.FormatAsCurrency(priceSale);
+                row.Cells["SubTotal"].Value = CultureInfoHelper.FormatAsCurrency(subTotal);
 
                 CleanProduct();
                 CalculateTotal();
@@ -378,7 +378,7 @@ namespace PharmacySystem
                 }
             }
 
-            lbltotalamount.Text = CultureInfoHelper.FormatAsEcuadorCurrency(total);
+            lbltotalamount.Text = CultureInfoHelper.FormatAsCurrency(total);
 
         }
 
