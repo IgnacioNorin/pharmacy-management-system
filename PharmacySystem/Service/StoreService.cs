@@ -1,4 +1,5 @@
 ﻿
+using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 using System;
 using System.Collections.Generic;
@@ -61,6 +62,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     obj = new Store();
                 }
             }
@@ -98,6 +100,7 @@ namespace PharmacySystem.Logical
             }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                 result = false;
             }
 

@@ -60,6 +60,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     result = 0;
                 }
             }
@@ -91,6 +92,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     result = false;
                 }
 
@@ -153,6 +155,7 @@ namespace PharmacySystem.Logical
                   
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
 
                     List = new List<Product>();
                 }
@@ -187,6 +190,7 @@ namespace PharmacySystem.Logical
 
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
 
                     result = false;
                 }
@@ -220,6 +224,7 @@ namespace PharmacySystem.Logical
          
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     result = false;
                 }
 
@@ -290,6 +295,7 @@ namespace PharmacySystem.Logical
                 }
                     catch (Exception ex)
                     {
+                        Logger.LogError(ex);
                     dt = new DataTable();
                     dtFinal = new DataTable();
                 }

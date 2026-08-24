@@ -68,6 +68,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     List = new List<Sale>();
                 }
             }
@@ -110,6 +111,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     List = new List<SaleDetail>();
                 }
             }
@@ -135,6 +137,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     result = false;
                 }
             }
@@ -201,6 +204,7 @@ namespace PharmacySystem.Logical
                     }
                     catch (Exception e)
                     {
+                        Logger.LogError(e);
                         objTransacion.Rollback();
                         result = 0;
                     }
@@ -208,6 +212,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     result = 0;
                 }
             }
@@ -277,6 +282,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     dt = new DataTable();
                     dtFinal = new DataTable();
                 }
@@ -313,6 +319,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     sum_obj = 0;
                 }
             }
@@ -349,6 +356,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     sum_obj = 0;
                 }
             }
@@ -385,6 +393,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     sum_obj = 0;
                 }
             }

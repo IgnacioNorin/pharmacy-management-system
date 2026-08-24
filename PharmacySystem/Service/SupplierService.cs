@@ -1,4 +1,5 @@
-﻿using PharmacySystem.Model;
+﻿using PharmacySystem.Helpers;
+using PharmacySystem.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -56,6 +57,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     result = 0;
                 }
             }
@@ -88,6 +90,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     result = false;
                 }
 
@@ -132,6 +135,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     List = new List<Supplier>();
                 }
             }
@@ -158,6 +162,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     result = false;
                 }
 
