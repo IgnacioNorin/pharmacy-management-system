@@ -169,9 +169,9 @@ namespace PharmacySystem
             AddCharacter("-");
 
             // Totals
-            AddTwoColumns("TOTAL A PAGAR:", $"${CultureInfoHelper.FormatAsEcuadorCurrency(sale.totalPay):F2}");
-            AddTwoColumns("PAGO CON:", $"${CultureInfoHelper.FormatAsEcuadorCurrency(sale.payWith):F2}");
-            AddTwoColumns("CAMBIO:", $"${CultureInfoHelper.FormatAsEcuadorCurrency(sale.change):F2}");
+            AddTwoColumns("TOTAL A PAGAR:", CultureInfoHelper.FormatAsEcuadorCurrency(sale.totalPay));
+            AddTwoColumns("PAGO CON:", CultureInfoHelper.FormatAsEcuadorCurrency(sale.payWith));
+            AddTwoColumns("CAMBIO:", CultureInfoHelper.FormatAsEcuadorCurrency(sale.change));
 
             AddCharacter("-");
             AddCenteredText("¡Gracias por su compra!");
