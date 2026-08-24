@@ -1,4 +1,5 @@
-﻿using PharmacySystem.Model;
+﻿using PharmacySystem.Helpers;
+using PharmacySystem.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -44,7 +45,7 @@ namespace PharmacySystem.Logical
                     cmd.Parameters.AddWithValue("name", person.name);
                     cmd.Parameters.AddWithValue("address", person.address);
                     cmd.Parameters.AddWithValue("phone", person.phone);
-                    cmd.Parameters.AddWithValue("password", person.password);
+                    cmd.Parameters.AddWithValue("password", PasswordHasher.IsHashed(person.password) ? person.password : PasswordHasher.Hash(person.password));
                     cmd.Parameters.AddWithValue("person_type_id", person.oPersonType.idPersonType);
                     cmd.Parameters.Add("result", SqlDbType.Int).Direction = ParameterDirection.Output;
                     cmd.CommandType = CommandType.StoredProcedure;
@@ -77,7 +78,7 @@ namespace PharmacySystem.Logical
                     cmd.Parameters.AddWithValue("name", person.name);
                     cmd.Parameters.AddWithValue("address", person.address);
                     cmd.Parameters.AddWithValue("phone", person.phone);
-                    cmd.Parameters.AddWithValue("password", person.password);
+                    cmd.Parameters.AddWithValue("password", PasswordHasher.IsHashed(person.password) ? person.password : PasswordHasher.Hash(person.password));
                     cmd.Parameters.AddWithValue("person_type_id", person.oPersonType.idPersonType);
                     cmd.Parameters.Add("result", SqlDbType.Bit).Direction = ParameterDirection.Output;
 
@@ -144,6 +145,80 @@ namespace PharmacySystem.Logical
                 }
             }
             return listPerson;
+        }
+
+        public Person GetPersonByDocument(string document)
+        {
+            Person person = null;
+            using (SqlConnection oConnection = new SqlConnection(Connection.CN))
+            {
+                try
+                {
+                    StringBuilder sb = new StringBuilder();
+                    sb.AppendLine("SELECT p.id AS idproduct,p.document_number,p.name,p.address,p.phone,p.password,pt.id AS person_type_id,pt.description, p.status FROM person p");
+                    sb.AppendLine("INNER JOIN person_type pt on pt.id = p.person_type_id");
+                    sb.AppendLine("WHERE p.document_number = @document");
+
+                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
+                    cmd.Parameters.AddWithValue("@document", document);
+                    cmd.CommandType = CommandType.Text;
+
+                    oConnection.Open();
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+                        if (dr.Read())
+                        {
+                            person = new Person()
+                            {
+                                idPerson = Convert.ToInt32(dr["idproduct"]),
+                                document = dr["document_number"].ToString(),
+                                name = dr["name"].ToString(),
+                                address = dr["address"].ToString(),
+                                phone = dr["phone"].ToString(),
+                                password = dr["password"].ToString(),
+                                oPersonType = new TypePerson() { idPersonType = Convert.ToInt32(dr["person_type_id"]), description = dr["description"].ToString() },
+                                Estado = Convert.ToBoolean(dr["status"])
+                            };
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    person = null;
+                }
+            }
+            return person;
+        }
+
+        public bool UpdatePassword(int idPerson, string hashedPassword)
+        {
+            bool result = true;
+            using (SqlConnection oConnection = new SqlConnection(Connection.CN))
+            {
+                try
+                {
+                    SqlCommand cmd = new SqlCommand("UPDATE person SET password = @password WHERE id = @id", oConnection);
+                    cmd.Parameters.AddWithValue("@password", hashedPassword);
+                    cmd.Parameters.AddWithValue("@id", idPerson);
+                    cmd.CommandType = CommandType.Text;
+
+                    oConnection.Open();
+
+                    cmd.ExecuteNonQuery();
+
+                    result = true;
+
+                }
+                catch (Exception ex)
+                {
+                    result = false;
+                }
+
+            }
+
+            return result;
+
         }
 
         public bool DeletePerson(int idPerson)
