@@ -12,6 +12,8 @@ namespace PharmacySystem.Tests.Presentation
         public DateTime SaleEndDate { get; set; } = new DateTime(2026, 1, 31);
         public DateTime PurchaseStartDate { get; set; } = new DateTime(2026, 1, 1);
         public DateTime PurchaseEndDate { get; set; } = new DateTime(2026, 1, 31);
+        public DateTime AlertHistoryStartDate { get; set; } = new DateTime(2026, 1, 1);
+        public DateTime AlertHistoryEndDate { get; set; } = new DateTime(2026, 1, 31);
         public string SelectedSupplierId { get; set; } = "0";
         public string SelectedCategoryId { get; set; } = "0";
 
@@ -20,11 +22,13 @@ namespace PharmacySystem.Tests.Presentation
         public DataTable SaleReport { get; private set; }
         public DataTable PurchaseReport { get; private set; }
         public DataTable ProductReport { get; private set; }
+        public DataTable AlertHistoryReport { get; private set; }
 
         public void LoadSupplierOptions(IReadOnlyList<ComboBoxItem> options) => SupplierOptions = options;
         public void LoadCategoryOptions(IReadOnlyList<ComboBoxItem> options) => CategoryOptions = options;
         public void SetSaleReport(DataTable table) => SaleReport = table;
         public void SetPurchaseReport(DataTable table) => PurchaseReport = table;
         public void SetProductReport(DataTable table) => ProductReport = table;
+        public void SetAlertHistoryReport(DataTable table) => AlertHistoryReport = table;
     }
 }

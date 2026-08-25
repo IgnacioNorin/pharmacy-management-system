@@ -21,6 +21,7 @@ namespace PharmacySystem
         DataTable dtSale = new DataTable();
         DataTable dtPurchase = new DataTable();
         DataTable dtProduct = new DataTable();
+        DataTable dtAlertHistory = new DataTable();
 
         #region IReportView
 
@@ -28,6 +29,8 @@ namespace PharmacySystem
         public DateTime SaleEndDate => txtenddate.Value;
         public DateTime PurchaseStartDate => txtstartdatepurchase.Value;
         public DateTime PurchaseEndDate => txtenddatepurchase.Value;
+        public DateTime AlertHistoryStartDate => txtstartdatealerthistory.Value;
+        public DateTime AlertHistoryEndDate => txtenddatealerthistory.Value;
         public string SelectedSupplierId => ((ComboBoxItem)cbosupplier.SelectedItem).Value.ToString();
         public string SelectedCategoryId => ((ComboBoxItem)cbocategory.SelectedItem).Value.ToString();
 
@@ -71,13 +74,19 @@ namespace PharmacySystem
             dgdataproduct.DataSource = dtProduct;
         }
 
+        public void SetAlertHistoryReport(DataTable table)
+        {
+            dtAlertHistory = table;
+            dgdataalerthistory.DataSource = dtAlertHistory;
+        }
+
         #endregion
 
         private void frmReport_Load(object sender, EventArgs e)
         {
             _presenter.OnLoad();
 
-            ChangeMaxDate(txtstartdate,txtenddate,txtstartdatepurchase,txtenddatepurchase);
+            ChangeMaxDate(txtstartdate, txtenddate, txtstartdatepurchase, txtenddatepurchase, txtstartdatealerthistory, txtenddatealerthistory);
         }
 
         private void btnExportSale_Click(object sender, EventArgs e)
@@ -167,6 +176,40 @@ namespace PharmacySystem
                     {
                         XLWorkbook wb = new XLWorkbook();
                         var sheet = wb.Worksheets.Add(dtProduct, "Informe");
+                        sheet.ColumnsUsed().AdjustToContents();
+                        wb.SaveAs(savefile.FileName);
+                        MessageBox.Show("Reporte Generado", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch
+                    {
+                        MessageBox.Show("Error al generar reporte", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("No existen datos para exportar", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            }
+        }
+
+        private void btnConsultAlertHistory_Click(object sender, EventArgs e)
+        {
+            _presenter.OnConsultAlertHistory();
+        }
+
+        private void btnExportAlertHistory_Click(object sender, EventArgs e)
+        {
+            if (dgdataalerthistory.Rows.Count > 0)
+            {
+                SaveFileDialog savefile = new SaveFileDialog();
+                savefile.FileName = string.Format("Historial_Alertas_{0}.xlsx", DateTime.Now.ToString("ddMMyyyyHHmmss"));
+                savefile.Filter = "Excel Files|*.xlsx";
+                if (savefile.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        XLWorkbook wb = new XLWorkbook();
+                        var sheet = wb.Worksheets.Add(dtAlertHistory, "Informe");
                         sheet.ColumnsUsed().AdjustToContents();
                         wb.SaveAs(savefile.FileName);
                         MessageBox.Show("Reporte Generado", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Information);
