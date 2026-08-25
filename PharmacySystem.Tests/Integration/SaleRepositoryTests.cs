@@ -2,14 +2,17 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using PharmacySystem.Helpers;
 using PharmacySystem.Logical;
+using PharmacySystem.Data;
 using PharmacySystem.Model;
 using Xunit;
 
 namespace PharmacySystem.Tests.Integration
 {
     [Collection("Database")]
-    public class SaleServiceTests
+    public class SaleRepositoryTests
     {
+        private static readonly ISaleRepository Repository = new SaleRepository(SqlConnectionFactory.FromConfiguration());
+
         private static int PersonTypeId()
         {
             return SqlTestHelper.ExecuteScalarInt("SELECT TOP 1 id FROM person_type");
@@ -67,11 +70,11 @@ namespace PharmacySystem.Tests.Integration
                     }
                 };
 
-                saleId = SaleService.Instance.RegisterSale(sale);
+                saleId = Repository.Register(sale);
 
                 Assert.True(saleId > 0);
-                Assert.Contains(SaleService.Instance.ListSale(), s => s.idSale == saleId && s.nameClient == "Walk-in client");
-                Assert.Contains(SaleService.Instance.ListSaleDetail(), d => d.idSale == saleId && d.subtotal == 15m);
+                Assert.Contains(Repository.ListSale(), s => s.idSale == saleId && s.nameClient == "Walk-in client");
+                Assert.Contains(Repository.ListSaleDetail(), d => d.idSale == saleId && d.subtotal == 15m);
             }
             finally
             {
@@ -98,7 +101,7 @@ namespace PharmacySystem.Tests.Integration
 
             try
             {
-                bool result = SaleService.Instance.ControlStock(productId, 4, subtract: true);
+                bool result = Repository.ControlStock(productId, 4, subtract: true);
 
                 Assert.True(result);
                 Assert.Equal(6, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId)));
@@ -125,7 +128,7 @@ namespace PharmacySystem.Tests.Integration
 
             try
             {
-                bool result = SaleService.Instance.ControlStock(productId, 4, subtract: false);
+                bool result = Repository.ControlStock(productId, 4, subtract: false);
 
                 Assert.True(result);
                 Assert.Equal(14, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId)));
@@ -208,7 +211,7 @@ namespace PharmacySystem.Tests.Integration
                     oSaleDetail = saleDetails
                 };
 
-                saleId = SaleService.Instance.RegisterSale(sale);
+                saleId = Repository.Register(sale);
 
                 Assert.True(saleId > 0);
 
