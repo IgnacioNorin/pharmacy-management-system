@@ -1,22 +1,29 @@
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using PharmacySystem.Data;
 using PharmacySystem.Logical;
 using PharmacySystem.Model;
 using Xunit;
 
 namespace PharmacySystem.Tests.Integration
 {
+    // Was PurchaseServiceTests, calling PurchaseService.Instance. Now exercises
+    // PurchaseRepository directly (ReportPurchase() has no repository equivalent yet, same
+    // reason as ProductRepository's Report()). Person/Supplier/Category/Product setup keeps
+    // using the already-migrated adapters, since that's just test fixture data.
     [Collection("Database")]
-    public class PurchaseServiceTests
+    public class PurchaseRepositoryTests
     {
+        private static readonly IPurchaseRepository Repository = new PurchaseRepository(SqlConnectionFactory.FromConfiguration());
+
         private static int PersonTypeId()
         {
             return SqlTestHelper.ExecuteScalarInt("SELECT TOP 1 id FROM person_type");
         }
 
         [Fact]
-        public void RegisterPurchase_ValidDetail_InsertsRowsAndUpdatesProductStock()
+        public void Register_ValidDetail_InsertsRowsAndUpdatesProductStock()
         {
             string document = SqlTestHelper.NewTag();
             PersonService.Instance.RegisterPerson(new Person
@@ -71,7 +78,7 @@ namespace PharmacySystem.Tests.Integration
                     }
                 };
 
-                bool result = PurchaseService.Instance.RegisterPurchase(purchase);
+                bool result = Repository.Register(purchase);
 
                 Assert.True(result);
                 purchaseId = SqlTestHelper.ExecuteScalarInt("SELECT id FROM purchase WHERE document_number = @doc", new SqlParameter("@doc", purchase.documentNumber));
@@ -147,7 +154,7 @@ namespace PharmacySystem.Tests.Integration
                         }
                     }
                 };
-                Assert.True(PurchaseService.Instance.RegisterPurchase(purchase));
+                Assert.True(Repository.Register(purchase));
                 purchaseId = SqlTestHelper.ExecuteScalarInt("SELECT id FROM purchase WHERE document_number = @doc", new SqlParameter("@doc", documentNumber));
 
                 // Pin the purchase date instead of relying on the getdate() default and a
@@ -161,7 +168,7 @@ namespace PharmacySystem.Tests.Integration
                     new SqlParameter("@date", purchaseDate),
                     new SqlParameter("@id", purchaseId));
 
-                decimal totalAmount = PurchaseService.Instance.GetTotalAmount(supplierId.ToString(), purchaseDay, purchaseDay);
+                decimal totalAmount = Repository.GetTotalAmount(supplierId.ToString(), purchaseDay, purchaseDay);
 
                 Assert.Equal(42.50m, totalAmount);
             }
