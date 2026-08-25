@@ -167,8 +167,6 @@
     <Compile Include="frmSale.Designer.cs">
       <DependentUpon>frmSale.cs</DependentUpon>
     </Compile>
-    <Compile Include="Helpers\CultureInfoHelper.cs" />
-    <Compile Include="Helpers\DateHelper.cs" />
     <Compile Include="Helpers\RawPrinterHelper.cs" />
     <Compile Include="PrintSale.cs">
       <SubType>Form</SubType>
@@ -220,7 +218,6 @@
     <Compile Include="ModalSupplier.Designer.cs">
       <DependentUpon>ModalSupplier.cs</DependentUpon>
     </Compile>
-    <Compile Include="Model\ComboBoxItem.cs" />
     <Compile Include="CompositionRoot.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
