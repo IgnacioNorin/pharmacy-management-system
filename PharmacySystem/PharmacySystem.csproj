@@ -222,18 +222,7 @@
     <Compile Include="ModalSupplier.Designer.cs">
       <DependentUpon>ModalSupplier.cs</DependentUpon>
     </Compile>
-    <Compile Include="Model\Categories.cs" />
     <Compile Include="Model\ComboBoxItem.cs" />
-    <Compile Include="Model\Purchase.cs" />
-    <Compile Include="Model\NotificationConfig.cs" />
-    <Compile Include="Model\PurchaseDetail.cs" />
-    <Compile Include="Model\SaleDetail.cs" />
-    <Compile Include="Model\Person.cs" />
-    <Compile Include="Model\Product.cs" />
-    <Compile Include="Model\Supplier.cs" />
-    <Compile Include="Model\Store.cs" />
-    <Compile Include="Model\TypePerson.cs" />
-    <Compile Include="Model\Sale.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Validators\RuleValidation.cs" />
@@ -295,6 +284,24 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PharmacySystem.Domain\PharmacySystem.Domain.csproj">
+      <Project>{674BC976-4D03-430E-B263-9E41E54C8BFE}</Project>
+      <Name>PharmacySystem.Domain</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PharmacySystem.Data\PharmacySystem.Data.csproj">
+      <Project>{2DAE2EEC-2A05-4042-ACE2-2113EFF1FD32}</Project>
+      <Name>PharmacySystem.Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PharmacySystem.Business\PharmacySystem.Business.csproj">
+      <Project>{25331025-0480-44AD-BD43-53F3A5EE66B9}</Project>
+      <Name>PharmacySystem.Business</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PharmacySystem.Presentation\PharmacySystem.Presentation.csproj">
+      <Project>{C7BA7957-0E0C-4EF3-B77D-861DEECBC75A}</Project>
+      <Name>PharmacySystem.Presentation</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">
