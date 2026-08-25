@@ -1,16 +1,22 @@
 using System;
 using System.Data.SqlClient;
+using PharmacySystem.Data;
 using PharmacySystem.Logical;
 using PharmacySystem.Model;
 using Xunit;
 
 namespace PharmacySystem.Tests.Integration
 {
-    // notification_settings is also a singleton row (id = 1); ConfigUpdate only updates it,
-    // it never inserts, so the row must already exist for the update branch to succeed.
+    // Was NotificationConfigServiceTests, using `new NotificationConfigService()`. Now exercises
+    // NotificationConfigRepository directly. CategoryService/ProductService.Instance stay as-is
+    // below (just test setup) until those services are migrated.
+    // notification_settings is a singleton row (id = 1); ConfigUpdate only updates it, it never
+    // inserts, so the row must already exist for the update branch to succeed.
     [Collection("Database")]
-    public class NotificationConfigServiceTests
+    public class NotificationConfigRepositoryTests
     {
+        private static readonly INotificationConfigRepository Repository = new NotificationConfigRepository(SqlConnectionFactory.FromConfiguration());
+
         [Fact]
         public void ConfigUpdate_ExistingRow_ChangesStockAndDay()
         {
@@ -19,11 +25,11 @@ namespace PharmacySystem.Tests.Integration
 
             try
             {
-                bool result = new NotificationConfigService().ConfigUpdate(new NotificationConfig { criticalStock = 20, days = 7 });
+                bool result = Repository.ConfigUpdate(new NotificationConfig { criticalStock = 20, days = 7 });
 
                 Assert.True(result);
-                Assert.Equal(20, new NotificationConfigService().ConfigStock());
-                Assert.Equal(7, new NotificationConfigService().ConfigDay());
+                Assert.Equal(20, Repository.ConfigStock());
+                Assert.Equal(7, Repository.ConfigDay());
             }
             finally
             {
@@ -47,7 +53,7 @@ namespace PharmacySystem.Tests.Integration
 
             try
             {
-                var results = new NotificationConfigService().ListExpirationDate();
+                var results = Repository.ListExpirationDate();
 
                 Assert.Contains(results, p => p.expirationDate.Date == DateTime.Today.AddDays(10).Date);
             }
