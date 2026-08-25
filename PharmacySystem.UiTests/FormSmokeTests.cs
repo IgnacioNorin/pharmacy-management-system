@@ -169,6 +169,21 @@ namespace PharmacySystem.UiTests
             });
         }
 
+        // ModalAlerts is a plain data-display dialog (Fase 3 of the alerts rework), not an MVP
+        // screen - no View interface to assert against, just confirms the hand-authored
+        // Designer.cs/.resx pair (no visual designer was used to generate them) actually wires up.
+        [Fact]
+        public void ModalAlerts_ConstructsWithoutException()
+        {
+            StaThread.Run(() =>
+            {
+                using (var form = new ModalAlerts())
+                {
+                    Assert.NotNull(form);
+                }
+            });
+        }
+
         [Fact]
         public void PrintSale_ConstructsWithoutException()
         {
