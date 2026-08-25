@@ -81,6 +81,13 @@ namespace PharmacySystem
             return new StoreManagementPresenter(view, service);
         }
 
+        public static LoginPresenter CreateLoginPresenter(ILoginView view)
+        {
+            IPersonRepository repository = new PersonRepository(ConnectionFactory);
+            IPersonService service = new PersonService(repository);
+            return new LoginPresenter(view, service);
+        }
+
         public static MainFormPresenter CreateMainFormPresenter(IMainFormView view)
         {
             IStoreService storeService = new StoreService(new StoreRepository(ConnectionFactory));
