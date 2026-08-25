@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>disable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>PharmacySystem.UiTests</RootNamespace>
+    <AssemblyName>PharmacySystem.UiTests</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!-- Kept separate from PharmacySystem.Tests on purpose: these smoke tests need the real Forms,
+       which live in the WinForms project. PharmacySystem.Tests deliberately does not reference it
+       any more (see Phase 4 of the MVP migration), so that "dotnet test" runs standalone there
+       without the full Visual Studio MSBuild/resource toolchain. This project keeps that toolchain
+       requirement contained to just the handful of tests that actually need it. -->
+  <ItemGroup>
+    <ProjectReference Include="..\PharmacySystem\PharmacySystem.csproj" />
+    <ProjectReference Include="..\PharmacySystem.Presentation\PharmacySystem.Presentation.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="ConnectionStrings.config" CopyToOutputDirectory="PreserveNewest" Condition="Exists('ConnectionStrings.config')" />
+    <None Include="ConnectionStrings.config.example" CopyToOutputDirectory="PreserveNewest" Condition="Exists('ConnectionStrings.config.example')" />
+  </ItemGroup>
+
+</Project>
