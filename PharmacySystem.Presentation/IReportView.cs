@@ -11,6 +11,8 @@ namespace PharmacySystem.Presentation
         DateTime SaleEndDate { get; }
         DateTime PurchaseStartDate { get; }
         DateTime PurchaseEndDate { get; }
+        DateTime AlertHistoryStartDate { get; }
+        DateTime AlertHistoryEndDate { get; }
         string SelectedSupplierId { get; }
         string SelectedCategoryId { get; }
 
@@ -20,5 +22,6 @@ namespace PharmacySystem.Presentation
         void SetSaleReport(DataTable table);
         void SetPurchaseReport(DataTable table);
         void SetProductReport(DataTable table);
+        void SetAlertHistoryReport(DataTable table);
     }
 }

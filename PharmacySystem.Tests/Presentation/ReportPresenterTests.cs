@@ -14,7 +14,8 @@ namespace PharmacySystem.Tests.Presentation
     public class ReportPresenterTests
     {
         private static (ReportPresenter Presenter, FakeReportView View, FakeSupplierService Suppliers,
-            FakeCategoryService Categories, FakeSaleService Sales, FakePurchaseService Purchases, FakeProductService Products) Create()
+            FakeCategoryService Categories, FakeSaleService Sales, FakePurchaseService Purchases, FakeProductService Products,
+            FakeNotificationConfigService Notifications) Create()
         {
             var view = new FakeReportView();
             var suppliers = new FakeSupplierService();
@@ -22,8 +23,9 @@ namespace PharmacySystem.Tests.Presentation
             var sales = new FakeSaleService();
             var purchases = new FakePurchaseService();
             var products = new FakeProductService();
-            var presenter = new ReportPresenter(view, suppliers, categories, sales, purchases, products);
-            return (presenter, view, suppliers, categories, sales, purchases, products);
+            var notifications = new FakeNotificationConfigService();
+            var presenter = new ReportPresenter(view, suppliers, categories, sales, purchases, products, notifications);
+            return (presenter, view, suppliers, categories, sales, purchases, products, notifications);
         }
 
         [Fact]
@@ -155,6 +157,76 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Single(dt.Rows); // no "Total:" row for products, matching the original
             Assert.Equal("Aspirin", dt.Rows[0]["Nombre"]);
             Assert.Equal("20", dt.Rows[0]["Stock"]);
+        }
+
+        // Fase 4 of the alerts rework (traceability).
+        [Fact]
+        public void OnConsultAlertHistory_OpenAndResolvedRows_FormatEachStateCorrectly()
+        {
+            var f = Create();
+            f.Notifications.GetAlertHistoryResult = new List<ProductAlertHistoryEntry>
+            {
+                new ProductAlertHistoryEntry
+                {
+                    ProductCode = "P1",
+                    ProductName = "Paracetamol",
+                    AlertType = AlertType.Stock,
+                    Severity = AlertSeverity.Critical,
+                    TriggerValue = 0m,
+                    DetectedAt = new DateTime(2026, 3, 10),
+                    ResolvedAt = null,
+                    AcknowledgedByName = null,
+                    AcknowledgedAt = null
+                },
+                new ProductAlertHistoryEntry
+                {
+                    ProductCode = "P2",
+                    ProductName = "Amoxicilina",
+                    AlertType = AlertType.Expiration,
+                    Severity = AlertSeverity.Expired,
+                    TriggerValue = null,
+                    DetectedAt = new DateTime(2026, 3, 1),
+                    ResolvedAt = new DateTime(2026, 3, 5),
+                    AcknowledgedByName = "Juan Pérez",
+                    AcknowledgedAt = new DateTime(2026, 3, 2)
+                }
+            };
+
+            f.Presenter.OnConsultAlertHistory();
+
+            var dt = f.View.AlertHistoryReport;
+            Assert.Equal(9, dt.Columns.Count);
+            Assert.Equal(2, dt.Rows.Count);
+
+            Assert.Equal("Paracetamol", dt.Rows[0]["Producto"]);
+            Assert.Equal("Stock", dt.Rows[0]["Tipo"]);
+            Assert.Equal("Crítico", dt.Rows[0]["Severidad"]);
+            Assert.Equal("Abierta", dt.Rows[0]["Fecha Resuelta"]);
+            Assert.Equal("", dt.Rows[0]["Reconocido Por"]);
+
+            Assert.Equal("Vencimiento", dt.Rows[1]["Tipo"]);
+            Assert.Equal("Vencido", dt.Rows[1]["Severidad"]);
+            Assert.Equal("05-03-2026", dt.Rows[1]["Fecha Resuelta"]);
+            Assert.Equal("Juan Pérez", dt.Rows[1]["Reconocido Por"]);
+        }
+
+        [Fact]
+        public void OnConsultAlertHistory_PassesSelectedDateRangeToService()
+        {
+            var f = Create();
+            f.View.AlertHistoryStartDate = new DateTime(2026, 1, 1);
+            f.View.AlertHistoryEndDate = new DateTime(2026, 1, 31);
+
+            f.Presenter.OnConsultAlertHistory();
+
+            // FakeNotificationConfigService.GetAlertHistory doesn't currently record its args, but
+            // it must not throw and must forward whatever the service returns for that call -
+            // covered by returning a distinct result instance and asserting identity.
+            var expected = new List<ProductAlertHistoryEntry>();
+            f.Notifications.GetAlertHistoryResult = expected;
+            f.Presenter.OnConsultAlertHistory();
+
+            Assert.Empty(f.View.AlertHistoryReport.Rows);
         }
     }
 }

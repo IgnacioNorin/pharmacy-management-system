@@ -89,7 +89,7 @@ namespace PharmacySystem
             new SalePresenter(view, _saleService, _productService, idPerson);
 
         public static ReportPresenter CreateReportPresenter(IReportView view) =>
-            new ReportPresenter(view, _supplierService, _categoryService, _saleService, _purchaseService, _productService);
+            new ReportPresenter(view, _supplierService, _categoryService, _saleService, _purchaseService, _productService, _notificationConfigService);
 
         #endregion
     }

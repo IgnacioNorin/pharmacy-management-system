@@ -21,6 +21,7 @@ namespace PharmacySystem.Presentation
         private readonly ISaleService _saleService;
         private readonly IPurchaseService _purchaseService;
         private readonly IProductService _productService;
+        private readonly INotificationConfigService _notificationConfigService;
 
         public ReportPresenter(
             IReportView view,
@@ -28,7 +29,8 @@ namespace PharmacySystem.Presentation
             ICategoryService categoryService,
             ISaleService saleService,
             IPurchaseService purchaseService,
-            IProductService productService)
+            IProductService productService,
+            INotificationConfigService notificationConfigService)
         {
             _view = view;
             _supplierService = supplierService;
@@ -36,6 +38,7 @@ namespace PharmacySystem.Presentation
             _saleService = saleService;
             _purchaseService = purchaseService;
             _productService = productService;
+            _notificationConfigService = notificationConfigService;
         }
 
         public void OnLoad()
@@ -176,6 +179,56 @@ namespace PharmacySystem.Presentation
             }
 
             _view.SetProductReport(dt);
+        }
+
+        // Fase 4 of the alerts rework (traceability): every stock/expiration alert transition
+        // (detected, resolved, acknowledged) that fell inside the selected date range, so a
+        // pharmacy can answer "when was this flagged, and was it handled" on demand.
+        public void OnConsultAlertHistory()
+        {
+            List<ProductAlertHistoryEntry> rows = _notificationConfigService.GetAlertHistory(
+                _view.AlertHistoryStartDate, _view.AlertHistoryEndDate);
+
+            DataTable dt = new DataTable();
+            dt.Columns.Add("Fecha Detectada", typeof(string));
+            dt.Columns.Add("Producto", typeof(string));
+            dt.Columns.Add("Codigo", typeof(string));
+            dt.Columns.Add("Tipo", typeof(string));
+            dt.Columns.Add("Severidad", typeof(string));
+            dt.Columns.Add("Valor", typeof(string));
+            dt.Columns.Add("Fecha Resuelta", typeof(string));
+            dt.Columns.Add("Reconocido Por", typeof(string));
+            dt.Columns.Add("Fecha Reconocimiento", typeof(string));
+
+            foreach (ProductAlertHistoryEntry r in rows)
+            {
+                dt.Rows.Add(
+                    DateHelper.FormatDatePresentation(r.DetectedAt),
+                    r.ProductName,
+                    r.ProductCode,
+                    TypeLabel(r.AlertType),
+                    SeverityLabel(r.Severity),
+                    r.TriggerValue?.ToString() ?? "",
+                    r.ResolvedAt.HasValue ? DateHelper.FormatDatePresentation(r.ResolvedAt.Value) : "Abierta",
+                    r.AcknowledgedByName ?? "",
+                    r.AcknowledgedAt.HasValue ? DateHelper.FormatDatePresentation(r.AcknowledgedAt.Value) : "");
+            }
+
+            _view.SetAlertHistoryReport(dt);
+        }
+
+        private static string TypeLabel(AlertType type) => type == AlertType.Stock ? "Stock" : "Vencimiento";
+
+        private static string SeverityLabel(AlertSeverity severity)
+        {
+            switch (severity)
+            {
+                case AlertSeverity.Critical: return "Crítico";
+                case AlertSeverity.Expired: return "Vencido";
+                case AlertSeverity.Low: return "Bajo";
+                case AlertSeverity.ExpiringSoon: return "Por vencer";
+                default: return "";
+            }
         }
     }
 }
