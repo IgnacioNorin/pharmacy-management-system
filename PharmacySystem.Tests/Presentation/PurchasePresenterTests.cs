@@ -214,6 +214,54 @@ namespace PharmacySystem.Tests.Presentation
             Assert.False(view.PurchaseCleared);
         }
 
+        // Fase 2 of the alerts rework: a successful purchase must let MainForm know stock just
+        // changed, instead of it waiting up to 5 minutes for the next safety-net timer tick.
+        [Fact]
+        public void OnFinishPurchase_Succeeds_RaisesInventoryChangedNotification()
+        {
+            var view = new FakePurchaseView { DocumentNumber = "001", SelectedSupplierId = 3 };
+            var purchaseService = new FakePurchaseService { RegisterResult = true };
+            var presenter = CreatePresenter(view, purchaseService, new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "10.00");
+
+            bool raised = false;
+            void Handler() => raised = true;
+            InventoryChangeNotifier.StockChanged += Handler;
+            try
+            {
+                presenter.OnFinishPurchase();
+            }
+            finally
+            {
+                InventoryChangeNotifier.StockChanged -= Handler;
+            }
+
+            Assert.True(raised);
+        }
+
+        [Fact]
+        public void OnFinishPurchase_ServiceFails_DoesNotRaiseInventoryChangedNotification()
+        {
+            var view = new FakePurchaseView { DocumentNumber = "001", SelectedSupplierId = 3 };
+            var purchaseService = new FakePurchaseService { RegisterResult = false };
+            var presenter = CreatePresenter(view, purchaseService, new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "10.00");
+
+            bool raised = false;
+            void Handler() => raised = true;
+            InventoryChangeNotifier.StockChanged += Handler;
+            try
+            {
+                presenter.OnFinishPurchase();
+            }
+            finally
+            {
+                InventoryChangeNotifier.StockChanged -= Handler;
+            }
+
+            Assert.False(raised);
+        }
+
         [Fact]
         public void OnFinishPurchase_Succeeds_ClearsThePresenterOwnedCartToo()
         {

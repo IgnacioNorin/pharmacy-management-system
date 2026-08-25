@@ -22,6 +22,10 @@ namespace PharmacySystem.Presentation
     // The cart is owned here rather than read back from the grid, for the same reason as
     // PurchasePresenter's cart: the Presenter is the single source of truth for cart state, the
     // View is a pure render target.
+    //
+    // A successful sale raises InventoryChangeNotifier.StockChanged so MainForm can recheck its
+    // stock/expiration alerts immediately instead of waiting for the next timer tick - Fase 2 of
+    // the alerts rework.
     public class SalePresenter
     {
         private readonly ISaleView _view;
@@ -229,6 +233,7 @@ namespace PharmacySystem.Presentation
                 _cart.Clear();
                 _view.ClearSale();
                 _view.SaleRegistered(idSale);
+                InventoryChangeNotifier.NotifyStockChanged();
             }
             else
             {

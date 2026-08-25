@@ -2,6 +2,7 @@ using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using System;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PharmacySystem
@@ -17,6 +18,7 @@ namespace PharmacySystem
             InitializeComponent();
             oPerson = obj;
             _presenter = CompositionRoot.CreateMainFormPresenter(this);
+            InventoryChangeNotifier.StockChanged += OnInventoryChangedElsewhere;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -24,11 +26,29 @@ namespace PharmacySystem
             _presenter.OnLoad(oPerson);
 
             timerNotification.Start();
-            timerNotification.Interval = 3000;
+            // Safety net only - a sale or purchase now triggers an immediate recheck via
+            // InventoryChangeNotifier, so this just catches a product crossing its expiration
+            // threshold purely because time passed, with nobody having sold or bought anything.
+            timerNotification.Interval = 300000; // 5 minutes
             pictureBoxStock.Visible = false;
             pictureBoxExpiredDate.Visible = false;
             frmSale childForm = new frmSale(oPerson.idPerson);
             ShowForm(childForm, salesToolStripMenuItem);
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            InventoryChangeNotifier.StockChanged -= OnInventoryChangedElsewhere;
+            base.OnFormClosed(e);
+        }
+
+        // Raised from SalePresenter/PurchasePresenter after a successful register, on whatever
+        // thread called them (normally the UI thread, from a button click) - dispatch through the
+        // same non-blocking path as every other alert check instead of assuming the caller's thread.
+        private void OnInventoryChangedElsewhere()
+        {
+            notificationDate();
+            notificationStock();
         }
 
         public void SetUserName(string name) => lbluser.Text = name;
@@ -45,19 +65,34 @@ namespace PharmacySystem
 
         public void ShowExpirationWarning(bool visible, string message)
         {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action(() => ShowExpirationWarning(visible, message)));
+                return;
+            }
+
             lblnotifyexpireddate.Text = message;
             pictureBoxExpiredDate.Visible = visible;
         }
 
         public void ShowStockWarning(bool visible, string message)
         {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action(() => ShowStockWarning(visible, message)));
+                return;
+            }
+
             lblnotifystock.Text = message;
             pictureBoxStock.Visible = visible;
         }
 
-        private void notificationDate() => _presenter.CheckExpirationWarnings();
+        // Both queries now hit an indexed, server-filtered SELECT (Fase 1), but they still cross
+        // the network - running them off the UI thread keeps the window responsive on the 5-minute
+        // timer tick and on every menu navigation, instead of freezing on a slow connection.
+        private void notificationDate() => Task.Run(() => _presenter.CheckExpirationWarnings());
 
-        private void notificationStock() => _presenter.CheckStockWarnings();
+        private void notificationStock() => Task.Run(() => _presenter.CheckStockWarnings());
 
         private void clientsToolStripMenuItem_Click(object sender, EventArgs e)
         {
