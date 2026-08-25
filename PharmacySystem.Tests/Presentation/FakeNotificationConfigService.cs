@@ -1,5 +1,6 @@
 using PharmacySystem.Business;
 using PharmacySystem.Model;
+using System;
 using System.Collections.Generic;
 
 namespace PharmacySystem.Tests.Presentation
@@ -37,5 +38,18 @@ namespace PharmacySystem.Tests.Presentation
             UpdatedWith = obj;
             return ConfigUpdateResult;
         }
+
+        public bool AcknowledgeAlertResult { get; set; } = true;
+        public (int HistoryId, int PersonId)? AcknowledgedWith { get; private set; }
+
+        public bool AcknowledgeAlert(int historyId, int personId)
+        {
+            AcknowledgedWith = (historyId, personId);
+            return AcknowledgeAlertResult;
+        }
+
+        public List<ProductAlertHistoryEntry> GetAlertHistoryResult { get; set; } = new List<ProductAlertHistoryEntry>();
+
+        public List<ProductAlertHistoryEntry> GetAlertHistory(DateTime startDate, DateTime endDate) => GetAlertHistoryResult;
     }
 }

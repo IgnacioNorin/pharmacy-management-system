@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using PharmacySystem.Business;
 using PharmacySystem.Model;
 using Xunit;
@@ -8,8 +9,8 @@ namespace PharmacySystem.Tests.Business
 {
     public class NotificationConfigServiceTests
     {
-        private static NotificationConfigService CreateService(FakeNotificationConfigRepository repository)
-            => new NotificationConfigService(repository);
+        private static NotificationConfigService CreateService(FakeNotificationConfigRepository repository, FakeProductAlertHistoryRepository historyRepository = null)
+            => new NotificationConfigService(repository, historyRepository ?? new FakeProductAlertHistoryRepository());
 
         [Fact]
         public void GetActiveAlerts_OutOfStockProduct_IsCritical()
@@ -138,6 +139,112 @@ namespace PharmacySystem.Tests.Business
 
             Assert.Equal(7, repository.RequestedCriticalStock);
             Assert.Equal(4, repository.RequestedDays);
+        }
+
+        // Fase 4 (traceability): GetActiveAlerts() must diff the live alert list against
+        // product_alert_history's open rows and write only the transitions.
+
+        [Fact]
+        public void GetActiveAlerts_NewAlert_InsertsHistoryRowAndAttachesId()
+        {
+            var repository = new FakeNotificationConfigRepository
+            {
+                ListStockResult = new List<Product> { new Product { idProduct = 1, code = "P1", name = "Paracetamol", stock = 0 } }
+            };
+            var historyRepository = new FakeProductAlertHistoryRepository { NextInsertedId = 42 };
+
+            var alerts = CreateService(repository, historyRepository).GetActiveAlerts();
+
+            var inserted = Assert.Single(historyRepository.Inserted);
+            Assert.Equal(1, inserted.ProductId);
+            Assert.Equal(AlertType.Stock, inserted.AlertType);
+            Assert.Equal(AlertSeverity.Critical, inserted.Severity);
+            Assert.Equal(42, Assert.Single(alerts).HistoryId);
+        }
+
+        [Fact]
+        public void GetActiveAlerts_AlreadyOpenAlertSameSeverity_DoesNotWriteAgain()
+        {
+            var repository = new FakeNotificationConfigRepository
+            {
+                ListStockResult = new List<Product> { new Product { idProduct = 1, code = "P1", name = "Paracetamol", stock = 3 } }
+            };
+            var historyRepository = new FakeProductAlertHistoryRepository
+            {
+                OpenAlerts = new List<ProductAlertHistoryEntry>
+                {
+                    new ProductAlertHistoryEntry { Id = 7, ProductId = 1, AlertType = AlertType.Stock, Severity = AlertSeverity.Low }
+                }
+            };
+
+            var alerts = CreateService(repository, historyRepository).GetActiveAlerts();
+
+            Assert.Empty(historyRepository.Inserted);
+            Assert.Empty(historyRepository.SeverityUpdates);
+            Assert.Equal(7, Assert.Single(alerts).HistoryId);
+        }
+
+        [Fact]
+        public void GetActiveAlerts_OpenAlertSeverityWorsened_UpdatesSeverityInPlace()
+        {
+            var repository = new FakeNotificationConfigRepository
+            {
+                ListStockResult = new List<Product> { new Product { idProduct = 1, code = "P1", name = "Paracetamol", stock = 0 } }
+            };
+            var historyRepository = new FakeProductAlertHistoryRepository
+            {
+                OpenAlerts = new List<ProductAlertHistoryEntry>
+                {
+                    new ProductAlertHistoryEntry { Id = 7, ProductId = 1, AlertType = AlertType.Stock, Severity = AlertSeverity.Low }
+                }
+            };
+
+            CreateService(repository, historyRepository).GetActiveAlerts();
+
+            var update = Assert.Single(historyRepository.SeverityUpdates);
+            Assert.Equal(7, update.HistoryId);
+            Assert.Equal(AlertSeverity.Critical, update.Severity);
+            Assert.Empty(historyRepository.Inserted);
+        }
+
+        [Fact]
+        public void GetActiveAlerts_PreviouslyOpenAlertNoLongerQualifies_IsResolved()
+        {
+            var repository = new FakeNotificationConfigRepository(); // nothing qualifies any more
+            var historyRepository = new FakeProductAlertHistoryRepository
+            {
+                OpenAlerts = new List<ProductAlertHistoryEntry>
+                {
+                    new ProductAlertHistoryEntry { Id = 7, ProductId = 1, AlertType = AlertType.Stock, Severity = AlertSeverity.Low }
+                }
+            };
+
+            CreateService(repository, historyRepository).GetActiveAlerts();
+
+            Assert.Equal(new[] { 7 }, historyRepository.Resolved);
+        }
+
+        [Fact]
+        public void AcknowledgeAlert_DelegatesToHistoryRepository()
+        {
+            var historyRepository = new FakeProductAlertHistoryRepository { AcknowledgeResult = true };
+
+            bool result = CreateService(new FakeNotificationConfigRepository(), historyRepository).AcknowledgeAlert(7, 3);
+
+            Assert.True(result);
+            Assert.Equal((7, 3), historyRepository.AcknowledgedWith);
+        }
+
+        [Fact]
+        public void GetAlertHistory_DelegatesToHistoryRepository()
+        {
+            var expected = new List<ProductAlertHistoryEntry> { new ProductAlertHistoryEntry { Id = 1 } };
+            var historyRepository = new FakeProductAlertHistoryRepository { HistoryResult = expected };
+
+            var result = CreateService(new FakeNotificationConfigRepository(), historyRepository)
+                .GetAlertHistory(DateTime.Today.AddDays(-7), DateTime.Today);
+
+            Assert.Same(expected, result);
         }
     }
 }

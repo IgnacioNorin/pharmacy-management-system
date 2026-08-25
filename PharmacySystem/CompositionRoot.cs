@@ -20,7 +20,7 @@ namespace PharmacySystem
         private static readonly IProductService _productService = new ProductService(new ProductRepository(ConnectionFactory));
         private static readonly ICategoryService _categoryService = new CategoryService(new CategoryRepository(ConnectionFactory));
         private static readonly IStoreService _storeService = new StoreService(new StoreRepository(ConnectionFactory));
-        private static readonly INotificationConfigService _notificationConfigService = new NotificationConfigService(new NotificationConfigRepository(ConnectionFactory));
+        private static readonly INotificationConfigService _notificationConfigService = new NotificationConfigService(new NotificationConfigRepository(ConnectionFactory), new ProductAlertHistoryRepository(ConnectionFactory));
         private static readonly IPurchaseService _purchaseService = new PurchaseService(new PurchaseRepository(ConnectionFactory));
         private static readonly ISaleService _saleService = new SaleService(new SaleRepository(ConnectionFactory));
 
