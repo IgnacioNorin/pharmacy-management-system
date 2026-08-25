@@ -169,7 +169,6 @@
     </Compile>
     <Compile Include="Helpers\CultureInfoHelper.cs" />
     <Compile Include="Helpers\DateHelper.cs" />
-    <Compile Include="Helpers\PasswordHasher.cs" />
     <Compile Include="Helpers\RawPrinterHelper.cs" />
     <Compile Include="PrintSale.cs">
       <SubType>Form</SubType>
