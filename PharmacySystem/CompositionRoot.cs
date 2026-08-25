@@ -52,5 +52,12 @@ namespace PharmacySystem
             IPersonService service = new PersonService(repository);
             return new ClientPickerPresenter(view, service);
         }
+
+        public static ProductPickerPresenter CreateProductPickerPresenter(IProductPickerView view, string origin)
+        {
+            IProductRepository repository = new ProductRepository(ConnectionFactory);
+            IProductService service = new ProductService(repository);
+            return new ProductPickerPresenter(view, service, origin);
+        }
     }
 }
