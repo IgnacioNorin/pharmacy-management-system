@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Text;
+using System.Linq;
+using Dapper;
 using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 
@@ -12,6 +13,13 @@ namespace PharmacySystem.Data
     {
         private readonly ISqlConnectionFactory _connectionFactory;
 
+        // person and its person_type in one row - split at idPersonType, the first column of the
+        // TypePerson half, to build the nested oPersonType via Dapper multi-mapping.
+        private const string PersonWithTypeSelect =
+            "SELECT p.id AS idPerson, p.document_number AS document, p.name, p.address, p.phone, p.password, p.status AS Estado, " +
+            "pt.id AS idPersonType, pt.description " +
+            "FROM person p INNER JOIN person_type pt ON pt.id = p.person_type_id";
+
         public PersonRepository(ISqlConnectionFactory connectionFactory)
         {
             _connectionFactory = connectionFactory;
@@ -19,219 +27,134 @@ namespace PharmacySystem.Data
 
         public bool Register(Person person)
         {
-            bool result = true;
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    SqlCommand cmd = new SqlCommand("sp_create_person", oConnection);
-                    cmd.Parameters.AddWithValue("document", person.document);
-                    cmd.Parameters.AddWithValue("name", person.name);
-                    cmd.Parameters.AddWithValue("address", person.address);
-                    cmd.Parameters.AddWithValue("phone", person.phone);
-                    cmd.Parameters.AddWithValue("password", person.password);
-                    cmd.Parameters.AddWithValue("person_type_id", person.oPersonType.idPersonType);
-                    cmd.Parameters.Add("result", SqlDbType.Int).Direction = ParameterDirection.Output;
-                    cmd.CommandType = CommandType.StoredProcedure;
+                    var parameters = new DynamicParameters();
+                    parameters.Add("document", person.document);
+                    parameters.Add("name", person.name);
+                    parameters.Add("address", person.address);
+                    parameters.Add("phone", person.phone);
+                    parameters.Add("password", person.password);
+                    parameters.Add("person_type_id", person.oPersonType.idPersonType);
+                    parameters.Add("result", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
-                    oConnection.Open();
+                    oConnection.Execute("sp_create_person", parameters, commandType: CommandType.StoredProcedure);
 
-                    cmd.ExecuteNonQuery();
-
-                    result = Convert.ToBoolean(cmd.Parameters["result"].Value);
-
+                    return Convert.ToBoolean(parameters.Get<int>("result"));
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    result = false;
+                    return false;
                 }
             }
-            return result;
         }
 
         public bool Update(Person person)
         {
-            bool result = true;
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    SqlCommand cmd = new SqlCommand("sp_update_person", oConnection);
-                    cmd.Parameters.AddWithValue("id_person", person.idPerson);
-                    cmd.Parameters.AddWithValue("document", person.document);
-                    cmd.Parameters.AddWithValue("name", person.name);
-                    cmd.Parameters.AddWithValue("address", person.address);
-                    cmd.Parameters.AddWithValue("phone", person.phone);
-                    cmd.Parameters.AddWithValue("password", person.password);
-                    cmd.Parameters.AddWithValue("person_type_id", person.oPersonType.idPersonType);
-                    cmd.Parameters.Add("result", SqlDbType.Bit).Direction = ParameterDirection.Output;
+                    var parameters = new DynamicParameters();
+                    parameters.Add("id_person", person.idPerson);
+                    parameters.Add("document", person.document);
+                    parameters.Add("name", person.name);
+                    parameters.Add("address", person.address);
+                    parameters.Add("phone", person.phone);
+                    parameters.Add("password", person.password);
+                    parameters.Add("person_type_id", person.oPersonType.idPersonType);
+                    parameters.Add("result", dbType: DbType.Boolean, direction: ParameterDirection.Output);
 
-                    cmd.CommandType = CommandType.StoredProcedure;
+                    oConnection.Execute("sp_update_person", parameters, commandType: CommandType.StoredProcedure);
 
-                    oConnection.Open();
-
-                    cmd.ExecuteNonQuery();
-
-                    result = Convert.ToBoolean(cmd.Parameters["result"].Value);
-
+                    return parameters.Get<bool>("result");
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    result = false;
+                    return false;
                 }
-
             }
-
-            return result;
         }
 
         public List<Person> List()
         {
-            List<Person> listPerson = new List<Person>();
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("SELECT p.id AS idproduct,p.document_number,p.name,p.address,p.phone,p.password,pt.id AS person_type_id,pt.description, p.status FROM person p");
-                    sb.AppendLine("INNER JOIN person_type pt on pt.id = p.person_type_id");
-
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    cmd.CommandType = CommandType.Text;
-
-                    oConnection.Open();
-                    using (SqlDataReader dr = cmd.ExecuteReader())
-                    {
-                        while (dr.Read())
-                        {
-                            listPerson.Add(new Person()
-                            {
-                                idPerson = Convert.ToInt32(dr["idproduct"]),
-                                document = dr["document_number"].ToString(),
-                                name = dr["name"].ToString(),
-                                address = dr["address"].ToString(),
-                                phone = dr["phone"].ToString(),
-                                password = dr["password"].ToString(),
-                                oPersonType = new TypePerson() { idPersonType = Convert.ToInt32(dr["person_type_id"]), description = dr["description"].ToString() },
-                                Estado = Convert.ToBoolean(dr["status"])
-                            });
-                        }
-                    }
-
+                    return oConnection.Query<Person, TypePerson, Person>(
+                        PersonWithTypeSelect,
+                        (person, typePerson) => { person.oPersonType = typePerson; return person; },
+                        splitOn: "idPersonType")
+                        .ToList();
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    listPerson = new List<Person>();
+                    return new List<Person>();
                 }
             }
-            return listPerson;
         }
 
         public Person GetByDocument(string document)
         {
-            Person person = null;
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("SELECT p.id AS idproduct,p.document_number,p.name,p.address,p.phone,p.password,pt.id AS person_type_id,pt.description, p.status FROM person p");
-                    sb.AppendLine("INNER JOIN person_type pt on pt.id = p.person_type_id");
-                    sb.AppendLine("WHERE p.document_number = @document");
-
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    cmd.Parameters.AddWithValue("@document", document);
-                    cmd.CommandType = CommandType.Text;
-
-                    oConnection.Open();
-                    using (SqlDataReader dr = cmd.ExecuteReader())
-                    {
-                        if (dr.Read())
-                        {
-                            person = new Person()
-                            {
-                                idPerson = Convert.ToInt32(dr["idproduct"]),
-                                document = dr["document_number"].ToString(),
-                                name = dr["name"].ToString(),
-                                address = dr["address"].ToString(),
-                                phone = dr["phone"].ToString(),
-                                password = dr["password"].ToString(),
-                                oPersonType = new TypePerson() { idPersonType = Convert.ToInt32(dr["person_type_id"]), description = dr["description"].ToString() },
-                                Estado = Convert.ToBoolean(dr["status"])
-                            };
-                        }
-                    }
-
+                    return oConnection.Query<Person, TypePerson, Person>(
+                        PersonWithTypeSelect + " WHERE p.document_number = @document",
+                        (person, typePerson) => { person.oPersonType = typePerson; return person; },
+                        new { document },
+                        splitOn: "idPersonType")
+                        .FirstOrDefault();
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    person = null;
+                    return null;
                 }
             }
-            return person;
         }
 
         public bool UpdatePassword(int idPerson, string hashedPassword)
         {
-            bool result = true;
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    SqlCommand cmd = new SqlCommand("UPDATE person SET password = @password WHERE id = @id", oConnection);
-                    cmd.Parameters.AddWithValue("@password", hashedPassword);
-                    cmd.Parameters.AddWithValue("@id", idPerson);
-                    cmd.CommandType = CommandType.Text;
-
-                    oConnection.Open();
-
-                    cmd.ExecuteNonQuery();
-
-                    result = true;
-
+                    oConnection.Execute(
+                        "UPDATE person SET password = @password WHERE id = @id",
+                        new { password = hashedPassword, id = idPerson });
+                    return true;
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    result = false;
+                    return false;
                 }
-
             }
-
-            return result;
         }
 
         public bool Delete(int idPerson)
         {
-            bool result = true;
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    SqlCommand cmd = new SqlCommand("DELETE FROM person WHERE id = @id", oConnection);
-                    cmd.Parameters.AddWithValue("@id", idPerson);
-                    cmd.CommandType = CommandType.Text;
-
-                    oConnection.Open();
-
-                    cmd.ExecuteNonQuery();
-
-                    result = true;
-
+                    oConnection.Execute("DELETE FROM person WHERE id = @id", new { id = idPerson });
+                    return true;
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    result = false;
+                    return false;
                 }
-
             }
-
-            return result;
         }
     }
 }
