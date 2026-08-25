@@ -1,32 +1,41 @@
-﻿using PharmacySystem.Logical;
-using PharmacySystem.Model;
+using PharmacySystem.Presentation;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PharmacySystem
 {
-    public partial class ModalSupplier : Form
+    public partial class ModalSupplier : Form, ISupplierPickerView
     {
         public int idSupplier { get; set; }
         public string document { get; set; }
         public string companyName { get; set; }
-        
+
+        private readonly SupplierPickerPresenter _presenter;
+
         public ModalSupplier()
         {
             InitializeComponent();
+            _presenter = CompositionRoot.CreateSupplierPickerPresenter(this);
+        }
+
+        public void LoadSuppliers(IEnumerable<SupplierRow> suppliers)
+        {
+            foreach (SupplierRow row in suppliers)
+            {
+                int rowId = dgdata.Rows.Add();
+                DataGridViewRow gridRow = dgdata.Rows[rowId];
+                gridRow.Cells["Id"].Value = row.Id.ToString();
+                gridRow.Cells["NumeroDocumento"].Value = row.Document;
+                gridRow.Cells["RazonSocial"].Value = row.CompanyName;
+                gridRow.Cells["Correo"].Value = row.Email;
+                gridRow.Cells["Telefono"].Value = row.Phone;
+            }
         }
 
         private void ModalSupplier_Load(object sender, EventArgs e)
         {
-
-
             //AGREGAR BOTON ELIMINAR
             DataGridViewButtonColumn Button = new DataGridViewButtonColumn();
 
@@ -54,24 +63,14 @@ namespace PharmacySystem
             {
                 if (cl.Visible == true && cl.Name != "btnSeleccionar")
                 {
-                    cboSearch.Items.Add(new ComboBoxItem() { Value = cl.Name, Text = cl.HeaderText });
+                    cboSearch.Items.Add(new PharmacySystem.Model.ComboBoxItem() { Value = cl.Name, Text = cl.HeaderText });
                 }
             }
             cboSearch.DisplayMember = "Text";
             cboSearch.ValueMember = "Value";
             cboSearch.SelectedIndex = 0;
 
-            foreach (Supplier p in SupplierService.Instance.ListSupplier())
-            {
-                int rowId = dgdata.Rows.Add();
-                DataGridViewRow row = dgdata.Rows[rowId];
-                row.Cells["Id"].Value = p.idSupplier.ToString();
-                row.Cells["NumeroDocumento"].Value = p.document;
-                row.Cells["RazonSocial"].Value = p.companyName;
-                row.Cells["Correo"].Value = p.email;
-                row.Cells["Telefono"].Value = p.phone;
-            }
-
+            _presenter.OnLoad();
         }
 
         private void dgdata_CellMouseEnter(object sender, DataGridViewCellEventArgs e)
@@ -128,7 +127,7 @@ namespace PharmacySystem
 
         private void btnsearch_Click(object sender, EventArgs e)
         {
-            string columnFilter = ((ComboBoxItem)cboSearch.SelectedItem).Value.ToString();
+            string columnFilter = ((PharmacySystem.Model.ComboBoxItem)cboSearch.SelectedItem).Value.ToString();
 
             if (dgdata.Rows.Count > 0)
             {
