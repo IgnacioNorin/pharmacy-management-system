@@ -59,5 +59,15 @@ namespace PharmacySystem
             IProductService service = new ProductService(repository);
             return new ProductPickerPresenter(view, service, origin);
         }
+
+        public static ReportPresenter CreateReportPresenter(IReportView view)
+        {
+            ISupplierService supplierService = new SupplierService(new SupplierRepository(ConnectionFactory));
+            ICategoryService categoryService = new CategoryService(new CategoryRepository(ConnectionFactory));
+            ISaleService saleService = new SaleService(new SaleRepository(ConnectionFactory));
+            IPurchaseService purchaseService = new PurchaseService(new PurchaseRepository(ConnectionFactory));
+            IProductService productService = new ProductService(new ProductRepository(ConnectionFactory));
+            return new ReportPresenter(view, supplierService, categoryService, saleService, purchaseService, productService);
+        }
     }
 }

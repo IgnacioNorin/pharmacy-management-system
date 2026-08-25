@@ -1,50 +1,81 @@
-﻿using ClosedXML.Excel;
-using PharmacySystem.Helpers;
-using PharmacySystem.Logical;
+using ClosedXML.Excel;
 using PharmacySystem.Model;
+using PharmacySystem.Presentation;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PharmacySystem
 {
-    public partial class frmReport : Form
+    public partial class frmReport : Form, IReportView
     {
+        private readonly ReportPresenter _presenter;
+
         public frmReport()
         {
             InitializeComponent();
+            _presenter = CompositionRoot.CreateReportPresenter(this);
         }
+
         DataTable dtSale = new DataTable();
         DataTable dtPurchase = new DataTable();
         DataTable dtProduct = new DataTable();
 
-        private void frmReport_Load(object sender, EventArgs e)
+        #region IReportView
+
+        public DateTime SaleStartDate => txtstartdate.Value;
+        public DateTime SaleEndDate => txtenddate.Value;
+        public DateTime PurchaseStartDate => txtstartdatepurchase.Value;
+        public DateTime PurchaseEndDate => txtenddatepurchase.Value;
+        public string SelectedSupplierId => ((ComboBoxItem)cbosupplier.SelectedItem).Value.ToString();
+        public string SelectedCategoryId => ((ComboBoxItem)cbocategory.SelectedItem).Value.ToString();
+
+        public void LoadSupplierOptions(IReadOnlyList<ComboBoxItem> options)
         {
-            cbosupplier.Items.Add(new ComboBoxItem() { Value = "0", Text = "Todos" });
-            foreach (Supplier pr in SupplierService.Instance.ListSupplier())
+            foreach (ComboBoxItem item in options)
             {
-                cbosupplier.Items.Add(new ComboBoxItem() { Value = pr.idSupplier, Text = pr.companyName });
+                cbosupplier.Items.Add(item);
             }
             cbosupplier.DisplayMember = "Text";
             cbosupplier.ValueMember = "Value";
             cbosupplier.SelectedIndex = 0;
+        }
 
-
-            cbocategory.Items.Add(new ComboBoxItem() { Value = "0", Text = "Todos" });
-            foreach (Categories c in CategoryService.Instance.ListCategory())
+        public void LoadCategoryOptions(IReadOnlyList<ComboBoxItem> options)
+        {
+            foreach (ComboBoxItem item in options)
             {
-                cbocategory.Items.Add(new ComboBoxItem() { Value = c.IdCategory, Text = c.description });
+                cbocategory.Items.Add(item);
             }
             cbocategory.DisplayMember = "Text";
             cbocategory.ValueMember = "Value";
             cbocategory.SelectedIndex = 0;
+        }
 
+        public void SetSaleReport(DataTable table)
+        {
+            dtSale = table;
+            dgdatasale.DataSource = dtSale;
+        }
+
+        public void SetPurchaseReport(DataTable table)
+        {
+            dtPurchase = table;
+            dgdatapurchase.DataSource = dtPurchase;
+        }
+
+        public void SetProductReport(DataTable table)
+        {
+            dtProduct = table;
+            dgdataproduct.DataSource = dtProduct;
+        }
+
+        #endregion
+
+        private void frmReport_Load(object sender, EventArgs e)
+        {
+            _presenter.OnLoad();
 
             ChangeMaxDate(txtstartdate,txtenddate,txtstartdatepurchase,txtenddatepurchase);
         }
@@ -81,60 +112,12 @@ namespace PharmacySystem
 
         private void btnConsultSale_Click(object sender, EventArgs e)
         {
-            decimal sumTotalPay;
-            decimal sumAmountReceived;
-            decimal sumChangeAmount;
-            var startDate = DateHelper.FormatDateBackend(txtstartdate.Value);
-            var endDate = DateHelper.FormatDateBackend(txtenddate.Value);
-
-            sumTotalPay = SaleService.Instance.SumTotalPay(startDate, endDate);
-            sumAmountReceived = SaleService.Instance.SumAmountReceived(startDate, endDate);
-            sumChangeAmount = SaleService.Instance.SumChangeAmount(startDate, endDate);
-            dtSale = SaleService.Instance.ReportSale(startDate, endDate);
-
-
-            if (dtSale != null)
-            {
-                dtSale.Rows.Add(null, null);
-                dtSale.Rows.Add(null, null, null, null, null, null, "Total:", 
-                                CultureInfoHelper.FormatAsCurrency(sumTotalPay),
-                                CultureInfoHelper.FormatAsCurrency(sumAmountReceived),
-                                CultureInfoHelper.FormatAsCurrency(sumChangeAmount));
-                dgdatasale.DataSource = dtSale;
-            }
+            _presenter.OnConsultSale();
         }
 
         private void btnConsultPurchase_Click(object sender, EventArgs e)
         {
-            decimal sumTotalAmount;
-            decimal sumQuantityProduct;
-            decimal sumPurchasePrice;
-            decimal sumSalePrice;
-
-            var startDate = DateHelper.FormatDateBackend(txtstartdatepurchase.Value);
-            var endDate = DateHelper.FormatDateBackend(txtenddatepurchase.Value);
-            var cboSupplier = ((ComboBoxItem)cbosupplier.SelectedItem).Value.ToString();
-
-
-            dtPurchase = PurchaseService.Instance.ReportPurchase(cboSupplier, startDate, endDate);
-            sumTotalAmount = PurchaseService.Instance.GetTotalAmount(cboSupplier, startDate, endDate);
-            sumQuantityProduct = PurchaseService.Instance.GetTotalQuantity( cboSupplier , startDate, endDate);
-            sumPurchasePrice = PurchaseService.Instance.GetTotalPurchasePrice(cboSupplier, startDate, endDate);
-            sumSalePrice = PurchaseService.Instance.GetTotalSalesPrice(cboSupplier, startDate, endDate);
-
-            if (dtPurchase != null)
-            {
-                dtPurchase.Rows.Add(null, null);
-                dtPurchase.Rows.Add(null, null, null, null, "Total:", 
-                                CultureInfoHelper.FormatAsCurrency(sumTotalAmount), null,
-                                sumQuantityProduct.ToString(), 
-                                CultureInfoHelper.FormatAsCurrency(sumPurchasePrice),
-                                CultureInfoHelper.FormatAsCurrency(sumSalePrice));
-
-
-                dgdatapurchase.DataSource = dtPurchase;
-
-            }
+            _presenter.OnConsultPurchase();
         }
 
         private void btnExportPurchases_Click(object sender, EventArgs e)
@@ -168,12 +151,7 @@ namespace PharmacySystem
 
         private void btnConsultProduct_Click(object sender, EventArgs e)
         {
-            dtProduct = ProductService.Instance.Report(((ComboBoxItem)cbocategory.SelectedItem).Value.ToString());
-            if (dtProduct != null)
-            {
-                dgdataproduct.DataSource = dtProduct;
-            }
-
+            _presenter.OnConsultProduct();
         }
 
         private void btnExportProduct_Click(object sender, EventArgs e)
@@ -207,8 +185,8 @@ namespace PharmacySystem
 
         private void ChangeMaxDate(params DateTimePicker[] camps)
         {
-            foreach (var camp in camps) { 
-            
+            foreach (var camp in camps) {
+
                 camp.MaxDate = DateTime.Now;
             }
 

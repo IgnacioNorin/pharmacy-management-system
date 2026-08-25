@@ -201,6 +201,56 @@ namespace PharmacySystem.Data
             return result;
         }
 
+        public List<SaleReportRow> ReportSale(string startDate, string endDate)
+        {
+            List<SaleReportRow> rows = new List<SaleReportRow>();
+
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.AppendLine("SELECT s.date_registered,s.document_type,s.document_number AS document_tribute_number,p.document_number AS document_number_person,p.name,s.document_client,s.name_client,");
+                    sb.AppendLine("s.total_amount,s.amount_received,s.change_amount FROM sale s");
+                    sb.AppendLine("INNER JOIN person p ON p.id = s.user_id");
+                    sb.AppendLine("WHERE CAST(s.date_registered AS DATE) BETWEEN @startDate AND @endDate");
+
+                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
+                    cmd.Parameters.AddWithValue("@startDate", startDate);
+                    cmd.Parameters.AddWithValue("@endDate", endDate);
+                    cmd.CommandType = CommandType.Text;
+
+                    oConnection.Open();
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+                        while (dr.Read())
+                        {
+                            rows.Add(new SaleReportRow
+                            {
+                                DateRegistered = Convert.ToDateTime(dr["date_registered"]),
+                                DocumentType = dr["document_type"].ToString(),
+                                DocumentNumber = dr["document_tribute_number"].ToString(),
+                                SellerDocument = dr["document_number_person"].ToString(),
+                                SellerName = dr["name"].ToString(),
+                                ClientDocument = dr["document_client"].ToString(),
+                                ClientName = dr["name_client"].ToString(),
+                                TotalAmount = Convert.ToDecimal(dr["total_amount"]),
+                                AmountReceived = Convert.ToDecimal(dr["amount_received"]),
+                                ChangeAmount = Convert.ToDecimal(dr["change_amount"])
+                            });
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    rows = new List<SaleReportRow>();
+                }
+            }
+            return rows;
+        }
+
         public decimal SumTotalPay(string startDate, string endDate)
         {
             decimal sum_obj;

@@ -10,5 +10,6 @@ namespace PharmacySystem.Business
         List<Product> List();
         bool Verify(int idProduct);
         bool Delete(int idProduct);
+        List<ProductReportRow> Report(string categoryId);
     }
 }

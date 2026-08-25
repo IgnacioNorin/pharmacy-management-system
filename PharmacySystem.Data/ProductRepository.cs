@@ -197,5 +197,54 @@ namespace PharmacySystem.Data
             }
             return result;
         }
+
+        public List<ProductReportRow> Report(string categoryId)
+        {
+            List<ProductReportRow> rows = new List<ProductReportRow>();
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    StringBuilder sb = new StringBuilder();
+                    sb.AppendLine("SELECT p.date_created, p.code,p.name AS product_name,p.description AS description_product,c.description");
+                    sb.AppendLine(" AS description_category ,p.stock,p.purchase_price,p.sale_price, p.date_expired,s.name AS status_name ");
+                    sb.AppendLine("FROM product p INNER JOIN category c on c.id = p.category_id");
+                    sb.AppendLine("INNER JOIN state_product s on s.id = p.status");
+                    sb.AppendLine("WHERE c.id = case @category_id when '0' then c.id when 0 then c.id else @category_id end");
+                    sb.AppendLine("and p.date_expired IS NOT NULL");
+
+                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
+                    cmd.Parameters.AddWithValue("@category_id", categoryId);
+                    cmd.CommandType = CommandType.Text;
+
+                    oConnection.Open();
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+                        while (dr.Read())
+                        {
+                            rows.Add(new ProductReportRow
+                            {
+                                DateCreated = Convert.ToDateTime(dr["date_created"]),
+                                Code = dr["code"].ToString(),
+                                Name = dr["product_name"].ToString(),
+                                Description = dr["description_product"].ToString(),
+                                CategoryDescription = dr["description_category"].ToString(),
+                                Stock = Convert.ToInt32(dr["stock"]),
+                                PurchasePrice = Convert.ToDecimal(dr["purchase_price"]),
+                                SalePrice = Convert.ToDecimal(dr["sale_price"]),
+                                DateExpired = Convert.ToDateTime(dr["date_expired"]),
+                                StatusName = dr["status_name"].ToString()
+                            });
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    rows = new List<ProductReportRow>();
+                }
+            }
+            return rows;
+        }
     }
 }
