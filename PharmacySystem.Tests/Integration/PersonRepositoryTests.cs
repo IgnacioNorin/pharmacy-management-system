@@ -1,20 +1,25 @@
 using System.Data.SqlClient;
-using PharmacySystem.Helpers;
-using PharmacySystem.Logical;
+using PharmacySystem.Data;
 using PharmacySystem.Model;
 using Xunit;
 
 namespace PharmacySystem.Tests.Integration
 {
+    // Was PersonServiceTests. The hash-if-not-already-hashed rule moved to Business - see
+    // PersonServiceTests in PharmacySystem.Tests.Business for that, tested with no database.
+    // This file only covers what the repository does: it persists person.password exactly as
+    // given, so every password here is already in its final (hashed) form.
     [Collection("Database")]
-    public class PersonServiceTests
+    public class PersonRepositoryTests
     {
+        private static readonly IPersonRepository Repository = new PersonRepository(SqlConnectionFactory.FromConfiguration());
+
         private static int PersonTypeId()
         {
             return SqlTestHelper.ExecuteScalarInt("SELECT TOP 1 id FROM person_type");
         }
 
-        private static Person NewPerson(string document = null, string password = "Passw0rd!")
+        private static Person NewPerson(string document = null, string password = "already-hashed-value")
         {
             return new Person
             {
@@ -28,20 +33,19 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void RegisterPerson_New_StoresPasswordHashedNotPlainText()
+        public void Register_New_PersistsPasswordVerbatim()
         {
             string document = SqlTestHelper.NewTag();
-            bool result = PersonService.Instance.RegisterPerson(NewPerson(document, "Passw0rd!"));
+            bool result = Repository.Register(NewPerson(document, "some-already-hashed-string"));
 
             try
             {
                 Assert.True(result);
 
-                Person stored = PersonService.Instance.GetPersonByDocument(document);
+                Person stored = Repository.GetByDocument(document);
 
                 Assert.NotNull(stored);
-                Assert.True(PasswordHasher.IsHashed(stored.password));
-                Assert.True(PasswordHasher.Verify("Passw0rd!", stored.password));
+                Assert.Equal("some-already-hashed-string", stored.password); // no hashing happens here
             }
             finally
             {
@@ -50,14 +54,14 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void RegisterPerson_DuplicateDocument_ReturnsFalse()
+        public void Register_DuplicateDocument_ReturnsFalse()
         {
             string document = SqlTestHelper.NewTag();
-            PersonService.Instance.RegisterPerson(NewPerson(document));
+            Repository.Register(NewPerson(document));
 
             try
             {
-                bool result = PersonService.Instance.RegisterPerson(NewPerson(document));
+                bool result = Repository.Register(NewPerson(document));
 
                 Assert.False(result);
             }
@@ -68,27 +72,27 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void UpdatePerson_ChangesFields()
+        public void Update_ChangesFields()
         {
             string document = SqlTestHelper.NewTag();
-            PersonService.Instance.RegisterPerson(NewPerson(document));
-            Person created = PersonService.Instance.GetPersonByDocument(document);
+            Repository.Register(NewPerson(document));
+            Person created = Repository.GetByDocument(document);
 
             try
             {
-                bool result = PersonService.Instance.UpdatePerson(new Person
+                bool result = Repository.Update(new Person
                 {
                     idPerson = created.idPerson,
                     document = document,
                     name = "Updated name",
                     address = "Updated address",
                     phone = "0888888888",
-                    password = "Passw0rd!",
+                    password = "already-hashed-value",
                     oPersonType = new TypePerson { idPersonType = PersonTypeId() }
                 });
 
                 Assert.True(result);
-                Assert.Equal("Updated name", PersonService.Instance.GetPersonByDocument(document).name);
+                Assert.Equal("Updated name", Repository.GetByDocument(document).name);
             }
             finally
             {
@@ -97,19 +101,18 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void UpdatePassword_ChangesStoredHash()
+        public void UpdatePassword_ChangesStoredValue()
         {
             string document = SqlTestHelper.NewTag();
-            PersonService.Instance.RegisterPerson(NewPerson(document, "Passw0rd!"));
-            Person created = PersonService.Instance.GetPersonByDocument(document);
-            string newHash = PasswordHasher.Hash("NewPassw0rd!");
+            Repository.Register(NewPerson(document));
+            Person created = Repository.GetByDocument(document);
 
             try
             {
-                bool result = PersonService.Instance.UpdatePassword(created.idPerson, newHash);
+                bool result = Repository.UpdatePassword(created.idPerson, "new-hashed-value");
 
                 Assert.True(result);
-                Assert.True(PasswordHasher.Verify("NewPassw0rd!", PersonService.Instance.GetPersonByDocument(document).password));
+                Assert.Equal("new-hashed-value", Repository.GetByDocument(document).password);
             }
             finally
             {
@@ -118,22 +121,22 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void DeletePerson_RemovesRow()
+        public void Delete_RemovesRow()
         {
             string document = SqlTestHelper.NewTag();
-            PersonService.Instance.RegisterPerson(NewPerson(document));
-            Person created = PersonService.Instance.GetPersonByDocument(document);
+            Repository.Register(NewPerson(document));
+            Person created = Repository.GetByDocument(document);
 
-            bool result = PersonService.Instance.DeletePerson(created.idPerson);
+            bool result = Repository.Delete(created.idPerson);
 
             Assert.True(result);
-            Assert.Null(PersonService.Instance.GetPersonByDocument(document));
+            Assert.Null(Repository.GetByDocument(document));
         }
 
         [Fact]
-        public void GetPersonByDocument_UnknownDocument_ReturnsNull()
+        public void GetByDocument_UnknownDocument_ReturnsNull()
         {
-            Assert.Null(PersonService.Instance.GetPersonByDocument(SqlTestHelper.NewTag()));
+            Assert.Null(Repository.GetByDocument(SqlTestHelper.NewTag()));
         }
     }
 }
