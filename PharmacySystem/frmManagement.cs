@@ -1,31 +1,27 @@
-﻿using DocumentFormat.OpenXml.Drawing.Spreadsheet;
-using DocumentFormat.OpenXml.Presentation;
-using DocumentFormat.OpenXml.Spreadsheet;
-using DocumentFormat.OpenXml.Wordprocessing;
-using PharmacySystem.Helpers;
-using PharmacySystem.Logical;
 using PharmacySystem.Model;
+using PharmacySystem.Presentation;
 using PharmacySystem.Validators;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Control = System.Windows.Forms.Control;
 
-
 namespace PharmacySystem
 {
-    public partial class frmManagement : Form
+    public partial class frmManagement : Form, ICategoryManagementView, IProductManagementView, IStoreManagementView
     {
+        private readonly CategoryManagementPresenter _categoryPresenter;
+        private readonly ProductManagementPresenter _productPresenter;
+        private readonly StoreManagementPresenter _storePresenter;
+
         public frmManagement()
         {
             InitializeComponent();
+            _categoryPresenter = CompositionRoot.CreateCategoryManagementPresenter(this);
+            _productPresenter = CompositionRoot.CreateProductManagementPresenter(this);
+            _storePresenter = CompositionRoot.CreateStoreManagementPresenter(this);
         }
 
         private Dictionary<string, Dictionary<Control, List<string>>> sectionWithRules;
@@ -56,26 +52,20 @@ namespace PharmacySystem
                 #region STORE
                 ["tabStore"] = new Dictionary<Control, List<string>>
                 {
-                   
                     { txttaxid, new List<string>{ "NotEmpty", "ValidatorRUC/CI" } },
                     { txtlegalName, new List<string>{ "NotEmpty", "ValidateMaxLength" } },
                     { txtemail, new List<string>{ "NotEmpty","ValidateEmail", "ValidateMaxLength" } },
                     { txtphone, new List<string>{ "NotEmpty","OnlyNumbers" } },
                     { txtaddress, new List<string>{ "NotEmpty" , "ValidateMaxLength" } },
-                    
-
                 },
                 #endregion
                 #region PRODUCT
                 ["tabProduct"] = new Dictionary<Control, List<string>>
-                { 
-                 
+                {
                     { txtcodeproduct , new List<string>{ "NotEmpty", "ValidateMaxLength" } },
                     { txtnameproduct , new List<string>{ "NotEmpty", "ValidateMaxLength" } },
                     { txtdescriptionproduct , new List<string>{ "NotEmpty", "ValidateMaxLength" } },
                     { cbocategory , new List<string>{ "ComboNotEmpty" } },
-                
-                  
                 },
                 #endregion
                 #region CATEGORY
@@ -84,32 +74,55 @@ namespace PharmacySystem
                     {txtdescriptioncategory, new List<string> {"NotEmpty", "ValidateMaxLength"}}
                 }
                 #endregion
-
-
             };
-  
-            
-
-             
-
         }
 
+        // Shared by the three presenters: each button click only ever fires while its own tab is
+        // selected, so tabManagement.SelectedTab.Name at that moment is always the same tab this
+        // handler belongs to - same as the original.
+        private List<string> ValidateForm()
+        {
+            var errors = new List<string>();
 
+            foreach (var camp in sectionWithRules[tabManagement.SelectedTab.Name])
+            {
+                Control control = camp.Key;
+
+                foreach (var rulePassword in camp.Value)
+                {
+                    var rule = Validations.rules[rulePassword];
+                    string value = "";
+                    if (control is TextBox txt)
+                    {
+                        value = txt.Text.Trim();
+                    }
+                    else if (control is ComboBox cbo)
+                    {
+                        value = (cbo.SelectedItem as ComboBoxItem)?.Value?.ToString() ?? "";
+                    }
+
+                    if (!rule.Validate(value))
+                    {
+                        errors.Add($"{namesMessages[camp.Key.Name]} : {rule.MessageError}");
+                    }
+                }
+            }
+
+            return errors;
+        }
 
         private void frmManagement_Load(object sender, EventArgs e)
         {
             InitializeValidators();
-            #region CATEGORY
-            //AGREGAR BOTON ELIMINAR
-            DataGridViewButtonColumn Boton = new DataGridViewButtonColumn();
 
+            #region CATEGORY
+            DataGridViewButtonColumn Boton = new DataGridViewButtonColumn();
             Boton.HeaderText = "Seleccionar";
             Boton.Width = 80;
             Boton.Text = "";
             Boton.Name = "btnSeleccionar";
             Boton.UseColumnTextForButtonValue = true;
 
-            //AGREGAMOS LOS BOTONES
             dgdatacategory.Columns.Add(Boton);
             dgdatacategory.Columns.Add("Id", "Id");
             dgdatacategory.Columns.Add("Descripcion", "Descripción");
@@ -117,37 +130,15 @@ namespace PharmacySystem
             dgdatacategory.Columns["btnSeleccionar"].Width = 100;
             dgdatacategory.Columns["Descripcion"].Width = 600;
             dgdatacategory.Columns["Id"].Visible = false;
-
-
-            foreach (Categories p in CategoryService.Instance.ListCategory())
-            {
-                int rowId = dgdatacategory.Rows.Add();
-                DataGridViewRow row = dgdatacategory.Rows[rowId];
-                row.Cells["Id"].Value = p.IdCategory.ToString();
-                row.Cells["Descripcion"].Value = p.description;
-            }
             #endregion
 
             #region PRODUCT
-            List<Categories> lstc = CategoryService.Instance.ListCategory();
-            if (lstc.Count > 0)
-            {
-                foreach (Categories c in lstc)
-                {
-                    cbocategory.Items.Add(new ComboBoxItem() { Value = c.IdCategory, Text = c.description });
-                }
-                cbocategory.DisplayMember = "Text";
-                cbocategory.ValueMember = "Value";
-                cbocategory.SelectedIndex = 0;
-            }
-
             DataGridViewButtonColumn Button = new DataGridViewButtonColumn();
             Button.HeaderText = "Seleccionar";
             Button.Width = 80;
             Button.Text = "";
             Button.Name = "btnSeleccionar";
             Button.UseColumnTextForButtonValue = true;
-
 
             dgdataproduct.Columns.Add(Button);
             dgdataproduct.Columns.Add("Id", "Id");
@@ -170,131 +161,82 @@ namespace PharmacySystem
             cbosearchproduct.DisplayMember = "Text";
             cbosearchproduct.ValueMember = "Value";
             cbosearchproduct.SelectedIndex = 0;
-
-            foreach (Product p in ProductService.Instance.ListProduct())
-            {
-                int rowId = dgdataproduct.Rows.Add();
-                DataGridViewRow row = dgdataproduct.Rows[rowId];
-                row.Cells["Id"].Value = p.idProduct.ToString();
-                row.Cells["Codigo"].Value = p.code;
-                row.Cells["Nombre"].Value = p.name;
-                row.Cells["Descripcion"].Value = p.description;
-                row.Cells["Categoria"].Value = p.oCategory.description;
-                row.Cells["Stock"].Value = p.stock;
-                if (p.expirationDate.ToShortDateString() == "01/01/0001")
-                {
-                    row.Cells["FechaVencimiento"].Value = "";
-                }
-                else
-                {
-                    row.Cells["FechaVencimiento"].Value = p.expirationDate.ToShortDateString();
-                }
-
-            }
-
             #endregion
 
-            #region TIENDA
-
-
-            Store objeto = StoreService.Instance.ListStore();
-            txttaxid.Text = objeto.document;
-            txtlegalName.Text = objeto.companyName;
-            txtemail.Text = objeto.email;
-            txtphone.Text = objeto.phone;
-            txtaddress.Text = objeto.address;
-
-            cbocurrency.DataSource = CultureInfoHelper.SupportedCurrencies.ToList();
-            cbocurrency.DisplayMember = "Text";
-            cbocurrency.ValueMember = "Value";
-            int currencyIndex = CultureInfoHelper.SupportedCurrencies
-                .ToList()
-                .FindIndex(c => string.Equals((string)c.Value, objeto.currencyCulture, StringComparison.OrdinalIgnoreCase));
-            cbocurrency.SelectedIndex = currencyIndex >= 0 ? currencyIndex : 0;
-
-            // Currency only changes formatting, never converts stored amounts, so it's locked
-            // once there is real sales/purchase history to avoid making past records display
-            // under a currency they were never actually recorded in.
-            cbocurrency.Enabled = !StoreService.Instance.HasOperationalData();
-            #endregion
-
+            _categoryPresenter.OnLoad();
+            _productPresenter.OnLoad();
+            _storePresenter.OnLoad();
         }
 
-        private void btnSaveCategory_Click(object sender, EventArgs e)
+        #region ICategoryManagementView
+
+        int ICategoryManagementView.SelectedIndex => int.Parse(txtindexcategory.Text);
+        int ICategoryManagementView.RowCount => dgdatacategory.Rows.Count;
+        public int CategoryId => int.Parse(txtidcategory.Text);
+        string ICategoryManagementView.Description => txtdescriptioncategory.Text;
+
+        List<string> ICategoryManagementView.Validate() => ValidateForm();
+
+        bool ICategoryManagementView.ConfirmDelete() =>
+            MessageBox.Show("¿Desea eliminar la categoria?", "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+
+        public void LoadCategories(IEnumerable<CategoryRow> categories)
         {
-            if (!ValidateForm()) return;
-            Categories obj = new Categories()
+            foreach (CategoryRow row in categories)
             {
-                IdCategory = int.Parse(txtidcategory.Text),
-                description = txtdescriptioncategory.Text.Trim(),
-            };
-
-            var result = false;
-            if (int.Parse(txtidcategory.Text) == 0)
-            {
-                int id = CategoryService.Instance.RegisterCategory(obj);
-                result = id != 0 ? true : false;
-                if (result)
-                {
-                    int rowId = dgdatacategory.Rows.Add();
-                    DataGridViewRow row = dgdatacategory.Rows[rowId];
-                    row.Cells["Id"].Value = id.ToString();
-                    row.Cells["Descripcion"].Value = txtdescriptioncategory.Text.Trim();
-                }
+                ((ICategoryManagementView)this).AddRow(row);
             }
-            else
-            {
-                result = CategoryService.Instance.UpdateCategory(obj);
-                if (result)
-                {
-                    DataGridViewRow row = dgdatacategory.Rows[int.Parse(txtindexcategory.Text) - 1];
-                    row.Cells["Id"].Value = txtidcategory.Text;
-                    row.Cells["Descripcion"].Value = txtdescriptioncategory.Text.Trim();
-
-                }
-            }
-
-            if (result)
-            {
-                cbocategory.Items.Clear();
-                List<Categories> lstc = CategoryService.Instance.ListCategory();
-                if (lstc.Count > 0)
-                {
-                    foreach (Categories c in lstc)
-                    {
-                        cbocategory.Items.Add(new ComboBoxItem() { Value = c.IdCategory, Text = c.description });
-                    }
-                    cbocategory.DisplayMember = "Text";
-                    cbocategory.ValueMember = "Value";
-                    cbocategory.SelectedIndex = 0;
-                }
-                CleanCategory();
-            }
-            else
-                MessageBox.Show("No se pudo guardar los cambios\nRevise los datos", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
         }
+
+        void ICategoryManagementView.AddRow(CategoryRow row)
+        {
+            int rowId = dgdatacategory.Rows.Add();
+            WriteCategoryRow(dgdatacategory.Rows[rowId], row);
+        }
+
+        void ICategoryManagementView.ReplaceRow(int index, CategoryRow row) => WriteCategoryRow(dgdatacategory.Rows[index], row);
+
+        void ICategoryManagementView.RemoveRow(int index) => dgdatacategory.Rows.RemoveAt(index);
+
+        void ICategoryManagementView.ClearForm() => CleanCategory();
+
+        void ICategoryManagementView.ShowMessage(string message) =>
+            MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+        void ICategoryManagementView.ShowValidationErrors(IReadOnlyList<string> errors) =>
+            MessageBox.Show(string.Join("\n", errors), "Errores de Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+        public void RefreshProductCategoryOptions(IEnumerable<ComboBoxItem> options) => LoadCategoryComboItems(options.ToList());
+
+        private static void WriteCategoryRow(DataGridViewRow gridRow, CategoryRow row)
+        {
+            gridRow.Cells["Id"].Value = row.Id.ToString();
+            gridRow.Cells["Descripcion"].Value = row.Description;
+        }
+
+        private void CleanCategory()
+        {
+            txtindexcategory.Text = "0";
+            txtidcategory.Text = "0";
+            txtdescriptioncategory.Text = "";
+        }
+
+        private void btnSaveCategory_Click(object sender, EventArgs e) => _categoryPresenter.OnSave();
+
+        private void btnDeleteCategory_Click(object sender, EventArgs e) => _categoryPresenter.OnDelete();
 
         private void dgdataCategory_CellMouseEnter(object sender, DataGridViewCellEventArgs e)
         {
             if (e.ColumnIndex >= 0)
             {
                 string colname = dgdatacategory.Columns[e.ColumnIndex].Name;
-                if (colname != "btnSeleccionar")
-                {
-                    dgdatacategory.Cursor = Cursors.Default;
-                }
-                else
-                {
-                    dgdatacategory.Cursor = Cursors.Hand;
-                }
+                dgdatacategory.Cursor = colname != "btnSeleccionar" ? Cursors.Default : Cursors.Hand;
             }
-
         }
 
         private void dgdataCategory_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
         {
-            if (e.RowIndex < 0)
-                return;
+            if (e.RowIndex < 0) return;
 
             if (e.ColumnIndex == 0)
             {
@@ -310,22 +252,10 @@ namespace PharmacySystem
             }
         }
 
-        private void btnCleanCategory_Click(object sender, EventArgs e)
-        {
-            CleanCategory();
-        }
-
-        private void CleanCategory()
-        {
-
-            txtindexcategory.Text = "0";
-            txtidcategory.Text = "0";
-            txtdescriptioncategory.Text = "";
-        }
+        private void btnCleanCategory_Click(object sender, EventArgs e) => CleanCategory();
 
         private void dgdataCategory_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-
             if (dgdatacategory.Columns[e.ColumnIndex].Name == "btnSeleccionar")
             {
                 int index = e.RowIndex;
@@ -338,93 +268,103 @@ namespace PharmacySystem
             }
         }
 
-        private void btnDeleteCategory_Click(object sender, EventArgs e)
+        #endregion
+
+        #region IProductManagementView
+
+        int IProductManagementView.SelectedIndex => int.Parse(txtindexproduct.Text);
+        int IProductManagementView.RowCount => dgdataproduct.Rows.Count;
+        public int ProductId => int.Parse(txtidproduct.Text);
+        public string Code => txtcodeproduct.Text;
+        string IProductManagementView.Name => txtnameproduct.Text;
+        string IProductManagementView.Description => txtdescriptionproduct.Text;
+        public int SelectedCategoryId => (int)((ComboBoxItem)cbocategory.SelectedItem).Value;
+        public string SelectedCategoryText => ((ComboBoxItem)cbocategory.SelectedItem).Text;
+
+        List<string> IProductManagementView.Validate() => ValidateForm();
+
+        bool IProductManagementView.ConfirmDelete() =>
+            MessageBox.Show("¿Desea eliminar el producto?", "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+
+        public void LoadCategoryOptions(IEnumerable<ComboBoxItem> options) => LoadCategoryComboItems(options.ToList());
+
+        private void LoadCategoryComboItems(List<ComboBoxItem> options)
         {
-            if (int.Parse(txtindexcategory.Text) > 0)
+            cbocategory.Items.Clear();
+            if (options.Count > 0)
             {
-                if (MessageBox.Show("¿Desea eliminar la categoria?", "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                foreach (ComboBoxItem item in options)
                 {
-
-                    bool result = CategoryService.Instance.DeleteCategory(int.Parse(txtidcategory.Text));
-                    if (result)
-                    {
-                        cbocategory.Items.Clear();
-                        List<Categories> lstc = CategoryService.Instance.ListCategory();
-                        if (lstc.Count > 0)
-                        {
-                            foreach (Categories c in lstc)
-                            {
-                                cbocategory.Items.Add(new ComboBoxItem() {Value = c.IdCategory, Text = c.description });
-                            }
-                            cbocategory.DisplayMember = "Text";
-                            cbocategory.ValueMember = "Value";
-                            cbocategory.SelectedIndex = 0;
-                        }
-                        dgdatacategory.Rows.RemoveAt(int.Parse(txtindexcategory.Text) - 1);
-                        CleanCategory();
-                    }
-                    else
-                        MessageBox.Show("No se pudo eliminar el registro\nRevise los datos", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    cbocategory.Items.Add(item);
                 }
-
+                cbocategory.DisplayMember = "Text";
+                cbocategory.ValueMember = "Value";
+                cbocategory.SelectedIndex = 0;
             }
         }
 
-        private void btnSaveProduct_Click(object sender, EventArgs e)
+        public void LoadProducts(IEnumerable<ManagementProductRow> products)
         {
-            if (!ValidateForm()) return;
-            int txtIdProductParse = int.Parse(txtidproduct.Text);
-            int txtIndexProductParse = int.Parse(txtindexproduct.Text);
-            ComboBoxItem comboboxItem = ((ComboBoxItem)cbocategory.SelectedItem);
-
-            Product product = new Product()
+            foreach (ManagementProductRow row in products)
             {
-                idProduct = txtIdProductParse,
-                code = txtcodeproduct.Text.Trim(),
-                name = txtnameproduct.Text.Trim(),
-                description = txtdescriptionproduct.Text.Trim(),
-                oCategory = new Categories() { IdCategory = (int)comboboxItem.Value },
-            };
-
-            var result = false;
-            if (txtIdProductParse == 0)
-            {
-                int id = ProductService.Instance.RegisterProduct(product);
-                result = id != 0 ? true : false;
-
-                if (!result) return;
-
-                int rowId = dgdataproduct.Rows.Add();
-                DataGridViewRow row = dgdataproduct.Rows[rowId];
-                row.Cells["Id"].Value = id.ToString();
-                row.Cells["Codigo"].Value = txtcodeproduct.Text.Trim();
-                row.Cells["Nombre"].Value = txtnameproduct.Text.Trim();
-                row.Cells["Descripcion"].Value = txtdescriptionproduct.Text.Trim();
-                row.Cells["Categoria"].Value = comboboxItem.Text;
-                row.Cells["Stock"].Value = "0";
-
-
+                ((IProductManagementView)this).AddRow(row);
             }
-            else
-            {
-                result = ProductService.Instance.UpdateProduct(product);
-                if (!result) return;
-
-                DataGridViewRow row = dgdataproduct.Rows[txtIndexProductParse - 1];
-                row.Cells["Id"].Value = txtidproduct.Text;
-                row.Cells["Codigo"].Value = txtcodeproduct.Text.Trim();
-                row.Cells["Nombre"].Value = txtnameproduct.Text.Trim();
-                row.Cells["Descripcion"].Value = txtdescriptionproduct.Text.Trim();
-                row.Cells["Categoria"].Value = comboboxItem.Text;
-
-
-            }
-
-            if (result)
-                CleanProduct();
-            else
-                MessageBox.Show("No se pudo guardar los cambios\nRevise los datos", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
         }
+
+        void IProductManagementView.AddRow(ManagementProductRow row)
+        {
+            int rowId = dgdataproduct.Rows.Add();
+            WriteProductRow(dgdataproduct.Rows[rowId], row, isNewRow: true);
+        }
+
+        void IProductManagementView.ReplaceRow(int index, ManagementProductRow row) =>
+            WriteProductRow(dgdataproduct.Rows[index], row, isNewRow: false);
+
+        void IProductManagementView.RemoveRow(int index) => dgdataproduct.Rows.RemoveAt(index);
+
+        void IProductManagementView.ClearForm() => CleanProduct();
+
+        void IProductManagementView.ShowMessage(string message) =>
+            MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+        void IProductManagementView.ShowValidationErrors(IReadOnlyList<string> errors) =>
+            MessageBox.Show(string.Join("\n", errors), "Errores de Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+        private static void WriteProductRow(DataGridViewRow gridRow, ManagementProductRow row, bool isNewRow)
+        {
+            gridRow.Cells["Id"].Value = row.Id.ToString();
+            gridRow.Cells["Codigo"].Value = row.Code;
+            gridRow.Cells["Nombre"].Value = row.Name;
+            gridRow.Cells["Descripcion"].Value = row.Description;
+            gridRow.Cells["Categoria"].Value = row.CategoryText;
+
+            // On a new row the original always sets Stock ("0") and leaves FechaVencimiento
+            // untouched (defaults to blank). On an update it rewrites neither cell.
+            if (isNewRow)
+            {
+                gridRow.Cells["Stock"].Value = row.Stock;
+            }
+            else if (row.Stock != null)
+            {
+                gridRow.Cells["Stock"].Value = row.Stock;
+                gridRow.Cells["FechaVencimiento"].Value = row.ExpirationDateText;
+            }
+        }
+
+        private void CleanProduct()
+        {
+            txtindexproduct.Text = "0";
+            txtidproduct.Text = "0";
+            txtcodeproduct.Text = "";
+            txtnameproduct.Text = "";
+            txtdescriptionproduct.Text = "";
+            if (cbocategory.SelectedValue != null)
+            {
+                cbocategory.SelectedIndex = 0;
+            }
+        }
+
+        private void btnSaveProduct_Click(object sender, EventArgs e) => _productPresenter.OnSave();
 
         private void dgdataProduct_CellMouseEnter(object sender, DataGridViewCellEventArgs e)
         {
@@ -435,14 +375,12 @@ namespace PharmacySystem
             dgdataproduct.Cursor = (colname != "btnSeleccionar")
                                     ? Cursors.Hand
                                     : Cursors.Default;
-
         }
 
         private void dgdataProduct_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
         {
             if (e.RowIndex < 0) return;
-
-            if (e.ColumnIndex != 0) return ;
+            if (e.ColumnIndex != 0) return;
 
             e.Paint(e.CellBounds, DataGridViewPaintParts.All);
 
@@ -453,27 +391,9 @@ namespace PharmacySystem
 
             e.Graphics.DrawImage(Properties.Resources.check20, new Rectangle(x, y, w, h));
             e.Handled = true;
-
         }
 
-        private void btnCleanProduct_Click(object sender, EventArgs e)
-        {
-            CleanProduct();
-        }
-
-
-        private void CleanProduct()
-        {
-            txtindexproduct.Text = "0";
-            txtidproduct.Text = "0";
-            txtcodeproduct.Text = "";
-            txtnameproduct.Text = "";
-            txtdescriptionproduct.Text = "";
-            if(cbocategory.SelectedValue != null)
-            {
-               cbocategory.SelectedIndex = 0;
-            }
-        }
+        private void btnCleanProduct_Click(object sender, EventArgs e) => CleanProduct();
 
         private void dgdataProduct_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
@@ -496,44 +416,23 @@ namespace PharmacySystem
                             break;
                         }
                     }
-
-
                 }
             }
         }
 
-        private void btnDeleteProduct_Click(object sender, EventArgs e)
-        {
-            int txtIndexParse = int.Parse(txtindexproduct.Text);
-            if (txtIndexParse > 0)
-            {
-                if (MessageBox.Show("¿Desea eliminar el producto?", "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                {
-
-                    bool result = ProductService.Instance.DeleteProduct(int.Parse(txtidproduct.Text));
-                    if (result)
-                    {
-                        dgdataproduct.Rows.RemoveAt(txtIndexParse - 1);
-                        CleanProduct();
-                    }
-                    else
-                        MessageBox.Show("No se pudo eliminar el registro\nRevise los datos", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                }
-
-
-
-            }
-        }
+        private void btnDeleteProduct_Click(object sender, EventArgs e) => _productPresenter.OnDelete();
 
         private void btnsearch_Click(object sender, EventArgs e)
         {
             string columnFilter = ((ComboBoxItem)cbosearchproduct.SelectedItem).Value.ToString();
 
-            if (dgdataproduct.Rows.Count <= 0) {
+            if (dgdataproduct.Rows.Count <= 0)
+            {
                 MessageBox.Show("No hay datos para buscar", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
-            if (string.IsNullOrEmpty(txtsearchproduct.Text)) {
+            if (string.IsNullOrEmpty(txtsearchproduct.Text))
+            {
                 MessageBox.Show("Ingrese un valor al campo antes de buscar", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
@@ -547,7 +446,6 @@ namespace PharmacySystem
                 else
                     row.Visible = false;
             }
-
         }
 
         private void btnClear_Click(object sender, EventArgs e)
@@ -559,84 +457,49 @@ namespace PharmacySystem
             }
         }
 
-
-        #region STORE
-        private void btnSaveStore_Click(object sender, EventArgs e)
-        {
-            if (!ValidateForm()) return;
- 
-
-            Store store = StoreService.Instance.ListStore();
-            string selectedCurrency = ((ComboBoxItem)cbocurrency.SelectedItem).Value.ToString();
-            bool isSuccess;
-            isSuccess = StoreService.Instance.UpdateStore(new Store()
-            {
-                document = txttaxid.Text,
-                companyName = txtlegalName.Text,
-                email = txtemail.Text,
-                phone = txtphone.Text,
-                address = txtaddress.Text,
-                currencyCulture = selectedCurrency,
-            });
-            if (isSuccess)
-            {
-                CultureInfoHelper.SetCurrency(selectedCurrency);
-            }
-            if (store == null && isSuccess) {
-
-                MessageBox.Show("Se guardaron los datos ingresados", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else if (store != null && isSuccess)
-            {
-                MessageBox.Show("Se actualizaron los datos ingresados exitosamente", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show("No se pudo guardar los datos ingresados\nRevise los datos", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            }
-
-
-
-
-
-        }
         #endregion
-        private bool ValidateForm()
+
+        #region IStoreManagementView
+
+        public string Document => txttaxid.Text;
+        string IStoreManagementView.CompanyName => txtlegalName.Text;
+        public string Email => txtemail.Text;
+        public string Phone => txtphone.Text;
+        public string Address => txtaddress.Text;
+        public string SelectedCurrency => ((ComboBoxItem)cbocurrency.SelectedItem).Value.ToString();
+
+        List<string> IStoreManagementView.Validate() => ValidateForm();
+
+        public void LoadStoreFields(string document, string companyName, string email, string phone, string address)
         {
-            var errors = new List<string>();
-
-
-            
-            foreach (var camp in sectionWithRules[tabManagement.SelectedTab.Name])
-            {
-                Control control = camp.Key;
-
-                foreach (var rulePassword in camp.Value)
-                {
-                    var rule = Validations.rules[rulePassword];
-                    string value = "";
-                    if(control is TextBox txt)
-                    {
-                        value = txt.Text.Trim();
-                    }else if (control is ComboBox cbo)
-                    {
-                        value = (cbo.SelectedItem as ComboBoxItem)?.Value?.ToString() ?? "";
-                    }
-
-                    if (!rule.Validate(value))
-                    {
-                        errors.Add($"{namesMessages[camp.Key.Name]} : {rule.MessageError}");
-                    }
-                }
-
-            }
-            if (errors.Count > 0)
-            {
-                MessageBox.Show(string.Join("\n", errors), "Errores de Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;
-            }
-            return true;
+            txttaxid.Text = document;
+            txtlegalName.Text = companyName;
+            txtemail.Text = email;
+            txtphone.Text = phone;
+            txtaddress.Text = address;
         }
 
+        public void LoadCurrencyOptions(IReadOnlyList<ComboBoxItem> options, int selectedIndex)
+        {
+            cbocurrency.DataSource = options.ToList();
+            cbocurrency.DisplayMember = "Text";
+            cbocurrency.ValueMember = "Value";
+            cbocurrency.SelectedIndex = selectedIndex;
+        }
+
+        public void SetCurrencyEditable(bool enabled) => cbocurrency.Enabled = enabled;
+
+        public void ShowInfo(string message) =>
+            MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+        public void ShowError(string message) =>
+            MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+        void IStoreManagementView.ShowValidationErrors(IReadOnlyList<string> errors) =>
+            MessageBox.Show(string.Join("\n", errors), "Errores de Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+        private void btnSaveStore_Click(object sender, EventArgs e) => _storePresenter.OnSave();
+
+        #endregion
     }
 }
