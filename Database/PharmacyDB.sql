@@ -152,6 +152,16 @@ CREATE TABLE [dbo].[product](
 )
 GO
 
+-- Backs the stock-critical and expiring-soon alert queries (NotificationConfigRepository), which
+-- filter by status plus one of these columns and used to do a full table scan of every active
+-- product on every poll.
+CREATE INDEX [ix_product_status_stock] ON [dbo].[product] ([status], [stock]) INCLUDE ([code], [name])
+GO
+
+CREATE INDEX [ix_product_status_expired] ON [dbo].[product] ([status], [date_expired]) INCLUDE ([code], [name])
+    WHERE [date_expired] IS NOT NULL
+GO
+
 CREATE TABLE [dbo].[store](
     [id] [int] NOT NULL,
     [document_store] [varchar](50) NULL,
@@ -411,6 +421,12 @@ BEGIN
     ELSE
         SET @result = 0;
 END
+GO
+
+-- QUOTED_IDENTIFIER must be ON at CREATE time for any procedure that modifies a table backed by
+-- a filtered index (see ix_product_status_expired above) - SQL Server bakes that setting into the
+-- compiled procedure, so it does not matter what the caller's session has at execution time.
+SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE PROCEDURE [dbo].[sp_delete_product]

@@ -5,8 +5,8 @@ namespace PharmacySystem.Data
 {
     public interface INotificationConfigRepository
     {
-        List<Product> ListExpirationDate();
-        List<Product> ListStock();
+        List<Product> ListExpirationDate(int days);
+        List<Product> ListStock(int criticalStock);
         int ConfigDay();
         int ConfigStock();
         bool ConfigUpdate(NotificationConfig obj);
