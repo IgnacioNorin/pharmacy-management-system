@@ -223,27 +223,32 @@
             this.label10.TabIndex = 49;
             // 
             // lblnotifystock
-            // 
+            //
             this.lblnotifystock.AutoSize = true;
+            this.lblnotifystock.Cursor = System.Windows.Forms.Cursors.Hand;
             this.lblnotifystock.Location = new System.Drawing.Point(830, 20);
             this.lblnotifystock.Name = "lblnotifystock";
             this.lblnotifystock.Size = new System.Drawing.Size(0, 13);
             this.lblnotifystock.TabIndex = 51;
-            // 
+            this.lblnotifystock.Click += new System.EventHandler(this.OpenAlertsCenter);
+            //
             // lblnotifyexpireddate
-            // 
+            //
             this.lblnotifyexpireddate.AutoSize = true;
+            this.lblnotifyexpireddate.Cursor = System.Windows.Forms.Cursors.Hand;
             this.lblnotifyexpireddate.Location = new System.Drawing.Point(833, 51);
             this.lblnotifyexpireddate.Name = "lblnotifyexpireddate";
             this.lblnotifyexpireddate.Size = new System.Drawing.Size(0, 13);
             this.lblnotifyexpireddate.TabIndex = 52;
-            // 
+            this.lblnotifyexpireddate.Click += new System.EventHandler(this.OpenAlertsCenter);
+            //
             // timerNotification
-            // 
+            //
             this.timerNotification.Tick += new System.EventHandler(this.timerNotification_Tick);
-            // 
+            //
             // pictureBoxStock
-            // 
+            //
+            this.pictureBoxStock.Cursor = System.Windows.Forms.Cursors.Hand;
             this.pictureBoxStock.Image = global::PharmacySystem.Properties.Resources.advertenciaicon;
             this.pictureBoxStock.Location = new System.Drawing.Point(817, 20);
             this.pictureBoxStock.Name = "pictureBoxStock";
@@ -251,10 +256,12 @@
             this.pictureBoxStock.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
             this.pictureBoxStock.TabIndex = 54;
             this.pictureBoxStock.TabStop = false;
-            // 
+            this.pictureBoxStock.Click += new System.EventHandler(this.OpenAlertsCenter);
+            //
             // pictureBoxExpiredDate
-            // 
+            //
             this.pictureBoxExpiredDate.BackColor = System.Drawing.Color.White;
+            this.pictureBoxExpiredDate.Cursor = System.Windows.Forms.Cursors.Hand;
             this.pictureBoxExpiredDate.Image = global::PharmacySystem.Properties.Resources.advertenciaicon;
             this.pictureBoxExpiredDate.Location = new System.Drawing.Point(817, 49);
             this.pictureBoxExpiredDate.Name = "pictureBoxExpiredDate";
@@ -262,6 +269,7 @@
             this.pictureBoxExpiredDate.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
             this.pictureBoxExpiredDate.TabIndex = 56;
             this.pictureBoxExpiredDate.TabStop = false;
+            this.pictureBoxExpiredDate.Click += new System.EventHandler(this.OpenAlertsCenter);
             // 
             // MainForm
             // 

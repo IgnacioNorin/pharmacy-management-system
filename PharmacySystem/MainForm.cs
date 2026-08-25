@@ -14,6 +14,7 @@ namespace PharmacySystem
         public static Person oPerson;
 
         private readonly MainFormPresenter _presenter;
+        private IReadOnlyList<ProductAlert> _currentAlerts = new List<ProductAlert>();
 
         public MainForm(Person obj = null)
         {
@@ -73,6 +74,8 @@ namespace PharmacySystem
                 return;
             }
 
+            _currentAlerts = alerts;
+
             List<ProductAlert> stockAlerts = alerts
                 .Where(a => a.Severity == AlertSeverity.Critical || a.Severity == AlertSeverity.Low)
                 .ToList();
@@ -101,6 +104,24 @@ namespace PharmacySystem
         // network - running it off the UI thread keeps the window responsive on the 5-minute timer
         // tick and on every menu navigation, instead of freezing on a slow connection.
         private void checkNotifications() => Task.Run(() => _presenter.RefreshAlerts());
+
+        // Notification center (Fase 3): shows the itemized alert list computed by the last
+        // RefreshAlerts() call, and click-through navigates straight to the flagged product in
+        // frmManagement's existing search, instead of leaving the user to find it manually.
+        private void OpenAlertsCenter(object sender, EventArgs e)
+        {
+            using (var modal = new ModalAlerts())
+            {
+                modal.LoadAlerts(_currentAlerts);
+
+                if (modal.ShowDialog(this) == DialogResult.OK && !string.IsNullOrEmpty(modal.SelectedProductCode))
+                {
+                    frmManagement childForm = new frmManagement();
+                    ShowForm(childForm, managementToolStripMenuItem);
+                    childForm.ShowProductByCode(modal.SelectedProductCode);
+                }
+            }
+        }
 
         private void clientsToolStripMenuItem_Click(object sender, EventArgs e)
         {
