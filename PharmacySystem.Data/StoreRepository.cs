@@ -1,7 +1,7 @@
 using System;
-using System.Data;
 using System.Data.SqlClient;
-using System.Text;
+using System.Linq;
+using Dapper;
 using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 
@@ -18,39 +18,36 @@ namespace PharmacySystem.Data
 
         public Store ListStore()
         {
-            Store obj = new Store();
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    SqlCommand cmd = new SqlCommand("SELECT id,document_store, company_name, email, phone, address, currency_culture FROM store WHERE id = 1", oConnection);
-                    cmd.CommandType = CommandType.Text;
+                    Store row = oConnection.Query<Store>(
+                        "SELECT document_store AS document, company_name AS companyName, email, phone, address, currency_culture AS currencyCulture " +
+                        "FROM store WHERE id = 1")
+                        .FirstOrDefault();
 
-                    oConnection.Open();
-                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    if (row == null)
                     {
-                        while (dr.Read())
-                        {
-                            obj = new Store()
-                            {
-                                document = dr["document_store"].ToString(),
-                                companyName = dr["company_name"].ToString(),
-                                email = dr["email"].ToString(),
-                                phone = dr["phone"].ToString(),
-                                address = dr["address"].ToString(),
-                                currencyCulture = dr["currency_culture"] == DBNull.Value ? null : dr["currency_culture"].ToString()
-                            };
-                        }
+                        return new Store();
                     }
 
+                    // Non-currency fields match the original dr["x"].ToString() behavior, which
+                    // never returned null even for a NULL cell (DBNull.ToString() is ""). Only
+                    // currency_culture is treated as genuinely nullable, same as before.
+                    row.document = row.document ?? "";
+                    row.companyName = row.companyName ?? "";
+                    row.email = row.email ?? "";
+                    row.phone = row.phone ?? "";
+                    row.address = row.address ?? "";
+                    return row;
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    obj = new Store();
+                    return new Store();
                 }
             }
-            return obj;
         }
 
         public bool HasOperationalData()
@@ -59,13 +56,8 @@ namespace PharmacySystem.Data
             {
                 try
                 {
-                    SqlCommand cmd = new SqlCommand(
-                        "SELECT CASE WHEN EXISTS (SELECT 1 FROM sale) OR EXISTS (SELECT 1 FROM purchase) THEN 1 ELSE 0 END",
-                        oConnection);
-                    cmd.CommandType = CommandType.Text;
-
-                    oConnection.Open();
-                    return Convert.ToInt32(cmd.ExecuteScalar()) == 1;
+                    return oConnection.ExecuteScalar<int>(
+                        "SELECT CASE WHEN EXISTS (SELECT 1 FROM sale) OR EXISTS (SELECT 1 FROM purchase) THEN 1 ELSE 0 END") == 1;
                 }
                 catch (Exception ex)
                 {
@@ -80,43 +72,31 @@ namespace PharmacySystem.Data
 
         public bool UpdateStoreRow(Store obj)
         {
-            bool result = true;
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    StringBuilder sb = new StringBuilder();
+                    oConnection.Execute(
+                        "UPDATE store SET document_store = @document, company_name = @companyName, email = @email, " +
+                        "phone = @phone, address = @address, currency_culture = @currencyCulture WHERE id = 1",
+                        new
+                        {
+                            document = obj.document,
+                            companyName = obj.companyName,
+                            email = obj.email,
+                            phone = obj.phone,
+                            address = obj.address,
+                            currencyCulture = obj.currencyCulture
+                        });
 
-                    sb.AppendLine("UPDATE store SET document_store = @document,");
-                    sb.AppendLine("company_name = @company_name,");
-                    sb.AppendLine("email = @email,");
-                    sb.AppendLine("phone = @phone,");
-                    sb.AppendLine("address = @address,");
-                    sb.AppendLine("currency_culture = @currency_culture");
-                    sb.AppendLine("WHERE id = 1");
-
-                    using (SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection))
-                    {
-                        cmd.Parameters.AddWithValue("@document", obj.document);
-                        cmd.Parameters.AddWithValue("@company_name", obj.companyName);
-                        cmd.Parameters.AddWithValue("@email", obj.email);
-                        cmd.Parameters.AddWithValue("@phone", obj.phone);
-                        cmd.Parameters.AddWithValue("@address", obj.address);
-                        cmd.Parameters.AddWithValue("@currency_culture", (object)obj.currencyCulture ?? DBNull.Value);
-                        cmd.CommandType = CommandType.Text;
-                        oConnection.Open();
-                        cmd.ExecuteNonQuery();
-                        result = true;
-                    }
+                    return true;
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    result = false;
+                    return false;
                 }
             }
-
-            return result;
         }
     }
 }
