@@ -1,25 +1,27 @@
-﻿using DocumentFormat.OpenXml.Office2010.Excel;
+using PharmacySystem.Data;
 using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Globalization;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace PharmacySystem.Logical
 {
+    // Thin adapter kept for screens not migrated yet (frmManagement.cs, frmPurchase.cs,
+    // frmReport.cs, frmSale.cs, ModalProduct.cs). Delegates to PharmacySystem.Business for every
+    // method except Report(), which stays here unchanged: it formats currency/dates with
+    // CultureInfoHelper/DateHelper (WinForms-side helpers), so moving it into Data would create
+    // a circular reference. It belongs with frmReport's own migration later in this plan.
     public class ProductService
     {
-
         private static ProductService instance = null;
+        private readonly Business.IProductService _inner;
 
         public ProductService()
         {
-
+            _inner = new Business.ProductService(new ProductRepository(CompositionRoot.ConnectionFactory));
         }
 
         public static ProductService Instance
@@ -35,202 +37,15 @@ namespace PharmacySystem.Logical
             }
         }
 
+        public int RegisterProduct(Product obj) => _inner.Register(obj);
 
-        public int RegisterProduct(Product obj)
-        {
-            int result = 0;
-            using (SqlConnection oConnection = new SqlConnection(Connection.CN))
-            {
-                try
-                {
-                    SqlCommand cmd = new SqlCommand("sp_create_product", oConnection);
-                    cmd.Parameters.AddWithValue("code", obj.code);
-                    cmd.Parameters.AddWithValue("name", obj.name);
-                    cmd.Parameters.AddWithValue("description", obj.description);
-                    cmd.Parameters.AddWithValue("category_id", obj.oCategory.IdCategory);
-                    cmd.Parameters.Add("result", SqlDbType.Int).Direction = ParameterDirection.Output;
-                    cmd.CommandType = CommandType.StoredProcedure;
+        public bool UpdateProduct(Product obj) => _inner.Update(obj);
 
-                    oConnection.Open();
+        public List<Product> ListProduct() => _inner.List();
 
-                    cmd.ExecuteNonQuery();
+        public bool VerifyProduct(int idProduct) => _inner.Verify(idProduct);
 
-                    result = Convert.ToInt32(cmd.Parameters["result"].Value);
-
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex);
-                    result = 0;
-                }
-            }
-            return result;
-        }
-
-        public bool UpdateProduct(Product obj)
-        {
-            bool result = true;
-            using (SqlConnection oConnection = new SqlConnection(Connection.CN))
-            {
-                try
-                {
-                    SqlCommand cmd = new SqlCommand("sp_update_product", oConnection);
-                    cmd.Parameters.AddWithValue("id_product", obj.idProduct);
-                    cmd.Parameters.AddWithValue("code", obj.code);
-                    cmd.Parameters.AddWithValue("name", obj.name);
-                    cmd.Parameters.AddWithValue("description", obj.description);
-                    cmd.Parameters.AddWithValue("category_id", obj.oCategory.IdCategory);
-                    cmd.Parameters.Add("result", SqlDbType.Bit).Direction = ParameterDirection.Output;
-
-                    cmd.CommandType = CommandType.StoredProcedure;
-
-                    oConnection.Open();
-
-                    cmd.ExecuteNonQuery();
-
-                    result = Convert.ToBoolean(cmd.Parameters["result"].Value);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex);
-                    result = false;
-                }
-
-            }
-
-            return result;
-
-        }
-
-
-        public List<Product> ListProduct()
-        {
-            List<Product> List = new List<Product>();
-            using (SqlConnection oConnection = new SqlConnection(Connection.CN))
-            {
-                try
-                {
-                    StringBuilder sb = new StringBuilder();
-
-                    sb.AppendLine("SELECT p.id,p.code,p.name,p.description AS description_product,p.category_id,c.description");
-                    sb.AppendLine("AS description_category,p.stock,p.purchase_price,p.sale_price,p.date_expired FROM product p");
-                    sb.AppendLine("INNER JOIN category c on c.id = p.category_id");
-                    sb.AppendLine("WHERE p.status = 1");
-
-
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    cmd.CommandType = CommandType.Text;
-                    oConnection.Open();
-                    using (SqlDataReader dr = cmd.ExecuteReader())
-                    {
-                        while (dr.Read())
-                        {
-                            var date = "";
-                            if (dr["date_expired"] == DBNull.Value)
-                            {
-                                date = null;
-                            }
-                            else
-                            {
-                                date = dr["date_expired"].ToString();
-                            }
-                            List.Add(new Product()
-                            {
-                                idProduct = Convert.ToInt32(dr["id"]),
-                                code = dr["code"].ToString(),
-                                name = dr["name"].ToString(),
-                                description = dr["description_product"].ToString(),
-                                oCategory = new Categories() { IdCategory = Convert.ToInt32(dr["category_id"]), 
-                                                               description = dr["description_category"].ToString() },
-                                stock = Convert.ToInt32(dr["stock"]),
-                                purchasePrice = Convert.ToDecimal(dr["purchase_price"]),
-                                salePrice = Convert.ToDecimal(dr["sale_price"]),
-                                expirationDate = Convert.ToDateTime(date)
-
-                            });
-                        }
-                    }
-                }
-                
-                  
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex);
-
-                    List = new List<Product>();
-                }
-
-                
-                
-            }
-            return List;
-        }
-
-        public bool VerifyProduct(int idProduct)
-        {
-            bool result = false;
-            using (SqlConnection oConnection = new SqlConnection(Connection.CN))
-            {
-                try
-                {
-                    StringBuilder sb = new StringBuilder();
-
-                    sb.AppendLine("SELECT COUNT(*) FROM product WHERE id = @idProduct");
-     
-
-
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    cmd.Parameters.AddWithValue("@idProduct", idProduct);
-                    cmd.CommandType = CommandType.Text;
-                    oConnection.Open();
-                    cmd.ExecuteNonQuery();
-                    int count = (int)cmd.ExecuteScalar();
-                    result = count > 0 ? true : false;
-                }
-
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex);
-
-                    result = false;
-                }
-
-
-
-            }
-            return result;
-        }
-
-
-        public bool DeleteProduct(int id)
-        {
-            bool result = true;
-            using (SqlConnection oConnection = new SqlConnection(Connection.CN))
-            {
-                try
-                {
-                    SqlCommand cmd = new SqlCommand("sp_delete_product", oConnection);
-                    cmd.Parameters.AddWithValue("@id_product", id);
-                    cmd.Parameters.Add("result", SqlDbType.Bit).Direction = ParameterDirection.Output;
-
-                    cmd.CommandType = CommandType.StoredProcedure;
-
-                    oConnection.Open();
-
-                    cmd.ExecuteNonQuery();
-
-                    result = Convert.ToBoolean(cmd.Parameters["result"].Value);
-                }
-         
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex);
-                    result = false;
-                }
-
-            }
-            return result;
-        }
+        public bool DeleteProduct(int id) => _inner.Delete(id);
 
         public DataTable Report(string idcategory)
         {
@@ -250,7 +65,7 @@ namespace PharmacySystem.Logical
 
 
 
-            using (SqlConnection oConnection = new SqlConnection(Connection.CN))
+            using (SqlConnection oConnection = CompositionRoot.ConnectionFactory.Create())
             {
                 try
                 {
@@ -284,10 +99,10 @@ namespace PharmacySystem.Logical
                             string state = row["status_name"].ToString();
 
 
-                            dtFinal.Rows.Add( createdDate, codeProduct, 
-                                            nameProduct, descriptionProduct, 
-                                            categoryDescription, stockProduct, 
-                                            pricePurchase, priceSales, 
+                            dtFinal.Rows.Add( createdDate, codeProduct,
+                                            nameProduct, descriptionProduct,
+                                            categoryDescription, stockProduct,
+                                            pricePurchase, priceSales,
                                             expirationDate,state);
 
                         }
