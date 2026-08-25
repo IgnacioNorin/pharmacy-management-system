@@ -201,26 +201,6 @@ namespace PharmacySystem
         string ISaleView.ChangeText => txtchange.Text;
         string ISaleView.DocumentType => ((ComboBoxItem)cbodocumenttype.SelectedItem).Value.ToString();
 
-        IReadOnlyList<SaleCartLine> ISaleView.CartLines
-        {
-            get
-            {
-                var lines = new List<SaleCartLine>();
-                foreach (DataGridViewRow row in dgdata.Rows)
-                {
-                    lines.Add(new SaleCartLine
-                    {
-                        ProductId = int.Parse(row.Cells["IdProducto"].Value.ToString()),
-                        Name = row.Cells["NombreProducto"].Value.ToString(),
-                        Quantity = decimal.Parse(row.Cells["Cantidad"].Value.ToString()),
-                        SalePrice = CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["PrecioVenta"].Value.ToString()),
-                        SubTotal = CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["SubTotal"].Value.ToString())
-                    });
-                }
-                return lines;
-            }
-        }
-
         public void ShowMessage(string message) =>
             MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 

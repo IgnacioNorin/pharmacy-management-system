@@ -279,29 +279,6 @@ namespace PharmacySystem
         string IPurchaseView.DocumentType => ((ComboBoxItem)cbotypedocument.SelectedItem).Value.ToString();
         int IPurchaseView.SelectedSupplierId => int.Parse(txtidsupplier.Text.Trim());
 
-        IReadOnlyList<PurchaseCartLine> IPurchaseView.CartLines
-        {
-            get
-            {
-                var lines = new List<PurchaseCartLine>();
-                foreach (DataGridViewRow row in dgdata.Rows)
-                {
-                    lines.Add(new PurchaseCartLine
-                    {
-                        ProductId = int.Parse(row.Cells["IdProducto"].Value.ToString()),
-                        Code = row.Cells["Codigo"].Value.ToString(),
-                        Name = row.Cells["NombreProducto"].Value.ToString(),
-                        Quantity = decimal.Parse(row.Cells["Cantidad"].Value.ToString()),
-                        ExpirationDate = Convert.ToDateTime(row.Cells["FechaVencimiento"].Value),
-                        PurchasePrice = CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["PrecioCompra"].Value.ToString()),
-                        SalePrice = CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["PrecioVenta"].Value.ToString()),
-                        SubTotal = CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["SubTotal"].Value.ToString())
-                    });
-                }
-                return lines;
-            }
-        }
-
         List<string> IPurchaseView.ValidateProductEntry() => ValidateForm();
 
         void IPurchaseView.ShowValidationErrors(IReadOnlyList<string> errors) =>

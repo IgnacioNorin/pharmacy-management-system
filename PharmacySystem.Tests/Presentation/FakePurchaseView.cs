@@ -19,8 +19,9 @@ namespace PharmacySystem.Tests.Presentation
         public string DocumentType { get; set; } = "Factura";
         public int SelectedSupplierId { get; set; }
 
-        public List<PurchaseCartLine> CartLinesList { get; set; } = new List<PurchaseCartLine>();
-        public IReadOnlyList<PurchaseCartLine> CartLines => CartLinesList;
+        // What the presenter rendered via AddCartLine/RemoveCartLineAt - the presenter owns cart
+        // state now, this list is just what the View was told to display, for assertions.
+        public List<PurchaseCartLine> RenderedCartLines { get; } = new List<PurchaseCartLine>();
 
         public List<string> ValidationErrors { get; set; } = new List<string>();
 
@@ -37,8 +38,8 @@ namespace PharmacySystem.Tests.Presentation
         public (int Id, string Code, string Name)? SelectedProductSetTo { get; private set; }
         public void SetSelectedProduct(int id, string code, string name) => SelectedProductSetTo = (id, code, name);
 
-        public void AddCartLine(PurchaseCartLine line) => CartLinesList.Add(line);
-        public void RemoveCartLineAt(int index) => CartLinesList.RemoveAt(index);
+        public void AddCartLine(PurchaseCartLine line) => RenderedCartLines.Add(line);
+        public void RemoveCartLineAt(int index) => RenderedCartLines.RemoveAt(index);
 
         public string TotalText { get; private set; }
         public void SetTotalText(string formattedTotal) => TotalText = formattedTotal;

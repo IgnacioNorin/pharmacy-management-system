@@ -17,8 +17,6 @@ namespace PharmacySystem.Presentation
         string ChangeText { get; }
         string DocumentType { get; }
 
-        IReadOnlyList<SaleCartLine> CartLines { get; }
-
         void ShowMessage(string message);
 
         void SetSelectedProduct(int id, string code, string name, int stock, string priceSaleFormatted);

@@ -10,6 +10,18 @@ namespace PharmacySystem.Tests.Presentation
         private static SalePresenter CreatePresenter(FakeSaleView view, FakeSaleService saleService, FakeProductService productService, int idPerson = 1)
             => new SalePresenter(view, saleService, productService, idPerson);
 
+        // The cart lives inside the Presenter now, not the View, so tests that need an existing
+        // cart line build it through the real OnAddProduct() path instead of pre-seeding view state.
+        private static void AddLine(SalePresenter presenter, FakeSaleView view, int productId, decimal amount, string priceSaleText, int stock = 100)
+        {
+            view.SelectedProductId = productId;
+            view.SelectedProductName = "Product " + productId;
+            view.Stock = stock;
+            view.Amount = amount;
+            view.PriceSaleText = priceSaleText;
+            presenter.OnAddProduct();
+        }
+
         [Fact]
         public void OnProductCodeEntered_KnownCode_SelectsProduct()
         {
@@ -33,7 +45,7 @@ namespace PharmacySystem.Tests.Presentation
             CreatePresenter(view, new FakeSaleService(), new FakeProductService()).OnAddProduct();
 
             Assert.Equal(new[] { "Debe seleccionar un producto primero" }, view.ShownMessages);
-            Assert.Empty(view.CartLinesList);
+            Assert.Empty(view.RenderedCartLines);
         }
 
         [Fact]
@@ -44,7 +56,7 @@ namespace PharmacySystem.Tests.Presentation
             CreatePresenter(view, new FakeSaleService(), new FakeProductService()).OnAddProduct();
 
             Assert.Equal(new[] { "No hay suficiente stock del producto" }, view.ShownMessages);
-            Assert.Empty(view.CartLinesList);
+            Assert.Empty(view.RenderedCartLines);
         }
 
         [Fact]
@@ -55,7 +67,7 @@ namespace PharmacySystem.Tests.Presentation
             CreatePresenter(view, new FakeSaleService(), new FakeProductService()).OnAddProduct();
 
             Assert.Equal(new[] { "Error al convertir el tipo de moneda - Precio Venta\nEjemplo Formato ##.##" }, view.ShownMessages);
-            Assert.Empty(view.CartLinesList);
+            Assert.Empty(view.RenderedCartLines);
         }
 
         [Fact]
@@ -65,8 +77,8 @@ namespace PharmacySystem.Tests.Presentation
 
             CreatePresenter(view, new FakeSaleService(), new FakeProductService()).OnAddProduct();
 
-            Assert.Single(view.CartLinesList);
-            Assert.Equal(6m, view.CartLinesList[0].SubTotal);
+            Assert.Single(view.RenderedCartLines);
+            Assert.Equal(6m, view.RenderedCartLines[0].SubTotal);
             Assert.True(view.ProductEntryCleared);
             Assert.NotNull(view.TotalText);
         }
@@ -74,37 +86,32 @@ namespace PharmacySystem.Tests.Presentation
         [Fact]
         public void OnAddProduct_ProductAlreadyInCart_ShowsMessageAndDoesNotAdd()
         {
-            var view = new FakeSaleView
-            {
-                SelectedProductId = 1,
-                Stock = 10,
-                Amount = 1,
-                PriceSaleText = "2.00",
-                CartLinesList = new List<SaleCartLine> { new SaleCartLine { ProductId = 1 } }
-            };
+            var view = new FakeSaleView();
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "2.00");
 
-            CreatePresenter(view, new FakeSaleService(), new FakeProductService()).OnAddProduct();
+            view.SelectedProductId = 1;
+            view.Stock = 10;
+            view.Amount = 1;
+            view.PriceSaleText = "2.00";
+            presenter.OnAddProduct();
 
             Assert.Equal(new[] { "El producto ya fue agregado\nElimínelo e ingrese el nuevo si quiere cambiar la cantidad." }, view.ShownMessages);
-            Assert.Single(view.CartLinesList);
+            Assert.Single(view.RenderedCartLines);
         }
 
         [Fact]
         public void OnRemoveProduct_RemovesLineAndRecalculatesTotal()
         {
-            var view = new FakeSaleView
-            {
-                CartLinesList = new List<SaleCartLine>
-                {
-                    new SaleCartLine { ProductId = 1, SubTotal = 10m },
-                    new SaleCartLine { ProductId = 2, SubTotal = 20m }
-                }
-            };
+            var view = new FakeSaleView();
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+            AddLine(presenter, view, productId: 2, amount: 1, priceSaleText: "20.00");
 
-            CreatePresenter(view, new FakeSaleService(), new FakeProductService()).OnRemoveProduct(0);
+            presenter.OnRemoveProduct(0);
 
-            Assert.Single(view.CartLinesList);
-            Assert.Equal(2, view.CartLinesList[0].ProductId);
+            Assert.Single(view.RenderedCartLines);
+            Assert.Equal(2, view.RenderedCartLines[0].ProductId);
         }
 
         // Regression test: CalculateChange() used to parse "Paga con" with Convert.ToDecimal
@@ -137,16 +144,13 @@ namespace PharmacySystem.Tests.Presentation
         [Fact]
         public void OnFinishSale_InvalidPayWith_ShowsMessage()
         {
-            var view = new FakeSaleView
-            {
-                DocumentClient = "123",
-                NameClient = "Juan",
-                PayWithText = "not-a-number",
-                TotalPayText = "10.00",
-                CartLinesList = new List<SaleCartLine> { new SaleCartLine { ProductId = 1, SubTotal = 10m } }
-            };
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
 
-            CreatePresenter(view, new FakeSaleService(), new FakeProductService()).OnFinishSale();
+            view.PayWithText = "not-a-number";
+            view.TotalPayText = "10.00";
+            presenter.OnFinishSale();
 
             Assert.Equal(new[] { "Error al convertir el tipo de moneda - Paga con\nEjemplo Formato ##.##" }, view.ShownMessages);
         }
@@ -174,15 +178,12 @@ namespace PharmacySystem.Tests.Presentation
         [Fact]
         public void OnFinishSale_NoPayment_ShowsMessage()
         {
-            var view = new FakeSaleView
-            {
-                DocumentClient = "123",
-                NameClient = "Juan",
-                PayWithText = "0",
-                CartLinesList = new List<SaleCartLine> { new SaleCartLine { ProductId = 1, SubTotal = 10m } }
-            };
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
 
-            CreatePresenter(view, new FakeSaleService(), new FakeProductService()).OnFinishSale();
+            view.PayWithText = "0";
+            presenter.OnFinishSale();
 
             Assert.Equal(new[] { "Debe ingresar con cuanto paga el cliente" }, view.ShownMessages);
         }
@@ -190,16 +191,13 @@ namespace PharmacySystem.Tests.Presentation
         [Fact]
         public void OnFinishSale_NotEnoughMoney_ShowsMessage()
         {
-            var view = new FakeSaleView
-            {
-                DocumentClient = "123",
-                NameClient = "Juan",
-                PayWithText = "5.00",
-                TotalPayText = "10.00",
-                CartLinesList = new List<SaleCartLine> { new SaleCartLine { ProductId = 1, SubTotal = 10m } }
-            };
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
 
-            CreatePresenter(view, new FakeSaleService(), new FakeProductService()).OnFinishSale();
+            view.PayWithText = "5.00";
+            view.TotalPayText = "10.00";
+            presenter.OnFinishSale();
 
             Assert.Equal(new[] { "Falta dinero para pagar" }, view.ShownMessages);
         }
@@ -212,20 +210,18 @@ namespace PharmacySystem.Tests.Presentation
         [Fact]
         public void OnFinishSale_ProductEntryFieldsResetAfterLastAdd_StillRegistersSale()
         {
-            var view = new FakeSaleView
-            {
-                DocumentClient = "123",
-                NameClient = "Juan",
-                PayWithText = "10.00",
-                TotalPayText = "10.00",
-                SelectedProductId = 0,
-                Amount = 1,
-                CartLinesList = new List<SaleCartLine> { new SaleCartLine { ProductId = 1, SubTotal = 10m } }
-            };
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
             var saleService = new FakeSaleService { ControlStockResult = true, RegisterResult = 5 };
             var productService = new FakeProductService { VerifyResult = true };
+            var presenter = CreatePresenter(view, saleService, productService);
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
 
-            CreatePresenter(view, saleService, productService).OnFinishSale();
+            // Mirrors CleanProduct() having reset the entry fields after the add above.
+            view.SelectedProductId = 0;
+            view.Amount = 1;
+            view.PayWithText = "10.00";
+            view.TotalPayText = "10.00";
+            presenter.OnFinishSale();
 
             Assert.NotNull(saleService.RegisteredWith);
             Assert.True(view.SaleCleared);
@@ -235,18 +231,15 @@ namespace PharmacySystem.Tests.Presentation
         [Fact]
         public void OnFinishSale_LineProductNoLongerExists_ShowsMessage()
         {
-            var view = new FakeSaleView
-            {
-                DocumentClient = "123",
-                NameClient = "Juan",
-                PayWithText = "10.00",
-                TotalPayText = "10.00",
-                CartLinesList = new List<SaleCartLine> { new SaleCartLine { ProductId = 1, SubTotal = 10m } }
-            };
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
             var saleService = new FakeSaleService { ControlStockResult = true };
             var productService = new FakeProductService { VerifyResult = false };
+            var presenter = CreatePresenter(view, saleService, productService);
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
 
-            CreatePresenter(view, saleService, productService).OnFinishSale();
+            view.PayWithText = "10.00";
+            view.TotalPayText = "10.00";
+            presenter.OnFinishSale();
 
             Assert.Equal(new[] { "No se pudo registrar la venta\n Problema con producto" }, view.ShownMessages);
             Assert.Null(saleService.RegisteredWith);
@@ -255,18 +248,16 @@ namespace PharmacySystem.Tests.Presentation
         [Fact]
         public void OnFinishSale_SubtractStockFails_ShowsMessage()
         {
-            var view = new FakeSaleView
-            {
-                DocumentClient = "123",
-                NameClient = "Juan",
-                PayWithText = "10.00",
-                TotalPayText = "10.00",
-                CartLinesList = new List<SaleCartLine> { new SaleCartLine { ProductId = 1, SubTotal = 10m } }
-            };
-            var saleService = new FakeSaleService { ControlStockResult = false };
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
+            var saleService = new FakeSaleService();
             var productService = new FakeProductService { VerifyResult = true };
+            var presenter = CreatePresenter(view, saleService, productService);
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
 
-            CreatePresenter(view, saleService, productService).OnFinishSale();
+            saleService.ControlStockResult = false;
+            view.PayWithText = "10.00";
+            view.TotalPayText = "10.00";
+            presenter.OnFinishSale();
 
             Assert.Equal(new[] { "No se pudo registrar la venta\n Problema con Stock" }, view.ShownMessages);
             Assert.Null(saleService.RegisteredWith);
@@ -275,20 +266,18 @@ namespace PharmacySystem.Tests.Presentation
         [Fact]
         public void OnFinishSale_Succeeds_RegistersSaleClearsAndNotifiesView()
         {
-            var view = new FakeSaleView
-            {
-                DocumentClient = " 123 ",
-                NameClient = " Juan ",
-                PayWithText = "10.00",
-                TotalPayText = "10.00",
-                ChangeText = "0.00",
-                DocumentType = "Factura",
-                CartLinesList = new List<SaleCartLine> { new SaleCartLine { ProductId = 1, Quantity = 2, SalePrice = 5m, SubTotal = 10m } }
-            };
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan", DocumentType = "Factura" };
             var saleService = new FakeSaleService { ControlStockResult = true, RegisterResult = 99 };
             var productService = new FakeProductService { VerifyResult = true };
+            var presenter = CreatePresenter(view, saleService, productService, idPerson: 7);
+            AddLine(presenter, view, productId: 1, amount: 2, priceSaleText: "5.00");
 
-            CreatePresenter(view, saleService, productService, idPerson: 7).OnFinishSale();
+            view.DocumentClient = " 123 ";
+            view.NameClient = " Juan ";
+            view.PayWithText = "10.00";
+            view.TotalPayText = "10.00";
+            view.ChangeText = "0.00";
+            presenter.OnFinishSale();
 
             Assert.NotNull(saleService.RegisteredWith);
             Assert.Equal("123", saleService.RegisteredWith.documentClient);
@@ -302,21 +291,39 @@ namespace PharmacySystem.Tests.Presentation
         [Fact]
         public void OnFinishSale_RegisterFails_ShowsMessage()
         {
-            var view = new FakeSaleView
-            {
-                DocumentClient = "123",
-                NameClient = "Juan",
-                PayWithText = "10.00",
-                TotalPayText = "10.00",
-                CartLinesList = new List<SaleCartLine> { new SaleCartLine { ProductId = 1, SubTotal = 10m } }
-            };
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
             var saleService = new FakeSaleService { ControlStockResult = true, RegisterResult = 0 };
             var productService = new FakeProductService { VerifyResult = true };
+            var presenter = CreatePresenter(view, saleService, productService);
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
 
-            CreatePresenter(view, saleService, productService).OnFinishSale();
+            view.PayWithText = "10.00";
+            view.TotalPayText = "10.00";
+            presenter.OnFinishSale();
 
             Assert.Equal(new[] { "No se pudo registrar la venta" }, view.ShownMessages);
             Assert.False(view.SaleCleared);
+        }
+
+        [Fact]
+        public void OnFinishSale_Succeeds_ClearsThePresenterOwnedCartToo()
+        {
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
+            var saleService = new FakeSaleService { ControlStockResult = true, RegisterResult = 5 };
+            var productService = new FakeProductService { VerifyResult = true };
+            var presenter = CreatePresenter(view, saleService, productService);
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            view.PayWithText = "10.00";
+            view.TotalPayText = "10.00";
+            presenter.OnFinishSale();
+
+            // A second finish attempt with nothing re-added must behave as an empty cart again -
+            // proves the cart was actually cleared, not just the grid the View renders.
+            view.ShownMessages.Clear();
+            presenter.OnFinishSale();
+
+            Assert.Equal(new[] { "Debe ingresar un producto como minimo\npara registrar una venta" }, view.ShownMessages);
         }
     }
 }
