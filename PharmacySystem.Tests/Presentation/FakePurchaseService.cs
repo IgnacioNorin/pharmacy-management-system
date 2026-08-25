@@ -13,8 +13,13 @@ namespace PharmacySystem.Tests.Presentation
         public int TotalQuantityResult { get; set; }
         public decimal TotalSalesPriceResult { get; set; }
         public decimal SubTotalResult { get; set; }
+        public Purchase RegisteredWith { get; private set; }
 
-        public bool Register(Purchase purchase) => RegisterResult;
+        public bool Register(Purchase purchase)
+        {
+            RegisteredWith = purchase;
+            return RegisterResult;
+        }
         public List<PurchaseReportRow> ReportPurchase(string idSupplier, string startDate, string endDate) => ReportResult;
         public decimal GetTotalAmount(string idSupplier, string startDate, string endDate) => TotalAmountResult;
         public decimal GetTotalPurchasePrice(string idSupplier, string startDate, string endDate) => TotalPurchasePriceResult;

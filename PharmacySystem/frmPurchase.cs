@@ -1,28 +1,22 @@
-﻿using DocumentFormat.OpenXml.Wordprocessing;
 using PharmacySystem.Helpers;
-using PharmacySystem.Logical;
 using PharmacySystem.Model;
+using PharmacySystem.Presentation;
 using PharmacySystem.Validators;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PharmacySystem
 {
-    public partial class frmPurchase : Form
+    public partial class frmPurchase : Form, IPurchaseView
     {
-        private static int _IdPerson = 0;
+        private readonly PurchasePresenter _presenter;
+
         public frmPurchase(int IdPerson = 0)
         {
             InitializeComponent();
-            _IdPerson = IdPerson;
+            _presenter = CompositionRoot.CreatePurchasePresenter(this, IdPerson);
         }
 
         private Dictionary<TextBox, List<string>> campWithRules = new Dictionary<TextBox, List<string>>();
@@ -57,7 +51,7 @@ namespace PharmacySystem
         private void frmPurchase_Load(object sender, EventArgs e)
         {
             InitializeValidators();
-  
+
             DataGridViewButtonColumn Button = new DataGridViewButtonColumn();
 
             Button.HeaderText = "Eliminar";
@@ -66,7 +60,7 @@ namespace PharmacySystem
             Button.Name = "btnEliminar";
             Button.UseColumnTextForButtonValue = true;
 
-   
+
             dgdata.Columns.Add(Button);
             dgdata.Columns.Add("IdProducto", "IdProducto");
             dgdata.Columns.Add("Codigo", "Codigo");
@@ -80,9 +74,6 @@ namespace PharmacySystem
             dgdata.Columns["IdProducto"].Visible = false;
             dgdata.Columns["PrecioVenta"].Visible = false;
 
-
-
-            //cbotipodocumento.Items.Add(new ComboBoxItem() { Value = "Boleta", Text = "Boleta" });
             cbotypedocument.Items.Add(new ComboBoxItem() { Value = "Factura", Text = "Factura" });
             cbotypedocument.DisplayMember = "Text";
             cbotypedocument.ValueMember = "Value";
@@ -146,7 +137,7 @@ namespace PharmacySystem
                 }
 
             }
-                
+
         }
 
         private void txtPriceSale_KeyPress(object sender, KeyPressEventArgs e)
@@ -175,79 +166,7 @@ namespace PharmacySystem
             }
         }
 
-        private void btnAdd_Click(object sender, EventArgs e)
-        {
-            if (!ValidateForm()) return;
-            decimal pricePurchase = 0;
-            decimal priceSale = 0;
-            decimal subTotal;
-            bool product_exists = false;
-
-            if (int.Parse(txtidproduct.Text) == 0) {
-                MessageBox.Show("Debe seleccionar un producto primero", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-
-            bool errorPurchase = false;
-            bool errorSale = false;
-            try
-            {
-                pricePurchase = CultureInfoHelper.CultureInfoConverterStringToDecimal(txtpricepurchase.Text);
-            }
-            catch {
-                errorPurchase = true;
-            }
-
-            try
-            {
-                Console.WriteLine(txtpricesale.Text);
-                priceSale = CultureInfoHelper.CultureInfoConverterStringToDecimal(txtpricesale.Text);
-            }
-            catch
-            {
-                errorSale = true;
-            }
-
-            if (errorPurchase) {
-                MessageBox.Show("Error al convertir el tipo de moneda - Precio Compra\nEjemplo Formato ##.##", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-            if (errorSale)
-            {
-                MessageBox.Show("Error al convertir el tipo de moneda - Precio Venta\nEjemplo Formato ##.##", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-
-
-            foreach (DataGridViewRow row in dgdata.Rows)
-            {
-                if (row.Cells["IdProducto"].Value.ToString() == txtidproduct.Text) {
-                    product_exists = true;
-                    break;
-                }
-            }
-            
-            if (!product_exists) {
-                int rowId = dgdata.Rows.Add();
-                DataGridViewRow row = dgdata.Rows[rowId];
-                subTotal = Convert.ToDecimal(txtamount.Text.Trim()) * pricePurchase;
-
-                row.Cells["IdProducto"].Value = txtidproduct.Text;
-                row.Cells["Codigo"].Value = txtcodeproduct.Text.Trim();
-                row.Cells["NombreProducto"].Value = txtnameproduct.Text.Trim();
-                row.Cells["Cantidad"].Value = txtamount.Text.Trim();
-                row.Cells["FechaVencimiento"].Value = DTPexpireddate.Value.ToShortDateString();
-                row.Cells["PrecioCompra"].Value = CultureInfoHelper.FormatAsCurrency(pricePurchase);
-                row.Cells["PrecioVenta"].Value = CultureInfoHelper.FormatAsCurrency(priceSale);
-                row.Cells["SubTotal"].Value = CultureInfoHelper.FormatAsCurrency(subTotal);
-
-                CleanProduct();
-                CalculateTotal();
-            }
-
-           
-
-        }
+        private void btnAdd_Click(object sender, EventArgs e) => _presenter.OnAddProduct();
 
         public void CleanProduct() {
             txtidproduct.Text = "0";
@@ -301,86 +220,12 @@ namespace PharmacySystem
                 int index = e.RowIndex;
                 if (index >= 0)
                 {
-                    dgdata.Rows.RemoveAt(index);
-                    CalculateTotal();
+                    _presenter.OnRemoveProduct(index);
                 }
             }
         }
 
-        private void btnFinishPurchase_Click(object sender, EventArgs e)
-        {
-            if (txtnumberdocument.Text.Trim() == "")
-            {
-                MessageBox.Show("Debe ingresar el numero de documento\npara registrar una compra", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                txtnumberdocument.Focus();
-                return;
-            }
-
-            if (int.Parse(txtidsupplier.Text.Trim()) == 0) {
-                MessageBox.Show("Debe seleccionar un proveedor\npara registrar una compra", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-
-            if (dgdata.Rows.Count < 1)
-            {
-                MessageBox.Show("Debe ingresar un producto como minimo\npara registrar una compra", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-
-            var lblTotalAmount = CultureInfoHelper.CultureInfoConverterStringToDecimal(lbltotalamount.Text);
-
-            Purchase oPurchase = new Purchase() {
-                oPerson = new Person() { idPerson = _IdPerson },
-                oSupplier = new Supplier() { idSupplier = int.Parse(txtidsupplier.Text.Trim()) },
-                totalAmount = lblTotalAmount,
-                documentType = ((ComboBoxItem)cbotypedocument.SelectedItem).Value.ToString(),
-                documentNumber = txtnumberdocument.Text.Trim()
-                
-            };
-
-            List<PurchaseDetail> olist = new List<PurchaseDetail>();
-            if (dgdata.Rows.Count > 0)
-            {
-                foreach (DataGridViewRow row in dgdata.Rows)
-                {
-                    olist.Add(new PurchaseDetail() {
-                        oProduct = new Product() { idProduct = int.Parse(row.Cells["IdProducto"].Value.ToString()) },
-                        quantity = int.Parse(row.Cells["Cantidad"].Value.ToString()),
-                        expirationDate = Convert.ToDateTime(row.Cells["FechaVencimiento"].Value),
-                        purchasePrice = CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["PrecioCompra"].Value.ToString()),
-                        salePrice = CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["PrecioVenta"].Value.ToString()),
-                        total = CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["SubTotal"].Value.ToString())
-                    });
-                }
-            }
-            oPurchase.oPurchaseDetail = olist;
-
-
-            if (PurchaseService.Instance.RegisterPurchase(oPurchase))
-            {
-                Clean();
-                MessageBox.Show("La compra fue registrada", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else {
-                MessageBox.Show("No se pudo registrar la compra", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            }
-
-        }
-
-        private void CalculateTotal() {
-
-            decimal total = 0;
-            if (dgdata.Rows.Count > 0)
-            {
-                foreach (DataGridViewRow row in dgdata.Rows)
-                {
-                    total +=  CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["SubTotal"].Value.ToString());
-                }
-            }
-
-            lbltotalamount.Text = CultureInfoHelper.FormatAsCurrency(total);
-
-        }
+        private void btnFinishPurchase_Click(object sender, EventArgs e) => _presenter.OnFinishPurchase();
 
         private void Clean() {
             CleanProduct();
@@ -397,18 +242,11 @@ namespace PharmacySystem
         {
             if (e.KeyData == Keys.Enter)
             {
-                Product pr = ProductService.Instance.ListProduct().Where(p => p.code == txtcodeproduct.Text.Trim()).FirstOrDefault();
-                if (pr != null)
-                {
-                    txtcodeproduct.Text = pr.code;
-                    txtnameproduct.Text = pr.name;
-                    txtidproduct.Text = pr.idProduct.ToString();
-                }
-
+                _presenter.OnProductCodeEntered(txtcodeproduct.Text.Trim());
             }
         }
 
-        private bool ValidateForm()
+        private List<string> ValidateForm()
         {
             var errors = new List<string>();
 
@@ -424,12 +262,86 @@ namespace PharmacySystem
                 }
 
             }
-            if (errors.Count > 0)
-            {
-                MessageBox.Show(string.Join("\n", errors), "Errores de Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;
-            }
-            return true;
+            return errors;
         }
+
+        #region IPurchaseView
+
+        int IPurchaseView.SelectedProductId => int.Parse(txtidproduct.Text);
+        string IPurchaseView.SelectedProductCode => txtcodeproduct.Text.Trim();
+        string IPurchaseView.SelectedProductName => txtnameproduct.Text.Trim();
+        decimal IPurchaseView.Amount => txtamount.Value;
+        DateTime IPurchaseView.ExpirationDate => DTPexpireddate.Value;
+        string IPurchaseView.PricePurchaseText => txtpricepurchase.Text;
+        string IPurchaseView.PriceSaleText => txtpricesale.Text;
+
+        string IPurchaseView.DocumentNumber => txtnumberdocument.Text.Trim();
+        string IPurchaseView.DocumentType => ((ComboBoxItem)cbotypedocument.SelectedItem).Value.ToString();
+        int IPurchaseView.SelectedSupplierId => int.Parse(txtidsupplier.Text.Trim());
+
+        IReadOnlyList<PurchaseCartLine> IPurchaseView.CartLines
+        {
+            get
+            {
+                var lines = new List<PurchaseCartLine>();
+                foreach (DataGridViewRow row in dgdata.Rows)
+                {
+                    lines.Add(new PurchaseCartLine
+                    {
+                        ProductId = int.Parse(row.Cells["IdProducto"].Value.ToString()),
+                        Code = row.Cells["Codigo"].Value.ToString(),
+                        Name = row.Cells["NombreProducto"].Value.ToString(),
+                        Quantity = decimal.Parse(row.Cells["Cantidad"].Value.ToString()),
+                        ExpirationDate = Convert.ToDateTime(row.Cells["FechaVencimiento"].Value),
+                        PurchasePrice = CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["PrecioCompra"].Value.ToString()),
+                        SalePrice = CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["PrecioVenta"].Value.ToString()),
+                        SubTotal = CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["SubTotal"].Value.ToString())
+                    });
+                }
+                return lines;
+            }
+        }
+
+        List<string> IPurchaseView.ValidateProductEntry() => ValidateForm();
+
+        void IPurchaseView.ShowValidationErrors(IReadOnlyList<string> errors) =>
+            MessageBox.Show(string.Join("\n", errors), "Errores de Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+        public void ShowMessage(string message) =>
+            MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+        public void FocusDocumentNumber() => txtnumberdocument.Focus();
+
+        public void SetSelectedProduct(int id, string code, string name)
+        {
+            txtidproduct.Text = id.ToString();
+            txtcodeproduct.Text = code;
+            txtnameproduct.Text = name;
+        }
+
+        public void AddCartLine(PurchaseCartLine line)
+        {
+            int rowId = dgdata.Rows.Add();
+            DataGridViewRow row = dgdata.Rows[rowId];
+
+            row.Cells["IdProducto"].Value = line.ProductId.ToString();
+            row.Cells["Codigo"].Value = line.Code;
+            row.Cells["NombreProducto"].Value = line.Name;
+            row.Cells["Cantidad"].Value = line.Quantity.ToString();
+            row.Cells["FechaVencimiento"].Value = line.ExpirationDate.ToShortDateString();
+            row.Cells["PrecioCompra"].Value = CultureInfoHelper.FormatAsCurrency(line.PurchasePrice);
+            row.Cells["PrecioVenta"].Value = CultureInfoHelper.FormatAsCurrency(line.SalePrice);
+            row.Cells["SubTotal"].Value = CultureInfoHelper.FormatAsCurrency(line.SubTotal);
+        }
+
+        public void RemoveCartLineAt(int index) => dgdata.Rows.RemoveAt(index);
+
+        public void SetTotalText(string formattedTotal) => lbltotalamount.Text = formattedTotal;
+
+        public void ClearProductEntry() => CleanProduct();
+
+        public void ClearPurchase() => Clean();
+
+        #endregion
     }
 }
