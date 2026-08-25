@@ -1,13 +1,19 @@
 using System.Data.SqlClient;
+using PharmacySystem.Data;
 using PharmacySystem.Logical;
 using PharmacySystem.Model;
 using Xunit;
 
 namespace PharmacySystem.Tests.Integration
 {
+    // Was ProductServiceTests, calling ProductService.Instance. Now exercises
+    // ProductRepository directly (Report() has no repository equivalent yet - see
+    // IProductRepository's comment). CategoryService.Instance stays as test setup.
     [Collection("Database")]
-    public class ProductServiceTests
+    public class ProductRepositoryTests
     {
+        private static readonly IProductRepository Repository = new ProductRepository(SqlConnectionFactory.FromConfiguration());
+
         private static int CreateCategory()
         {
             return CategoryService.Instance.RegisterCategory(new Categories { description = SqlTestHelper.NewTag() });
@@ -25,18 +31,18 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void RegisterProduct_New_IsListedAndVerifiable()
+        public void Register_New_IsListedAndVerifiable()
         {
             int categoryId = CreateCategory();
             int productId = 0;
 
             try
             {
-                productId = ProductService.Instance.RegisterProduct(NewProduct(categoryId));
+                productId = Repository.Register(NewProduct(categoryId));
 
                 Assert.True(productId > 0);
-                Assert.True(ProductService.Instance.VerifyProduct(productId));
-                Assert.Contains(ProductService.Instance.ListProduct(), p => p.idProduct == productId);
+                Assert.True(Repository.Verify(productId));
+                Assert.Contains(Repository.List(), p => p.idProduct == productId);
             }
             finally
             {
@@ -46,15 +52,15 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void RegisterProduct_DuplicateCode_ReturnsZero()
+        public void Register_DuplicateCode_ReturnsZero()
         {
             int categoryId = CreateCategory();
             string code = SqlTestHelper.NewTag();
-            int firstId = ProductService.Instance.RegisterProduct(NewProduct(categoryId, code));
+            int firstId = Repository.Register(NewProduct(categoryId, code));
 
             try
             {
-                int secondId = ProductService.Instance.RegisterProduct(NewProduct(categoryId, code));
+                int secondId = Repository.Register(NewProduct(categoryId, code));
 
                 Assert.Equal(0, secondId);
             }
@@ -66,15 +72,15 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void UpdateProduct_ChangesFields()
+        public void Update_ChangesFields()
         {
             int categoryId = CreateCategory();
-            int productId = ProductService.Instance.RegisterProduct(NewProduct(categoryId));
+            int productId = Repository.Register(NewProduct(categoryId));
             string newCode = SqlTestHelper.NewTag();
 
             try
             {
-                bool result = ProductService.Instance.UpdateProduct(new Product
+                bool result = Repository.Update(new Product
                 {
                     idProduct = productId,
                     code = newCode,
@@ -84,7 +90,7 @@ namespace PharmacySystem.Tests.Integration
                 });
 
                 Assert.True(result);
-                Assert.Contains(ProductService.Instance.ListProduct(), p => p.idProduct == productId && p.code == newCode && p.name == "Updated name");
+                Assert.Contains(Repository.List(), p => p.idProduct == productId && p.code == newCode && p.name == "Updated name");
             }
             finally
             {
@@ -94,16 +100,16 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void UpdateProduct_DuplicateCodeOnAnotherProduct_ReturnsFalse()
+        public void Update_DuplicateCodeOnAnotherProduct_ReturnsFalse()
         {
             int categoryId = CreateCategory();
             string existingCode = SqlTestHelper.NewTag();
-            int firstId = ProductService.Instance.RegisterProduct(NewProduct(categoryId, existingCode));
-            int secondId = ProductService.Instance.RegisterProduct(NewProduct(categoryId));
+            int firstId = Repository.Register(NewProduct(categoryId, existingCode));
+            int secondId = Repository.Register(NewProduct(categoryId));
 
             try
             {
-                bool result = ProductService.Instance.UpdateProduct(new Product
+                bool result = Repository.Update(new Product
                 {
                     idProduct = secondId,
                     code = existingCode,
@@ -123,20 +129,20 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void VerifyProduct_NonExistingId_ReturnsFalse()
+        public void Verify_NonExistingId_ReturnsFalse()
         {
-            Assert.False(ProductService.Instance.VerifyProduct(-1));
+            Assert.False(Repository.Verify(-1));
         }
 
         [Fact]
-        public void DeleteProduct_NotReferencedByPurchaseOrSale_HardDeletesRow()
+        public void Delete_NotReferencedByPurchaseOrSale_HardDeletesRow()
         {
             int categoryId = CreateCategory();
-            int productId = ProductService.Instance.RegisterProduct(NewProduct(categoryId));
+            int productId = Repository.Register(NewProduct(categoryId));
 
             try
             {
-                bool result = ProductService.Instance.DeleteProduct(productId);
+                bool result = Repository.Delete(productId);
 
                 Assert.True(result);
                 Assert.Null(SqlTestHelper.ExecuteScalar("SELECT id FROM product WHERE id = @id", new SqlParameter("@id", productId)));
@@ -148,17 +154,17 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void DeleteProduct_ReferencedByPurchaseOnly_SoftDeletesInstead()
+        public void Delete_ReferencedByPurchaseOnly_SoftDeletesInstead()
         {
             int categoryId = CreateCategory();
-            int productId = ProductService.Instance.RegisterProduct(NewProduct(categoryId));
+            int productId = Repository.Register(NewProduct(categoryId));
             SqlTestHelper.ExecuteNonQuery(
                 "INSERT INTO purchase_detail(purchase_id, product_id, stock, purchase_price, sale_price, total_amount) VALUES (NULL, @product_id, 1, 1.0, 1.0, 1.0)",
                 new SqlParameter("@product_id", productId));
 
             try
             {
-                bool result = ProductService.Instance.DeleteProduct(productId);
+                bool result = Repository.Delete(productId);
 
                 Assert.True(result);
                 Assert.Equal(0, SqlTestHelper.ExecuteScalarInt("SELECT status FROM product WHERE id = @id", new SqlParameter("@id", productId)));
@@ -175,17 +181,17 @@ namespace PharmacySystem.Tests.Integration
         // checked, so a product that had only ever been sold (never purchased) would hit the
         // physical DELETE branch and violate the FK from sale_detail.
         [Fact]
-        public void DeleteProduct_ReferencedBySaleOnly_SoftDeletesInsteadOfViolatingForeignKey()
+        public void Delete_ReferencedBySaleOnly_SoftDeletesInsteadOfViolatingForeignKey()
         {
             int categoryId = CreateCategory();
-            int productId = ProductService.Instance.RegisterProduct(NewProduct(categoryId));
+            int productId = Repository.Register(NewProduct(categoryId));
             SqlTestHelper.ExecuteNonQuery(
                 "INSERT INTO sale_detail(sale_id, product_id, stock, sale_price, subtotal) VALUES (NULL, @product_id, 1, 1.0, 1.0)",
                 new SqlParameter("@product_id", productId));
 
             try
             {
-                bool result = ProductService.Instance.DeleteProduct(productId);
+                bool result = Repository.Delete(productId);
 
                 Assert.True(result);
                 Assert.NotNull(SqlTestHelper.ExecuteScalar("SELECT id FROM product WHERE id = @id", new SqlParameter("@id", productId)));
