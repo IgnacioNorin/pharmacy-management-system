@@ -10,9 +10,11 @@ namespace PharmacySystem.Tests.Presentation
         public int ConfigStockResult { get; set; }
         public bool ConfigUpdateResult { get; set; } = true;
         public NotificationConfig UpdatedWith { get; private set; }
+        public List<Product> ListExpirationDateResult { get; set; } = new List<Product>();
+        public List<Product> ListStockResult { get; set; } = new List<Product>();
 
-        public List<Product> ListExpirationDate() => new List<Product>();
-        public List<Product> ListStock() => new List<Product>();
+        public List<Product> ListExpirationDate() => ListExpirationDateResult;
+        public List<Product> ListStock() => ListStockResult;
         public int ConfigDay() => ConfigDayResult;
         public int ConfigStock() => ConfigStockResult;
 
