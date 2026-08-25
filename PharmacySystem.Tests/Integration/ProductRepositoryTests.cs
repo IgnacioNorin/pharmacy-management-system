@@ -1,4 +1,6 @@
+using System;
 using System.Data.SqlClient;
+using System.Linq;
 using PharmacySystem.Data;
 using PharmacySystem.Model;
 using Xunit;
@@ -43,6 +45,30 @@ namespace PharmacySystem.Tests.Integration
                 Assert.True(productId > 0);
                 Assert.True(Repository.Verify(productId));
                 Assert.Contains(Repository.List(), p => p.idProduct == productId);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+            }
+        }
+
+        // Regression test for the Dapper migration: List() used to build Product manually with
+        // `expirationDate = Convert.ToDateTime(date)` where `date` was null for a NULL DB column,
+        // and Convert.ToDateTime(null) returns default(DateTime) rather than throwing. Dapper must
+        // reproduce that exact fallback - a NULL date_expired should leave expirationDate at
+        // default(DateTime), not throw and not silently corrupt the row.
+        [Fact]
+        public void List_ProductWithoutExpirationDate_DefaultsExpirationDateInsteadOfThrowing()
+        {
+            int categoryId = CreateCategory();
+            int productId = Repository.Register(NewProduct(categoryId));
+
+            try
+            {
+                Product product = Repository.List().Single(p => p.idProduct == productId);
+
+                Assert.Equal(default(DateTime), product.expirationDate);
             }
             finally
             {
