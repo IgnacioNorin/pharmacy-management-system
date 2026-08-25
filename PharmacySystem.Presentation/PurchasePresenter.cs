@@ -17,6 +17,10 @@ namespace PharmacySystem.Presentation
     // fragile: any future formatting tweak could silently corrupt cart totals. Holding the cart as
     // a plain list here makes the Presenter the single source of truth and the View a pure render
     // target, closer to the intent of Passive View.
+    //
+    // A successful purchase raises InventoryChangeNotifier.StockChanged so MainForm can recheck
+    // its stock/expiration alerts immediately instead of waiting for the next timer tick - Fase 2
+    // of the alerts rework.
     public class PurchasePresenter
     {
         private readonly IPurchaseView _view;
@@ -164,6 +168,7 @@ namespace PharmacySystem.Presentation
                 _cart.Clear();
                 _view.ClearPurchase();
                 _view.ShowMessage("La compra fue registrada");
+                InventoryChangeNotifier.NotifyStockChanged();
             }
             else
             {

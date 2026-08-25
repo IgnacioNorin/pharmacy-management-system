@@ -288,6 +288,56 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Equal(99, view.RegisteredSaleId);
         }
 
+        // Fase 2 of the alerts rework: a successful sale must let MainForm know stock just
+        // changed, instead of it waiting up to 5 minutes for the next safety-net timer tick.
+        [Fact]
+        public void OnFinishSale_Succeeds_RaisesInventoryChangedNotification()
+        {
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan", PayWithText = "10.00", TotalPayText = "10.00" };
+            var saleService = new FakeSaleService { ControlStockResult = true, RegisterResult = 99 };
+            var productService = new FakeProductService { VerifyResult = true };
+            var presenter = CreatePresenter(view, saleService, productService);
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            bool raised = false;
+            void Handler() => raised = true;
+            InventoryChangeNotifier.StockChanged += Handler;
+            try
+            {
+                presenter.OnFinishSale();
+            }
+            finally
+            {
+                InventoryChangeNotifier.StockChanged -= Handler;
+            }
+
+            Assert.True(raised);
+        }
+
+        [Fact]
+        public void OnFinishSale_RegisterFails_DoesNotRaiseInventoryChangedNotification()
+        {
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan", PayWithText = "10.00", TotalPayText = "10.00" };
+            var saleService = new FakeSaleService { ControlStockResult = true, RegisterResult = 0 };
+            var productService = new FakeProductService { VerifyResult = true };
+            var presenter = CreatePresenter(view, saleService, productService);
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            bool raised = false;
+            void Handler() => raised = true;
+            InventoryChangeNotifier.StockChanged += Handler;
+            try
+            {
+                presenter.OnFinishSale();
+            }
+            finally
+            {
+                InventoryChangeNotifier.StockChanged -= Handler;
+            }
+
+            Assert.False(raised);
+        }
+
         [Fact]
         public void OnFinishSale_RegisterFails_ShowsMessage()
         {
