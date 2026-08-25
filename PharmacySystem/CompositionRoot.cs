@@ -17,5 +17,12 @@ namespace PharmacySystem
             ISupplierService service = new SupplierService(repository);
             return new SupplierPresenter(view, service);
         }
+
+        public static NotificationConfigPresenter CreateNotificationConfigPresenter(INotificationConfigView view)
+        {
+            INotificationConfigRepository repository = new NotificationConfigRepository(ConnectionFactory);
+            INotificationConfigService service = new NotificationConfigService(repository);
+            return new NotificationConfigPresenter(view, service);
+        }
     }
 }
