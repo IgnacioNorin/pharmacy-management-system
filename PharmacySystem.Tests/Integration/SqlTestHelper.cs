@@ -1,16 +1,18 @@
 using System;
 using System.Data.SqlClient;
-using PharmacySystem.Logical;
+using PharmacySystem.Data;
 
 namespace PharmacySystem.Tests.Integration
 {
     // Thin ADO.NET helper for integration test setup/cleanup. Deliberately independent from
-    // the Service classes under test, so assertions don't rely on the same code path they verify.
+    // the repository classes under test, so assertions don't rely on the same code path they verify.
     internal static class SqlTestHelper
     {
+        private static string ConnectionString => SqlConnectionFactory.FromConfiguration().Create().ConnectionString;
+
         public static void ExecuteNonQuery(string sql, params SqlParameter[] parameters)
         {
-            using (SqlConnection connection = new SqlConnection(Connection.CN))
+            using (SqlConnection connection = new SqlConnection(ConnectionString))
             using (SqlCommand command = new SqlCommand(sql, connection))
             {
                 if (parameters != null)
@@ -25,7 +27,7 @@ namespace PharmacySystem.Tests.Integration
 
         public static object ExecuteScalar(string sql, params SqlParameter[] parameters)
         {
-            using (SqlConnection connection = new SqlConnection(Connection.CN))
+            using (SqlConnection connection = new SqlConnection(ConnectionString))
             using (SqlCommand command = new SqlCommand(sql, connection))
             {
                 if (parameters != null)

@@ -22,9 +22,6 @@
     <ProjectReference Include="..\PharmacySystem.Data\PharmacySystem.Data.csproj" />
     <ProjectReference Include="..\PharmacySystem.Business\PharmacySystem.Business.csproj" />
     <ProjectReference Include="..\PharmacySystem.Presentation\PharmacySystem.Presentation.csproj" />
-    <!-- Still referenced because the Service classes have not moved yet; it is what keeps
-         the suite tied to Visual Studio's MSBuild. Dropping it is the last step of the migration. -->
-    <ProjectReference Include="..\PharmacySystem\PharmacySystem.csproj" />
   </ItemGroup>
 
   <ItemGroup>

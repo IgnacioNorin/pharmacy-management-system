@@ -1,6 +1,5 @@
 using System.Data.SqlClient;
 using PharmacySystem.Data;
-using PharmacySystem.Logical;
 using PharmacySystem.Model;
 using Xunit;
 
@@ -8,15 +7,16 @@ namespace PharmacySystem.Tests.Integration
 {
     // Was ProductServiceTests, calling ProductService.Instance. Now exercises
     // ProductRepository directly (Report() has no repository equivalent yet - see
-    // IProductRepository's comment). CategoryService.Instance stays as test setup.
+    // IProductRepository's comment). Category setup goes through CategoryRepository directly too.
     [Collection("Database")]
     public class ProductRepositoryTests
     {
         private static readonly IProductRepository Repository = new ProductRepository(SqlConnectionFactory.FromConfiguration());
+        private static readonly ICategoryRepository CategoryRepo = new CategoryRepository(SqlConnectionFactory.FromConfiguration());
 
         private static int CreateCategory()
         {
-            return CategoryService.Instance.RegisterCategory(new Categories { description = SqlTestHelper.NewTag() });
+            return CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
         }
 
         private static Product NewProduct(int categoryId, string code = null)

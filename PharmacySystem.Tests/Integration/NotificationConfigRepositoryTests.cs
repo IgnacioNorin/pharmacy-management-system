@@ -1,21 +1,22 @@
 using System;
 using System.Data.SqlClient;
 using PharmacySystem.Data;
-using PharmacySystem.Logical;
 using PharmacySystem.Model;
 using Xunit;
 
 namespace PharmacySystem.Tests.Integration
 {
     // Was NotificationConfigServiceTests, using `new NotificationConfigService()`. Now exercises
-    // NotificationConfigRepository directly. CategoryService/ProductService.Instance stay as-is
-    // below (just test setup) until those services are migrated.
+    // NotificationConfigRepository directly. Category/product setup goes through their repositories
+    // directly too, just as test fixture data.
     // notification_settings is a singleton row (id = 1); ConfigUpdate only updates it, it never
     // inserts, so the row must already exist for the update branch to succeed.
     [Collection("Database")]
     public class NotificationConfigRepositoryTests
     {
         private static readonly INotificationConfigRepository Repository = new NotificationConfigRepository(SqlConnectionFactory.FromConfiguration());
+        private static readonly ICategoryRepository CategoryRepo = new CategoryRepository(SqlConnectionFactory.FromConfiguration());
+        private static readonly IProductRepository ProductRepo = new ProductRepository(SqlConnectionFactory.FromConfiguration());
 
         [Fact]
         public void ConfigUpdate_ExistingRow_ChangesStockAndDay()
@@ -40,8 +41,8 @@ namespace PharmacySystem.Tests.Integration
         [Fact]
         public void ListExpirationDate_OnlyReturnsActiveProductsWithExpirationSet()
         {
-            int categoryId = CategoryService.Instance.RegisterCategory(new Categories { description = SqlTestHelper.NewTag() });
-            int withExpiration = ProductService.Instance.RegisterProduct(new Product
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int withExpiration = ProductRepo.Register(new Product
             {
                 code = SqlTestHelper.NewTag(),
                 name = "With expiration",

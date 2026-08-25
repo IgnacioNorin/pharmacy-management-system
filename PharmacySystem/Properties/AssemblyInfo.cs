@@ -22,9 +22,6 @@ using System.Runtime.InteropServices;
 // El siguiente GUID sirve como id. de typelib si este proyecto se expone a COM.
 [assembly: Guid("fa1b9ac9-71cc-4293-8fb1-a1147f8c8efe")]
 
-// Permite que el proyecto de pruebas acceda a tipos internal (ej. StoreService).
-[assembly: InternalsVisibleTo("PharmacySystem.Tests")]
-
 // La información de versión de un ensamblado consta de los cuatro valores siguientes:
 //
 //      Versión principal
