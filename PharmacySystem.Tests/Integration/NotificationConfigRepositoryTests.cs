@@ -64,5 +64,35 @@ namespace PharmacySystem.Tests.Integration
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
             }
         }
+
+        // Regression test: ListStock() used to require date_expired IS NOT NULL in its WHERE
+        // clause, so a product with no expiration date could never trigger a critical-stock alert
+        // no matter how low its stock got. Fixed by dropping that condition from the query.
+        [Fact]
+        public void ListStock_IncludesProductsWithoutExpirationDate()
+        {
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = ProductRepo.Register(new Product
+            {
+                code = SqlTestHelper.NewTag(),
+                name = "Without expiration",
+                description = "Without expiration",
+                oCategory = new Categories { IdCategory = categoryId }
+            });
+            SqlTestHelper.ExecuteNonQuery("UPDATE product SET stock = 3, date_expired = NULL WHERE id = @id",
+                new SqlParameter("@id", productId));
+
+            try
+            {
+                var results = Repository.ListStock();
+
+                Assert.Contains(results, p => p.stock == 3);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+            }
+        }
     }
 }

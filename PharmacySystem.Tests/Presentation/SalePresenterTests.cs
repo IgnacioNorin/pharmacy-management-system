@@ -107,6 +107,50 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Equal(2, view.CartLinesList[0].ProductId);
         }
 
+        // Regression test: CalculateChange() used to parse "Paga con" with Convert.ToDecimal
+        // instead of the culture-aware converter used for totalPay right next to it, and never
+        // actually returned false, so this error message was unreachable dead code. Now a bad
+        // "Paga con" value is caught and reported like every other currency-parsing error on this
+        // screen.
+        [Fact]
+        public void OnCalculateChangeRequested_InvalidPayWith_ShowsMessage()
+        {
+            var view = new FakeSaleView { PayWithText = "not-a-number", TotalPayText = "10.00" };
+
+            CreatePresenter(view, new FakeSaleService(), new FakeProductService()).OnCalculateChangeRequested();
+
+            Assert.Equal(new[] { "Error al convertir el tipo de moneda - Paga con\nEjemplo Formato ##.##" }, view.ShownMessages);
+            Assert.Null(view.ChangeTextSet);
+        }
+
+        [Fact]
+        public void OnCalculateChangeRequested_ValidPayWith_SetsChangeText()
+        {
+            var view = new FakeSaleView { PayWithText = "15.00", TotalPayText = "10.00" };
+
+            CreatePresenter(view, new FakeSaleService(), new FakeProductService()).OnCalculateChangeRequested();
+
+            Assert.Empty(view.ShownMessages);
+            Assert.NotNull(view.ChangeTextSet);
+        }
+
+        [Fact]
+        public void OnFinishSale_InvalidPayWith_ShowsMessage()
+        {
+            var view = new FakeSaleView
+            {
+                DocumentClient = "123",
+                NameClient = "Juan",
+                PayWithText = "not-a-number",
+                TotalPayText = "10.00",
+                CartLinesList = new List<SaleCartLine> { new SaleCartLine { ProductId = 1, SubTotal = 10m } }
+            };
+
+            CreatePresenter(view, new FakeSaleService(), new FakeProductService()).OnFinishSale();
+
+            Assert.Equal(new[] { "Error al convertir el tipo de moneda - Paga con\nEjemplo Formato ##.##" }, view.ShownMessages);
+        }
+
         [Fact]
         public void OnFinishSale_MissingClientData_ShowsMessage()
         {
@@ -160,8 +204,13 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Equal(new[] { "Falta dinero para pagar" }, view.ShownMessages);
         }
 
+        // Regression test: OnFinishSale used to run an extra ControlStock() check against the
+        // product-entry fields (SelectedProductId/Amount) before touching the cart, and those are
+        // "0"/1 after the last CleanProduct(). A real cashier hits this on every sale - after
+        // adding their last item, the entry fields reset, yet the sale must still register. Fixed
+        // by removing that check; only the per-line ControlStock in the loop below gates the sale now.
         [Fact]
-        public void OnFinishSale_InitialControlStockFails_DoesNothingSilently()
+        public void OnFinishSale_ProductEntryFieldsResetAfterLastAdd_StillRegistersSale()
         {
             var view = new FakeSaleView
             {
@@ -173,12 +222,14 @@ namespace PharmacySystem.Tests.Presentation
                 Amount = 1,
                 CartLinesList = new List<SaleCartLine> { new SaleCartLine { ProductId = 1, SubTotal = 10m } }
             };
-            var saleService = new FakeSaleService { ControlStockResult = false };
+            var saleService = new FakeSaleService { ControlStockResult = true, RegisterResult = 5 };
+            var productService = new FakeProductService { VerifyResult = true };
 
-            CreatePresenter(view, saleService, new FakeProductService()).OnFinishSale();
+            CreatePresenter(view, saleService, productService).OnFinishSale();
 
-            Assert.Empty(view.ShownMessages);
-            Assert.Null(saleService.RegisteredWith);
+            Assert.NotNull(saleService.RegisteredWith);
+            Assert.True(view.SaleCleared);
+            Assert.DoesNotContain(saleService.ControlStockCalls, c => c.IdProduct == 0);
         }
 
         [Fact]
@@ -212,10 +263,7 @@ namespace PharmacySystem.Tests.Presentation
                 TotalPayText = "10.00",
                 CartLinesList = new List<SaleCartLine> { new SaleCartLine { ProductId = 1, SubTotal = 10m } }
             };
-            var saleService = new FakeSaleService
-            {
-                ControlStockResults = new System.Collections.Generic.Queue<bool>(new[] { true, false })
-            };
+            var saleService = new FakeSaleService { ControlStockResult = false };
             var productService = new FakeProductService { VerifyResult = true };
 
             CreatePresenter(view, saleService, productService).OnFinishSale();
