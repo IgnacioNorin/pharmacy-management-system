@@ -47,17 +47,30 @@ namespace PharmacySystem
                 Name = "btnAck",
                 UseColumnTextForButtonValue = true
             };
+            DataGridViewButtonColumn muteButton = new DataGridViewButtonColumn
+            {
+                HeaderText = "",
+                Width = 90,
+                Text = "Mutear",
+                Name = "btnMute",
+                UseColumnTextForButtonValue = true
+            };
 
-            dgdata.Columns.Add(viewButton);
-            dgdata.Columns.Add(ackButton);
+            // Data columns first, action buttons on the right - they read like consequences of the
+            // row, not the row's primary identity.
             dgdata.Columns.Add("Severidad", "Severidad");
-            dgdata.Columns.Add("Codigo", "Código");
-            dgdata.Columns.Add("HistoryId", "HistoryId");
             dgdata.Columns.Add("Producto", "Producto");
             dgdata.Columns.Add("Detalle", "Detalle");
+            dgdata.Columns.Add("Estado", "Estado");
+            dgdata.Columns.Add("Codigo", "Código");
+            dgdata.Columns.Add("HistoryId", "HistoryId");
+            dgdata.Columns.Add(viewButton);
+            dgdata.Columns.Add(ackButton);
+            dgdata.Columns.Add(muteButton);
 
             dgdata.Columns["Codigo"].Visible = false;
             dgdata.Columns["HistoryId"].Visible = false;
+            dgdata.Columns["Estado"].Width = 90;
             dgdata.Columns["Severidad"].Width = 90;
             dgdata.Columns["Producto"].Width = 180;
             dgdata.Columns["Detalle"].Width = 160;
@@ -72,21 +85,37 @@ namespace PharmacySystem
                 row.Cells["HistoryId"].Value = alert.HistoryId?.ToString() ?? "";
                 row.Cells["Producto"].Value = alert.Name;
                 row.Cells["Detalle"].Value = alert.Detail;
+                row.Cells["Estado"].Value = StatusLabel(alert);
+                row.Cells["btnMute"].Value = alert.MutedAt != null ? "Desmutear" : "Mutear";
 
                 row.Cells["Severidad"].Style.ForeColor = SeverityColor(alert.Severity);
                 row.Cells["Severidad"].Style.Font = new Font(dgdata.Font, FontStyle.Bold);
 
-                // No history row to acknowledge against (a DB hiccup on the history write - the
-                // alert itself is still shown, fail-open, just not acknowledgeable this round).
+                // No history row to act against (a DB hiccup on the history write - the alert
+                // itself is still shown, fail-open, just not actionable this round).
                 if (alert.HistoryId == null)
                 {
                     row.Cells["btnAck"].Value = "";
+                    row.Cells["btnAck"].ReadOnly = true;
+                    row.Cells["btnMute"].Value = "";
+                    row.Cells["btnMute"].ReadOnly = true;
+                }
+                else if (alert.AcknowledgedAt != null)
+                {
+                    row.Cells["btnAck"].Value = "Hecho";
                     row.Cells["btnAck"].ReadOnly = true;
                 }
             }
 
             lblEmpty.Visible = dgdata.Rows.Count == 0;
             dgdata.Visible = dgdata.Rows.Count > 0;
+        }
+
+        private static string StatusLabel(ProductAlert alert)
+        {
+            if (alert.MutedAt != null) return "Muteada";
+            if (alert.AcknowledgedAt != null) return "Leída";
+            return "Pendiente";
         }
 
         private static string SeverityLabel(AlertSeverity severity)
@@ -118,7 +147,7 @@ namespace PharmacySystem
             if (e.ColumnIndex < 0) return;
 
             string colName = dgdata.Columns[e.ColumnIndex].Name;
-            dgdata.Cursor = colName == "btnVer" || colName == "btnAck" ? Cursors.Hand : Cursors.Default;
+            dgdata.Cursor = colName == "btnVer" || colName == "btnAck" || colName == "btnMute" ? Cursors.Hand : Cursors.Default;
         }
 
         private void dgdata_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -138,24 +167,81 @@ namespace PharmacySystem
             {
                 AcknowledgeRow(row);
             }
+            else if (columnName == "btnMute")
+            {
+                ToggleMuteRow(row);
+            }
         }
 
         private void AcknowledgeRow(DataGridViewRow row)
         {
             if (_notificationService == null) return;
 
-            string rawHistoryId = row.Cells["HistoryId"].Value?.ToString();
-            if (string.IsNullOrEmpty(rawHistoryId) || !int.TryParse(rawHistoryId, out int historyId)) return;
+            int? historyId = ParseHistoryId(row);
+            if (historyId == null) return;
 
-            if (_notificationService.AcknowledgeAlert(historyId, _currentPersonId))
+            string product = row.Cells["Producto"].Value?.ToString() ?? "";
+            if (!Confirm($"¿Marcar como reconocida la alerta de \"{product}\"?"))
+            {
+                return;
+            }
+
+            if (_notificationService.AcknowledgeAlert(historyId.Value, _currentPersonId))
             {
                 row.Cells["btnAck"].Value = "Hecho";
                 row.Cells["btnAck"].ReadOnly = true;
+                if (row.Cells["Estado"].Value as string != "Muteada")
+                {
+                    row.Cells["Estado"].Value = "Leída";
+                }
             }
             else
             {
                 MessageBox.Show("No se pudo registrar el reconocimiento de la alerta.", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
+        }
+
+        private void ToggleMuteRow(DataGridViewRow row)
+        {
+            if (_notificationService == null) return;
+
+            int? historyId = ParseHistoryId(row);
+            if (historyId == null) return;
+
+            bool currentlyMuted = (string)row.Cells["btnMute"].Value == "Desmutear";
+            string product = row.Cells["Producto"].Value?.ToString() ?? "";
+            string confirmMessage = currentlyMuted
+                ? $"¿Desmutear la alerta de \"{product}\"? Volverá a contar en el aviso de notificaciones."
+                : $"¿Mutear la alerta de \"{product}\"? Dejará de contar en el aviso de notificaciones hasta que cambie.";
+            if (!Confirm(confirmMessage))
+            {
+                return;
+            }
+
+            bool ok = currentlyMuted
+                ? _notificationService.UnmuteAlert(historyId.Value)
+                : _notificationService.MuteAlert(historyId.Value);
+
+            if (ok)
+            {
+                row.Cells["btnMute"].Value = currentlyMuted ? "Mutear" : "Desmutear";
+                row.Cells["Estado"].Value = currentlyMuted
+                    ? (row.Cells["btnAck"].Value as string == "Hecho" ? "Leída" : "Pendiente")
+                    : "Muteada";
+            }
+            else
+            {
+                MessageBox.Show("No se pudo actualizar la alerta.", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            }
+        }
+
+        private static bool Confirm(string message) =>
+            MessageBox.Show(message, "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+
+        private static int? ParseHistoryId(DataGridViewRow row)
+        {
+            string rawHistoryId = row.Cells["HistoryId"].Value?.ToString();
+            return !string.IsNullOrEmpty(rawHistoryId) && int.TryParse(rawHistoryId, out int historyId) ? historyId : (int?)null;
         }
 
         private void btnClose_Click(object sender, EventArgs e)

@@ -33,8 +33,8 @@ namespace PharmacySystem
             // InventoryChangeNotifier, so this just catches a product crossing its expiration
             // threshold purely because time passed, with nobody having sold or bought anything.
             timerNotification.Interval = 300000; // 5 minutes
-            pictureBoxStock.Visible = false;
-            pictureBoxExpiredDate.Visible = false;
+            lblAlertBadge.Visible = false;
+            RepositionAlertBadge();
             frmSale childForm = new frmSale(oPerson.idPerson);
             ShowForm(childForm, salesToolStripMenuItem);
         }
@@ -60,12 +60,27 @@ namespace PharmacySystem
             reportsToolStripMenuItem.Visible = visible;
             purchasesToolStripMenuItem.Visible = visible;
             notificationsToolStripMenuItem.Visible = visible;
+
+            // Hiding/showing sibling items reflows msMenu's horizontal stack, which moves
+            // alertBellToolStripMenuItem - the alert bell itself stays visible for every user
+            // (everyone should see stock/expiration alerts, unlike the admin-only config screens
+            // above), so its badge needs to follow wherever the item lands.
+            RepositionAlertBadge();
         }
 
-        // Fase 3 of the alerts rework: one itemized, severity-ranked list instead of two generic
-        // sentences. Still rendered through the same two labels/icons for now - a dedicated
-        // notification-center panel (with per-product click-through) is the next step, not yet
-        // wired up here.
+        // The badge is a plain Label floating on top of the Form, not a child of msMenu - a
+        // ToolStripItem can't host a nested control, so this is the only way to draw a number in
+        // its corner. msMenu isn't anchored (fixed size regardless of window resize), so the only
+        // thing that moves alertBellToolStripMenuItem is sibling visibility changing above.
+        private void RepositionAlertBadge()
+        {
+            Rectangle bounds = alertBellToolStripMenuItem.Bounds;
+            lblAlertBadge.Location = new Point(bounds.Right - lblAlertBadge.Width - 6, bounds.Top + 4);
+        }
+
+        // Fase 6 of the alerts rework: a single bell icon with a badge count instead of two
+        // always-on text summaries - the itemized list already lives one click away in
+        // ModalAlerts, so the header only needs to say "how many", not "which ones".
         public void ShowAlerts(IReadOnlyList<ProductAlert> alerts)
         {
             if (InvokeRequired)
@@ -76,28 +91,12 @@ namespace PharmacySystem
 
             _currentAlerts = alerts;
 
-            List<ProductAlert> stockAlerts = alerts
-                .Where(a => a.Severity == AlertSeverity.Critical || a.Severity == AlertSeverity.Low)
-                .ToList();
-            List<ProductAlert> expirationAlerts = alerts
-                .Where(a => a.Severity == AlertSeverity.Expired || a.Severity == AlertSeverity.ExpiringSoon)
-                .ToList();
+            // Fase 5 (mute): a muted alert still shows in the notification center (ModalAlerts),
+            // it just stops counting toward the badge - that's the whole point of muting it.
+            int unmutedCount = alerts.Count(a => a.MutedAt == null);
 
-            pictureBoxStock.Visible = stockAlerts.Count > 0;
-            lblnotifystock.Text = FormatAlertSummary("Stock: ", stockAlerts);
-
-            pictureBoxExpiredDate.Visible = expirationAlerts.Count > 0;
-            lblnotifyexpireddate.Text = FormatAlertSummary("Vencimientos: ", expirationAlerts);
-        }
-
-        private static string FormatAlertSummary(string prefix, List<ProductAlert> alerts)
-        {
-            if (alerts.Count == 0) return "";
-
-            const int maxNamed = 3;
-            string names = string.Join(", ", alerts.Take(maxNamed).Select(a => a.Name));
-            string overflow = alerts.Count > maxNamed ? $" (+{alerts.Count - maxNamed})" : "";
-            return prefix + names + overflow;
+            lblAlertBadge.Text = unmutedCount > 99 ? "99+" : unmutedCount.ToString();
+            lblAlertBadge.Visible = unmutedCount > 0;
         }
 
         // The query now hits an indexed, server-filtered SELECT (Fase 1), but it still crosses the
@@ -123,7 +122,6 @@ namespace PharmacySystem
 
         private void clientsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            checkNotifications();
             frmClient childForm = new frmClient();
 
             ShowForm(childForm, sender);
@@ -131,7 +129,6 @@ namespace PharmacySystem
 
         private void suppliersToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            checkNotifications();
             frmSupplier childForm = new frmSupplier();
 
             ShowForm(childForm, sender);
@@ -140,7 +137,6 @@ namespace PharmacySystem
 
         private void managementToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            checkNotifications();
             frmManagement childForm = new frmManagement();
 
             ShowForm(childForm, sender);
@@ -149,7 +145,6 @@ namespace PharmacySystem
 
         private void purchasesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            checkNotifications();
             frmPurchase childForm = new frmPurchase(oPerson.idPerson);
 
             ShowForm(childForm, sender);
@@ -157,7 +152,6 @@ namespace PharmacySystem
 
         private void salesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            checkNotifications();
             frmSale childForm = new frmSale(oPerson.idPerson);
 
             ShowForm(childForm, sender);
@@ -165,7 +159,6 @@ namespace PharmacySystem
 
         private void usersToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            checkNotifications();
             frmUser childForm = new frmUser();
 
             ShowForm(childForm, sender);
@@ -174,12 +167,14 @@ namespace PharmacySystem
 
         private void reportsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            checkNotifications();
             frmReport childForm = new frmReport();
 
             ShowForm(childForm, sender);
         }
 
+        // ShowForm already calls checkNotifications() for every navigation below - each handler
+        // above used to call it again first, which fired two overlapping RefreshAlerts() calls per
+        // click and raced inside SyncAlertHistory (see the lock in NotificationConfigService).
         private void ShowForm(Form form, object senderitem)
         {
             checkNotifications();

@@ -14,6 +14,8 @@ namespace PharmacySystem.Data
         void UpdateSeverity(int historyId, AlertSeverity severity, decimal? triggerValue);
         void Resolve(int historyId);
         bool Acknowledge(int historyId, int personId);
+        bool Mute(int historyId);
+        bool Unmute(int historyId);
         List<ProductAlertHistoryEntry> GetHistory(DateTime startDate, DateTime endDate);
     }
 }

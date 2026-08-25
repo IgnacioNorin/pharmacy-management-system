@@ -143,6 +143,56 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
+        public void Mute_ThenUnmute_RoundTripsMutedAt()
+        {
+            int categoryId = CreateCategory();
+            int productId = CreateProduct(categoryId);
+            int historyId = Repository.Insert(productId, AlertType.Stock, AlertSeverity.Critical, 0m);
+
+            try
+            {
+                bool muted = Repository.Mute(historyId);
+                Assert.True(muted);
+                var entry = Assert.Single(Repository.GetOpenAlerts(), o => o.Id == historyId);
+                Assert.NotNull(entry.MutedAt);
+
+                bool unmuted = Repository.Unmute(historyId);
+                Assert.True(unmuted);
+                entry = Assert.Single(Repository.GetOpenAlerts(), o => o.Id == historyId);
+                Assert.Null(entry.MutedAt);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_alert_history WHERE id = @id", new SqlParameter("@id", historyId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+            }
+        }
+
+        [Fact]
+        public void UpdateSeverity_OnMutedRow_ClearsMute()
+        {
+            int categoryId = CreateCategory();
+            int productId = CreateProduct(categoryId);
+            int historyId = Repository.Insert(productId, AlertType.Stock, AlertSeverity.Low, 3m);
+
+            try
+            {
+                Repository.Mute(historyId);
+                Repository.UpdateSeverity(historyId, AlertSeverity.Critical, 0m);
+
+                var entry = Assert.Single(Repository.GetOpenAlerts(), o => o.Id == historyId);
+                Assert.Null(entry.MutedAt);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_alert_history WHERE id = @id", new SqlParameter("@id", historyId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+            }
+        }
+
+        [Fact]
         public void GetHistory_OutsideDateRange_IsExcluded()
         {
             int categoryId = CreateCategory();

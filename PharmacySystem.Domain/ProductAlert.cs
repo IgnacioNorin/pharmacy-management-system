@@ -1,3 +1,5 @@
+using System;
+
 namespace PharmacySystem.Model
 {
     // One row for the notification center (Fase 3 of the alerts rework): a product that is
@@ -16,5 +18,11 @@ namespace PharmacySystem.Model
         // itself failed (fail-open: a DB hiccup on the history table must never hide a real alert).
         public int? HistoryId { get; set; }
         public decimal? TriggerValue { get; set; }
+
+        // Fase 5 (mute): mirrors the backing history row's state so the notification center can
+        // show a status (Pendiente/Leída/Muteada) and MainForm can exclude muted alerts from the
+        // header summary without a second round-trip.
+        public DateTime? AcknowledgedAt { get; set; }
+        public DateTime? MutedAt { get; set; }
     }
 }

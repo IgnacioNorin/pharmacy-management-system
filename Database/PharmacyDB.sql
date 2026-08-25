@@ -241,6 +241,7 @@ CREATE TABLE [dbo].[product_alert_history](
     [resolved_at] [datetime] NULL,
     [acknowledged_by] [int] NULL,
     [acknowledged_at] [datetime] NULL,
+    [muted_at] [datetime] NULL,
     CONSTRAINT [PK_product_alert_history] PRIMARY KEY CLUSTERED ([id] ASC),
     CONSTRAINT [FK_product_alert_history_product] FOREIGN KEY ([product_id]) REFERENCES [dbo].[product] ([id]),
     CONSTRAINT [FK_product_alert_history_person] FOREIGN KEY ([acknowledged_by]) REFERENCES [dbo].[person] ([id])

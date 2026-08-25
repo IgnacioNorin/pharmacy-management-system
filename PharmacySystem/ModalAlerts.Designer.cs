@@ -94,7 +94,7 @@ namespace PharmacySystem
             this.dgdata.RowTemplate.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black;
             this.dgdata.RowTemplate.Height = 30;
             this.dgdata.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgdata.Size = new System.Drawing.Size(608, 320);
+            this.dgdata.Size = new System.Drawing.Size(800, 320);
             this.dgdata.TabIndex = 1;
             this.dgdata.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgdata_CellContentClick);
             this.dgdata.CellMouseEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgdata_CellMouseEnter);
@@ -106,7 +106,7 @@ namespace PharmacySystem
             this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnClose.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnClose.ForeColor = System.Drawing.Color.White;
-            this.btnClose.Location = new System.Drawing.Point(509, 380);
+            this.btnClose.Location = new System.Drawing.Point(701, 380);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(115, 32);
             this.btnClose.TabIndex = 2;
@@ -119,7 +119,7 @@ namespace PharmacySystem
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(640, 424);
+            this.ClientSize = new System.Drawing.Size(832, 424);
             this.Controls.Add(this.lblEmpty);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.dgdata);
