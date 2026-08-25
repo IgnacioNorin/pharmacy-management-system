@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.SqlClient;
-using System.Text;
+using System.Linq;
+using Dapper;
 using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 
@@ -19,120 +19,73 @@ namespace PharmacySystem.Data
 
         public List<Sale> ListSale()
         {
-            List<Sale> List = new List<Sale>();
-
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("SELECT id, document_type, document_number, document_client, name_client, total_amount, amount_received, change_amount, date_registered FROM sale");
+                    const string sql =
+                        "SELECT id AS idSale, document_type AS typeDocument, document_number AS numberDocument, " +
+                        "document_client AS documentClient, name_client AS nameClient, total_amount AS totalPay, " +
+                        "amount_received AS payWith, change_amount AS change, date_registered AS registrationDate FROM sale";
 
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    cmd.CommandType = CommandType.Text;
-
-                    oConnection.Open();
-                    using (SqlDataReader dr = cmd.ExecuteReader())
-                    {
-                        while (dr.Read())
-                        {
-                            List.Add(new Sale()
-                            {
-                                idSale = Convert.ToInt32(dr["id"].ToString()),
-                                typeDocument = dr["document_type"].ToString(),
-                                numberDocument = dr["document_number"].ToString(),
-                                documentClient = dr["document_client"].ToString(),
-                                nameClient = dr["name_client"].ToString(),
-                                totalPay = Convert.ToDecimal(dr["total_amount"]),
-                                payWith = Convert.ToDecimal(dr["amount_received"]),
-                                change = Convert.ToDecimal(dr["change_amount"]),
-                                registrationDate = Convert.ToDateTime(dr["date_registered"])
-                            });
-                        }
-                    }
-
+                    return oConnection.Query<Sale>(sql).ToList();
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    List = new List<Sale>();
+                    return new List<Sale>();
                 }
             }
-            return List;
         }
 
         public List<SaleDetail> ListSaleDetail()
         {
-            List<SaleDetail> List = new List<SaleDetail>();
-
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("SELECT sd.id, sd.sale_id ,p.name, sd.stock, sd.sale_price, sd.subtotal FROM sale_detail sd");
-                    sb.AppendLine("INNER JOIN product p ON p.id = sd.product_id");
+                    // Product's own column (name) is placed last so its region is contiguous for
+                    // Dapper's split-based multi-mapping - splitOn only supports a clean two-region
+                    // split, unlike the original column order (name sandwiched in the middle).
+                    const string sql =
+                        "SELECT sd.id AS idSaleDetail, sd.sale_id AS idSale, sd.stock AS amount, sd.sale_price AS salePrice, sd.subtotal AS subtotal, " +
+                        "p.name AS name " +
+                        "FROM sale_detail sd INNER JOIN product p ON p.id = sd.product_id";
 
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    cmd.CommandType = CommandType.Text;
-
-                    oConnection.Open();
-                    using (SqlDataReader dr = cmd.ExecuteReader())
-                    {
-                        while (dr.Read())
-                        {
-                            List.Add(new SaleDetail()
-                            {
-                                idSaleDetail = Convert.ToInt32(dr["id"].ToString()),
-                                idSale = Convert.ToInt32(dr["sale_id"].ToString()),
-                                oProduct = new Product() { name = dr["name"].ToString() },
-                                amount = Convert.ToInt32(dr["stock"].ToString()),
-                                salePrice = Convert.ToDecimal(dr["sale_price"]),
-                                subtotal = Convert.ToDecimal(dr["subtotal"])
-                            });
-                        }
-                    }
-
+                    return oConnection.Query<SaleDetail, Product, SaleDetail>(
+                        sql,
+                        (detail, product) => { detail.oProduct = product; return detail; },
+                        splitOn: "name")
+                        .ToList();
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    List = new List<SaleDetail>();
+                    return new List<SaleDetail>();
                 }
             }
-            return List;
         }
 
         public bool ControlStock(int idproduct, int amount, bool subtract)
         {
-            bool result = true;
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
                     string query = string.Format("UPDATE product SET stock = (stock {0} @amount) WHERE id = @idproduct", subtract ? "-" : "+");
-                    SqlCommand cmd = new SqlCommand(query, oConnection);
-                    cmd.Parameters.AddWithValue("@amount", amount);
-                    cmd.Parameters.AddWithValue("@idproduct", idproduct);
-                    cmd.CommandType = CommandType.Text;
-                    oConnection.Open();
-                    cmd.ExecuteNonQuery();
-                    result = true;
+                    oConnection.Execute(query, new { amount, idproduct });
+                    return true;
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    result = false;
+                    return false;
                 }
             }
-
-            return result;
         }
 
         public int Register(Sale obj)
         {
-            int result = 0;
-
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
@@ -142,215 +95,151 @@ namespace PharmacySystem.Data
 
                     try
                     {
-                        string insertSaleQuery = "INSERT INTO sale(document_type, document_number, user_id, document_client, name_client, total_amount, amount_received, change_amount) " +
+                        const string insertSaleQuery =
+                            "INSERT INTO sale(document_type, document_number, user_id, document_client, name_client, total_amount, amount_received, change_amount) " +
                             "VALUES (@document_type, (SELECT RIGHT('000000' + CAST((SELECT count(*) + 1 FROM sale) AS VARCHAR), 6)), @user_id, @document_client, @name_client, @total_amount, @amount_received, @change_amount); " +
                             "SELECT SCOPE_IDENTITY();";
 
-                        SqlCommand cmdSale = new SqlCommand(insertSaleQuery, oConnection, objTransacion);
-                        cmdSale.Parameters.AddWithValue("@document_type", obj.typeDocument);
-                        cmdSale.Parameters.AddWithValue("@user_id", obj.oPerson.idPerson);
-                        cmdSale.Parameters.AddWithValue("@document_client", obj.documentClient);
-                        cmdSale.Parameters.AddWithValue("@name_client", obj.nameClient);
-                        cmdSale.Parameters.AddWithValue("@total_amount", obj.totalPay);
-                        cmdSale.Parameters.AddWithValue("@amount_received", obj.payWith);
-                        cmdSale.Parameters.AddWithValue("@change_amount", obj.change);
+                        object rawId = oConnection.ExecuteScalar<object>(insertSaleQuery, new
+                        {
+                            document_type = obj.typeDocument,
+                            user_id = obj.oPerson.idPerson,
+                            document_client = obj.documentClient,
+                            name_client = obj.nameClient,
+                            total_amount = obj.totalPay,
+                            amount_received = obj.payWith,
+                            change_amount = obj.change
+                        }, objTransacion);
 
-                        int idSale = 0;
-                        int.TryParse(cmdSale.ExecuteScalar()?.ToString(), out idSale);
+                        int.TryParse(rawId?.ToString(), out int idSale);
 
                         if (idSale != 0)
                         {
-                            string insertDetailQuery = "INSERT INTO sale_detail(sale_id, product_id, stock, sale_price, subtotal) " +
+                            const string insertDetailQuery =
+                                "INSERT INTO sale_detail(sale_id, product_id, stock, sale_price, subtotal) " +
                                 "VALUES (@sale_id, @product_id, @stock, @sale_price, @subtotal)";
 
                             foreach (SaleDetail dv in obj.oSaleDetail)
                             {
-                                SqlCommand cmdDetail = new SqlCommand(insertDetailQuery, oConnection, objTransacion);
-                                cmdDetail.Parameters.AddWithValue("@sale_id", idSale);
-                                cmdDetail.Parameters.AddWithValue("@product_id", dv.oProduct.idProduct);
-                                cmdDetail.Parameters.AddWithValue("@stock", dv.amount);
-                                cmdDetail.Parameters.AddWithValue("@sale_price", dv.salePrice);
-                                cmdDetail.Parameters.AddWithValue("@subtotal", dv.subtotal);
-                                cmdDetail.ExecuteNonQuery();
+                                oConnection.Execute(insertDetailQuery, new
+                                {
+                                    sale_id = idSale,
+                                    product_id = dv.oProduct.idProduct,
+                                    stock = dv.amount,
+                                    sale_price = dv.salePrice,
+                                    subtotal = dv.subtotal
+                                }, objTransacion);
                             }
 
                             objTransacion.Commit();
-                            result = idSale;
+                            return idSale;
                         }
                         else
                         {
                             objTransacion.Rollback();
-                            result = 0;
+                            return 0;
                         }
-
                     }
                     catch (Exception e)
                     {
                         Logger.LogError(e);
                         objTransacion.Rollback();
-                        result = 0;
+                        return 0;
                     }
-
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    result = 0;
+                    return 0;
                 }
             }
-            return result;
         }
 
         public List<SaleReportRow> ReportSale(string startDate, string endDate)
         {
-            List<SaleReportRow> rows = new List<SaleReportRow>();
-
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    StringBuilder sb = new StringBuilder();
+                    const string sql =
+                        "SELECT s.date_registered AS DateRegistered, s.document_type AS DocumentType, s.document_number AS DocumentNumber, " +
+                        "p.document_number AS SellerDocument, p.name AS SellerName, s.document_client AS ClientDocument, s.name_client AS ClientName, " +
+                        "s.total_amount AS TotalAmount, s.amount_received AS AmountReceived, s.change_amount AS ChangeAmount " +
+                        "FROM sale s " +
+                        "INNER JOIN person p ON p.id = s.user_id " +
+                        "WHERE CAST(s.date_registered AS DATE) BETWEEN @startDate AND @endDate";
 
-                    sb.AppendLine("SELECT s.date_registered,s.document_type,s.document_number AS document_tribute_number,p.document_number AS document_number_person,p.name,s.document_client,s.name_client,");
-                    sb.AppendLine("s.total_amount,s.amount_received,s.change_amount FROM sale s");
-                    sb.AppendLine("INNER JOIN person p ON p.id = s.user_id");
-                    sb.AppendLine("WHERE CAST(s.date_registered AS DATE) BETWEEN @startDate AND @endDate");
-
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    cmd.Parameters.AddWithValue("@startDate", startDate);
-                    cmd.Parameters.AddWithValue("@endDate", endDate);
-                    cmd.CommandType = CommandType.Text;
-
-                    oConnection.Open();
-                    using (SqlDataReader dr = cmd.ExecuteReader())
-                    {
-                        while (dr.Read())
-                        {
-                            rows.Add(new SaleReportRow
-                            {
-                                DateRegistered = Convert.ToDateTime(dr["date_registered"]),
-                                DocumentType = dr["document_type"].ToString(),
-                                DocumentNumber = dr["document_tribute_number"].ToString(),
-                                SellerDocument = dr["document_number_person"].ToString(),
-                                SellerName = dr["name"].ToString(),
-                                ClientDocument = dr["document_client"].ToString(),
-                                ClientName = dr["name_client"].ToString(),
-                                TotalAmount = Convert.ToDecimal(dr["total_amount"]),
-                                AmountReceived = Convert.ToDecimal(dr["amount_received"]),
-                                ChangeAmount = Convert.ToDecimal(dr["change_amount"])
-                            });
-                        }
-                    }
+                    return oConnection.Query<SaleReportRow>(sql, new { startDate, endDate }).ToList();
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    rows = new List<SaleReportRow>();
+                    return new List<SaleReportRow>();
                 }
             }
-            return rows;
         }
 
         public decimal SumTotalPay(string startDate, string endDate)
         {
-            decimal sum_obj;
-            DataTable dt = new DataTable();
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("SELECT ISNULL(SUM(s.total_amount), 0) AS total_amount");
-                    sb.AppendLine("FROM sale s");
-                    sb.AppendLine("INNER JOIN person p ON p.id = s.user_id");
-                    sb.AppendLine("WHERE CAST(s.date_registered AS DATE) BETWEEN @startDate AND @endDate");
+                    const string sql =
+                        "SELECT ISNULL(SUM(s.total_amount), 0) AS total_amount " +
+                        "FROM sale s INNER JOIN person p ON p.id = s.user_id " +
+                        "WHERE CAST(s.date_registered AS DATE) BETWEEN @startDate AND @endDate";
 
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    cmd.Parameters.AddWithValue("@startDate", startDate);
-                    cmd.Parameters.AddWithValue("@endDate", endDate);
-                    cmd.CommandType = CommandType.Text;
-
-                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                    {
-                        da.Fill(dt);
-                        sum_obj = Convert.ToDecimal(dt.Rows[0]["total_amount"]);
-                    }
+                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate, endDate });
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    sum_obj = 0;
+                    return 0;
                 }
             }
-            return sum_obj;
         }
 
         public decimal SumAmountReceived(string startDate, string endDate)
         {
-            decimal sum_obj;
-            DataTable dt = new DataTable();
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("SELECT ISNULL(SUM(s.amount_received), 0) AS amount_received");
-                    sb.AppendLine("FROM sale s");
-                    sb.AppendLine("INNER JOIN person p ON p.id = s.user_id");
-                    sb.AppendLine("WHERE CAST(s.date_registered AS DATE) BETWEEN @startDate AND @endDate");
+                    const string sql =
+                        "SELECT ISNULL(SUM(s.amount_received), 0) AS amount_received " +
+                        "FROM sale s INNER JOIN person p ON p.id = s.user_id " +
+                        "WHERE CAST(s.date_registered AS DATE) BETWEEN @startDate AND @endDate";
 
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    cmd.Parameters.AddWithValue("@startDate", startDate);
-                    cmd.Parameters.AddWithValue("@endDate", endDate);
-                    cmd.CommandType = CommandType.Text;
-
-                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                    {
-                        da.Fill(dt);
-                        sum_obj = Convert.ToDecimal(dt.Rows[0]["amount_received"]);
-                    }
+                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate, endDate });
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    sum_obj = 0;
+                    return 0;
                 }
             }
-            return sum_obj;
         }
 
         public decimal SumChangeAmount(string startDate, string endDate)
         {
-            decimal sum_obj;
-            DataTable dt = new DataTable();
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("SELECT ISNULL(SUM(s.change_amount), 0) AS change_amount");
-                    sb.AppendLine("FROM sale s");
-                    sb.AppendLine("INNER JOIN person p ON p.id = s.user_id");
-                    sb.AppendLine("WHERE CAST(s.date_registered AS DATE) BETWEEN @startDate and @endDate");
+                    const string sql =
+                        "SELECT ISNULL(SUM(s.change_amount), 0) AS change_amount " +
+                        "FROM sale s INNER JOIN person p ON p.id = s.user_id " +
+                        "WHERE CAST(s.date_registered AS DATE) BETWEEN @startDate and @endDate";
 
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    cmd.Parameters.AddWithValue("@startDate", startDate);
-                    cmd.Parameters.AddWithValue("@endDate", endDate);
-                    cmd.CommandType = CommandType.Text;
-
-                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                    {
-                        da.Fill(dt);
-                        sum_obj = Convert.ToDecimal(dt.Rows[0]["change_amount"]);
-                    }
+                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate, endDate });
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    sum_obj = 0;
+                    return 0;
                 }
             }
-            return sum_obj;
         }
     }
 }
