@@ -11,112 +11,82 @@ namespace PharmacySystem
     {
         internal static readonly ISqlConnectionFactory ConnectionFactory = SqlConnectionFactory.FromConfiguration();
 
-        public static SupplierPresenter CreateSupplierPresenter(ISupplierView view)
-        {
-            ISupplierRepository repository = new SupplierRepository(ConnectionFactory);
-            ISupplierService service = new SupplierService(repository);
-            return new SupplierPresenter(view, service);
-        }
+        // Services are stateless wrappers around a repository, which in turn only holds the
+        // shared ConnectionFactory above - safe to build each one once and hand the same instance
+        // to every screen that needs it, instead of re-building the same repository+service pair
+        // in every Create*Presenter method below.
+        private static readonly ISupplierService _supplierService = new SupplierService(new SupplierRepository(ConnectionFactory));
+        private static readonly IPersonService _personService = new PersonService(new PersonRepository(ConnectionFactory));
+        private static readonly IProductService _productService = new ProductService(new ProductRepository(ConnectionFactory));
+        private static readonly ICategoryService _categoryService = new CategoryService(new CategoryRepository(ConnectionFactory));
+        private static readonly IStoreService _storeService = new StoreService(new StoreRepository(ConnectionFactory));
+        private static readonly INotificationConfigService _notificationConfigService = new NotificationConfigService(new NotificationConfigRepository(ConnectionFactory));
+        private static readonly IPurchaseService _purchaseService = new PurchaseService(new PurchaseRepository(ConnectionFactory));
+        private static readonly ISaleService _saleService = new SaleService(new SaleRepository(ConnectionFactory));
 
-        public static NotificationConfigPresenter CreateNotificationConfigPresenter(INotificationConfigView view)
-        {
-            INotificationConfigRepository repository = new NotificationConfigRepository(ConnectionFactory);
-            INotificationConfigService service = new NotificationConfigService(repository);
-            return new NotificationConfigPresenter(view, service);
-        }
+        #region Supplier
 
-        public static SupplierPickerPresenter CreateSupplierPickerPresenter(ISupplierPickerView view)
-        {
-            ISupplierRepository repository = new SupplierRepository(ConnectionFactory);
-            ISupplierService service = new SupplierService(repository);
-            return new SupplierPickerPresenter(view, service);
-        }
+        public static SupplierPresenter CreateSupplierPresenter(ISupplierView view) =>
+            new SupplierPresenter(view, _supplierService);
 
-        public static ClientPresenter CreateClientPresenter(IClientView view)
-        {
-            IPersonRepository repository = new PersonRepository(ConnectionFactory);
-            IPersonService service = new PersonService(repository);
-            return new ClientPresenter(view, service);
-        }
+        public static SupplierPickerPresenter CreateSupplierPickerPresenter(ISupplierPickerView view) =>
+            new SupplierPickerPresenter(view, _supplierService);
 
-        public static UserPresenter CreateUserPresenter(IUserView view)
-        {
-            IPersonRepository repository = new PersonRepository(ConnectionFactory);
-            IPersonService service = new PersonService(repository);
-            return new UserPresenter(view, service);
-        }
+        #endregion
 
-        public static ClientPickerPresenter CreateClientPickerPresenter(IClientPickerView view)
-        {
-            IPersonRepository repository = new PersonRepository(ConnectionFactory);
-            IPersonService service = new PersonService(repository);
-            return new ClientPickerPresenter(view, service);
-        }
+        #region Person (client / user / login)
 
-        public static ProductPickerPresenter CreateProductPickerPresenter(IProductPickerView view, string origin)
-        {
-            IProductRepository repository = new ProductRepository(ConnectionFactory);
-            IProductService service = new ProductService(repository);
-            return new ProductPickerPresenter(view, service, origin);
-        }
+        public static ClientPresenter CreateClientPresenter(IClientView view) =>
+            new ClientPresenter(view, _personService);
 
-        public static CategoryManagementPresenter CreateCategoryManagementPresenter(ICategoryManagementView view)
-        {
-            ICategoryRepository repository = new CategoryRepository(ConnectionFactory);
-            ICategoryService service = new CategoryService(repository);
-            return new CategoryManagementPresenter(view, service);
-        }
+        public static UserPresenter CreateUserPresenter(IUserView view) =>
+            new UserPresenter(view, _personService);
 
-        public static ProductManagementPresenter CreateProductManagementPresenter(IProductManagementView view)
-        {
-            IProductService productService = new ProductService(new ProductRepository(ConnectionFactory));
-            ICategoryService categoryService = new CategoryService(new CategoryRepository(ConnectionFactory));
-            return new ProductManagementPresenter(view, productService, categoryService);
-        }
+        public static ClientPickerPresenter CreateClientPickerPresenter(IClientPickerView view) =>
+            new ClientPickerPresenter(view, _personService);
 
-        public static StoreManagementPresenter CreateStoreManagementPresenter(IStoreManagementView view)
-        {
-            IStoreRepository repository = new StoreRepository(ConnectionFactory);
-            IStoreService service = new StoreService(repository);
-            return new StoreManagementPresenter(view, service);
-        }
+        public static LoginPresenter CreateLoginPresenter(ILoginView view) =>
+            new LoginPresenter(view, _personService);
 
-        public static PurchasePresenter CreatePurchasePresenter(IPurchaseView view, int idPerson)
-        {
-            IPurchaseService purchaseService = new PurchaseService(new PurchaseRepository(ConnectionFactory));
-            IProductService productService = new ProductService(new ProductRepository(ConnectionFactory));
-            return new PurchasePresenter(view, purchaseService, productService, idPerson);
-        }
+        #endregion
 
-        public static SalePresenter CreateSalePresenter(ISaleView view, int idPerson)
-        {
-            ISaleService saleService = new SaleService(new SaleRepository(ConnectionFactory));
-            IProductService productService = new ProductService(new ProductRepository(ConnectionFactory));
-            return new SalePresenter(view, saleService, productService, idPerson);
-        }
+        #region Product / Category
 
-        public static LoginPresenter CreateLoginPresenter(ILoginView view)
-        {
-            IPersonRepository repository = new PersonRepository(ConnectionFactory);
-            IPersonService service = new PersonService(repository);
-            return new LoginPresenter(view, service);
-        }
+        public static ProductPickerPresenter CreateProductPickerPresenter(IProductPickerView view, string origin) =>
+            new ProductPickerPresenter(view, _productService, origin);
 
-        public static MainFormPresenter CreateMainFormPresenter(IMainFormView view)
-        {
-            IStoreService storeService = new StoreService(new StoreRepository(ConnectionFactory));
-            INotificationConfigService notificationService = new NotificationConfigService(new NotificationConfigRepository(ConnectionFactory));
-            return new MainFormPresenter(view, storeService, notificationService);
-        }
+        public static CategoryManagementPresenter CreateCategoryManagementPresenter(ICategoryManagementView view) =>
+            new CategoryManagementPresenter(view, _categoryService);
 
-        public static ReportPresenter CreateReportPresenter(IReportView view)
-        {
-            ISupplierService supplierService = new SupplierService(new SupplierRepository(ConnectionFactory));
-            ICategoryService categoryService = new CategoryService(new CategoryRepository(ConnectionFactory));
-            ISaleService saleService = new SaleService(new SaleRepository(ConnectionFactory));
-            IPurchaseService purchaseService = new PurchaseService(new PurchaseRepository(ConnectionFactory));
-            IProductService productService = new ProductService(new ProductRepository(ConnectionFactory));
-            return new ReportPresenter(view, supplierService, categoryService, saleService, purchaseService, productService);
-        }
+        public static ProductManagementPresenter CreateProductManagementPresenter(IProductManagementView view) =>
+            new ProductManagementPresenter(view, _productService, _categoryService);
+
+        #endregion
+
+        #region Store / Notifications
+
+        public static StoreManagementPresenter CreateStoreManagementPresenter(IStoreManagementView view) =>
+            new StoreManagementPresenter(view, _storeService);
+
+        public static NotificationConfigPresenter CreateNotificationConfigPresenter(INotificationConfigView view) =>
+            new NotificationConfigPresenter(view, _notificationConfigService);
+
+        public static MainFormPresenter CreateMainFormPresenter(IMainFormView view) =>
+            new MainFormPresenter(view, _storeService, _notificationConfigService);
+
+        #endregion
+
+        #region Purchase / Sale / Reports
+
+        public static PurchasePresenter CreatePurchasePresenter(IPurchaseView view, int idPerson) =>
+            new PurchasePresenter(view, _purchaseService, _productService, idPerson);
+
+        public static SalePresenter CreateSalePresenter(ISaleView view, int idPerson) =>
+            new SalePresenter(view, _saleService, _productService, idPerson);
+
+        public static ReportPresenter CreateReportPresenter(IReportView view) =>
+            new ReportPresenter(view, _supplierService, _categoryService, _saleService, _purchaseService, _productService);
+
+        #endregion
     }
 }
