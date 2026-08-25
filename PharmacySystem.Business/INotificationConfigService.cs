@@ -10,6 +10,8 @@ namespace PharmacySystem.Business
         List<Product> ListStock(int criticalStock);
         List<ProductAlert> GetActiveAlerts();
         bool AcknowledgeAlert(int historyId, int personId);
+        bool MuteAlert(int historyId);
+        bool UnmuteAlert(int historyId);
         List<ProductAlertHistoryEntry> GetAlertHistory(DateTime startDate, DateTime endDate);
         int ConfigDay();
         int ConfigStock();

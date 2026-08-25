@@ -11,6 +11,15 @@ namespace PharmacySystem.Business
         private readonly INotificationConfigRepository _repository;
         private readonly IProductAlertHistoryRepository _historyRepository;
 
+        // NotificationConfigService is a process-wide singleton (see CompositionRoot) and
+        // RefreshAlerts() is fired from several places that can overlap in practice (a menu click
+        // calling checkNotifications() directly and again through ShowForm, the 5-minute timer
+        // tick, the StockChanged event) - each becomes a Task.Run on a threadpool thread. Without
+        // this lock, two overlapping calls both read "no open row yet" in SyncAlertHistory before
+        // either finishes inserting, and both insert the same (ProductId, AlertType) row, which
+        // then crashes the *next* call's ToDictionary with a duplicate-key ArgumentException.
+        private static readonly object _syncLock = new object();
+
         public NotificationConfigService(INotificationConfigRepository repository, IProductAlertHistoryRepository historyRepository)
         {
             _repository = repository;
@@ -70,6 +79,10 @@ namespace PharmacySystem.Business
 
         public bool AcknowledgeAlert(int historyId, int personId) => _historyRepository.Acknowledge(historyId, personId);
 
+        public bool MuteAlert(int historyId) => _historyRepository.Mute(historyId);
+
+        public bool UnmuteAlert(int historyId) => _historyRepository.Unmute(historyId);
+
         public List<ProductAlertHistoryEntry> GetAlertHistory(DateTime startDate, DateTime endDate) =>
             _historyRepository.GetHistory(startDate, endDate);
 
@@ -78,35 +91,51 @@ namespace PharmacySystem.Business
         // (resolve). A poll that finds nothing new touches product_alert_history zero times.
         private void SyncAlertHistory(List<ProductAlert> alerts)
         {
-            List<ProductAlertHistoryEntry> open = _historyRepository.GetOpenAlerts();
-            var openByKey = open.ToDictionary(o => (o.ProductId, o.AlertType));
-            var currentKeys = new HashSet<(int ProductId, AlertType AlertType)>();
-
-            foreach (ProductAlert alert in alerts)
+            lock (_syncLock)
             {
-                AlertType type = TypeOf(alert.Severity);
-                currentKeys.Add((alert.ProductId, type));
+                List<ProductAlertHistoryEntry> open = _historyRepository.GetOpenAlerts();
+                // GroupBy + take-first instead of ToDictionary: tolerates a duplicate open row left
+                // over from before this lock existed instead of crashing every future call.
+                var openByKey = open
+                    .GroupBy(o => (o.ProductId, o.AlertType))
+                    .ToDictionary(g => g.Key, g => g.First());
+                var currentKeys = new HashSet<(int ProductId, AlertType AlertType)>();
 
-                if (openByKey.TryGetValue((alert.ProductId, type), out ProductAlertHistoryEntry existing))
+                foreach (ProductAlert alert in alerts)
                 {
-                    alert.HistoryId = existing.Id;
-                    if (existing.Severity != alert.Severity)
+                    AlertType type = TypeOf(alert.Severity);
+                    currentKeys.Add((alert.ProductId, type));
+
+                    if (openByKey.TryGetValue((alert.ProductId, type), out ProductAlertHistoryEntry existing))
                     {
-                        _historyRepository.UpdateSeverity(existing.Id, alert.Severity, alert.TriggerValue);
+                        alert.HistoryId = existing.Id;
+                        alert.AcknowledgedAt = existing.AcknowledgedAt;
+
+                        if (existing.Severity != alert.Severity)
+                        {
+                            _historyRepository.UpdateSeverity(existing.Id, alert.Severity, alert.TriggerValue);
+                            // The mute applied to the old severity - a worsened or improved alert
+                            // is a different situation the user hasn't seen yet, so it un-mutes.
+                            alert.MutedAt = null;
+                        }
+                        else
+                        {
+                            alert.MutedAt = existing.MutedAt;
+                        }
+                    }
+                    else
+                    {
+                        int newId = _historyRepository.Insert(alert.ProductId, type, alert.Severity, alert.TriggerValue);
+                        alert.HistoryId = newId != 0 ? newId : (int?)null;
                     }
                 }
-                else
-                {
-                    int newId = _historyRepository.Insert(alert.ProductId, type, alert.Severity, alert.TriggerValue);
-                    alert.HistoryId = newId != 0 ? newId : (int?)null;
-                }
-            }
 
-            foreach (ProductAlertHistoryEntry entry in open)
-            {
-                if (!currentKeys.Contains((entry.ProductId, entry.AlertType)))
+                foreach (ProductAlertHistoryEntry entry in open)
                 {
-                    _historyRepository.Resolve(entry.Id);
+                    if (!currentKeys.Contains((entry.ProductId, entry.AlertType)))
+                    {
+                        _historyRepository.Resolve(entry.Id);
+                    }
                 }
             }
         }

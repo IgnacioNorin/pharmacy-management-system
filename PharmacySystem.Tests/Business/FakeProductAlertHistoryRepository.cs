@@ -16,6 +16,10 @@ namespace PharmacySystem.Tests.Business
         public List<(int HistoryId, AlertSeverity Severity, decimal? TriggerValue)> SeverityUpdates { get; } = new List<(int, AlertSeverity, decimal?)>();
         public List<int> Resolved { get; } = new List<int>();
         public (int HistoryId, int PersonId)? AcknowledgedWith { get; private set; }
+        public List<int> Muted { get; } = new List<int>();
+        public List<int> Unmuted { get; } = new List<int>();
+        public bool MuteResult { get; set; } = true;
+        public bool UnmuteResult { get; set; } = true;
 
         public List<ProductAlertHistoryEntry> GetOpenAlerts() => OpenAlerts;
 
@@ -37,5 +41,17 @@ namespace PharmacySystem.Tests.Business
         }
 
         public List<ProductAlertHistoryEntry> GetHistory(DateTime startDate, DateTime endDate) => HistoryResult;
+
+        public bool Mute(int historyId)
+        {
+            Muted.Add(historyId);
+            return MuteResult;
+        }
+
+        public bool Unmute(int historyId)
+        {
+            Unmuted.Add(historyId);
+            return UnmuteResult;
+        }
     }
 }

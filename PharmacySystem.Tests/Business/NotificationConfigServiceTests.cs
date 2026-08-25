@@ -1,7 +1,11 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using PharmacySystem.Business;
+using PharmacySystem.Data;
 using PharmacySystem.Model;
 using Xunit;
 
@@ -9,7 +13,7 @@ namespace PharmacySystem.Tests.Business
 {
     public class NotificationConfigServiceTests
     {
-        private static NotificationConfigService CreateService(FakeNotificationConfigRepository repository, FakeProductAlertHistoryRepository historyRepository = null)
+        private static NotificationConfigService CreateService(FakeNotificationConfigRepository repository, IProductAlertHistoryRepository historyRepository = null)
             => new NotificationConfigService(repository, historyRepository ?? new FakeProductAlertHistoryRepository());
 
         [Fact]
@@ -222,6 +226,157 @@ namespace PharmacySystem.Tests.Business
             CreateService(repository, historyRepository).GetActiveAlerts();
 
             Assert.Equal(new[] { 7 }, historyRepository.Resolved);
+        }
+
+        [Fact]
+        public void GetActiveAlerts_DuplicateOpenRowsForSameKey_DoesNotThrow()
+        {
+            // Regression: a duplicate open row (see the race test below) used to crash every
+            // subsequent call with ToDictionary's "an item with the same key has already been
+            // added" - SyncAlertHistory must tolerate leftover duplicates instead of relying on the
+            // history table already being clean.
+            var repository = new FakeNotificationConfigRepository
+            {
+                ListStockResult = new List<Product> { new Product { idProduct = 1, code = "P1", name = "Paracetamol", stock = 0 } }
+            };
+            var historyRepository = new FakeProductAlertHistoryRepository
+            {
+                OpenAlerts = new List<ProductAlertHistoryEntry>
+                {
+                    new ProductAlertHistoryEntry { Id = 16, ProductId = 1, AlertType = AlertType.Stock, Severity = AlertSeverity.Critical },
+                    new ProductAlertHistoryEntry { Id = 17, ProductId = 1, AlertType = AlertType.Stock, Severity = AlertSeverity.Critical }
+                }
+            };
+
+            var alerts = CreateService(repository, historyRepository).GetActiveAlerts();
+
+            Assert.Equal(16, Assert.Single(alerts).HistoryId);
+        }
+
+        [Fact]
+        public void GetActiveAlerts_ConcurrentCallsForSameNewAlert_InsertOnlyOnce()
+        {
+            // Regression: overlapping RefreshAlerts() calls (e.g. a menu click firing
+            // checkNotifications() twice, or a timer tick racing a StockChanged event) used to
+            // both read "no open row yet" before either finished inserting, producing two rows for
+            // the same (ProductId, AlertType) and crashing the next call. The lock in
+            // SyncAlertHistory must serialize these so only one insert wins.
+            var repository = new FakeNotificationConfigRepository
+            {
+                ListStockResult = new List<Product> { new Product { idProduct = 1, code = "P1", name = "Paracetamol", stock = 0 } }
+            };
+            var historyRepository = new RacyProductAlertHistoryRepository();
+            var service = CreateService(repository, historyRepository);
+
+            Parallel.Invoke(
+                () => service.GetActiveAlerts(),
+                () => service.GetActiveAlerts());
+
+            Assert.Single(historyRepository.Open);
+        }
+
+        // Models a real table: Insert() makes the row visible to later GetOpenAlerts() calls, and
+        // GetOpenAlerts() pauses briefly to widen the window for two threads to overlap - the same
+        // shape as two RefreshAlerts() calls both hitting the database around the same time.
+        private class RacyProductAlertHistoryRepository : IProductAlertHistoryRepository
+        {
+            private readonly ConcurrentDictionary<(int, AlertType), ProductAlertHistoryEntry> _open = new ConcurrentDictionary<(int, AlertType), ProductAlertHistoryEntry>();
+            private int _nextId = 1;
+
+            public ICollection<ProductAlertHistoryEntry> Open => _open.Values;
+
+            public List<ProductAlertHistoryEntry> GetOpenAlerts()
+            {
+                Thread.Sleep(5);
+                return _open.Values.ToList();
+            }
+
+            public int Insert(int productId, AlertType alertType, AlertSeverity severity, decimal? triggerValue)
+            {
+                int id = Interlocked.Increment(ref _nextId);
+                _open[(productId, alertType)] = new ProductAlertHistoryEntry { Id = id, ProductId = productId, AlertType = alertType, Severity = severity };
+                return id;
+            }
+
+            public void UpdateSeverity(int historyId, AlertSeverity severity, decimal? triggerValue) { }
+
+            public void Resolve(int historyId) { }
+
+            public bool Acknowledge(int historyId, int personId) => true;
+
+            public bool Mute(int historyId) => true;
+
+            public bool Unmute(int historyId) => true;
+
+            public List<ProductAlertHistoryEntry> GetHistory(DateTime startDate, DateTime endDate) => new List<ProductAlertHistoryEntry>();
+        }
+
+        // Fase 5 (mute): a muted alert keeps its MutedAt as long as its severity hasn't changed,
+        // and un-mutes itself the moment it does.
+
+        [Fact]
+        public void GetActiveAlerts_MutedAlertSameSeverity_StaysMuted()
+        {
+            var repository = new FakeNotificationConfigRepository
+            {
+                ListStockResult = new List<Product> { new Product { idProduct = 1, code = "P1", name = "Paracetamol", stock = 3 } }
+            };
+            var mutedAt = new DateTime(2026, 3, 1);
+            var historyRepository = new FakeProductAlertHistoryRepository
+            {
+                OpenAlerts = new List<ProductAlertHistoryEntry>
+                {
+                    new ProductAlertHistoryEntry { Id = 7, ProductId = 1, AlertType = AlertType.Stock, Severity = AlertSeverity.Low, MutedAt = mutedAt }
+                }
+            };
+
+            var alerts = CreateService(repository, historyRepository).GetActiveAlerts();
+
+            Assert.Equal(mutedAt, Assert.Single(alerts).MutedAt);
+            Assert.Empty(historyRepository.SeverityUpdates);
+        }
+
+        [Fact]
+        public void GetActiveAlerts_MutedAlertSeverityWorsens_UnmutesAutomatically()
+        {
+            var repository = new FakeNotificationConfigRepository
+            {
+                ListStockResult = new List<Product> { new Product { idProduct = 1, code = "P1", name = "Paracetamol", stock = 0 } }
+            };
+            var historyRepository = new FakeProductAlertHistoryRepository
+            {
+                OpenAlerts = new List<ProductAlertHistoryEntry>
+                {
+                    new ProductAlertHistoryEntry { Id = 7, ProductId = 1, AlertType = AlertType.Stock, Severity = AlertSeverity.Low, MutedAt = new DateTime(2026, 3, 1) }
+                }
+            };
+
+            var alerts = CreateService(repository, historyRepository).GetActiveAlerts();
+
+            Assert.Null(Assert.Single(alerts).MutedAt);
+            Assert.Single(historyRepository.SeverityUpdates);
+        }
+
+        [Fact]
+        public void MuteAlert_DelegatesToHistoryRepository()
+        {
+            var historyRepository = new FakeProductAlertHistoryRepository { MuteResult = true };
+
+            bool result = CreateService(new FakeNotificationConfigRepository(), historyRepository).MuteAlert(7);
+
+            Assert.True(result);
+            Assert.Equal(new[] { 7 }, historyRepository.Muted);
+        }
+
+        [Fact]
+        public void UnmuteAlert_DelegatesToHistoryRepository()
+        {
+            var historyRepository = new FakeProductAlertHistoryRepository { UnmuteResult = true };
+
+            bool result = CreateService(new FakeNotificationConfigRepository(), historyRepository).UnmuteAlert(7);
+
+            Assert.True(result);
+            Assert.Equal(new[] { 7 }, historyRepository.Unmuted);
         }
 
         [Fact]

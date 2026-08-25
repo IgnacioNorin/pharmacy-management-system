@@ -19,5 +19,10 @@ namespace PharmacySystem.Model
         public int? AcknowledgedBy { get; set; }
         public string AcknowledgedByName { get; set; }
         public DateTime? AcknowledgedAt { get; set; }
+
+        // Fase 5 (mute): silences this specific open row - same product, same type, same
+        // severity - from the notification center summary without resolving it. Cleared
+        // automatically the moment its severity changes (see NotificationConfigService.SyncAlertHistory).
+        public DateTime? MutedAt { get; set; }
     }
 }

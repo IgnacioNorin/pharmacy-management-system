@@ -14,7 +14,8 @@ namespace PharmacySystem.Data
             "h.id AS Id, h.product_id AS ProductId, p.code AS ProductCode, p.name AS ProductName, " +
             "h.alert_type AS AlertType, h.severity AS Severity, h.trigger_value AS TriggerValue, " +
             "h.detected_at AS DetectedAt, h.resolved_at AS ResolvedAt, " +
-            "h.acknowledged_by AS AcknowledgedBy, h.acknowledged_at AS AcknowledgedAt";
+            "h.acknowledged_by AS AcknowledgedBy, h.acknowledged_at AS AcknowledgedAt, " +
+            "h.muted_at AS MutedAt";
 
         private readonly ISqlConnectionFactory _connectionFactory;
 
@@ -69,8 +70,11 @@ namespace PharmacySystem.Data
             {
                 try
                 {
+                    // A severity change means the condition the mute applied to no longer holds -
+                    // clear it here too, in case the caller ever updates severity without going
+                    // through NotificationConfigService.SyncAlertHistory's own reset.
                     oConnection.Execute(
-                        "UPDATE product_alert_history SET severity = @severity, trigger_value = @triggerValue WHERE id = @historyId",
+                        "UPDATE product_alert_history SET severity = @severity, trigger_value = @triggerValue, muted_at = NULL WHERE id = @historyId",
                         new { historyId, severity, triggerValue });
                 }
                 catch (Exception ex)
@@ -106,6 +110,44 @@ namespace PharmacySystem.Data
                     int rows = oConnection.Execute(
                         "UPDATE product_alert_history SET acknowledged_by = @personId, acknowledged_at = GETDATE() WHERE id = @historyId",
                         new { historyId, personId });
+                    return rows > 0;
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return false;
+                }
+            }
+        }
+
+        public bool Mute(int historyId)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    int rows = oConnection.Execute(
+                        "UPDATE product_alert_history SET muted_at = GETDATE() WHERE id = @historyId AND resolved_at IS NULL",
+                        new { historyId });
+                    return rows > 0;
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return false;
+                }
+            }
+        }
+
+        public bool Unmute(int historyId)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    int rows = oConnection.Execute(
+                        "UPDATE product_alert_history SET muted_at = NULL WHERE id = @historyId",
+                        new { historyId });
                     return rows > 0;
                 }
                 catch (Exception ex)

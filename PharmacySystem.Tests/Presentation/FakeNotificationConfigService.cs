@@ -51,5 +51,22 @@ namespace PharmacySystem.Tests.Presentation
         public List<ProductAlertHistoryEntry> GetAlertHistoryResult { get; set; } = new List<ProductAlertHistoryEntry>();
 
         public List<ProductAlertHistoryEntry> GetAlertHistory(DateTime startDate, DateTime endDate) => GetAlertHistoryResult;
+
+        public bool MuteAlertResult { get; set; } = true;
+        public bool UnmuteAlertResult { get; set; } = true;
+        public int? MutedHistoryId { get; private set; }
+        public int? UnmutedHistoryId { get; private set; }
+
+        public bool MuteAlert(int historyId)
+        {
+            MutedHistoryId = historyId;
+            return MuteAlertResult;
+        }
+
+        public bool UnmuteAlert(int historyId)
+        {
+            UnmutedHistoryId = historyId;
+            return UnmuteAlertResult;
+        }
     }
 }

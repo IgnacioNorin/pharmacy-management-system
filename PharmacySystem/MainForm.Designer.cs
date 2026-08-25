@@ -39,18 +39,13 @@
             this.usersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.reportsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.notificationsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.alertBellToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.lbluser = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
-            this.label10 = new System.Windows.Forms.Label();
-            this.lblnotifystock = new System.Windows.Forms.Label();
-            this.lblnotifyexpireddate = new System.Windows.Forms.Label();
+            this.lblAlertBadge = new System.Windows.Forms.Label();
+            this.btnExit = new System.Windows.Forms.Button();
             this.timerNotification = new System.Windows.Forms.Timer(this.components);
-            this.pictureBoxStock = new System.Windows.Forms.PictureBox();
-            this.pictureBoxExpiredDate = new System.Windows.Forms.PictureBox();
             this.msMenu.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxStock)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxExpiredDate)).BeginInit();
             this.SuspendLayout();
             // 
             // msMenu
@@ -66,7 +61,7 @@
             this.usersToolStripMenuItem,
             this.reportsToolStripMenuItem,
             this.notificationsToolStripMenuItem,
-            this.exitToolStripMenuItem});
+            this.alertBellToolStripMenuItem});
             this.msMenu.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.HorizontalStackWithOverflow;
             this.msMenu.Location = new System.Drawing.Point(0, 0);
             this.msMenu.Name = "msMenu";
@@ -171,19 +166,21 @@
             this.notificationsToolStripMenuItem.TextDirection = System.Windows.Forms.ToolStripTextDirection.Horizontal;
             this.notificationsToolStripMenuItem.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.notificationsToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem1_Click);
-            // 
-            // exitToolStripMenuItem
-            // 
-            this.exitToolStripMenuItem.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(37)))), ((int)(((byte)(69)))));
-            this.exitToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.exitToolStripMenuItem.Image = global::PharmacySystem.Properties.Resources.saliricon;
-            this.exitToolStripMenuItem.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
-            this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(76, 87);
-            this.exitToolStripMenuItem.Text = "Salir";
-            this.exitToolStripMenuItem.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
-            // 
+            //
+            // alertBellToolStripMenuItem
+            //
+            // Sits right after Notificaciones, in the same left-stacked menu flow as every other
+            // section - looks and behaves exactly like its siblings instead of floating separately.
+            this.alertBellToolStripMenuItem.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(37)))), ((int)(((byte)(69)))));
+            this.alertBellToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.alertBellToolStripMenuItem.Image = global::PharmacySystem.Properties.Resources.alertbellicon;
+            this.alertBellToolStripMenuItem.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.alertBellToolStripMenuItem.Name = "alertBellToolStripMenuItem";
+            this.alertBellToolStripMenuItem.Size = new System.Drawing.Size(76, 87);
+            this.alertBellToolStripMenuItem.Text = "Alertas";
+            this.alertBellToolStripMenuItem.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.alertBellToolStripMenuItem.Click += new System.EventHandler(this.OpenAlertsCenter);
+            //
             // lbluser
             // 
             this.lbluser.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -210,78 +207,57 @@
             this.label5.TabIndex = 3;
             this.label5.Text = "Bienvenido";
             this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // label10
-            // 
-            this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.label10.BackColor = System.Drawing.Color.White;
-            this.label10.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.label10.Location = new System.Drawing.Point(810, 9);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(457, 75);
-            this.label10.TabIndex = 49;
-            // 
-            // lblnotifystock
-            //
-            this.lblnotifystock.AutoSize = true;
-            this.lblnotifystock.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.lblnotifystock.Location = new System.Drawing.Point(830, 20);
-            this.lblnotifystock.Name = "lblnotifystock";
-            this.lblnotifystock.Size = new System.Drawing.Size(0, 13);
-            this.lblnotifystock.TabIndex = 51;
-            this.lblnotifystock.Click += new System.EventHandler(this.OpenAlertsCenter);
-            //
-            // lblnotifyexpireddate
-            //
-            this.lblnotifyexpireddate.AutoSize = true;
-            this.lblnotifyexpireddate.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.lblnotifyexpireddate.Location = new System.Drawing.Point(833, 51);
-            this.lblnotifyexpireddate.Name = "lblnotifyexpireddate";
-            this.lblnotifyexpireddate.Size = new System.Drawing.Size(0, 13);
-            this.lblnotifyexpireddate.TabIndex = 52;
-            this.lblnotifyexpireddate.Click += new System.EventHandler(this.OpenAlertsCenter);
             //
             // timerNotification
             //
             this.timerNotification.Tick += new System.EventHandler(this.timerNotification_Tick);
             //
-            // pictureBoxStock
+            // lblAlertBadge
             //
-            this.pictureBoxStock.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pictureBoxStock.Image = global::PharmacySystem.Properties.Resources.advertenciaicon;
-            this.pictureBoxStock.Location = new System.Drawing.Point(817, 20);
-            this.pictureBoxStock.Name = "pictureBoxStock";
-            this.pictureBoxStock.Size = new System.Drawing.Size(16, 16);
-            this.pictureBoxStock.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
-            this.pictureBoxStock.TabIndex = 54;
-            this.pictureBoxStock.TabStop = false;
-            this.pictureBoxStock.Click += new System.EventHandler(this.OpenAlertsCenter);
+            // Not part of msMenu's own item flow - it floats on top, repositioned at runtime
+            // (MainForm.RepositionAlertBadge) to sit at alertBellToolStripMenuItem's top-right
+            // corner, since that item's exact position shifts with admin-only sibling visibility.
+            this.lblAlertBadge.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(48)))), ((int)(((byte)(48)))));
+            this.lblAlertBadge.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.lblAlertBadge.Font = new System.Drawing.Font("Segoe UI", 7F, System.Drawing.FontStyle.Bold);
+            this.lblAlertBadge.ForeColor = System.Drawing.Color.White;
+            this.lblAlertBadge.Location = new System.Drawing.Point(0, 0);
+            this.lblAlertBadge.Name = "lblAlertBadge";
+            this.lblAlertBadge.Size = new System.Drawing.Size(20, 15);
+            this.lblAlertBadge.TabIndex = 55;
+            this.lblAlertBadge.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblAlertBadge.Visible = false;
+            this.lblAlertBadge.Click += new System.EventHandler(this.OpenAlertsCenter);
             //
-            // pictureBoxExpiredDate
+            // btnExit
             //
-            this.pictureBoxExpiredDate.BackColor = System.Drawing.Color.White;
-            this.pictureBoxExpiredDate.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pictureBoxExpiredDate.Image = global::PharmacySystem.Properties.Resources.advertenciaicon;
-            this.pictureBoxExpiredDate.Location = new System.Drawing.Point(817, 49);
-            this.pictureBoxExpiredDate.Name = "pictureBoxExpiredDate";
-            this.pictureBoxExpiredDate.Size = new System.Drawing.Size(16, 16);
-            this.pictureBoxExpiredDate.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
-            this.pictureBoxExpiredDate.TabIndex = 56;
-            this.pictureBoxExpiredDate.TabStop = false;
-            this.pictureBoxExpiredDate.Click += new System.EventHandler(this.OpenAlertsCenter);
-            // 
+            // A plain Button instead of a ToolStripMenuItem - it needs to sit pinned next to the
+            // Bienvenido/Usuario block (outside msMenu's own left-stacking flow), while still
+            // looking like the rest of the menu (navy background, bold white text, icon above text).
+            this.btnExit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnExit.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(37)))), ((int)(((byte)(69)))));
+            this.btnExit.FlatAppearance.BorderSize = 0;
+            this.btnExit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnExit.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.btnExit.ForeColor = System.Drawing.Color.White;
+            this.btnExit.Image = global::PharmacySystem.Properties.Resources.saliricon;
+            this.btnExit.Location = new System.Drawing.Point(1206, 2);
+            this.btnExit.Name = "btnExit";
+            this.btnExit.Size = new System.Drawing.Size(76, 87);
+            this.btnExit.TabIndex = 56;
+            this.btnExit.Text = "Salir";
+            this.btnExit.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnExit.UseVisualStyleBackColor = false;
+            this.btnExit.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
+            //
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ButtonFace;
             this.ClientSize = new System.Drawing.Size(1484, 861);
-            this.Controls.Add(this.pictureBoxExpiredDate);
-            this.Controls.Add(this.pictureBoxStock);
-            this.Controls.Add(this.lblnotifyexpireddate);
-            this.Controls.Add(this.lblnotifystock);
-            this.Controls.Add(this.label10);
+            this.Controls.Add(this.lblAlertBadge);
+            this.Controls.Add(this.btnExit);
             this.Controls.Add(this.lbluser);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.msMenu);
@@ -294,8 +270,6 @@
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.msMenu.ResumeLayout(false);
             this.msMenu.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxStock)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxExpiredDate)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -314,13 +288,10 @@
         private System.Windows.Forms.Label lbluser;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.ToolStripMenuItem notificationsToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
-        private System.Windows.Forms.Label label10;
-        private System.Windows.Forms.Label lblnotifystock;
-        private System.Windows.Forms.Label lblnotifyexpireddate;
+        private System.Windows.Forms.ToolStripMenuItem alertBellToolStripMenuItem;
         private System.Windows.Forms.Timer timerNotification;
-        private System.Windows.Forms.PictureBox pictureBoxStock;
-        private System.Windows.Forms.PictureBox pictureBoxExpiredDate;
+        private System.Windows.Forms.Label lblAlertBadge;
+        private System.Windows.Forms.Button btnExit;
     }
 }
 
