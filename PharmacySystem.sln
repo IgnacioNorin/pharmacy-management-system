@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PharmacySystem.Business", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PharmacySystem.Presentation", "PharmacySystem.Presentation\PharmacySystem.Presentation.csproj", "{C7BA7957-0E0C-4EF3-B77D-861DEECBC75A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PharmacySystem.UiTests", "PharmacySystem.UiTests\PharmacySystem.UiTests.csproj", "{C8043AD8-1EC7-404C-9D2A-71ACD549D599}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{C7BA7957-0E0C-4EF3-B77D-861DEECBC75A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C7BA7957-0E0C-4EF3-B77D-861DEECBC75A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C7BA7957-0E0C-4EF3-B77D-861DEECBC75A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8043AD8-1EC7-404C-9D2A-71ACD549D599}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8043AD8-1EC7-404C-9D2A-71ACD549D599}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8043AD8-1EC7-404C-9D2A-71ACD549D599}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8043AD8-1EC7-404C-9D2A-71ACD549D599}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

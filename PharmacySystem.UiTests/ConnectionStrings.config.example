@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<connectionStrings>
+  <!-- Copy this file to ConnectionStrings.config (ignored by git) and fill in your own credentials. -->
+  <!-- These smoke tests only construct Forms - they never call OnLoad(), so the connection string
+       just needs to exist and be well-formed; no query actually runs against it. -->
+  <add name="connection" connectionString="Server=#HereYourServer#;database=PharmacyDB;User Id=#HereYourUser#;Password=#HereYourPassword#;" providerName="System.Data.SqlClient"/>
+</connectionStrings>
