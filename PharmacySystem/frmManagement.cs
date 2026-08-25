@@ -422,7 +422,9 @@ namespace PharmacySystem
 
         private void btnDeleteProduct_Click(object sender, EventArgs e) => _productPresenter.OnDelete();
 
-        private void btnsearch_Click(object sender, EventArgs e)
+        private void btnsearch_Click(object sender, EventArgs e) => FilterProducts();
+
+        private void FilterProducts()
         {
             string columnFilter = ((ComboBoxItem)cbosearchproduct.SelectedItem).Value.ToString();
 
@@ -446,6 +448,26 @@ namespace PharmacySystem
                 else
                     row.Visible = false;
             }
+        }
+
+        // Entry point for the notification center's click-through (Fase 3 of the alerts rework):
+        // jumps straight to the Producto tab filtered to this code, reusing the exact same search
+        // the user already has instead of building a separate "select this row" mechanism.
+        public void ShowProductByCode(string code)
+        {
+            tabManagement.SelectedTab = tabProduct;
+
+            foreach (ComboBoxItem item in cbosearchproduct.Items)
+            {
+                if ((string)item.Value == "Codigo")
+                {
+                    cbosearchproduct.SelectedItem = item;
+                    break;
+                }
+            }
+
+            txtsearchproduct.Text = code;
+            FilterProducts();
         }
 
         private void btnClear_Click(object sender, EventArgs e)

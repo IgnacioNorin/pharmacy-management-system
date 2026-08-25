@@ -1,19 +1,17 @@
-using PharmacySystem.Business;
-using PharmacySystem.Model;
 using System.Collections.Generic;
+using PharmacySystem.Data;
+using PharmacySystem.Model;
 
-namespace PharmacySystem.Tests.Presentation
+namespace PharmacySystem.Tests.Business
 {
-    internal class FakeNotificationConfigService : INotificationConfigService
+    internal class FakeNotificationConfigRepository : INotificationConfigRepository
     {
+        public List<Product> ListExpirationDateResult { get; set; } = new List<Product>();
+        public List<Product> ListStockResult { get; set; } = new List<Product>();
         public int ConfigDayResult { get; set; }
         public int ConfigStockResult { get; set; }
         public bool ConfigUpdateResult { get; set; } = true;
         public NotificationConfig UpdatedWith { get; private set; }
-        public List<Product> ListExpirationDateResult { get; set; } = new List<Product>();
-        public List<Product> ListStockResult { get; set; } = new List<Product>();
-        public List<ProductAlert> GetActiveAlertsResult { get; set; } = new List<ProductAlert>();
-
         public int? RequestedDays { get; private set; }
         public int? RequestedCriticalStock { get; private set; }
 
@@ -30,7 +28,6 @@ namespace PharmacySystem.Tests.Presentation
         }
         public int ConfigDay() => ConfigDayResult;
         public int ConfigStock() => ConfigStockResult;
-        public List<ProductAlert> GetActiveAlerts() => GetActiveAlertsResult;
 
         public bool ConfigUpdate(NotificationConfig obj)
         {

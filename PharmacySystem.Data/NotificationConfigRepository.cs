@@ -26,11 +26,13 @@ namespace PharmacySystem.Data
                 {
                     // Same cutoff the caller used to compute in C# (today >= expirationDate - days,
                     // i.e. expirationDate <= today + days), now applied server-side so only the
-                    // rows that actually matter cross the wire.
+                    // rows that actually matter cross the wire. id/code/name are included so the
+                    // notification center (Fase 3) can name the product, not just flag "something".
                     return oConnection.Query<Product>(
-                        "SELECT date_expired AS expirationDate FROM product " +
+                        "SELECT id AS idProduct, code, name, date_expired AS expirationDate FROM product " +
                         "WHERE status = 1 AND date_expired IS NOT NULL " +
-                        "AND date_expired <= DATEADD(day, @days, CAST(GETDATE() AS DATE))",
+                        "AND date_expired <= DATEADD(day, @days, CAST(GETDATE() AS DATE)) " +
+                        "ORDER BY date_expired ASC",
                         new { days })
                         .ToList();
                 }
@@ -49,7 +51,9 @@ namespace PharmacySystem.Data
                 try
                 {
                     return oConnection.Query<Product>(
-                        "SELECT stock FROM product WHERE status = 1 AND stock <= @criticalStock",
+                        "SELECT id AS idProduct, code, name, stock FROM product " +
+                        "WHERE status = 1 AND stock <= @criticalStock " +
+                        "ORDER BY stock ASC",
                         new { criticalStock })
                         .ToList();
                 }

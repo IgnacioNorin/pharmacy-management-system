@@ -1,7 +1,9 @@
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -45,11 +47,7 @@ namespace PharmacySystem
         // Raised from SalePresenter/PurchasePresenter after a successful register, on whatever
         // thread called them (normally the UI thread, from a button click) - dispatch through the
         // same non-blocking path as every other alert check instead of assuming the caller's thread.
-        private void OnInventoryChangedElsewhere()
-        {
-            notificationDate();
-            notificationStock();
-        }
+        private void OnInventoryChangedElsewhere() => checkNotifications();
 
         public void SetUserName(string name) => lbluser.Text = name;
 
@@ -63,40 +61,50 @@ namespace PharmacySystem
             notificationsToolStripMenuItem.Visible = visible;
         }
 
-        public void ShowExpirationWarning(bool visible, string message)
+        // Fase 3 of the alerts rework: one itemized, severity-ranked list instead of two generic
+        // sentences. Still rendered through the same two labels/icons for now - a dedicated
+        // notification-center panel (with per-product click-through) is the next step, not yet
+        // wired up here.
+        public void ShowAlerts(IReadOnlyList<ProductAlert> alerts)
         {
             if (InvokeRequired)
             {
-                BeginInvoke(new Action(() => ShowExpirationWarning(visible, message)));
+                BeginInvoke(new Action(() => ShowAlerts(alerts)));
                 return;
             }
 
-            lblnotifyexpireddate.Text = message;
-            pictureBoxExpiredDate.Visible = visible;
+            List<ProductAlert> stockAlerts = alerts
+                .Where(a => a.Severity == AlertSeverity.Critical || a.Severity == AlertSeverity.Low)
+                .ToList();
+            List<ProductAlert> expirationAlerts = alerts
+                .Where(a => a.Severity == AlertSeverity.Expired || a.Severity == AlertSeverity.ExpiringSoon)
+                .ToList();
+
+            pictureBoxStock.Visible = stockAlerts.Count > 0;
+            lblnotifystock.Text = FormatAlertSummary("Stock: ", stockAlerts);
+
+            pictureBoxExpiredDate.Visible = expirationAlerts.Count > 0;
+            lblnotifyexpireddate.Text = FormatAlertSummary("Vencimientos: ", expirationAlerts);
         }
 
-        public void ShowStockWarning(bool visible, string message)
+        private static string FormatAlertSummary(string prefix, List<ProductAlert> alerts)
         {
-            if (InvokeRequired)
-            {
-                BeginInvoke(new Action(() => ShowStockWarning(visible, message)));
-                return;
-            }
+            if (alerts.Count == 0) return "";
 
-            lblnotifystock.Text = message;
-            pictureBoxStock.Visible = visible;
+            const int maxNamed = 3;
+            string names = string.Join(", ", alerts.Take(maxNamed).Select(a => a.Name));
+            string overflow = alerts.Count > maxNamed ? $" (+{alerts.Count - maxNamed})" : "";
+            return prefix + names + overflow;
         }
 
-        // Both queries now hit an indexed, server-filtered SELECT (Fase 1), but they still cross
-        // the network - running them off the UI thread keeps the window responsive on the 5-minute
-        // timer tick and on every menu navigation, instead of freezing on a slow connection.
-        private void notificationDate() => Task.Run(() => _presenter.CheckExpirationWarnings());
-
-        private void notificationStock() => Task.Run(() => _presenter.CheckStockWarnings());
+        // The query now hits an indexed, server-filtered SELECT (Fase 1), but it still crosses the
+        // network - running it off the UI thread keeps the window responsive on the 5-minute timer
+        // tick and on every menu navigation, instead of freezing on a slow connection.
+        private void checkNotifications() => Task.Run(() => _presenter.RefreshAlerts());
 
         private void clientsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            notificationDate();
+            checkNotifications();
             frmClient childForm = new frmClient();
 
             ShowForm(childForm, sender);
@@ -104,7 +112,7 @@ namespace PharmacySystem
 
         private void suppliersToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            notificationDate();
+            checkNotifications();
             frmSupplier childForm = new frmSupplier();
 
             ShowForm(childForm, sender);
@@ -113,7 +121,7 @@ namespace PharmacySystem
 
         private void managementToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            notificationDate();
+            checkNotifications();
             frmManagement childForm = new frmManagement();
 
             ShowForm(childForm, sender);
@@ -122,7 +130,7 @@ namespace PharmacySystem
 
         private void purchasesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            notificationDate();
+            checkNotifications();
             frmPurchase childForm = new frmPurchase(oPerson.idPerson);
 
             ShowForm(childForm, sender);
@@ -130,7 +138,7 @@ namespace PharmacySystem
 
         private void salesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            notificationDate();
+            checkNotifications();
             frmSale childForm = new frmSale(oPerson.idPerson);
 
             ShowForm(childForm, sender);
@@ -138,7 +146,7 @@ namespace PharmacySystem
 
         private void usersToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            notificationDate();
+            checkNotifications();
             frmUser childForm = new frmUser();
 
             ShowForm(childForm, sender);
@@ -147,7 +155,7 @@ namespace PharmacySystem
 
         private void reportsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            notificationDate();
+            checkNotifications();
             frmReport childForm = new frmReport();
 
             ShowForm(childForm, sender);
@@ -155,7 +163,7 @@ namespace PharmacySystem
 
         private void ShowForm(Form form, object senderitem)
         {
-            notificationDate();
+            checkNotifications();
             foreach (Form frm in this.MdiChildren)
             {
                 frm.Close();
@@ -176,7 +184,7 @@ namespace PharmacySystem
 
         private void aboutToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            notificationDate();
+            checkNotifications();
             ModalConfignotification frm = new ModalConfignotification();
             frm.ShowDialog();
         }
@@ -191,8 +199,8 @@ namespace PharmacySystem
 
         private void timerNotification_Tick(object sender, EventArgs e)
         {
-            notificationDate();
-            notificationStock();
+            checkNotifications();
+
         }
     }
 }
