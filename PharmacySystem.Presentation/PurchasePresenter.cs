@@ -6,19 +6,24 @@ using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
 {
-    // Ported from frmPurchase.cs. Preserves two real quirks from the original:
-    // - btnAdd_Click silently does nothing (no message) when the product is already in the cart -
-    //   `if (!product_exists) { ... }` had no else branch.
-    // - The total registered with the purchase is the same total shown on screen: originally that
-    //   meant re-parsing the formatted lbltotalamount.Text; here it's the same sum computed once
-    //   from the cart lines, which is equivalent because FormatAsCurrency/ConverterStringToDecimal
-    //   round-trip exactly (see CultureInfoHelperTests).
+    // Ported from frmPurchase.cs. Preserves a real quirk from the original: btnAdd_Click silently
+    // does nothing (no message) when the product is already in the cart - `if (!product_exists)
+    // { ... }` had no else branch.
+    //
+    // The cart itself is owned here, not read back from the grid: the View used to be the source
+    // of truth for cart state, reconstructing it on every access by re-parsing the formatted
+    // currency text out of each grid cell. That round-trip is safe (FormatAsCurrency and
+    // CultureInfoConverterStringToDecimal are exact inverses - see CultureInfoHelperTests) but
+    // fragile: any future formatting tweak could silently corrupt cart totals. Holding the cart as
+    // a plain list here makes the Presenter the single source of truth and the View a pure render
+    // target, closer to the intent of Passive View.
     public class PurchasePresenter
     {
         private readonly IPurchaseView _view;
         private readonly IPurchaseService _purchaseService;
         private readonly IProductService _productService;
         private readonly int _idPerson;
+        private readonly List<PurchaseCartLine> _cart = new List<PurchaseCartLine>();
 
         public PurchasePresenter(IPurchaseView view, IPurchaseService purchaseService, IProductService productService, int idPerson)
         {
@@ -74,7 +79,7 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            bool productExists = _view.CartLines.Any(l => l.ProductId == _view.SelectedProductId);
+            bool productExists = _cart.Any(l => l.ProductId == _view.SelectedProductId);
             if (productExists)
             {
                 return;
@@ -82,7 +87,7 @@ namespace PharmacySystem.Presentation
 
             decimal subTotal = _view.Amount * pricePurchase;
 
-            _view.AddCartLine(new PurchaseCartLine
+            var line = new PurchaseCartLine
             {
                 ProductId = _view.SelectedProductId,
                 Code = _view.SelectedProductCode,
@@ -92,21 +97,24 @@ namespace PharmacySystem.Presentation
                 PurchasePrice = pricePurchase,
                 SalePrice = priceSale,
                 SubTotal = subTotal
-            });
+            };
 
+            _cart.Add(line);
+            _view.AddCartLine(line);
             _view.ClearProductEntry();
             RecalculateTotal();
         }
 
         public void OnRemoveProduct(int index)
         {
+            _cart.RemoveAt(index);
             _view.RemoveCartLineAt(index);
             RecalculateTotal();
         }
 
         private void RecalculateTotal()
         {
-            decimal total = _view.CartLines.Sum(l => l.SubTotal);
+            decimal total = _cart.Sum(l => l.SubTotal);
             _view.SetTotalText(CultureInfoHelper.FormatAsCurrency(total));
         }
 
@@ -125,13 +133,13 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            if (_view.CartLines.Count < 1)
+            if (_cart.Count < 1)
             {
                 _view.ShowMessage("Debe ingresar un producto como minimo\npara registrar una compra");
                 return;
             }
 
-            decimal totalAmount = _view.CartLines.Sum(l => l.SubTotal);
+            decimal totalAmount = _cart.Sum(l => l.SubTotal);
 
             Purchase purchase = new Purchase
             {
@@ -140,7 +148,7 @@ namespace PharmacySystem.Presentation
                 totalAmount = totalAmount,
                 documentType = _view.DocumentType,
                 documentNumber = _view.DocumentNumber.Trim(),
-                oPurchaseDetail = _view.CartLines.Select(l => new PurchaseDetail
+                oPurchaseDetail = _cart.Select(l => new PurchaseDetail
                 {
                     oProduct = new Product { idProduct = l.ProductId },
                     quantity = (int)l.Quantity,
@@ -153,6 +161,7 @@ namespace PharmacySystem.Presentation
 
             if (_purchaseService.Register(purchase))
             {
+                _cart.Clear();
                 _view.ClearPurchase();
                 _view.ShowMessage("La compra fue registrada");
             }

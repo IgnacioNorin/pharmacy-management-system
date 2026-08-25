@@ -17,8 +17,6 @@ namespace PharmacySystem.Presentation
         string DocumentType { get; }
         int SelectedSupplierId { get; }
 
-        IReadOnlyList<PurchaseCartLine> CartLines { get; }
-
         List<string> ValidateProductEntry();
         void ShowValidationErrors(IReadOnlyList<string> errors);
         void ShowMessage(string message);

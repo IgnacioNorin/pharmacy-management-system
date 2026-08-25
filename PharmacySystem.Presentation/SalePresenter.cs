@@ -18,12 +18,17 @@ namespace PharmacySystem.Presentation
     //   Those fields are back to "0"/1 after CleanProduct() runs on the last add, so in practice
     //   that check updated stock for product id 0 (a no-op) and never actually gated anything -
     //   removed as dead weight; the per-line ControlStock in the loop below is the real check.
+    //
+    // The cart is owned here rather than read back from the grid, for the same reason as
+    // PurchasePresenter's cart: the Presenter is the single source of truth for cart state, the
+    // View is a pure render target.
     public class SalePresenter
     {
         private readonly ISaleView _view;
         private readonly ISaleService _saleService;
         private readonly IProductService _productService;
         private readonly int _idPerson;
+        private readonly List<SaleCartLine> _cart = new List<SaleCartLine>();
 
         public SalePresenter(ISaleView view, ISaleService saleService, IProductService productService, int idPerson)
         {
@@ -67,7 +72,7 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            bool productExists = _view.CartLines.Any(l => l.ProductId == _view.SelectedProductId);
+            bool productExists = _cart.Any(l => l.ProductId == _view.SelectedProductId);
             if (productExists)
             {
                 _view.ShowMessage("El producto ya fue agregado\nElimínelo e ingrese el nuevo si quiere cambiar la cantidad.");
@@ -76,28 +81,31 @@ namespace PharmacySystem.Presentation
 
             decimal subTotal = _view.Amount * priceSale;
 
-            _view.AddCartLine(new SaleCartLine
+            var line = new SaleCartLine
             {
                 ProductId = _view.SelectedProductId,
                 Name = _view.SelectedProductName,
                 Quantity = _view.Amount,
                 SalePrice = priceSale,
                 SubTotal = subTotal
-            });
+            };
 
+            _cart.Add(line);
+            _view.AddCartLine(line);
             RecalculateTotal();
             _view.ClearProductEntry();
         }
 
         public void OnRemoveProduct(int index)
         {
+            _cart.RemoveAt(index);
             _view.RemoveCartLineAt(index);
             RecalculateTotal();
         }
 
         private void RecalculateTotal()
         {
-            decimal total = _view.CartLines.Sum(l => l.SubTotal);
+            decimal total = _cart.Sum(l => l.SubTotal);
             _view.SetTotalText(CultureInfoHelper.FormatAsCurrency(total));
         }
 
@@ -143,7 +151,7 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            if (_view.CartLines.Count < 1)
+            if (_cart.Count < 1)
             {
                 _view.ShowMessage("Debe ingresar un producto como minimo\npara registrar una venta");
                 return;
@@ -173,7 +181,7 @@ namespace PharmacySystem.Presentation
 
             var details = new List<SaleDetail>();
 
-            foreach (SaleCartLine line in _view.CartLines)
+            foreach (SaleCartLine line in _cart)
             {
                 bool existsProduct = _productService.Verify(line.ProductId);
 
@@ -218,6 +226,7 @@ namespace PharmacySystem.Presentation
 
             if (idSale != 0)
             {
+                _cart.Clear();
                 _view.ClearSale();
                 _view.SaleRegistered(idSale);
             }
