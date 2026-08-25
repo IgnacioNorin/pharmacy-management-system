@@ -2,15 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Text;
+using System.Linq;
+using Dapper;
 using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Data
 {
-    // Same SQL as the original PharmacySystem.Logical.SupplierService, moved here unchanged so
-    // this migration step is a relocation, not a rewrite. The connection now comes from an
-    // injected factory instead of the static Connection.CN.
     public class SupplierRepository : ISupplierRepository
     {
         private readonly ISqlConnectionFactory _connectionFactory;
@@ -22,136 +20,88 @@ namespace PharmacySystem.Data
 
         public int Register(Supplier obj)
         {
-            int result = 0;
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    SqlCommand cmd = new SqlCommand("sp_create_supplier", oConnection);
-                    cmd.Parameters.AddWithValue("document", obj.document);
-                    cmd.Parameters.AddWithValue("company_name", obj.companyName);
-                    cmd.Parameters.AddWithValue("email", obj.email);
-                    cmd.Parameters.AddWithValue("phone", obj.phone);
-                    cmd.Parameters.Add("result", SqlDbType.Int).Direction = ParameterDirection.Output;
-                    cmd.CommandType = CommandType.StoredProcedure;
+                    var parameters = new DynamicParameters();
+                    parameters.Add("document", obj.document);
+                    parameters.Add("company_name", obj.companyName);
+                    parameters.Add("email", obj.email);
+                    parameters.Add("phone", obj.phone);
+                    parameters.Add("result", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
-                    oConnection.Open();
+                    oConnection.Execute("sp_create_supplier", parameters, commandType: CommandType.StoredProcedure);
 
-                    cmd.ExecuteNonQuery();
-
-                    result = Convert.ToInt32(cmd.Parameters["result"].Value);
-
+                    return parameters.Get<int>("result");
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    result = 0;
+                    return 0;
                 }
             }
-            return result;
         }
 
         public bool Update(Supplier obj)
         {
-            bool result = true;
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    SqlCommand cmd = new SqlCommand("sp_update_supplier", oConnection);
-                    cmd.Parameters.AddWithValue("id_supplier", obj.idSupplier);
-                    cmd.Parameters.AddWithValue("document", obj.document);
-                    cmd.Parameters.AddWithValue("company_name", obj.companyName);
-                    cmd.Parameters.AddWithValue("email", obj.email);
-                    cmd.Parameters.AddWithValue("phone", obj.phone);
-                    cmd.Parameters.Add("result", SqlDbType.Bit).Direction = ParameterDirection.Output;
+                    var parameters = new DynamicParameters();
+                    parameters.Add("id_supplier", obj.idSupplier);
+                    parameters.Add("document", obj.document);
+                    parameters.Add("company_name", obj.companyName);
+                    parameters.Add("email", obj.email);
+                    parameters.Add("phone", obj.phone);
+                    parameters.Add("result", dbType: DbType.Boolean, direction: ParameterDirection.Output);
 
-                    cmd.CommandType = CommandType.StoredProcedure;
+                    oConnection.Execute("sp_update_supplier", parameters, commandType: CommandType.StoredProcedure);
 
-                    oConnection.Open();
-
-                    cmd.ExecuteNonQuery();
-
-                    result = Convert.ToBoolean(cmd.Parameters["result"].Value);
-
+                    return parameters.Get<bool>("result");
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    result = false;
+                    return false;
                 }
-
             }
-
-            return result;
         }
 
         public List<Supplier> List()
         {
-            List<Supplier> List = new List<Supplier>();
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("SELECT id,document_number,company_name,email,phone FROM supplier");
-
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    cmd.CommandType = CommandType.Text;
-
-                    oConnection.Open();
-                    using (SqlDataReader dr = cmd.ExecuteReader())
-                    {
-                        while (dr.Read())
-                        {
-                            List.Add(new Supplier()
-                            {
-                                idSupplier = Convert.ToInt32(dr["id"]),
-                                document = dr["document_number"].ToString(),
-                                companyName = dr["company_name"].ToString(),
-                                email = dr["email"].ToString(),
-                                phone = dr["phone"].ToString()
-                            });
-                        }
-                    }
-
+                    return oConnection.Query<Supplier>(
+                        "SELECT id AS idSupplier, document_number AS document, company_name AS companyName, email, phone FROM supplier")
+                        .ToList();
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    List = new List<Supplier>();
+                    return new List<Supplier>();
                 }
             }
-            return List;
         }
 
         public bool Delete(int idSupplier)
         {
-            bool result = true;
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    SqlCommand cmd = new SqlCommand("DELETE FROM supplier WHERE id = @id_supplier", oConnection);
-                    cmd.Parameters.AddWithValue("@id_supplier", idSupplier);
-                    cmd.CommandType = CommandType.Text;
-
-                    oConnection.Open();
-
-                    cmd.ExecuteNonQuery();
-
-                    result = true;
-
+                    oConnection.Execute("DELETE FROM supplier WHERE id = @id_supplier", new { id_supplier = idSupplier });
+                    return true;
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    result = false;
+                    return false;
                 }
-
             }
-
-            return result;
         }
     }
 }
