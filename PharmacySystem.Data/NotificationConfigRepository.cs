@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Text;
+using System.Linq;
+using Dapper;
 using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 
@@ -19,161 +20,91 @@ namespace PharmacySystem.Data
 
         public List<Product> ListExpirationDate()
         {
-            List<Product> List = new List<Product>();
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("SELECT date_expired FROM product");
-                    sb.AppendLine("WHERE status = 1");
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    cmd.CommandType = CommandType.Text;
-
-                    oConnection.Open();
-                    using (SqlDataReader dr = cmd.ExecuteReader())
-                    {
-                        while (dr.Read())
-                        {
-                            if (dr["date_expired"] != DBNull.Value)
-                            {
-                                List.Add(new Product()
-                                {
-                                    expirationDate = Convert.ToDateTime(dr["date_expired"])
-                                });
-                            }
-                        }
-                    }
-
+                    return oConnection.Query<Product>(
+                        "SELECT date_expired AS expirationDate FROM product WHERE status = 1 AND date_expired IS NOT NULL")
+                        .ToList();
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    List = new List<Product>();
+                    return new List<Product>();
                 }
             }
-            return List;
         }
 
         public List<Product> ListStock()
         {
-            List<Product> List = new List<Product>();
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("SELECT stock FROM product");
-                    sb.AppendLine("WHERE status = 1");
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    cmd.CommandType = CommandType.Text;
-
-                    oConnection.Open();
-                    using (SqlDataReader dr = cmd.ExecuteReader())
-                    {
-                        while (dr.Read())
-                        {
-                            List.Add(new Product()
-                            {
-                                stock = Convert.ToInt32(dr["stock"])
-                            });
-                        }
-                    }
-
+                    return oConnection.Query<Product>("SELECT stock FROM product WHERE status = 1").ToList();
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    List = new List<Product>();
+                    return new List<Product>();
                 }
             }
-            return List;
         }
 
         public int ConfigDay()
         {
-            int notifyDay = 0;
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    oConnection.Open();
-                    StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("SELECT notify_day FROM notification_settings");
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    SqlDataReader dr = cmd.ExecuteReader();
-
-                    while (dr.Read())
-                    {
-                        notifyDay = int.Parse(dr.GetValue(0).ToString());
-                    }
-
+                    return oConnection.QueryFirstOrDefault<int>("SELECT notify_day FROM notification_settings");
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
+                    return 0;
                 }
             }
-            return notifyDay;
         }
 
         public int ConfigStock()
         {
-            int criticalStock = 0;
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    oConnection.Open();
-                    StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("SELECT critical_stock FROM notification_settings");
-                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
-                    SqlDataReader dr = cmd.ExecuteReader();
-
-                    while (dr.Read())
-                    {
-                        criticalStock = int.Parse(dr.GetValue(0).ToString());
-                    }
-
+                    return oConnection.QueryFirstOrDefault<int>("SELECT critical_stock FROM notification_settings");
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
+                    return 0;
                 }
             }
-            return criticalStock;
         }
 
         public bool ConfigUpdate(NotificationConfig obj)
         {
-            bool result = true;
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    SqlCommand cmd = new SqlCommand("sp_update_notificacion_settings", oConnection);
-                    cmd.Parameters.AddWithValue("@critical_stock", obj.criticalStock);
-                    cmd.Parameters.AddWithValue("@notify_day", obj.days);
-                    cmd.Parameters.Add("result", SqlDbType.Bit).Direction = ParameterDirection.Output;
+                    var parameters = new DynamicParameters();
+                    parameters.Add("critical_stock", obj.criticalStock);
+                    parameters.Add("notify_day", obj.days);
+                    parameters.Add("result", dbType: DbType.Boolean, direction: ParameterDirection.Output);
 
-                    cmd.CommandType = CommandType.StoredProcedure;
+                    oConnection.Execute("sp_update_notificacion_settings", parameters, commandType: CommandType.StoredProcedure);
 
-                    oConnection.Open();
-
-                    cmd.ExecuteNonQuery();
-
-                    result = Convert.ToBoolean(cmd.Parameters["result"].Value);
-
+                    return parameters.Get<bool>("result");
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    result = false;
+                    return false;
                 }
-
             }
-
-            return result;
         }
     }
 }
