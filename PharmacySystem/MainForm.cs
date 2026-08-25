@@ -1,39 +1,28 @@
-﻿using PharmacySystem.Helpers;
-using PharmacySystem.Logical;
 using PharmacySystem.Model;
+using PharmacySystem.Presentation;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace PharmacySystem
 {
-    public partial class MainForm : Form
+    public partial class MainForm : Form, IMainFormView
     {
         public static Person oPerson;
+
+        private readonly MainFormPresenter _presenter;
 
         public MainForm(Person obj = null)
         {
             InitializeComponent();
             oPerson = obj;
+            _presenter = CompositionRoot.CreateMainFormPresenter(this);
         }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            CultureInfoHelper.SetCurrency(StoreService.Instance.ListStore()?.currencyCulture);
+            _presenter.OnLoad(oPerson);
 
-            lbluser.Text = oPerson.name;
-            if (oPerson.oPersonType.idPersonType == 2)
-            {
-
-                usersToolStripMenuItem.Visible = false;
-                managementToolStripMenuItem.Visible = false;
-                suppliersToolStripMenuItem.Visible = false;
-                reportsToolStripMenuItem.Visible = false;
-                purchasesToolStripMenuItem.Visible = false;
-                notificationsToolStripMenuItem.Visible = false;
-            }
             timerNotification.Start();
             timerNotification.Interval = 3000;
             pictureBoxStock.Visible = false;
@@ -42,71 +31,33 @@ namespace PharmacySystem
             ShowForm(childForm, salesToolStripMenuItem);
         }
 
+        public void SetUserName(string name) => lbluser.Text = name;
 
-        public void notificationDate()
+        public void SetAdministrativeMenusVisible(bool visible)
         {
-            NotificationConfigService confignotify = new NotificationConfigService();
-            List<DateTime> expiredDates = new List<DateTime>();
-            DateTime expirationDate;
-            int days = 0;
-            days = confignotify.ConfigDay();
-            lblnotifyexpireddate.Text = "";
-            pictureBoxExpiredDate.Visible = false;
-            foreach (var item in confignotify.ListExpirationDate().ToList())
-            {
-                expirationDate = item.expirationDate.AddDays(-days);
-
-                if (DateTime.Today >= expirationDate)
-                {
-                    expiredDates.Add(expirationDate);
-                    if (expiredDates.Count() >= 1)
-                    {
-                        lblnotifyexpireddate.Text = "Hay productos con Fechas Vencidas Revise";
-                        expiredDates.Clear();
-                        pictureBoxExpiredDate.Visible = true;
-                    }
-                    else
-                    {
-                        lblnotifyexpireddate.Text = "";
-                        expiredDates.Clear();
-                    }
-
-                }
-
-            }
-
-
-        }
-        public void notificationStock()
-        {
-            NotifyIcon notify;
-            List<int>  criticalStock = new List<int>();
-            NotificationConfigService confignotify = new NotificationConfigService();
-            int criticstock = confignotify.ConfigStock();
-            int Stock = 0;
-            lblnotifystock.Text = "";
-            pictureBoxStock.Visible = false;
-            foreach (var item in confignotify.ListStock().ToList())
-            {
-                Stock = item.stock;
-                if (Stock <= criticstock)
-                {
-                    criticalStock.Add(Stock);
-                    if (criticalStock.Count() >= 1)
-                    {
-                        lblnotifystock.Text = "Revise si hay productos con Stock Crítico";
-                        criticalStock.Clear();
-                        pictureBoxStock.Visible = true;
-                    }
-                    else
-                    {
-                        lblnotifystock.Text = "";
-                        criticalStock.Clear();
-                    }
-                }
-            }
+            usersToolStripMenuItem.Visible = visible;
+            managementToolStripMenuItem.Visible = visible;
+            suppliersToolStripMenuItem.Visible = visible;
+            reportsToolStripMenuItem.Visible = visible;
+            purchasesToolStripMenuItem.Visible = visible;
+            notificationsToolStripMenuItem.Visible = visible;
         }
 
+        public void ShowExpirationWarning(bool visible, string message)
+        {
+            lblnotifyexpireddate.Text = message;
+            pictureBoxExpiredDate.Visible = visible;
+        }
+
+        public void ShowStockWarning(bool visible, string message)
+        {
+            lblnotifystock.Text = message;
+            pictureBoxStock.Visible = visible;
+        }
+
+        private void notificationDate() => _presenter.CheckExpirationWarnings();
+
+        private void notificationStock() => _presenter.CheckStockWarnings();
 
         private void clientsToolStripMenuItem_Click(object sender, EventArgs e)
         {
