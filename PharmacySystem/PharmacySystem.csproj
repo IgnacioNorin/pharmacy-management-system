@@ -169,7 +169,6 @@
     </Compile>
     <Compile Include="Helpers\CultureInfoHelper.cs" />
     <Compile Include="Helpers\DateHelper.cs" />
-    <Compile Include="Helpers\Logger.cs" />
     <Compile Include="Helpers\PasswordHasher.cs" />
     <Compile Include="Helpers\RawPrinterHelper.cs" />
     <Compile Include="PrintSale.cs">
@@ -223,6 +222,7 @@
       <DependentUpon>ModalSupplier.cs</DependentUpon>
     </Compile>
     <Compile Include="Model\ComboBoxItem.cs" />
+    <Compile Include="CompositionRoot.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Validators\RuleValidation.cs" />
