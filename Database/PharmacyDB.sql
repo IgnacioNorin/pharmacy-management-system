@@ -226,6 +226,41 @@ CREATE TABLE [dbo].[sale_detail](
 )
 GO
 
+-- Fase 4 of the alerts rework (traceability): one row per open-or-resolved stock/expiration
+-- alert on a product. Written only on a state transition (a new alert appears, its severity
+-- changes, or it clears) - not on every poll - so this grows with real inventory activity, not
+-- with the passage of time. alert_type: 1 = stock, 2 = expiration. severity: 1 = low/expiring
+-- soon, 2 = critical/expired (mirrors PharmacySystem.Model.AlertType/AlertSeverity).
+CREATE TABLE [dbo].[product_alert_history](
+    [id] [int] IDENTITY(1,1) NOT NULL,
+    [product_id] [int] NOT NULL,
+    [alert_type] [tinyint] NOT NULL,
+    [severity] [tinyint] NOT NULL,
+    [trigger_value] [decimal](10, 2) NULL,
+    [detected_at] [datetime] NOT NULL,
+    [resolved_at] [datetime] NULL,
+    [acknowledged_by] [int] NULL,
+    [acknowledged_at] [datetime] NULL,
+    CONSTRAINT [PK_product_alert_history] PRIMARY KEY CLUSTERED ([id] ASC),
+    CONSTRAINT [FK_product_alert_history_product] FOREIGN KEY ([product_id]) REFERENCES [dbo].[product] ([id]),
+    CONSTRAINT [FK_product_alert_history_person] FOREIGN KEY ([acknowledged_by]) REFERENCES [dbo].[person] ([id])
+)
+GO
+
+-- QUOTED_IDENTIFIER must be ON at CREATE time for a filtered index, same reason as
+-- ix_product_status_expired above.
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- Backs both the "is this product's alert already open" lookup (product_id + alert_type, one
+-- open row at a time) and the general history browse.
+CREATE INDEX [ix_product_alert_history_open] ON [dbo].[product_alert_history] ([product_id], [alert_type])
+    WHERE [resolved_at] IS NULL
+GO
+
+CREATE INDEX [ix_product_alert_history_detected] ON [dbo].[product_alert_history] ([detected_at])
+GO
+
 -- DEFAULTS
 ALTER TABLE [dbo].[category] ADD CONSTRAINT [DF__CATEGORIA__Estad__440B1D61] DEFAULT ((1)) FOR [status]
 GO
