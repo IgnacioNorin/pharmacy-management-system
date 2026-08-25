@@ -150,8 +150,18 @@ namespace PharmacySystem.Tests.Integration
                 Assert.True(PurchaseService.Instance.RegisterPurchase(purchase));
                 purchaseId = SqlTestHelper.ExecuteScalarInt("SELECT id FROM purchase WHERE document_number = @doc", new SqlParameter("@doc", documentNumber));
 
-                string today = DateTime.Today.ToString("yyyy-MM-dd");
-                decimal totalAmount = PurchaseService.Instance.GetTotalAmount(supplierId.ToString(), today, today);
+                // Pin the purchase date instead of relying on the getdate() default and a
+                // DateTime.Today range: the application clock and the SQL Server clock can sit on
+                // opposite sides of midnight when they run in different time zones, so the row is
+                // stamped with one date while the range is built from another and matches nothing.
+                const string purchaseDay = "2026-03-17";
+                DateTime purchaseDate = new DateTime(2026, 3, 17);
+                SqlTestHelper.ExecuteNonQuery(
+                    "UPDATE purchase SET date_registered = @date WHERE id = @id",
+                    new SqlParameter("@date", purchaseDate),
+                    new SqlParameter("@id", purchaseId));
+
+                decimal totalAmount = PurchaseService.Instance.GetTotalAmount(supplierId.ToString(), purchaseDay, purchaseDay);
 
                 Assert.Equal(42.50m, totalAmount);
             }
