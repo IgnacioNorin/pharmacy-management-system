@@ -38,5 +38,12 @@ namespace PharmacySystem
             IPersonService service = new PersonService(repository);
             return new ClientPresenter(view, service);
         }
+
+        public static UserPresenter CreateUserPresenter(IUserView view)
+        {
+            IPersonRepository repository = new PersonRepository(ConnectionFactory);
+            IPersonService service = new PersonService(repository);
+            return new UserPresenter(view, service);
+        }
     }
 }
