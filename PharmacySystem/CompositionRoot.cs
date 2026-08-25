@@ -60,6 +60,27 @@ namespace PharmacySystem
             return new ProductPickerPresenter(view, service, origin);
         }
 
+        public static CategoryManagementPresenter CreateCategoryManagementPresenter(ICategoryManagementView view)
+        {
+            ICategoryRepository repository = new CategoryRepository(ConnectionFactory);
+            ICategoryService service = new CategoryService(repository);
+            return new CategoryManagementPresenter(view, service);
+        }
+
+        public static ProductManagementPresenter CreateProductManagementPresenter(IProductManagementView view)
+        {
+            IProductService productService = new ProductService(new ProductRepository(ConnectionFactory));
+            ICategoryService categoryService = new CategoryService(new CategoryRepository(ConnectionFactory));
+            return new ProductManagementPresenter(view, productService, categoryService);
+        }
+
+        public static StoreManagementPresenter CreateStoreManagementPresenter(IStoreManagementView view)
+        {
+            IStoreRepository repository = new StoreRepository(ConnectionFactory);
+            IStoreService service = new StoreService(repository);
+            return new StoreManagementPresenter(view, service);
+        }
+
         public static ReportPresenter CreateReportPresenter(IReportView view)
         {
             ISupplierService supplierService = new SupplierService(new SupplierRepository(ConnectionFactory));
