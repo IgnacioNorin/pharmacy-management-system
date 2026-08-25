@@ -77,7 +77,7 @@ namespace PharmacySystem
                     txtstock.Text = form.stock;
                     txtnameproduct.Text = form.name;
                     txtidproduct.Text = form.idProduct.ToString();
-                    txtpricesale.Text = CultureInfoHelper.FormatAsEcuadorCurrency(Convert.ToDecimal(form.priceSale.ToLower()));
+                    txtpricesale.Text = CultureInfoHelper.FormatAsCurrency(Convert.ToDecimal(form.priceSale.ToLower()));
 
                 }
             }
@@ -193,8 +193,8 @@ namespace PharmacySystem
                 row.Cells["IdProducto"].Value = txtidproduct.Text;
                 row.Cells["NombreProducto"].Value = txtnameproduct.Text.Trim();
                 row.Cells["Cantidad"].Value = txtamount.Text.Trim();
-                row.Cells["PrecioVenta"].Value = CultureInfoHelper.FormatAsEcuadorCurrency(priceSale);
-                row.Cells["SubTotal"].Value = CultureInfoHelper.FormatAsEcuadorCurrency(subTotal);
+                row.Cells["PrecioVenta"].Value = CultureInfoHelper.FormatAsCurrency(priceSale);
+                row.Cells["SubTotal"].Value = CultureInfoHelper.FormatAsCurrency(subTotal);
                 CalculateTotal();
                 CleanProduct();
 
@@ -231,7 +231,7 @@ namespace PharmacySystem
                 }
             }
 
-            txttotalpay.Text = CultureInfoHelper.FormatAsEcuadorCurrency(total);
+            txttotalpay.Text = CultureInfoHelper.FormatAsCurrency(total);
 
         }
 
@@ -408,12 +408,12 @@ namespace PharmacySystem
 
             if (moneyToPay < totalPay)
             {
-                txtchange.Text = CultureInfoHelper.FormatAsEcuadorCurrency(0);
+                txtchange.Text = CultureInfoHelper.FormatAsCurrency(0);
             }
             else
             {
                 decimal change = moneyToPay - totalPay;
-                txtchange.Text = CultureInfoHelper.FormatAsEcuadorCurrency(change);
+                txtchange.Text = CultureInfoHelper.FormatAsCurrency(change);
             }
 
             return result;
@@ -430,7 +430,7 @@ namespace PharmacySystem
                     txtstock.Text = pr.stock.ToString();
                     txtnameproduct.Text = pr.name;
                     txtidproduct.Text = pr.idProduct.ToString();
-                    txtpricesale.Text = CultureInfoHelper.FormatAsEcuadorCurrency(pr.salePrice);
+                    txtpricesale.Text = CultureInfoHelper.FormatAsCurrency(pr.salePrice);
                 }
                 
             }

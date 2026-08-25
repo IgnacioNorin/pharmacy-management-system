@@ -60,6 +60,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     result = 0;
                 }
             }
@@ -91,6 +92,7 @@ namespace PharmacySystem.Logical
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     result = false;
                 }
 
@@ -153,6 +155,7 @@ namespace PharmacySystem.Logical
                   
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
 
                     List = new List<Product>();
                 }
@@ -187,6 +190,7 @@ namespace PharmacySystem.Logical
 
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
 
                     result = false;
                 }
@@ -220,6 +224,7 @@ namespace PharmacySystem.Logical
          
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex);
                     result = false;
                 }
 
@@ -273,8 +278,8 @@ namespace PharmacySystem.Logical
                             string descriptionProduct = row["description_product"].ToString();
                             string categoryDescription = row["description_category"].ToString();
                             string stockProduct = row["stock"].ToString();
-                            string pricePurchase = CultureInfoHelper.FormatAsEcuadorCurrency(Convert.ToDecimal(row["purchase_price"]));
-                            string priceSales = CultureInfoHelper.FormatAsEcuadorCurrency(Convert.ToDecimal(row["sale_price"]));
+                            string pricePurchase = CultureInfoHelper.FormatAsCurrency(Convert.ToDecimal(row["purchase_price"]));
+                            string priceSales = CultureInfoHelper.FormatAsCurrency(Convert.ToDecimal(row["sale_price"]));
                             string expirationDate = DateHelper.FormatDatePresentation(Convert.ToDateTime(row["date_expired"]));
                             string state = row["status_name"].ToString();
 
@@ -290,6 +295,7 @@ namespace PharmacySystem.Logical
                 }
                     catch (Exception ex)
                     {
+                        Logger.LogError(ex);
                     dt = new DataTable();
                     dtFinal = new DataTable();
                 }
