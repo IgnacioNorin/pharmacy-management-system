@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using PharmacySystem.Helpers;
-using PharmacySystem.Logical;
 using PharmacySystem.Data;
 using PharmacySystem.Model;
 using Xunit;
@@ -12,6 +11,9 @@ namespace PharmacySystem.Tests.Integration
     public class SaleRepositoryTests
     {
         private static readonly ISaleRepository Repository = new SaleRepository(SqlConnectionFactory.FromConfiguration());
+        private static readonly IPersonRepository PersonRepo = new PersonRepository(SqlConnectionFactory.FromConfiguration());
+        private static readonly ICategoryRepository CategoryRepo = new CategoryRepository(SqlConnectionFactory.FromConfiguration());
+        private static readonly IProductRepository ProductRepo = new ProductRepository(SqlConnectionFactory.FromConfiguration());
 
         private static int PersonTypeId()
         {
@@ -21,7 +23,7 @@ namespace PharmacySystem.Tests.Integration
         private static Person CreatePerson(out string document)
         {
             document = SqlTestHelper.NewTag();
-            PersonService.Instance.RegisterPerson(new Person
+            PersonRepo.Register(new Person
             {
                 document = document,
                 name = "Sale tester",
@@ -30,15 +32,15 @@ namespace PharmacySystem.Tests.Integration
                 password = "Passw0rd!",
                 oPersonType = new TypePerson { idPersonType = PersonTypeId() }
             });
-            return PersonService.Instance.GetPersonByDocument(document);
+            return PersonRepo.GetByDocument(document);
         }
 
         [Fact]
         public void RegisterSale_ValidDetail_InsertsHeaderAndDetail()
         {
             Person person = CreatePerson(out string document);
-            int categoryId = CategoryService.Instance.RegisterCategory(new Categories { description = SqlTestHelper.NewTag() });
-            int productId = ProductService.Instance.RegisterProduct(new Product
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = ProductRepo.Register(new Product
             {
                 code = SqlTestHelper.NewTag(),
                 name = "Sale product",
@@ -89,8 +91,8 @@ namespace PharmacySystem.Tests.Integration
         [Fact]
         public void ControlStock_Subtract_DecreasesStock()
         {
-            int categoryId = CategoryService.Instance.RegisterCategory(new Categories { description = SqlTestHelper.NewTag() });
-            int productId = ProductService.Instance.RegisterProduct(new Product
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = ProductRepo.Register(new Product
             {
                 code = SqlTestHelper.NewTag(),
                 name = "Stock product",
@@ -116,8 +118,8 @@ namespace PharmacySystem.Tests.Integration
         [Fact]
         public void ControlStock_Add_IncreasesStock()
         {
-            int categoryId = CategoryService.Instance.RegisterCategory(new Categories { description = SqlTestHelper.NewTag() });
-            int productId = ProductService.Instance.RegisterProduct(new Product
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = ProductRepo.Register(new Product
             {
                 code = SqlTestHelper.NewTag(),
                 name = "Stock product",
@@ -150,8 +152,8 @@ namespace PharmacySystem.Tests.Integration
         public void RegisterSale_CartTotalCrossesThousandThreshold_PersistsExactAmount()
         {
             Person person = CreatePerson(out string document);
-            int categoryId = CategoryService.Instance.RegisterCategory(new Categories { description = SqlTestHelper.NewTag() });
-            int productId = ProductService.Instance.RegisterProduct(new Product
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = ProductRepo.Register(new Product
             {
                 code = SqlTestHelper.NewTag(),
                 name = "Bulk product",

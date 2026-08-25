@@ -1,4 +1,5 @@
-﻿using PharmacySystem.Logical;
+﻿using PharmacySystem.Business;
+using PharmacySystem.Data;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using System;
@@ -19,19 +20,23 @@ namespace PharmacySystem
     public partial class PrintSale : Form
     {
         int _IdSale;
+        private readonly IStoreService _storeService;
+        private readonly ISaleService _saleService;
 
         public PrintSale(int idsale = 0)
         {
             InitializeComponent();
             _IdSale = idsale;
+            _storeService = new StoreService(new StoreRepository(CompositionRoot.ConnectionFactory));
+            _saleService = new SaleService(new SaleRepository(CompositionRoot.ConnectionFactory));
         }
 
         #region Plain Text Ticket Generation
         private string GenerateFormattedPharmacyTicket()
         {
-            Store store = StoreService.Instance.ListStore();
-            Sale sale = SaleService.Instance.ListSale().Where(v => v.idSale == _IdSale).FirstOrDefault();
-            List<SaleDetail> saleDetails = SaleService.Instance.ListSaleDetail().Where(dv => dv.idSale == _IdSale).ToList();
+            Store store = _storeService.ListStore();
+            Sale sale = _saleService.ListSale().Where(v => v.idSale == _IdSale).FirstOrDefault();
+            List<SaleDetail> saleDetails = _saleService.ListSaleDetail().Where(dv => dv.idSale == _IdSale).ToList();
 
             string ticketText = PharmacyTicketBuilder.Build(store, sale, saleDetails);
             Console.WriteLine(ticketText);
@@ -154,8 +159,8 @@ namespace PharmacySystem
         {
             try
             {
-                Store store = StoreService.Instance.ListStore();
-                Sale sale = SaleService.Instance.ListSale().Where(v => v.idSale == _IdSale).FirstOrDefault();
+                Store store = _storeService.ListStore();
+                Sale sale = _saleService.ListSale().Where(v => v.idSale == _IdSale).FirstOrDefault();
 
                 if (sale == null)
                 {
@@ -165,7 +170,7 @@ namespace PharmacySystem
                     return;
                 }
 
-                List<SaleDetail> saleDetails = SaleService.Instance.ListSaleDetail().Where(dv => dv.idSale == _IdSale).ToList();
+                List<SaleDetail> saleDetails = _saleService.ListSaleDetail().Where(dv => dv.idSale == _IdSale).ToList();
 
                 if (saleDetails == null || !saleDetails.Any())
                 {

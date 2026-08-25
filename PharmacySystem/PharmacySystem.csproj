@@ -179,15 +179,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Service\CategoryService.cs" />
-    <Compile Include="Service\PurchaseService.cs" />
-    <Compile Include="Service\Connection.cs" />
-    <Compile Include="Service\NotificationConfigService.cs" />
-    <Compile Include="Service\PersonService.cs" />
-    <Compile Include="Service\ProductService.cs" />
-    <Compile Include="Service\SupplierService.cs" />
-    <Compile Include="Service\StoreService.cs" />
-    <Compile Include="Service\SaleService.cs" />
     <Compile Include="Login.cs">
       <SubType>Form</SubType>
     </Compile>

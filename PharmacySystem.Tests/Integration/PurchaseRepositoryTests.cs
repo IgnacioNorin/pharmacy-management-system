@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using PharmacySystem.Data;
-using PharmacySystem.Logical;
 using PharmacySystem.Model;
 using Xunit;
 
@@ -10,12 +9,16 @@ namespace PharmacySystem.Tests.Integration
 {
     // Was PurchaseServiceTests, calling PurchaseService.Instance. Now exercises
     // PurchaseRepository directly (ReportPurchase() has no repository equivalent yet, same
-    // reason as ProductRepository's Report()). Person/Supplier/Category/Product setup keeps
-    // using the already-migrated adapters, since that's just test fixture data.
+    // reason as ProductRepository's Report()). Person/Supplier/Category/Product setup goes
+    // through their repositories directly too, since that's just test fixture data.
     [Collection("Database")]
     public class PurchaseRepositoryTests
     {
         private static readonly IPurchaseRepository Repository = new PurchaseRepository(SqlConnectionFactory.FromConfiguration());
+        private static readonly IPersonRepository PersonRepo = new PersonRepository(SqlConnectionFactory.FromConfiguration());
+        private static readonly ISupplierRepository SupplierRepo = new SupplierRepository(SqlConnectionFactory.FromConfiguration());
+        private static readonly ICategoryRepository CategoryRepo = new CategoryRepository(SqlConnectionFactory.FromConfiguration());
+        private static readonly IProductRepository ProductRepo = new ProductRepository(SqlConnectionFactory.FromConfiguration());
 
         private static int PersonTypeId()
         {
@@ -26,7 +29,7 @@ namespace PharmacySystem.Tests.Integration
         public void Register_ValidDetail_InsertsRowsAndUpdatesProductStock()
         {
             string document = SqlTestHelper.NewTag();
-            PersonService.Instance.RegisterPerson(new Person
+            PersonRepo.Register(new Person
             {
                 document = document,
                 name = "Purchase tester",
@@ -35,9 +38,9 @@ namespace PharmacySystem.Tests.Integration
                 password = "Passw0rd!",
                 oPersonType = new TypePerson { idPersonType = PersonTypeId() }
             });
-            Person person = PersonService.Instance.GetPersonByDocument(document);
+            Person person = PersonRepo.GetByDocument(document);
 
-            int supplierId = SupplierService.Instance.RegisterSupplier(new Supplier
+            int supplierId = SupplierRepo.Register(new Supplier
             {
                 document = SqlTestHelper.NewTag(),
                 companyName = "Purchase supplier",
@@ -45,8 +48,8 @@ namespace PharmacySystem.Tests.Integration
                 phone = "0999999999"
             });
 
-            int categoryId = CategoryService.Instance.RegisterCategory(new Categories { description = SqlTestHelper.NewTag() });
-            int productId = ProductService.Instance.RegisterProduct(new Product
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = ProductRepo.Register(new Product
             {
                 code = SqlTestHelper.NewTag(),
                 name = "Purchase product",
@@ -102,7 +105,7 @@ namespace PharmacySystem.Tests.Integration
         public void GetTotalAmount_SumsPurchasesInDateRangeForSupplier()
         {
             string document = SqlTestHelper.NewTag();
-            PersonService.Instance.RegisterPerson(new Person
+            PersonRepo.Register(new Person
             {
                 document = document,
                 name = "Report tester",
@@ -111,9 +114,9 @@ namespace PharmacySystem.Tests.Integration
                 password = "Passw0rd!",
                 oPersonType = new TypePerson { idPersonType = PersonTypeId() }
             });
-            Person person = PersonService.Instance.GetPersonByDocument(document);
+            Person person = PersonRepo.GetByDocument(document);
 
-            int supplierId = SupplierService.Instance.RegisterSupplier(new Supplier
+            int supplierId = SupplierRepo.Register(new Supplier
             {
                 document = SqlTestHelper.NewTag(),
                 companyName = "Report supplier",
@@ -121,8 +124,8 @@ namespace PharmacySystem.Tests.Integration
                 phone = "0999999999"
             });
 
-            int categoryId = CategoryService.Instance.RegisterCategory(new Categories { description = SqlTestHelper.NewTag() });
-            int productId = ProductService.Instance.RegisterProduct(new Product
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = ProductRepo.Register(new Product
             {
                 code = SqlTestHelper.NewTag(),
                 name = "Report product",

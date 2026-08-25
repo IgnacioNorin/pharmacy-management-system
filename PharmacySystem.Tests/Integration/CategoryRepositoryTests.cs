@@ -1,18 +1,18 @@
 using System.Data.SqlClient;
 using PharmacySystem.Data;
-using PharmacySystem.Logical;
 using PharmacySystem.Model;
 using Xunit;
 
 namespace PharmacySystem.Tests.Integration
 {
     // Was CategoryServiceTests, calling CategoryService.Instance. Now exercises
-    // CategoryRepository directly. ProductService.Instance stays as-is below (it's just test
-    // setup for the cross-entity FK scenario) until ProductService itself is migrated.
+    // CategoryRepository directly. The cross-entity FK scenario below sets up its product
+    // through ProductRepository directly too, just as test fixture data.
     [Collection("Database")]
     public class CategoryRepositoryTests
     {
         private static readonly ICategoryRepository Repository = new CategoryRepository(SqlConnectionFactory.FromConfiguration());
+        private static readonly IProductRepository ProductRepo = new ProductRepository(SqlConnectionFactory.FromConfiguration());
 
         [Fact]
         public void Register_NewDescription_IsListedAsActive()
@@ -104,7 +104,7 @@ namespace PharmacySystem.Tests.Integration
         public void Delete_ReferencedByProduct_SoftDeletesInstead()
         {
             int categoryId = Repository.Register(new Categories { description = SqlTestHelper.NewTag() });
-            int productId = ProductService.Instance.RegisterProduct(new Product
+            int productId = ProductRepo.Register(new Product
             {
                 code = SqlTestHelper.NewTag(),
                 name = "Test product",
