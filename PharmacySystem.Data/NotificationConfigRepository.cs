@@ -8,11 +8,6 @@ using PharmacySystem.Model;
 
 namespace PharmacySystem.Data
 {
-    // NOTE: ListStock()'s WHERE clause requires date_expired IS NOT NULL, so a product with no
-    // expiration date can never trigger a critical-stock alert. That is a pre-existing bug, not
-    // something introduced here - it is being relocated unchanged. See the notification-system
-    // review from this session for the fix proposal; this migration commit is not the place to
-    // also fix it.
     public class NotificationConfigRepository : INotificationConfigRepository
     {
         private readonly ISqlConnectionFactory _connectionFactory;
@@ -69,7 +64,7 @@ namespace PharmacySystem.Data
                 {
                     StringBuilder sb = new StringBuilder();
                     sb.AppendLine("SELECT stock FROM product");
-                    sb.AppendLine("WHERE status = 1 AND date_expired IS NOT NULL");
+                    sb.AppendLine("WHERE status = 1");
                     SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
                     cmd.CommandType = CommandType.Text;
 

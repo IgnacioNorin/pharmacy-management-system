@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using PharmacySystem.Business;
@@ -7,15 +6,18 @@ using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
 {
-    // Ported from frmSale.cs. Preserves several real quirks from the original rather than fixing
-    // them, since this migration must not change observable behavior:
-    // - CalculateChange() always returns true (the "Error al convertir..." message it can trigger
-    //   is dead code); moneyToPay there is parsed with a plain Convert.ToDecimal, not the
-    //   culture-aware converter used everywhere else, unlike totalPay.
-    // - OnFinishSale's first ControlStock check reads the *product-entry* fields (SelectedProductId
-    //   / Amount), not the cart - which are usually back to "0"/1 after CleanProduct() ran on the
-    //   last add. If that check fails, the whole sale silently does nothing (no message), exactly
-    //   like the original's `if (result) { ... }` with no else.
+    // Ported from frmSale.cs. Two bugs from the original were fixed after the migration landed
+    // (both were verified safe via the presenter test suite before changing):
+    // - CalculateChange() parsed "Paga con" with a plain Convert.ToDecimal, not the culture-aware
+    //   converter used for every other amount on this screen (including totalPay right next to
+    //   it) - inconsistent under any culture that doesn't use "." as decimal separator. It also
+    //   never actually returned false, so the "Error al convertir..." message it could show was
+    //   dead code; a real try/catch now makes that message reachable.
+    // - OnFinishSale used to run an extra ControlStock() check against the *product-entry* fields
+    //   (SelectedProductId/Amount) before the per-cart-line loop that already does this properly.
+    //   Those fields are back to "0"/1 after CleanProduct() runs on the last add, so in practice
+    //   that check updated stock for product id 0 (a no-op) and never actually gated anything -
+    //   removed as dead weight; the per-line ControlStock in the loop below is the real check.
     public class SalePresenter
     {
         private readonly ISaleView _view;
@@ -109,8 +111,17 @@ namespace PharmacySystem.Presentation
 
         private bool CalculateChange()
         {
-            decimal moneyToPay = Convert.ToDecimal(_view.PayWithText);
-            decimal totalPay = CultureInfoHelper.CultureInfoConverterStringToDecimal(_view.TotalPayText);
+            decimal moneyToPay;
+            decimal totalPay;
+            try
+            {
+                moneyToPay = CultureInfoHelper.CultureInfoConverterStringToDecimal(_view.PayWithText);
+                totalPay = CultureInfoHelper.CultureInfoConverterStringToDecimal(_view.TotalPayText);
+            }
+            catch
+            {
+                return false;
+            }
 
             if (moneyToPay < totalPay)
             {
@@ -157,12 +168,6 @@ namespace PharmacySystem.Presentation
             if (totalToPay > moneyToPay)
             {
                 _view.ShowMessage("Falta dinero para pagar");
-                return;
-            }
-
-            bool result = _saleService.ControlStock(_view.SelectedProductId, (int)_view.Amount, true);
-            if (!result)
-            {
                 return;
             }
 
