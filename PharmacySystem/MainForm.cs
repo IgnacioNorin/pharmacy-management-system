@@ -110,10 +110,8 @@ namespace PharmacySystem
         // frmManagement's existing search, instead of leaving the user to find it manually.
         private void OpenAlertsCenter(object sender, EventArgs e)
         {
-            using (var modal = new ModalAlerts())
+            using (var modal = new ModalAlerts(_currentAlerts, CompositionRoot.NotificationConfigService, oPerson.idPerson))
             {
-                modal.LoadAlerts(_currentAlerts);
-
                 if (modal.ShowDialog(this) == DialogResult.OK && !string.IsNullOrEmpty(modal.SelectedProductCode))
                 {
                     frmManagement childForm = new frmManagement();
