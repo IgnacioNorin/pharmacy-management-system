@@ -145,8 +145,8 @@ namespace PharmacySystem
                 string productName = detail.oProduct.name.Length > 20 ?
                     detail.oProduct.name.Substring(0, 17) + "..." : detail.oProduct.name;
 
-                string priceStr = CultureInfoHelper.FormatAsEcuadorCurrency(detail.salePrice);
-                string subtotalStr = CultureInfoHelper.FormatAsEcuadorCurrency(detail.subtotal);
+                string priceStr = CultureInfoHelper.FormatAsCurrency(detail.salePrice);
+                string subtotalStr = CultureInfoHelper.FormatAsCurrency(detail.subtotal);
 
                 string productLine = string.Format("{0,-4} {1,-20} {2,-8} {3,8}",
                     detail.amount.ToString(),
@@ -169,9 +169,9 @@ namespace PharmacySystem
             AddCharacter("-");
 
             // Totals
-            AddTwoColumns("TOTAL A PAGAR:", $"${CultureInfoHelper.FormatAsEcuadorCurrency(sale.totalPay):F2}");
-            AddTwoColumns("PAGO CON:", $"${CultureInfoHelper.FormatAsEcuadorCurrency(sale.payWith):F2}");
-            AddTwoColumns("CAMBIO:", $"${CultureInfoHelper.FormatAsEcuadorCurrency(sale.change):F2}");
+            AddTwoColumns("TOTAL A PAGAR:", CultureInfoHelper.FormatAsCurrency(sale.totalPay));
+            AddTwoColumns("PAGO CON:", CultureInfoHelper.FormatAsCurrency(sale.payWith));
+            AddTwoColumns("CAMBIO:", CultureInfoHelper.FormatAsCurrency(sale.change));
 
             AddCharacter("-");
             AddCenteredText("¡Gracias por su compra!");
@@ -338,15 +338,15 @@ namespace PharmacySystem
                     tableRows.AppendLine("<tr>");
                     tableRows.AppendLine("<td width=\"20\">" + detail.amount + "</td>");
                     tableRows.AppendLine("<td width=\"180\">" + detail.oProduct.name + "</td>");
-                    tableRows.AppendLine("<td style=\"font-size:14px\">" + CultureInfoHelper.FormatAsEcuadorCurrency(detail.salePrice) + "</td>");
-                    tableRows.AppendLine("<td style=\"font-size:14px\">" + CultureInfoHelper.FormatAsEcuadorCurrency(detail.subtotal) + "</td>");
+                    tableRows.AppendLine("<td style=\"font-size:14px\">" + CultureInfoHelper.FormatAsCurrency(detail.salePrice) + "</td>");
+                    tableRows.AppendLine("<td style=\"font-size:14px\">" + CultureInfoHelper.FormatAsCurrency(detail.subtotal) + "</td>");
                     tableRows.AppendLine("</tr>");
                 }
                 ticketText = ticketText.Replace("¡detalleventa!", tableRows.ToString());
 
-                ticketText = ticketText.Replace("¡totalpagar!", CultureInfoHelper.FormatAsEcuadorCurrency(sale.totalPay));
-                ticketText = ticketText.Replace("¡pagocon!", CultureInfoHelper.FormatAsEcuadorCurrency(sale.payWith));
-                ticketText = ticketText.Replace("¡cambio!", CultureInfoHelper.FormatAsEcuadorCurrency(sale.change));
+                ticketText = ticketText.Replace("¡totalpagar!", CultureInfoHelper.FormatAsCurrency(sale.totalPay));
+                ticketText = ticketText.Replace("¡pagocon!", CultureInfoHelper.FormatAsCurrency(sale.payWith));
+                ticketText = ticketText.Replace("¡cambio!", CultureInfoHelper.FormatAsCurrency(sale.change));
 
                 BrowserPrintSale.DocumentText = ticketText;
             }
