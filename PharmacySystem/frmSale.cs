@@ -1,22 +1,21 @@
-﻿using PharmacySystem.Helpers;
-using PharmacySystem.Logical;
+using PharmacySystem.Helpers;
 using PharmacySystem.Model;
+using PharmacySystem.Presentation;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Drawing;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace PharmacySystem
 {
-    public partial class frmSale : Form
+    public partial class frmSale : Form, ISaleView
     {
-        private static int _IdPerson;
+        private readonly SalePresenter _presenter;
+
         public frmSale(int idperson = 0)
         {
             InitializeComponent();
-            _IdPerson = idperson;
+            _presenter = CompositionRoot.CreateSalePresenter(this, idperson);
         }
 
         private void frmSale_Load(object sender, EventArgs e)
@@ -26,9 +25,6 @@ namespace PharmacySystem
             cbodocumenttype.ValueMember = "Value";
             cbodocumenttype.SelectedIndex = 0;
             txtstock.Visible = false;
-
-
-
 
             DataGridViewButtonColumn Button = new DataGridViewButtonColumn();
 
@@ -44,8 +40,6 @@ namespace PharmacySystem
             dgdata.Columns.Add("Cantidad", "Cantidad");
             dgdata.Columns.Add("PrecioVenta", "Precio Venta");
             dgdata.Columns.Add("SubTotal", "SubTotal");
-            
-
 
             dgdata.Columns["IdProducto"].Visible = false;
             dgdata.Columns["PrecioVenta"].DefaultCellStyle.FormatProvider = CultureInfoHelper.CustomCultureInfo();
@@ -125,89 +119,12 @@ namespace PharmacySystem
                 int index = e.RowIndex;
                 if (index >= 0)
                 {
-                    //int idProduct = int.Parse(dgdata.Rows[index].Cells["IdProducto"].Value.ToString());
-                    //int stock = int.Parse(dgdata.Rows[index].Cells["Cantidad"].Value.ToString());
-                    //bool result = SaleService.Instance.ControlStock(idProduct, stock, false);
-
-                    //if (result) {
-                    dgdata.Rows.RemoveAt(index);
-                    CalculateTotal();
-                    //}
+                    _presenter.OnRemoveProduct(index);
                 }
             }
         }
 
-        private void btnAddProduct_Click(object sender, EventArgs e)
-        {
-            decimal priceSale = 0;
-            decimal subTotal;
-            bool productExists = false;
-
-
-
-
-            if (int.Parse(txtidproduct.Text) == 0)
-            {
-                MessageBox.Show("Debe seleccionar un producto primero", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-
-            if (int.Parse(txtstock.Text) < int.Parse(txtamount.Text))
-            {
-                MessageBox.Show("No hay suficiente stock del producto", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-
-            bool errorSale = false;
-            try
-            {
-                priceSale = CultureInfoHelper.CultureInfoConverterStringToDecimal(txtpricesale.Text);
-            }
-            catch
-            {
-                errorSale = true;
-            }
-
-            if (errorSale)
-            {
-                MessageBox.Show("Error al convertir el tipo de moneda - Precio Venta\nEjemplo Formato ##.##", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-
-            foreach (DataGridViewRow row in dgdata.Rows)
-            {
-                if (row.Cells["IdProducto"].Value.ToString() == txtidproduct.Text)
-                {
-                    productExists = true;
-                    break;
-                }
-            }
-
-            if (!productExists) {
-
-                
-                int rowId = dgdata.Rows.Add();
-                DataGridViewRow row = dgdata.Rows[rowId];
-                subTotal = Convert.ToDecimal(txtamount.Text.Trim()) * priceSale;
-
-                row.Cells["IdProducto"].Value = txtidproduct.Text;
-                row.Cells["NombreProducto"].Value = txtnameproduct.Text.Trim();
-                row.Cells["Cantidad"].Value = txtamount.Text.Trim();
-                row.Cells["PrecioVenta"].Value = CultureInfoHelper.FormatAsCurrency(priceSale);
-                row.Cells["SubTotal"].Value = CultureInfoHelper.FormatAsCurrency(subTotal);
-                CalculateTotal();
-                CleanProduct();
-
-
-            }
-            else
-            {
-                MessageBox.Show("El producto ya fue agregado\nElimínelo e ingrese el nuevo si quiere cambiar la cantidad.", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-
-            
-        }
+        private void btnAddProduct_Click(object sender, EventArgs e) => _presenter.OnAddProduct();
 
         public void CleanProduct()
         {
@@ -219,138 +136,8 @@ namespace PharmacySystem
             txtpricesale.Text = "";
         }
 
-        private void CalculateTotal()
-        {
+        private void btnFinishSale_Click(object sender, EventArgs e) => _presenter.OnFinishSale();
 
-            decimal total = 0;
-            if (dgdata.Rows.Count > 0)
-            {
-                foreach (DataGridViewRow row in dgdata.Rows)
-                {
-                    total += CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["SubTotal"].Value.ToString());
-                }
-            }
-
-            txttotalpay.Text = CultureInfoHelper.FormatAsCurrency(total);
-
-        }
-
-        private void btnFinishSale_Click(object sender, EventArgs e)
-        {
-
-            if (txtdocumentclient.Text.Trim() == "" || txtnameclient.Text.Trim() == "")
-            {
-                MessageBox.Show("Debe ingresar todos los datos del cliente", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-
-            if (dgdata.Rows.Count < 1)
-            {
-                MessageBox.Show("Debe ingresar un producto como minimo\npara registrar una venta", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-
-            if (txtpaywith.Text.Trim() == "0")
-            {
-                MessageBox.Show("Debe ingresar con cuanto paga el cliente", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-
-            if (!CalculateChange())
-            {
-                MessageBox.Show("Error al convertir el tipo de moneda - Paga con\nEjemplo Formato ##.##", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-
-            var moneyToPay = CultureInfoHelper.CultureInfoConverterStringToDecimal(txtpaywith.Text);
-            var totalToPay = CultureInfoHelper.CultureInfoConverterStringToDecimal(txttotalpay.Text);
-            var changeMoney = CultureInfoHelper.CultureInfoConverterStringToDecimal(txtchange.Text);
-
-            if (totalToPay > moneyToPay)
-            {
-                MessageBox.Show("Falta dinero para pagar", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-            bool result = SaleService.Instance.ControlStock(int.Parse(txtidproduct.Text), int.Parse(txtamount.Text.Trim()), true);
-            bool existsProduct = false;
-            bool subtractStock = false;
-            if (result)
-            {
-                List<SaleDetail> olist = new List<SaleDetail>();
-                
-
-                if (dgdata.Rows.Count > 0)
-                {
-                    foreach (DataGridViewRow row in dgdata.Rows)
-                    {
-                        int idProduct = int.Parse(row.Cells["IdProducto"].Value.ToString());
-                        int amount = int.Parse(row.Cells["Cantidad"].Value.ToString());
-                        decimal salePrice = CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["PrecioVenta"].Value.ToString());
-                        decimal subtotal = CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["SubTotal"].Value.ToString());
-                        existsProduct = ProductService.Instance.VerifyProduct(idProduct);
-
-                        if (existsProduct)
-                        {
-                            olist.Add(new SaleDetail()
-                            {
-                                oProduct = new Product() { idProduct = idProduct},
-                                amount = amount,
-                                salePrice = salePrice,
-                                subtotal = subtotal
-                            });
-                            subtractStock = SaleService.Instance.ControlStock(idProduct, amount, true);
-                            if (!subtractStock)
-                            {
-                                olist.Clear();
-                                MessageBox.Show("No se pudo registrar la venta\n Problema con Stock", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                                return;
-                            }
-
-                        }
-                        else
-                        {
-                            MessageBox.Show("No se pudo registrar la venta\n Problema con producto", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                            return;
-                        }
-
-                    }
-                }
-
-                Sale oSale = new Sale()
-                {
-                    typeDocument = ((ComboBoxItem)cbodocumenttype.SelectedItem).Value.ToString(),
-                    oPerson = new Person() { idPerson = _IdPerson },
-                    documentClient = txtdocumentclient.Text.Trim(),
-                    nameClient = txtnameclient.Text.Trim(),
-                    totalPay = totalToPay,
-                    payWith = moneyToPay,
-                    change = changeMoney
-                };
-
-                oSale.oSaleDetail = olist;
-
-                int idsale = SaleService.Instance.RegisterSale(oSale);
-
-                //bool resultSt = SaleService.Instance.ControlStock(idProduct, stock, false);
-                if (idsale != 0)
-                {
-                    Clean();
-                    if (MessageBox.Show("La venta fue registrada\n¿Desea imprimir el ticket ahora?", "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                    {
-                        PrintSale imp = new PrintSale(idsale);
-                        imp.ShowDialog();
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("No se pudo registrar la venta", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                }
-
-            }
-
-
-
-        }
         private void Clean()
         {
             txtdocumentclient.Text = "";
@@ -359,7 +146,6 @@ namespace PharmacySystem
             txtpaywith.Text = "0";
             txtchange.Text = "0";
             dgdata.Rows.Clear();
-
         }
 
         private void txtPayWith_KeyPress(object sender, KeyPressEventArgs e)
@@ -390,50 +176,94 @@ namespace PharmacySystem
 
         }
 
-        
-
-        private void btnCalculate_Click(object sender, EventArgs e)
-        {
-            if (!CalculateChange()) {
-                MessageBox.Show("Error al convertir el tipo de moneda - Paga con\nEjemplo Formato ##.##", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            }
-        }
-
-
-        private bool CalculateChange() {
-
-            bool result = true;
-            decimal moneyToPay = Convert.ToDecimal(txtpaywith.Text);
-            decimal totalPay = CultureInfoHelper.CultureInfoConverterStringToDecimal(txttotalpay.Text);
-
-            if (moneyToPay < totalPay)
-            {
-                txtchange.Text = CultureInfoHelper.FormatAsCurrency(0);
-            }
-            else
-            {
-                decimal change = moneyToPay - totalPay;
-                txtchange.Text = CultureInfoHelper.FormatAsCurrency(change);
-            }
-
-            return result;
-        }
+        private void btnCalculate_Click(object sender, EventArgs e) => _presenter.OnCalculateChangeRequested();
 
         private void txtCodeProduct_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyData == Keys.Enter)
             {
-
-                Product pr = ProductService.Instance.ListProduct().Where(p => p.code == txtcodeproduct.Text.Trim()).FirstOrDefault();
-                if (pr != null) {
-                    txtcodeproduct.Text = pr.code;
-                    txtstock.Text = pr.stock.ToString();
-                    txtnameproduct.Text = pr.name;
-                    txtidproduct.Text = pr.idProduct.ToString();
-                    txtpricesale.Text = CultureInfoHelper.FormatAsCurrency(pr.salePrice);
-                }
-                
+                _presenter.OnProductCodeEntered(txtcodeproduct.Text.Trim());
             }
         }
+
+        #region ISaleView
+
+        int ISaleView.SelectedProductId => int.Parse(txtidproduct.Text);
+        string ISaleView.SelectedProductName => txtnameproduct.Text.Trim();
+        int ISaleView.Stock => int.Parse(txtstock.Text);
+        decimal ISaleView.Amount => txtamount.Value;
+        string ISaleView.PriceSaleText => txtpricesale.Text;
+
+        string ISaleView.DocumentClient => txtdocumentclient.Text;
+        string ISaleView.NameClient => txtnameclient.Text;
+        string ISaleView.PayWithText => txtpaywith.Text;
+        string ISaleView.TotalPayText => txttotalpay.Text;
+        string ISaleView.ChangeText => txtchange.Text;
+        string ISaleView.DocumentType => ((ComboBoxItem)cbodocumenttype.SelectedItem).Value.ToString();
+
+        IReadOnlyList<SaleCartLine> ISaleView.CartLines
+        {
+            get
+            {
+                var lines = new List<SaleCartLine>();
+                foreach (DataGridViewRow row in dgdata.Rows)
+                {
+                    lines.Add(new SaleCartLine
+                    {
+                        ProductId = int.Parse(row.Cells["IdProducto"].Value.ToString()),
+                        Name = row.Cells["NombreProducto"].Value.ToString(),
+                        Quantity = decimal.Parse(row.Cells["Cantidad"].Value.ToString()),
+                        SalePrice = CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["PrecioVenta"].Value.ToString()),
+                        SubTotal = CultureInfoHelper.CultureInfoConverterStringToDecimal(row.Cells["SubTotal"].Value.ToString())
+                    });
+                }
+                return lines;
+            }
+        }
+
+        public void ShowMessage(string message) =>
+            MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+        public void SetSelectedProduct(int id, string code, string name, int stock, string priceSaleFormatted)
+        {
+            txtcodeproduct.Text = code;
+            txtstock.Text = stock.ToString();
+            txtnameproduct.Text = name;
+            txtidproduct.Text = id.ToString();
+            txtpricesale.Text = priceSaleFormatted;
+        }
+
+        public void AddCartLine(SaleCartLine line)
+        {
+            int rowId = dgdata.Rows.Add();
+            DataGridViewRow row = dgdata.Rows[rowId];
+
+            row.Cells["IdProducto"].Value = line.ProductId.ToString();
+            row.Cells["NombreProducto"].Value = line.Name;
+            row.Cells["Cantidad"].Value = line.Quantity.ToString();
+            row.Cells["PrecioVenta"].Value = CultureInfoHelper.FormatAsCurrency(line.SalePrice);
+            row.Cells["SubTotal"].Value = CultureInfoHelper.FormatAsCurrency(line.SubTotal);
+        }
+
+        public void RemoveCartLineAt(int index) => dgdata.Rows.RemoveAt(index);
+
+        public void SetTotalText(string formattedTotal) => txttotalpay.Text = formattedTotal;
+
+        public void SetChangeText(string formattedChange) => txtchange.Text = formattedChange;
+
+        public void ClearProductEntry() => CleanProduct();
+
+        public void ClearSale() => Clean();
+
+        public void SaleRegistered(int idSale)
+        {
+            if (MessageBox.Show("La venta fue registrada\n¿Desea imprimir el ticket ahora?", "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                PrintSale imp = new PrintSale(idSale);
+                imp.ShowDialog();
+            }
+        }
+
+        #endregion
     }
 }
