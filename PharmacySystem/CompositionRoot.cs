@@ -31,5 +31,12 @@ namespace PharmacySystem
             ISupplierService service = new SupplierService(repository);
             return new SupplierPickerPresenter(view, service);
         }
+
+        public static ClientPresenter CreateClientPresenter(IClientView view)
+        {
+            IPersonRepository repository = new PersonRepository(ConnectionFactory);
+            IPersonService service = new PersonService(repository);
+            return new ClientPresenter(view, service);
+        }
     }
 }
