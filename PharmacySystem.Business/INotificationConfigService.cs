@@ -7,6 +7,7 @@ namespace PharmacySystem.Business
     {
         List<Product> ListExpirationDate(int days);
         List<Product> ListStock(int criticalStock);
+        List<ProductAlert> GetActiveAlerts();
         int ConfigDay();
         int ConfigStock();
         bool ConfigUpdate(NotificationConfig obj);

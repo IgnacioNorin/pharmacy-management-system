@@ -1,15 +1,13 @@
-using System.Collections.Generic;
 using PharmacySystem.Business;
 using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
 {
-    // Ported from MainForm.cs's notificationDate()/notificationStock(). Both checks used to pull
-    // every active product and filter by threshold in this loop; the threshold is now applied in
-    // the repository's SQL (see NotificationConfigRepository), so this just checks whether
-    // anything came back - the observable behavior (message shown whenever at least one product
-    // qualifies) is unchanged from before.
+    // Ported from MainForm.cs's notificationDate()/notificationStock(). Fase 3 of the alerts
+    // rework replaced the two separate "is anything wrong" checks with a single itemized,
+    // severity-ranked list (NotificationConfigService.GetActiveAlerts()) - the View decides how to
+    // render it (notification center), this presenter just fetches and forwards it.
     public class MainFormPresenter
     {
         private readonly IMainFormView _view;
@@ -32,26 +30,9 @@ namespace PharmacySystem.Presentation
             _view.SetAdministrativeMenusVisible(person.oPersonType.idPersonType != 2);
         }
 
-        public void CheckExpirationWarnings()
+        public void RefreshAlerts()
         {
-            int days = _notificationService.ConfigDay();
-            List<Product> expiringProducts = _notificationService.ListExpirationDate(days);
-
-            bool visible = expiringProducts.Count > 0;
-            string message = visible ? "Hay productos con Fechas Vencidas Revise" : "";
-
-            _view.ShowExpirationWarning(visible, message);
-        }
-
-        public void CheckStockWarnings()
-        {
-            int criticalStockThreshold = _notificationService.ConfigStock();
-            List<Product> lowStockProducts = _notificationService.ListStock(criticalStockThreshold);
-
-            bool visible = lowStockProducts.Count > 0;
-            string message = visible ? "Revise si hay productos con Stock Crítico" : "";
-
-            _view.ShowStockWarning(visible, message);
+            _view.ShowAlerts(_notificationService.GetActiveAlerts());
         }
     }
 }

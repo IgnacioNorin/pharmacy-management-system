@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
@@ -54,74 +53,34 @@ namespace PharmacySystem.Tests.Presentation
             Assert.True(view.AdministrativeMenusVisible);
         }
 
-        // The threshold filter now lives in NotificationConfigRepository's SQL (see
-        // NotificationConfigRepositoryTests for that), not in this presenter - it just trusts
-        // whatever the service returns and forwards the configured threshold to it.
+        // Fase 3: severity classification itself is tested at the Business layer
+        // (NotificationConfigServiceTests) - here we only confirm the presenter fetches the
+        // itemized alert list and forwards it to the View untouched.
 
         [Fact]
-        public void CheckExpirationWarnings_ServiceReturnsNothing_HidesWarning()
+        public void RefreshAlerts_NoActiveAlerts_ShowsEmptyList()
         {
             var view = new FakeMainFormView();
-            var notificationService = new FakeNotificationConfigService
-            {
-                ConfigDayResult = 5,
-                ListExpirationDateResult = new List<Product>()
-            };
+            var notificationService = new FakeNotificationConfigService { GetActiveAlertsResult = new List<ProductAlert>() };
 
-            CreatePresenter(view, new FakeStoreService(), notificationService).CheckExpirationWarnings();
+            CreatePresenter(view, new FakeStoreService(), notificationService).RefreshAlerts();
 
-            Assert.False(view.ExpirationWarningVisible);
-            Assert.Equal("", view.ExpirationWarningMessage);
-            Assert.Equal(5, notificationService.RequestedDays);
+            Assert.Empty(view.ShownAlerts);
         }
 
         [Fact]
-        public void CheckExpirationWarnings_ServiceReturnsProducts_ShowsWarning()
+        public void RefreshAlerts_ForwardsAlertsFromServiceToView()
         {
             var view = new FakeMainFormView();
-            var notificationService = new FakeNotificationConfigService
+            var alerts = new List<ProductAlert>
             {
-                ConfigDayResult = 5,
-                ListExpirationDateResult = new List<Product> { new Product { expirationDate = DateTime.Today.AddDays(3) } }
+                new ProductAlert { ProductId = 1, Code = "P1", Name = "Paracetamol", Severity = AlertSeverity.Critical, Detail = "Sin stock" }
             };
+            var notificationService = new FakeNotificationConfigService { GetActiveAlertsResult = alerts };
 
-            CreatePresenter(view, new FakeStoreService(), notificationService).CheckExpirationWarnings();
+            CreatePresenter(view, new FakeStoreService(), notificationService).RefreshAlerts();
 
-            Assert.True(view.ExpirationWarningVisible);
-            Assert.Equal("Hay productos con Fechas Vencidas Revise", view.ExpirationWarningMessage);
-        }
-
-        [Fact]
-        public void CheckStockWarnings_ServiceReturnsNothing_HidesWarning()
-        {
-            var view = new FakeMainFormView();
-            var notificationService = new FakeNotificationConfigService
-            {
-                ConfigStockResult = 5,
-                ListStockResult = new List<Product>()
-            };
-
-            CreatePresenter(view, new FakeStoreService(), notificationService).CheckStockWarnings();
-
-            Assert.False(view.StockWarningVisible);
-            Assert.Equal("", view.StockWarningMessage);
-            Assert.Equal(5, notificationService.RequestedCriticalStock);
-        }
-
-        [Fact]
-        public void CheckStockWarnings_ServiceReturnsProducts_ShowsWarning()
-        {
-            var view = new FakeMainFormView();
-            var notificationService = new FakeNotificationConfigService
-            {
-                ConfigStockResult = 5,
-                ListStockResult = new List<Product> { new Product { stock = 5 } }
-            };
-
-            CreatePresenter(view, new FakeStoreService(), notificationService).CheckStockWarnings();
-
-            Assert.True(view.StockWarningVisible);
-            Assert.Equal("Revise si hay productos con Stock Crítico", view.StockWarningMessage);
+            Assert.Same(alerts[0], Assert.Single(view.ShownAlerts));
         }
     }
 }
