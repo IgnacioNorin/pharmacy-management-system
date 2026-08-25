@@ -1,0 +1,181 @@
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using PharmacySystem.Business;
+using PharmacySystem.Helpers;
+using PharmacySystem.Model;
+
+namespace PharmacySystem.Presentation
+{
+    // Ported from frmReport.cs. The three Report*/ReportPurchase/ReportSale methods used to
+    // build a pre-formatted-string DataTable directly inside the WinForms-side adapter, because
+    // that's where CultureInfoHelper/DateHelper lived. Now that those helpers are in Domain, the
+    // repositories return raw typed rows and this presenter builds the exact same DataTable
+    // shape (same column names/order, same "Total:" summary row) - it's what both the grid
+    // binding and the Excel export in frmReport.cs's Export*_Click handlers still consume.
+    public class ReportPresenter
+    {
+        private readonly IReportView _view;
+        private readonly ISupplierService _supplierService;
+        private readonly ICategoryService _categoryService;
+        private readonly ISaleService _saleService;
+        private readonly IPurchaseService _purchaseService;
+        private readonly IProductService _productService;
+
+        public ReportPresenter(
+            IReportView view,
+            ISupplierService supplierService,
+            ICategoryService categoryService,
+            ISaleService saleService,
+            IPurchaseService purchaseService,
+            IProductService productService)
+        {
+            _view = view;
+            _supplierService = supplierService;
+            _categoryService = categoryService;
+            _saleService = saleService;
+            _purchaseService = purchaseService;
+            _productService = productService;
+        }
+
+        public void OnLoad()
+        {
+            var supplierOptions = new List<ComboBoxItem> { new ComboBoxItem { Value = "0", Text = "Todos" } };
+            supplierOptions.AddRange(_supplierService.List().Select(s => new ComboBoxItem { Value = s.idSupplier, Text = s.companyName }));
+            _view.LoadSupplierOptions(supplierOptions);
+
+            var categoryOptions = new List<ComboBoxItem> { new ComboBoxItem { Value = "0", Text = "Todos" } };
+            categoryOptions.AddRange(_categoryService.List().Select(c => new ComboBoxItem { Value = c.IdCategory, Text = c.description }));
+            _view.LoadCategoryOptions(categoryOptions);
+        }
+
+        public void OnConsultSale()
+        {
+            string startDate = DateHelper.FormatDateBackend(_view.SaleStartDate);
+            string endDate = DateHelper.FormatDateBackend(_view.SaleEndDate);
+
+            decimal sumTotalPay = _saleService.SumTotalPay(startDate, endDate);
+            decimal sumAmountReceived = _saleService.SumAmountReceived(startDate, endDate);
+            decimal sumChangeAmount = _saleService.SumChangeAmount(startDate, endDate);
+            List<SaleReportRow> rows = _saleService.ReportSale(startDate, endDate);
+
+            DataTable dt = new DataTable();
+            dt.Columns.Add("Fecha Venta", typeof(string));
+            dt.Columns.Add("Tipo Documento", typeof(string));
+            dt.Columns.Add("Numero Documento", typeof(string));
+            dt.Columns.Add("CI Vendedor", typeof(string));
+            dt.Columns.Add("Nombre Vendedor", typeof(string));
+            dt.Columns.Add("CI Cliente", typeof(string));
+            dt.Columns.Add("Nombre Cliente", typeof(string));
+            dt.Columns.Add("Total Pagar", typeof(string));
+            dt.Columns.Add("Pago Con", typeof(string));
+            dt.Columns.Add("Cambio", typeof(string));
+
+            foreach (SaleReportRow r in rows)
+            {
+                dt.Rows.Add(
+                    DateHelper.FormatDatePresentation(r.DateRegistered),
+                    r.DocumentType,
+                    r.DocumentNumber,
+                    r.SellerDocument,
+                    r.SellerName,
+                    r.ClientDocument,
+                    r.ClientName,
+                    CultureInfoHelper.FormatAsCurrency(r.TotalAmount),
+                    CultureInfoHelper.FormatAsCurrency(r.AmountReceived),
+                    CultureInfoHelper.FormatAsCurrency(r.ChangeAmount));
+            }
+
+            dt.Rows.Add(null, null);
+            dt.Rows.Add(null, null, null, null, null, null, "Total:",
+                CultureInfoHelper.FormatAsCurrency(sumTotalPay),
+                CultureInfoHelper.FormatAsCurrency(sumAmountReceived),
+                CultureInfoHelper.FormatAsCurrency(sumChangeAmount));
+
+            _view.SetSaleReport(dt);
+        }
+
+        public void OnConsultPurchase()
+        {
+            string startDate = DateHelper.FormatDateBackend(_view.PurchaseStartDate);
+            string endDate = DateHelper.FormatDateBackend(_view.PurchaseEndDate);
+            string supplierId = _view.SelectedSupplierId;
+
+            List<PurchaseReportRow> rows = _purchaseService.ReportPurchase(supplierId, startDate, endDate);
+            decimal sumTotalAmount = _purchaseService.GetTotalAmount(supplierId, startDate, endDate);
+            int sumQuantityProduct = _purchaseService.GetTotalQuantity(supplierId, startDate, endDate);
+            decimal sumPurchasePrice = _purchaseService.GetTotalPurchasePrice(supplierId, startDate, endDate);
+            decimal sumSalePrice = _purchaseService.GetTotalSalesPrice(supplierId, startDate, endDate);
+
+            DataTable dt = new DataTable();
+            dt.Columns.Add("Fecha Compra", typeof(string));
+            dt.Columns.Add("RUC", typeof(string));
+            dt.Columns.Add("Razon Social", typeof(string));
+            dt.Columns.Add("Tipo Documento", typeof(string));
+            dt.Columns.Add("Numero Documento", typeof(string));
+            dt.Columns.Add("Monto Total", typeof(string));
+            dt.Columns.Add("Nombre,", typeof(string));
+            dt.Columns.Add("Cantidad", typeof(string));
+            dt.Columns.Add("Precio Compra", typeof(string));
+            dt.Columns.Add("Precio Venta", typeof(string));
+
+            foreach (PurchaseReportRow r in rows)
+            {
+                dt.Rows.Add(
+                    DateHelper.FormatDatePresentation(r.DateRegistered),
+                    r.SupplierDocument,
+                    r.CompanyName,
+                    r.DocumentType,
+                    r.DocumentNumber,
+                    CultureInfoHelper.FormatAsCurrency(r.TotalAmount),
+                    r.ProductName,
+                    r.Quantity.ToString(),
+                    CultureInfoHelper.FormatAsCurrency(r.PurchasePrice),
+                    CultureInfoHelper.FormatAsCurrency(r.SalePrice));
+            }
+
+            dt.Rows.Add(null, null);
+            dt.Rows.Add(null, null, null, null, "Total:",
+                CultureInfoHelper.FormatAsCurrency(sumTotalAmount), null,
+                sumQuantityProduct.ToString(),
+                CultureInfoHelper.FormatAsCurrency(sumPurchasePrice),
+                CultureInfoHelper.FormatAsCurrency(sumSalePrice));
+
+            _view.SetPurchaseReport(dt);
+        }
+
+        public void OnConsultProduct()
+        {
+            List<ProductReportRow> rows = _productService.Report(_view.SelectedCategoryId);
+
+            DataTable dt = new DataTable();
+            dt.Columns.Add("Fecha Registro", typeof(string));
+            dt.Columns.Add("Codigo", typeof(string));
+            dt.Columns.Add("Nombre", typeof(string));
+            dt.Columns.Add("Descripcion", typeof(string));
+            dt.Columns.Add("Categoria", typeof(string));
+            dt.Columns.Add("Stock", typeof(string));
+            dt.Columns.Add("Precio Compra", typeof(string));
+            dt.Columns.Add("Precio Venta", typeof(string));
+            dt.Columns.Add("Fecha Vencimiento", typeof(string));
+            dt.Columns.Add("Estado", typeof(string));
+
+            foreach (ProductReportRow r in rows)
+            {
+                dt.Rows.Add(
+                    DateHelper.FormatDatePresentation(r.DateCreated),
+                    r.Code,
+                    r.Name,
+                    r.Description,
+                    r.CategoryDescription,
+                    r.Stock.ToString(),
+                    CultureInfoHelper.FormatAsCurrency(r.PurchasePrice),
+                    CultureInfoHelper.FormatAsCurrency(r.SalePrice),
+                    DateHelper.FormatDatePresentation(r.DateExpired),
+                    r.StatusName);
+            }
+
+            _view.SetProductReport(dt);
+        }
+    }
+}

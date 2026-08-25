@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using PharmacySystem.Data;
 using PharmacySystem.Model;
 
@@ -16,6 +17,9 @@ namespace PharmacySystem.Business
         }
 
         public bool Register(Purchase purchase) => _repository.Register(purchase);
+
+        public List<PurchaseReportRow> ReportPurchase(string idSupplier, string startDate, string endDate) =>
+            _repository.ReportPurchase(idSupplier, startDate, endDate);
 
         public decimal GetTotalAmount(string idSupplier, string startDate, string endDate) =>
             _repository.GetTotalAmount(idSupplier, startDate, endDate);

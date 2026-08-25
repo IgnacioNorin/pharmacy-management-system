@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Business
@@ -5,6 +6,7 @@ namespace PharmacySystem.Business
     public interface IPurchaseService
     {
         bool Register(Purchase purchase);
+        List<PurchaseReportRow> ReportPurchase(string idSupplier, string startDate, string endDate);
         decimal GetTotalAmount(string idSupplier, string startDate, string endDate);
         decimal GetTotalPurchasePrice(string idSupplier, string startDate, string endDate);
         int GetTotalQuantity(string idSupplier, string startDate, string endDate);

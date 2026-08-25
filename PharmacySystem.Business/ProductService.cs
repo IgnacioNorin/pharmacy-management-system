@@ -25,5 +25,7 @@ namespace PharmacySystem.Business
         public bool Verify(int idProduct) => _repository.Verify(idProduct);
 
         public bool Delete(int idProduct) => _repository.Delete(idProduct);
+
+        public List<ProductReportRow> Report(string categoryId) => _repository.Report(categoryId);
     }
 }

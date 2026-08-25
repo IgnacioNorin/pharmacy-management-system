@@ -9,6 +9,7 @@ namespace PharmacySystem.Business
         List<SaleDetail> ListSaleDetail();
         bool ControlStock(int idproduct, int amount, bool subtract);
         int Register(Sale sale);
+        List<SaleReportRow> ReportSale(string startDate, string endDate);
         decimal SumTotalPay(string startDate, string endDate);
         decimal SumAmountReceived(string startDate, string endDate);
         decimal SumChangeAmount(string startDate, string endDate);

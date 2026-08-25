@@ -24,6 +24,8 @@ namespace PharmacySystem.Business
 
         public int Register(Sale sale) => _repository.Register(sale);
 
+        public List<SaleReportRow> ReportSale(string startDate, string endDate) => _repository.ReportSale(startDate, endDate);
+
         public decimal SumTotalPay(string startDate, string endDate) => _repository.SumTotalPay(startDate, endDate);
 
         public decimal SumAmountReceived(string startDate, string endDate) => _repository.SumAmountReceived(startDate, endDate);

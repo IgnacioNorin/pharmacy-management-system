@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Text;
@@ -96,6 +97,62 @@ namespace PharmacySystem.Data
                 }
             }
             return result;
+        }
+
+        public List<PurchaseReportRow> ReportPurchase(string idSupplier, string startDate, string endDate)
+        {
+            List<PurchaseReportRow> rows = new List<PurchaseReportRow>();
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.AppendLine("SELECT pu.date_registered,su.document_number AS document_number_supplier,su.company_name,");
+                    sb.AppendLine("pu.document_type,pu.document_number AS document_number_employee,pu.total_amount,");
+                    sb.AppendLine("pr.name,pd.stock,pd.purchase_price,pd.sale_price");
+                    sb.AppendLine("FROM purchase pu");
+                    sb.AppendLine("INNER JOIN supplier su ON su.id = pu.supplier_id");
+                    sb.AppendLine("INNER JOIN purchase_detail pd ON pd.purchase_id = pu.id");
+                    sb.AppendLine("INNER JOIN product pr on pr.id = pd.product_id");
+                    sb.AppendLine("WHERE CAST(pu.date_registered AS DATE) BETWEEN @startDate and @endDate");
+                    sb.AppendLine("and pu.supplier_id =  CASE @supplier_id WHEN '0' THEN pu.supplier_id ");
+                    sb.AppendLine("WHEN 0 THEN pu.supplier_id ELSE @supplier_id END");
+
+                    SqlCommand cmd = new SqlCommand(sb.ToString(), oConnection);
+                    cmd.Parameters.AddWithValue("@startDate", startDate);
+                    cmd.Parameters.AddWithValue("@endDate", endDate);
+                    cmd.Parameters.AddWithValue("@supplier_id", idSupplier);
+                    cmd.CommandType = CommandType.Text;
+
+                    oConnection.Open();
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+                        while (dr.Read())
+                        {
+                            rows.Add(new PurchaseReportRow
+                            {
+                                DateRegistered = Convert.ToDateTime(dr["date_registered"]),
+                                SupplierDocument = dr["document_number_supplier"].ToString(),
+                                CompanyName = dr["company_name"].ToString(),
+                                DocumentType = dr["document_type"].ToString(),
+                                DocumentNumber = dr["document_number_employee"].ToString(),
+                                TotalAmount = Convert.ToDecimal(dr["total_amount"]),
+                                ProductName = dr["name"].ToString(),
+                                Quantity = Convert.ToInt32(dr["stock"]),
+                                PurchasePrice = Convert.ToDecimal(dr["purchase_price"]),
+                                SalePrice = Convert.ToDecimal(dr["sale_price"])
+                            });
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    rows = new List<PurchaseReportRow>();
+                }
+            }
+            return rows;
         }
 
         public decimal GetTotalAmount(string idSupplier, string startDate, string endDate)
