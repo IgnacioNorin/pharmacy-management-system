@@ -1,24 +1,29 @@
 using System.Data.SqlClient;
-using System.Linq;
+using PharmacySystem.Data;
 using PharmacySystem.Logical;
 using PharmacySystem.Model;
 using Xunit;
 
 namespace PharmacySystem.Tests.Integration
 {
+    // Was CategoryServiceTests, calling CategoryService.Instance. Now exercises
+    // CategoryRepository directly. ProductService.Instance stays as-is below (it's just test
+    // setup for the cross-entity FK scenario) until ProductService itself is migrated.
     [Collection("Database")]
-    public class CategoryServiceTests
+    public class CategoryRepositoryTests
     {
+        private static readonly ICategoryRepository Repository = new CategoryRepository(SqlConnectionFactory.FromConfiguration());
+
         [Fact]
-        public void RegisterCategory_NewDescription_IsListedAsActive()
+        public void Register_NewDescription_IsListedAsActive()
         {
             string description = SqlTestHelper.NewTag();
-            int id = CategoryService.Instance.RegisterCategory(new Categories { description = description });
+            int id = Repository.Register(new Categories { description = description });
 
             try
             {
                 Assert.True(id > 0);
-                Assert.Contains(CategoryService.Instance.ListCategory(), c => c.IdCategory == id && c.description == description);
+                Assert.Contains(Repository.List(), c => c.IdCategory == id && c.description == description);
             }
             finally
             {
@@ -27,14 +32,14 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void RegisterCategory_DuplicateDescription_ReturnsZero()
+        public void Register_DuplicateDescription_ReturnsZero()
         {
             string description = SqlTestHelper.NewTag();
-            int firstId = CategoryService.Instance.RegisterCategory(new Categories { description = description });
+            int firstId = Repository.Register(new Categories { description = description });
 
             try
             {
-                int secondId = CategoryService.Instance.RegisterCategory(new Categories { description = description.ToUpperInvariant() });
+                int secondId = Repository.Register(new Categories { description = description.ToUpperInvariant() });
 
                 Assert.Equal(0, secondId);
             }
@@ -45,19 +50,19 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void RegisterCategory_ReRegisteringSoftDeletedDescription_ReactivatesSameRow()
+        public void Register_ReRegisteringSoftDeletedDescription_ReactivatesSameRow()
         {
             string description = SqlTestHelper.NewTag();
-            int id = CategoryService.Instance.RegisterCategory(new Categories { description = description });
+            int id = Repository.Register(new Categories { description = description });
 
             try
             {
                 SqlTestHelper.ExecuteNonQuery("UPDATE category SET status = 0 WHERE id = @id", new SqlParameter("@id", id));
 
-                int reactivatedId = CategoryService.Instance.RegisterCategory(new Categories { description = description });
+                int reactivatedId = Repository.Register(new Categories { description = description });
 
                 Assert.Equal(id, reactivatedId);
-                Assert.Contains(CategoryService.Instance.ListCategory(), c => c.IdCategory == id);
+                Assert.Contains(Repository.List(), c => c.IdCategory == id);
             }
             finally
             {
@@ -66,17 +71,17 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void UpdateCategory_NewDescription_IsPersisted()
+        public void Update_NewDescription_IsPersisted()
         {
-            int id = CategoryService.Instance.RegisterCategory(new Categories { description = SqlTestHelper.NewTag() });
+            int id = Repository.Register(new Categories { description = SqlTestHelper.NewTag() });
             string newDescription = SqlTestHelper.NewTag();
 
             try
             {
-                bool result = CategoryService.Instance.UpdateCategory(new Categories { IdCategory = id, description = newDescription });
+                bool result = Repository.Update(new Categories { IdCategory = id, description = newDescription });
 
                 Assert.True(result);
-                Assert.Contains(CategoryService.Instance.ListCategory(), c => c.IdCategory == id && c.description == newDescription);
+                Assert.Contains(Repository.List(), c => c.IdCategory == id && c.description == newDescription);
             }
             finally
             {
@@ -85,20 +90,20 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void DeleteCategory_NotReferencedByProducts_HardDeletesRow()
+        public void Delete_NotReferencedByProducts_HardDeletesRow()
         {
-            int id = CategoryService.Instance.RegisterCategory(new Categories { description = SqlTestHelper.NewTag() });
+            int id = Repository.Register(new Categories { description = SqlTestHelper.NewTag() });
 
-            bool result = CategoryService.Instance.DeleteCategory(id);
+            bool result = Repository.Delete(id);
 
             Assert.True(result);
             Assert.Null(SqlTestHelper.ExecuteScalar("SELECT id FROM category WHERE id = @id", new SqlParameter("@id", id)));
         }
 
         [Fact]
-        public void DeleteCategory_ReferencedByProduct_SoftDeletesInstead()
+        public void Delete_ReferencedByProduct_SoftDeletesInstead()
         {
-            int categoryId = CategoryService.Instance.RegisterCategory(new Categories { description = SqlTestHelper.NewTag() });
+            int categoryId = Repository.Register(new Categories { description = SqlTestHelper.NewTag() });
             int productId = ProductService.Instance.RegisterProduct(new Product
             {
                 code = SqlTestHelper.NewTag(),
@@ -109,11 +114,11 @@ namespace PharmacySystem.Tests.Integration
 
             try
             {
-                bool result = CategoryService.Instance.DeleteCategory(categoryId);
+                bool result = Repository.Delete(categoryId);
 
                 Assert.True(result);
                 Assert.Equal(0, SqlTestHelper.ExecuteScalarInt("SELECT status FROM category WHERE id = @id", new SqlParameter("@id", categoryId)));
-                Assert.DoesNotContain(CategoryService.Instance.ListCategory(), c => c.IdCategory == categoryId);
+                Assert.DoesNotContain(Repository.List(), c => c.IdCategory == categoryId);
             }
             finally
             {
