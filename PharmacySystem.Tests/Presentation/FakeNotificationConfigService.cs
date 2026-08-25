@@ -13,8 +13,20 @@ namespace PharmacySystem.Tests.Presentation
         public List<Product> ListExpirationDateResult { get; set; } = new List<Product>();
         public List<Product> ListStockResult { get; set; } = new List<Product>();
 
-        public List<Product> ListExpirationDate() => ListExpirationDateResult;
-        public List<Product> ListStock() => ListStockResult;
+        public int? RequestedDays { get; private set; }
+        public int? RequestedCriticalStock { get; private set; }
+
+        public List<Product> ListExpirationDate(int days)
+        {
+            RequestedDays = days;
+            return ListExpirationDateResult;
+        }
+
+        public List<Product> ListStock(int criticalStock)
+        {
+            RequestedCriticalStock = criticalStock;
+            return ListStockResult;
+        }
         public int ConfigDay() => ConfigDayResult;
         public int ConfigStock() => ConfigStockResult;
 

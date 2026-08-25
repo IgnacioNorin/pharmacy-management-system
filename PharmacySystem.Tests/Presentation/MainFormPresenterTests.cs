@@ -54,24 +54,29 @@ namespace PharmacySystem.Tests.Presentation
             Assert.True(view.AdministrativeMenusVisible);
         }
 
+        // The threshold filter now lives in NotificationConfigRepository's SQL (see
+        // NotificationConfigRepositoryTests for that), not in this presenter - it just trusts
+        // whatever the service returns and forwards the configured threshold to it.
+
         [Fact]
-        public void CheckExpirationWarnings_NoExpiredProducts_HidesWarning()
+        public void CheckExpirationWarnings_ServiceReturnsNothing_HidesWarning()
         {
             var view = new FakeMainFormView();
             var notificationService = new FakeNotificationConfigService
             {
                 ConfigDayResult = 5,
-                ListExpirationDateResult = new List<Product> { new Product { expirationDate = DateTime.Today.AddYears(1) } }
+                ListExpirationDateResult = new List<Product>()
             };
 
             CreatePresenter(view, new FakeStoreService(), notificationService).CheckExpirationWarnings();
 
             Assert.False(view.ExpirationWarningVisible);
             Assert.Equal("", view.ExpirationWarningMessage);
+            Assert.Equal(5, notificationService.RequestedDays);
         }
 
         [Fact]
-        public void CheckExpirationWarnings_ExpiredProductWithinConfiguredDays_ShowsWarning()
+        public void CheckExpirationWarnings_ServiceReturnsProducts_ShowsWarning()
         {
             var view = new FakeMainFormView();
             var notificationService = new FakeNotificationConfigService
@@ -87,23 +92,24 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void CheckStockWarnings_NoCriticalStock_HidesWarning()
+        public void CheckStockWarnings_ServiceReturnsNothing_HidesWarning()
         {
             var view = new FakeMainFormView();
             var notificationService = new FakeNotificationConfigService
             {
                 ConfigStockResult = 5,
-                ListStockResult = new List<Product> { new Product { stock = 20 } }
+                ListStockResult = new List<Product>()
             };
 
             CreatePresenter(view, new FakeStoreService(), notificationService).CheckStockWarnings();
 
             Assert.False(view.StockWarningVisible);
             Assert.Equal("", view.StockWarningMessage);
+            Assert.Equal(5, notificationService.RequestedCriticalStock);
         }
 
         [Fact]
-        public void CheckStockWarnings_StockAtOrBelowThreshold_ShowsWarning()
+        public void CheckStockWarnings_ServiceReturnsProducts_ShowsWarning()
         {
             var view = new FakeMainFormView();
             var notificationService = new FakeNotificationConfigService

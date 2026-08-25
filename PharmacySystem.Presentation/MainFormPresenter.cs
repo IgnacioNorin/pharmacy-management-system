@@ -1,17 +1,15 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using PharmacySystem.Business;
 using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
 {
-    // Ported from MainForm.cs's notificationDate()/notificationStock(). Both loops preserve a
-    // real quirk from the original: `if (expiredDates.Count() >= 1)` is checked right after the
-    // item that made the count >= 1, so it is always true and the trailing `else` branch (which
-    // would clear the message) is dead code. Left as-is rather than simplified to "first match
-    // wins", since it changes nothing observable but keeps the diff a faithful port.
+    // Ported from MainForm.cs's notificationDate()/notificationStock(). Both checks used to pull
+    // every active product and filter by threshold in this loop; the threshold is now applied in
+    // the repository's SQL (see NotificationConfigRepository), so this just checks whether
+    // anything came back - the observable behavior (message shown whenever at least one product
+    // qualifies) is unchanged from before.
     public class MainFormPresenter
     {
         private readonly IMainFormView _view;
@@ -37,60 +35,21 @@ namespace PharmacySystem.Presentation
         public void CheckExpirationWarnings()
         {
             int days = _notificationService.ConfigDay();
-            var expiredDates = new List<DateTime>();
-            string message = "";
-            bool visible = false;
+            List<Product> expiringProducts = _notificationService.ListExpirationDate(days);
 
-            foreach (var item in _notificationService.ListExpirationDate().ToList())
-            {
-                DateTime expirationDate = item.expirationDate.AddDays(-days);
-
-                if (DateTime.Today >= expirationDate)
-                {
-                    expiredDates.Add(expirationDate);
-                    if (expiredDates.Count() >= 1)
-                    {
-                        message = "Hay productos con Fechas Vencidas Revise";
-                        expiredDates.Clear();
-                        visible = true;
-                    }
-                    else
-                    {
-                        message = "";
-                        expiredDates.Clear();
-                    }
-                }
-            }
+            bool visible = expiringProducts.Count > 0;
+            string message = visible ? "Hay productos con Fechas Vencidas Revise" : "";
 
             _view.ShowExpirationWarning(visible, message);
         }
 
         public void CheckStockWarnings()
         {
-            var criticalStock = new List<int>();
             int criticalStockThreshold = _notificationService.ConfigStock();
-            string message = "";
-            bool visible = false;
+            List<Product> lowStockProducts = _notificationService.ListStock(criticalStockThreshold);
 
-            foreach (var item in _notificationService.ListStock().ToList())
-            {
-                int stock = item.stock;
-                if (stock <= criticalStockThreshold)
-                {
-                    criticalStock.Add(stock);
-                    if (criticalStock.Count() >= 1)
-                    {
-                        message = "Revise si hay productos con Stock Crítico";
-                        criticalStock.Clear();
-                        visible = true;
-                    }
-                    else
-                    {
-                        message = "";
-                        criticalStock.Clear();
-                    }
-                }
-            }
+            bool visible = lowStockProducts.Count > 0;
+            string message = visible ? "Revise si hay productos con Stock Crítico" : "";
 
             _view.ShowStockWarning(visible, message);
         }

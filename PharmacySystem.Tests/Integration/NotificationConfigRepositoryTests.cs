@@ -54,13 +54,43 @@ namespace PharmacySystem.Tests.Integration
 
             try
             {
-                var results = Repository.ListExpirationDate();
+                var results = Repository.ListExpirationDate(days: 15);
 
                 Assert.Contains(results, p => p.expirationDate.Date == DateTime.Today.AddDays(10).Date);
             }
             finally
             {
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", withExpiration));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+            }
+        }
+
+        // Regression/coverage for Fase 1 of the alerts rework: the "within days" cutoff moved from
+        // MainFormPresenter's C# loop into this query. A product expiring further out than the
+        // configured window must not come back, same as the old in-memory filter would have dropped it.
+        [Fact]
+        public void ListExpirationDate_ProductBeyondConfiguredDays_IsExcluded()
+        {
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int farExpiration = ProductRepo.Register(new Product
+            {
+                code = SqlTestHelper.NewTag(),
+                name = "Far expiration",
+                description = "Far expiration",
+                oCategory = new Categories { IdCategory = categoryId }
+            });
+            SqlTestHelper.ExecuteNonQuery("UPDATE product SET date_expired = @date WHERE id = @id",
+                new SqlParameter("@date", DateTime.Today.AddDays(30)), new SqlParameter("@id", farExpiration));
+
+            try
+            {
+                var results = Repository.ListExpirationDate(days: 5);
+
+                Assert.DoesNotContain(results, p => p.expirationDate.Date == DateTime.Today.AddDays(30).Date);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", farExpiration));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
             }
         }
@@ -84,9 +114,38 @@ namespace PharmacySystem.Tests.Integration
 
             try
             {
-                var results = Repository.ListStock();
+                var results = Repository.ListStock(criticalStock: 5);
 
                 Assert.Contains(results, p => p.stock == 3);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+            }
+        }
+
+        // Coverage for Fase 1: the "at or below threshold" comparison moved from
+        // MainFormPresenter's C# loop into this query. A product above the configured critical
+        // stock must not come back.
+        [Fact]
+        public void ListStock_ProductAboveThreshold_IsExcluded()
+        {
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = ProductRepo.Register(new Product
+            {
+                code = SqlTestHelper.NewTag(),
+                name = "Well stocked",
+                description = "Well stocked",
+                oCategory = new Categories { IdCategory = categoryId }
+            });
+            SqlTestHelper.ExecuteNonQuery("UPDATE product SET stock = 50 WHERE id = @id", new SqlParameter("@id", productId));
+
+            try
+            {
+                var results = Repository.ListStock(criticalStock: 5);
+
+                Assert.DoesNotContain(results, p => p.stock == 50);
             }
             finally
             {

@@ -13,9 +13,9 @@ namespace PharmacySystem.Business
             _repository = repository;
         }
 
-        public List<Product> ListExpirationDate() => _repository.ListExpirationDate();
+        public List<Product> ListExpirationDate(int days) => _repository.ListExpirationDate(days);
 
-        public List<Product> ListStock() => _repository.ListStock();
+        public List<Product> ListStock(int criticalStock) => _repository.ListStock(criticalStock);
 
         public int ConfigDay() => _repository.ConfigDay();
 

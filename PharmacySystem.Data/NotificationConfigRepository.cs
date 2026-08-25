@@ -18,14 +18,20 @@ namespace PharmacySystem.Data
             _connectionFactory = connectionFactory;
         }
 
-        public List<Product> ListExpirationDate()
+        public List<Product> ListExpirationDate(int days)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
+                    // Same cutoff the caller used to compute in C# (today >= expirationDate - days,
+                    // i.e. expirationDate <= today + days), now applied server-side so only the
+                    // rows that actually matter cross the wire.
                     return oConnection.Query<Product>(
-                        "SELECT date_expired AS expirationDate FROM product WHERE status = 1 AND date_expired IS NOT NULL")
+                        "SELECT date_expired AS expirationDate FROM product " +
+                        "WHERE status = 1 AND date_expired IS NOT NULL " +
+                        "AND date_expired <= DATEADD(day, @days, CAST(GETDATE() AS DATE))",
+                        new { days })
                         .ToList();
                 }
                 catch (Exception ex)
@@ -36,13 +42,16 @@ namespace PharmacySystem.Data
             }
         }
 
-        public List<Product> ListStock()
+        public List<Product> ListStock(int criticalStock)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    return oConnection.Query<Product>("SELECT stock FROM product WHERE status = 1").ToList();
+                    return oConnection.Query<Product>(
+                        "SELECT stock FROM product WHERE status = 1 AND stock <= @criticalStock",
+                        new { criticalStock })
+                        .ToList();
                 }
                 catch (Exception ex)
                 {
