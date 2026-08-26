@@ -185,6 +185,18 @@ namespace PharmacySystem.UiTests
         }
 
         [Fact]
+        public void FrmHome_ConstructsAndImplementsView()
+        {
+            StaThread.Run(() =>
+            {
+                using (var form = new frmHome(() => { }, () => { }, () => { }, code => { }))
+                {
+                    Assert.IsAssignableFrom<PharmacySystem.Presentation.IHomeView>(form);
+                }
+            });
+        }
+
+        [Fact]
         public void PrintSale_ConstructsWithoutException()
         {
             StaThread.Run(() =>

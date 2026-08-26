@@ -92,5 +92,12 @@ namespace PharmacySystem
             new ReportPresenter(view, _supplierService, _categoryService, _saleService, _purchaseService, _productService, _notificationConfigService);
 
         #endregion
+
+        #region Home
+
+        public static HomePresenter CreateHomePresenter(IHomeView view) =>
+            new HomePresenter(view, _saleService, _notificationConfigService);
+
+        #endregion
     }
 }

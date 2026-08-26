@@ -16,6 +16,14 @@ namespace PharmacySystem
         private readonly MainFormPresenter _presenter;
         private IReadOnlyList<ProductAlert> _currentAlerts = new List<ProductAlert>();
 
+        // Every sidebar item ShowForm can highlight as "active" - Salir is excluded on purpose,
+        // it isn't a navigation destination. Order doesn't matter, only membership.
+        private Button[] NavButtons => new[]
+        {
+            btnHome, btnSales, btnPurchases, btnManagement, btnSuppliers,
+            btnClients, btnUsers, btnReports, btnAlerts
+        };
+
         public MainForm(Person obj = null)
         {
             InitializeComponent();
@@ -34,9 +42,8 @@ namespace PharmacySystem
             // threshold purely because time passed, with nobody having sold or bought anything.
             timerNotification.Interval = 300000; // 5 minutes
             lblAlertBadge.Visible = false;
-            RepositionAlertBadge();
-            frmSale childForm = new frmSale(oPerson.idPerson);
-            ShowForm(childForm, salesToolStripMenuItem);
+            LayoutSidebarItems();
+            OpenHome();
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
@@ -54,28 +61,52 @@ namespace PharmacySystem
 
         public void SetAdministrativeMenusVisible(bool visible)
         {
-            usersToolStripMenuItem.Visible = visible;
-            managementToolStripMenuItem.Visible = visible;
-            suppliersToolStripMenuItem.Visible = visible;
-            reportsToolStripMenuItem.Visible = visible;
-            purchasesToolStripMenuItem.Visible = visible;
-            notificationsToolStripMenuItem.Visible = visible;
+            btnUsers.Visible = visible;
+            btnManagement.Visible = visible;
+            btnSuppliers.Visible = visible;
+            btnReports.Visible = visible;
+            btnPurchases.Visible = visible;
 
-            // Hiding/showing sibling items reflows msMenu's horizontal stack, which moves
-            // alertBellToolStripMenuItem - the alert bell itself stays visible for every user
-            // (everyone should see stock/expiration alerts, unlike the admin-only config screens
-            // above), so its badge needs to follow wherever the item lands.
-            RepositionAlertBadge();
+            // Hiding/showing items above changes which sidebar rows should butt up against each
+            // other - re-stack everything below the highest hidden row.
+            LayoutSidebarItems();
         }
 
-        // The badge is a plain Label floating on top of the Form, not a child of msMenu - a
-        // ToolStripItem can't host a nested control, so this is the only way to draw a number in
-        // its corner. msMenu isn't anchored (fixed size regardless of window resize), so the only
-        // thing that moves alertBellToolStripMenuItem is sibling visibility changing above.
-        private void RepositionAlertBadge()
+        // Fase 7 (navigation rework): stacks the visible sidebar items top-to-bottom, skipping
+        // hidden ones instead of leaving a gap - the plain-Panel equivalent of what the old
+        // MenuStrip's HorizontalStackWithOverflow did automatically. Every role keeps at least one
+        // item per group, so group headers are never hidden.
+        private void LayoutSidebarItems()
         {
-            Rectangle bounds = alertBellToolStripMenuItem.Bounds;
-            lblAlertBadge.Location = new Point(bounds.Right - lblAlertBadge.Width - 6, bounds.Top + 4);
+            const int itemGap = 6;
+            const int headerGapBefore = 8;
+            int y = 14;
+
+            y = PlaceItem(btnHome, y, itemGap);
+            y = PlaceHeader(lblGroupOperacion, y, headerGapBefore, itemGap);
+            y = PlaceItem(btnSales, y, itemGap);
+            y = PlaceItem(btnPurchases, y, itemGap);
+            y = PlaceHeader(lblGroupGestion, y, headerGapBefore, itemGap);
+            y = PlaceItem(btnManagement, y, itemGap);
+            y = PlaceItem(btnSuppliers, y, itemGap);
+            y = PlaceItem(btnClients, y, itemGap);
+            y = PlaceItem(btnUsers, y, itemGap);
+            y = PlaceHeader(lblGroupConsulta, y, headerGapBefore, itemGap);
+            y = PlaceItem(btnReports, y, itemGap);
+            PlaceItem(btnAlerts, y, itemGap);
+        }
+
+        private static int PlaceItem(Control control, int y, int gap)
+        {
+            if (!control.Visible) return y;
+            control.Top = y;
+            return y + control.Height + gap;
+        }
+
+        private static int PlaceHeader(Control header, int y, int gapBefore, int gapAfter)
+        {
+            header.Top = y + gapBefore;
+            return header.Top + header.Height + gapAfter;
         }
 
         // Fase 6 of the alerts rework: a single bell icon with a badge count instead of two
@@ -114,58 +145,76 @@ namespace PharmacySystem
                 if (modal.ShowDialog(this) == DialogResult.OK && !string.IsNullOrEmpty(modal.SelectedProductCode))
                 {
                     frmManagement childForm = new frmManagement();
-                    ShowForm(childForm, managementToolStripMenuItem);
+                    ShowForm(childForm, btnManagement);
                     childForm.ShowProductByCode(modal.SelectedProductCode);
                 }
             }
         }
 
-        private void clientsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void btnHome_Click(object sender, EventArgs e) => OpenHome();
+
+        // Landing screen: reuses the same GetActiveAlerts() computation the bell badge already
+        // ran, plus today's sales. Navigation from its tiles/buttons is handed in as callbacks
+        // that just call the existing menu handlers, instead of duplicating their logic.
+        private void OpenHome()
+        {
+            frmHome childForm = new frmHome(
+                () => btnSales_Click(btnSales, EventArgs.Empty),
+                () => btnPurchases_Click(btnPurchases, EventArgs.Empty),
+                () => btnManagement_Click(btnManagement, EventArgs.Empty),
+                code =>
+                {
+                    frmManagement mgmt = new frmManagement();
+                    ShowForm(mgmt, btnManagement);
+                    mgmt.ShowProductByCode(code);
+                });
+
+            ShowForm(childForm, btnHome);
+        }
+
+        private void btnClients_Click(object sender, EventArgs e)
         {
             frmClient childForm = new frmClient();
 
             ShowForm(childForm, sender);
         }
 
-        private void suppliersToolStripMenuItem_Click(object sender, EventArgs e)
+        private void btnSuppliers_Click(object sender, EventArgs e)
         {
             frmSupplier childForm = new frmSupplier();
 
             ShowForm(childForm, sender);
         }
 
-
-        private void managementToolStripMenuItem_Click(object sender, EventArgs e)
+        private void btnManagement_Click(object sender, EventArgs e)
         {
             frmManagement childForm = new frmManagement();
 
             ShowForm(childForm, sender);
         }
 
-
-        private void purchasesToolStripMenuItem_Click(object sender, EventArgs e)
+        private void btnPurchases_Click(object sender, EventArgs e)
         {
             frmPurchase childForm = new frmPurchase(oPerson.idPerson);
 
             ShowForm(childForm, sender);
         }
 
-        private void salesToolStripMenuItem_Click(object sender, EventArgs e)
+        private void btnSales_Click(object sender, EventArgs e)
         {
             frmSale childForm = new frmSale(oPerson.idPerson);
 
             ShowForm(childForm, sender);
         }
 
-        private void usersToolStripMenuItem_Click(object sender, EventArgs e)
+        private void btnUsers_Click(object sender, EventArgs e)
         {
             frmUser childForm = new frmUser();
 
             ShowForm(childForm, sender);
         }
 
-
-        private void reportsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void btnReports_Click(object sender, EventArgs e)
         {
             frmReport childForm = new frmReport();
 
@@ -183,24 +232,27 @@ namespace PharmacySystem
                 frm.Close();
             }
 
-            foreach (ToolStripMenuItem menu in msMenu.Items)
+            foreach (Button navButton in NavButtons)
             {
-                menu.BackColor = System.Drawing.Color.FromArgb(11, 37, 69);
-                menu.ForeColor = Color.White;
+                navButton.BackColor = Color.FromArgb(11, 37, 69);
+                navButton.ForeColor = Color.White;
             }
 
-           ((ToolStripMenuItem)senderitem).BackColor = System.Drawing.Color.FromArgb(141, 169, 196);
+            ((Button)senderitem).BackColor = Color.FromArgb(141, 169, 196);
 
+            // A maximized MDI child's minimize/restore/close buttons normally merge into the
+            // parent's MainMenuStrip; without one (the sidebar replaced it), Windows draws them as
+            // a floating row over the MDI area instead - ControlBox=false on the child doesn't
+            // suppress that, since MdiClient draws it, not the child form itself, and combining
+            // FormBorderStyle.None with WindowState.Maximized (tried first) breaks native MDI
+            // maximize layout instead of fixing it, leaving every child's controls mispositioned.
+            // Docking the child to fill the MDI area is a different mechanism entirely - the form
+            // is never actually put into the native maximized state, so there is no merge box to
+            // draw in the first place.
+            form.FormBorderStyle = FormBorderStyle.None;
             form.MdiParent = this;
-            form.WindowState = FormWindowState.Maximized;
+            form.Dock = DockStyle.Fill;
             form.Show();
-        }
-
-        private void aboutToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            checkNotifications();
-            ModalConfignotification frm = new ModalConfignotification();
-            frm.ShowDialog();
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
