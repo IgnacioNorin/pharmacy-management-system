@@ -244,6 +244,14 @@ namespace PharmacySystem
             return !string.IsNullOrEmpty(rawHistoryId) && int.TryParse(rawHistoryId, out int historyId) ? historyId : (int?)null;
         }
 
+        private void btnConfig_Click(object sender, EventArgs e)
+        {
+            using (var modal = new ModalConfignotification())
+            {
+                modal.ShowDialog(this);
+            }
+        }
+
         private void btnClose_Click(object sender, EventArgs e)
         {
             DialogResult = DialogResult.Cancel;

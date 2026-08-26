@@ -31,6 +31,7 @@ namespace PharmacySystem
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.lblTitle = new System.Windows.Forms.Label();
+            this.btnConfig = new System.Windows.Forms.Button();
             this.dgdata = new System.Windows.Forms.DataGridView();
             this.btnClose = new System.Windows.Forms.Button();
             this.lblEmpty = new System.Windows.Forms.Label();
@@ -46,6 +47,24 @@ namespace PharmacySystem
             this.lblTitle.Size = new System.Drawing.Size(160, 20);
             this.lblTitle.TabIndex = 0;
             this.lblTitle.Text = "Centro de notificaciones";
+            //
+            // btnConfig
+            //
+            // Replaces the old standalone "Notificaciones" sidebar item (Fase 7): the umbral
+            // config belongs next to the alerts it governs, not as its own top-level section.
+            this.btnConfig.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(237)))), ((int)(((byte)(241)))), ((int)(((byte)(245)))));
+            this.btnConfig.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnConfig.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(201)))), ((int)(((byte)(209)))), ((int)(((byte)(218)))));
+            this.btnConfig.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnConfig.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(37)))), ((int)(((byte)(69)))));
+            this.btnConfig.Location = new System.Drawing.Point(656, 14);
+            this.btnConfig.Name = "btnConfig";
+            this.btnConfig.Size = new System.Drawing.Size(160, 28);
+            this.btnConfig.TabIndex = 4;
+            this.btnConfig.Text = "Configurar umbrales";
+            this.btnConfig.UseVisualStyleBackColor = false;
+            this.btnConfig.Click += new System.EventHandler(this.btnConfig_Click);
             //
             // lblEmpty
             //
@@ -123,6 +142,7 @@ namespace PharmacySystem
             this.Controls.Add(this.lblEmpty);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.dgdata);
+            this.Controls.Add(this.btnConfig);
             this.Controls.Add(this.lblTitle);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -139,6 +159,7 @@ namespace PharmacySystem
         #endregion
 
         private System.Windows.Forms.Label lblTitle;
+        private System.Windows.Forms.Button btnConfig;
         private System.Windows.Forms.DataGridView dgdata;
         private System.Windows.Forms.Button btnClose;
         private System.Windows.Forms.Label lblEmpty;
