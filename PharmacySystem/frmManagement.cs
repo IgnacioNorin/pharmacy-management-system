@@ -165,7 +165,17 @@ namespace PharmacySystem
 
             _categoryPresenter.OnLoad();
             _productPresenter.OnLoad();
-            _storePresenter.OnLoad();
+
+            // Only Administrador General can see/edit the store's own name, tax data and
+            // currency - the regular Administrador keeps every other tab.
+            if (MainForm.oPerson.oPersonType.idPersonType == (int)PersonType.AdministradorGeneral)
+            {
+                _storePresenter.OnLoad();
+            }
+            else
+            {
+                tabManagement.TabPages.Remove(tabStore);
+            }
         }
 
         #region ICategoryManagementView

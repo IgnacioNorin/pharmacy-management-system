@@ -20,15 +20,15 @@ namespace PharmacySystem.Tests.Presentation
         };
 
         [Fact]
-        public void OnLoad_ExcludesPersonType3()
+        public void OnLoad_ExcludesClientRole()
         {
             var view = new FakeUserView();
             var service = new FakePersonService
             {
                 ListResult = new List<Person>
                 {
-                    new Person { idPerson = 1, name = "Admin", oPersonType = new TypePerson { idPersonType = 1, description = "Administrador" } },
-                    new Person { idPerson = 2, name = "Client", oPersonType = new TypePerson { idPersonType = 3, description = "Cliente" } }
+                    new Person { idPerson = 1, name = "Admin", oPersonType = new TypePerson { idPersonType = 2, description = "Administrador" } },
+                    new Person { idPerson = 2, name = "Client", oPersonType = new TypePerson { idPersonType = 4, description = "Cliente" } }
                 }
             };
 

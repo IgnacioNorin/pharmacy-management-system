@@ -360,6 +360,18 @@ GO
 INSERT INTO [dbo].[state_product] (id, name, description) VALUES (0, 'Inactivo', 'Producto dado de baja')
 GO
 
+-- Administrador General (1) is the only role that can see/edit the Tienda tab in frmManagement
+-- (name, tax data, currency) - see frmManagement.frmManagement_Load. Administrador (2) is the
+-- day-to-day admin role - full access except that tab.
+INSERT INTO [dbo].[person_type] (id, description, status, date_created) VALUES (1, 'Administrador General', 1, GETDATE())
+GO
+INSERT INTO [dbo].[person_type] (id, description, status, date_created) VALUES (2, 'Administrador', 1, GETDATE())
+GO
+INSERT INTO [dbo].[person_type] (id, description, status, date_created) VALUES (3, 'Empleado', 1, GETDATE())
+GO
+INSERT INTO [dbo].[person_type] (id, description, status, date_created) VALUES (4, 'Cliente', 1, GETDATE())
+GO
+
 -- STORED PROCEDURES
 CREATE PROC [dbo].[sp_create_category]
 @description VARCHAR(50),

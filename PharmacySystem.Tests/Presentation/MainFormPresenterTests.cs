@@ -20,11 +20,12 @@ namespace PharmacySystem.Tests.Presentation
             var view = new FakeMainFormView();
             var storeService = new FakeStoreService { ListStoreResult = new Store { currencyCulture = "es-EC" } };
             var notificationService = new FakeNotificationConfigService();
-            var person = new Person { name = "Juan Pérez", oPersonType = new TypePerson { idPersonType = 1 } };
+            var person = new Person { name = "Juan Pérez", oPersonType = new TypePerson { idPersonType = 1, description = "Administrador General" } };
 
             CreatePresenter(view, storeService, notificationService).OnLoad(person);
 
             Assert.Equal("Juan Pérez", view.UserName);
+            Assert.Equal("Administrador General", view.UserRole);
         }
 
         [Fact]
@@ -33,7 +34,7 @@ namespace PharmacySystem.Tests.Presentation
             var view = new FakeMainFormView();
             var storeService = new FakeStoreService { ListStoreResult = new Store() };
             var notificationService = new FakeNotificationConfigService();
-            var person = new Person { name = "Cajero", oPersonType = new TypePerson { idPersonType = 2 } };
+            var person = new Person { name = "Cajero", oPersonType = new TypePerson { idPersonType = 3 } };
 
             CreatePresenter(view, storeService, notificationService).OnLoad(person);
 

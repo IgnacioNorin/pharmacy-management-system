@@ -4,10 +4,9 @@ using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
 {
-    // Ported from Login.cs. Person type 3 is refused here regardless of password, same as the
-    // original `oPerson.oPersonType.idPersonType != 3` check. VerifyPassword also preserves the
-    // legacy plain-text migration path: a matching plain-text password logs the user in and
-    // rewrites it as a hash before returning.
+    // Ported from Login.cs. Cliente is refused here regardless of password. VerifyPassword also
+    // preserves the legacy plain-text migration path: a matching plain-text password logs the
+    // user in and rewrites it as a hash before returning.
     public class LoginPresenter
     {
         private readonly ILoginView _view;
@@ -23,7 +22,7 @@ namespace PharmacySystem.Presentation
         {
             Person person = _personService.GetByDocument(_view.Document?.Trim());
 
-            if (person != null && person.oPersonType.idPersonType != 3 && VerifyPassword(person, _view.Password))
+            if (person != null && person.oPersonType.idPersonType != (int)PersonType.Cliente && VerifyPassword(person, _view.Password))
             {
                 _view.LoginSucceeded(person);
             }
