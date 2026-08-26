@@ -372,6 +372,17 @@ GO
 INSERT INTO [dbo].[person_type] (id, description, status, date_created) VALUES (4, 'Cliente', 1, GETDATE())
 GO
 
+-- Default Administrador General account so a fresh database has someone who can log in and
+-- reach the Tienda tab (person_type 1) right away. Plain-text password on purpose: LoginPresenter
+-- (VerifyPassword) accepts a plain-text match on first login and rewrites it as a hash
+-- immediately after, the same legacy migration path every pre-existing account went through.
+IF NOT EXISTS (SELECT 1 FROM [dbo].[person] WHERE document_number = '1010101010')
+BEGIN
+    INSERT INTO [dbo].[person] (document_number, name, address, phone, password, person_type_id, status, date_created)
+    VALUES ('1010101010', 'Administrador General', 'N/A', 'N/A', '12345678', 1, 1, GETDATE())
+END
+GO
+
 -- STORED PROCEDURES
 CREATE PROC [dbo].[sp_create_category]
 @description VARCHAR(50),
