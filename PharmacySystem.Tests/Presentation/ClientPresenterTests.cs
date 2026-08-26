@@ -11,15 +11,15 @@ namespace PharmacySystem.Tests.Presentation
             => new ClientPresenter(view, service);
 
         [Fact]
-        public void OnLoad_OnlyIncludesPersonType3()
+        public void OnLoad_OnlyIncludesClientRole()
         {
             var view = new FakeClientView();
             var service = new FakePersonService
             {
                 ListResult = new List<Person>
                 {
-                    new Person { idPerson = 1, name = "Client", oPersonType = new TypePerson { idPersonType = 3 } },
-                    new Person { idPerson = 2, name = "Employee", oPersonType = new TypePerson { idPersonType = 2 } }
+                    new Person { idPerson = 1, name = "Client", oPersonType = new TypePerson { idPersonType = 4 } },
+                    new Person { idPerson = 2, name = "Employee", oPersonType = new TypePerson { idPersonType = 3 } }
                 }
             };
 
@@ -42,14 +42,14 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void OnSave_NewClient_SetsPersonType3AndEmptyPassword()
+        public void OnSave_NewClient_SetsClientRoleAndEmptyPassword()
         {
             var view = new FakeClientView { PersonId = 0, Document = "123", Name = "Test", Address = "Addr", Phone = "111" };
             var service = new FakePersonService { RegisterResult = true };
 
             CreatePresenter(view, service).OnSave();
 
-            Assert.Equal(3, service.RegisteredWith.oPersonType.idPersonType);
+            Assert.Equal(4, service.RegisteredWith.oPersonType.idPersonType); // Cliente
             Assert.Equal("", service.RegisteredWith.password);
             Assert.True(view.ClearFormCalled);
         }

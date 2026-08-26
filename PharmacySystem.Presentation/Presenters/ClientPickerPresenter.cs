@@ -1,5 +1,6 @@
 using System.Linq;
 using PharmacySystem.Business;
+using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
 {
@@ -17,7 +18,7 @@ namespace PharmacySystem.Presentation
         public void OnLoad()
         {
             var clients = _service.List()
-                .Where(p => p.oPersonType.idPersonType == 3)
+                .Where(p => p.oPersonType.idPersonType == (int)PersonType.Cliente)
                 .Select(ClientRow.From);
             _view.LoadClients(clients);
         }

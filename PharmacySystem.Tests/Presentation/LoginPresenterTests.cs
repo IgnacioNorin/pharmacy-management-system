@@ -23,12 +23,12 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void OnLogin_PersonTypeThree_IsAlwaysRejected()
+        public void OnLogin_ClientRole_IsAlwaysRejected()
         {
             var view = new FakeLoginView { Document = "123", Password = "secret" };
             var service = new FakePersonService
             {
-                GetByDocumentResult = new Person { idPerson = 1, password = "secret", oPersonType = new TypePerson { idPersonType = 3 } }
+                GetByDocumentResult = new Person { idPerson = 1, password = "secret", oPersonType = new TypePerson { idPersonType = 4 } } // Cliente
             };
 
             CreatePresenter(view, service).OnLogin();

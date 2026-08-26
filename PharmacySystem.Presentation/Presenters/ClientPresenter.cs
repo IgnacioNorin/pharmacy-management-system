@@ -28,7 +28,7 @@ namespace PharmacySystem.Presentation
         public void OnLoad()
         {
             var clients = _service.List()
-                .Where(p => p.oPersonType.idPersonType == 3)
+                .Where(p => p.oPersonType.idPersonType == (int)PersonType.Cliente)
                 .Select(ClientRow.From);
             _view.LoadClients(clients);
         }
@@ -50,7 +50,7 @@ namespace PharmacySystem.Presentation
                 address = _view.Address?.Trim(),
                 phone = _view.Phone?.Trim(),
                 password = "",
-                oPersonType = new TypePerson { idPersonType = 3 }
+                oPersonType = new TypePerson { idPersonType = (int)PersonType.Cliente }
             };
 
             bool result;

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 namespace PharmacySystem.Presentation
 {
     // Passive View, same shape as ISupplierView. Clients are PharmacySystem.Model.Person rows
-    // with person_type_id = 3 and no password - that mapping is the presenter's job, not the
-    // view's, so this interface only exposes the raw text fields.
+    // with person_type_id = PersonType.Cliente and no password - that mapping is the presenter's
+    // job, not the view's, so this interface only exposes the raw text fields.
     public interface IClientView
     {
         int SelectedIndex { get; }

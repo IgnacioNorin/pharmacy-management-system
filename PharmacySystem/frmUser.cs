@@ -121,8 +121,9 @@ namespace PharmacySystem
 
             var roles = new[]
             {
-                new ComboBoxItem() { Value = 1, Text = "Administrador" },
-                new ComboBoxItem() { Value = 2, Text = "Empleado" }
+                new ComboBoxItem() { Value = (int)PersonType.Administrador, Text = "Administrador" },
+                new ComboBoxItem() { Value = (int)PersonType.AdministradorGeneral, Text = "Administrador General" },
+                new ComboBoxItem() { Value = (int)PersonType.Empleado, Text = "Empleado" }
             };
             foreach (var rol in roles)
             {

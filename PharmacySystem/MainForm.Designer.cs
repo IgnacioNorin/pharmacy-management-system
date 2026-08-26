@@ -30,6 +30,11 @@ namespace PharmacySystem
         {
             this.components = new System.ComponentModel.Container();
             this.timerNotification = new System.Windows.Forms.Timer(this.components);
+            this.pnlTitleBar = new System.Windows.Forms.Panel();
+            this.lblTitleBarText = new System.Windows.Forms.Label();
+            this.btnCloseWin = new System.Windows.Forms.Button();
+            this.btnMaximizeRestore = new System.Windows.Forms.Button();
+            this.btnMinimizeWin = new System.Windows.Forms.Button();
             this.pnlSidebar = new System.Windows.Forms.Panel();
             this.pnlSidebarItems = new System.Windows.Forms.Panel();
             this.btnHome = new System.Windows.Forms.Button();
@@ -48,10 +53,12 @@ namespace PharmacySystem
             this.pnlSidebarHeader = new System.Windows.Forms.Panel();
             this.lbluser = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
+            this.lblUserRole = new System.Windows.Forms.Label();
             this.pnlSidebarHeaderDivider = new System.Windows.Forms.Panel();
             this.pnlSidebarBottom = new System.Windows.Forms.Panel();
             this.btnExit = new System.Windows.Forms.Button();
             this.pnlSidebarBottomDivider = new System.Windows.Forms.Panel();
+            this.pnlTitleBar.SuspendLayout();
             this.pnlSidebar.SuspendLayout();
             this.pnlSidebarItems.SuspendLayout();
             this.pnlSidebarHeader.SuspendLayout();
@@ -61,6 +68,102 @@ namespace PharmacySystem
             // timerNotification
             //
             this.timerNotification.Tick += new System.EventHandler(this.timerNotification_Tick);
+            //
+            // pnlTitleBar
+            //
+            // Custom title bar (Fase 8): the Form has FormBorderStyle.None, so Windows draws none
+            // of its own caption/buttons. Dragging is NOT done via WM_NCHITTEST on the Form - this
+            // panel and the label are themselves real child windows, so Windows delivers mouse
+            // messages to THEM first and MainForm's WndProc never sees WM_NCHITTEST for this area.
+            // Instead, MouseDown here calls ReleaseCapture + SendMessage(WM_NCLBUTTONDOWN,
+            // HTCAPTION) - the standard trick that hands the drag off to the OS exactly like a
+            // native caption (Aero Snap included). WM_GETMINMAXINFO in MainForm.cs is unrelated to
+            // that problem (it's a top-level-only message) and still works fine as an override.
+            this.pnlTitleBar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(37)))), ((int)(((byte)(69)))));
+            this.pnlTitleBar.Controls.Add(this.lblTitleBarText);
+            this.pnlTitleBar.Controls.Add(this.btnCloseWin);
+            this.pnlTitleBar.Controls.Add(this.btnMaximizeRestore);
+            this.pnlTitleBar.Controls.Add(this.btnMinimizeWin);
+            this.pnlTitleBar.Dock = System.Windows.Forms.DockStyle.Top;
+            this.pnlTitleBar.Location = new System.Drawing.Point(0, 0);
+            this.pnlTitleBar.Name = "pnlTitleBar";
+            this.pnlTitleBar.Size = new System.Drawing.Size(1500, 34);
+            this.pnlTitleBar.TabIndex = 0;
+            this.pnlTitleBar.DoubleClick += new System.EventHandler(this.pnlTitleBar_DoubleClick);
+            this.pnlTitleBar.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pnlTitleBar_MouseDown);
+            //
+            // lblTitleBarText
+            //
+            // Anchor, not Dock=Fill: Fill claimed the whole panel width - including the 138px the
+            // three buttons sit in - and being the first control added put it in front of them in
+            // paint order, hiding them completely. Anchoring Left+Right instead stretches the
+            // label with the window while keeping the same 138px gap on the right that its design
+            // width already leaves (1500 - 1362), which is exactly the buttons' combined width.
+            this.lblTitleBarText.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblTitleBarText.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
+            this.lblTitleBarText.ForeColor = System.Drawing.Color.White;
+            this.lblTitleBarText.Location = new System.Drawing.Point(0, 0);
+            this.lblTitleBarText.Name = "lblTitleBarText";
+            this.lblTitleBarText.Padding = new System.Windows.Forms.Padding(14, 0, 0, 0);
+            this.lblTitleBarText.Size = new System.Drawing.Size(1362, 34);
+            this.lblTitleBarText.TabIndex = 0;
+            this.lblTitleBarText.Text = "Pharmacy System";
+            this.lblTitleBarText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.lblTitleBarText.DoubleClick += new System.EventHandler(this.pnlTitleBar_DoubleClick);
+            this.lblTitleBarText.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pnlTitleBar_MouseDown);
+            //
+            // btnMinimizeWin
+            //
+            // Anchored, not Dock=Right: three same-edge Dock siblings order themselves by add
+            // order in a way that's easy to get backwards, so this pins each button an explicit,
+            // unambiguous distance from the right edge instead - Minimize, Maximize, Close from
+            // left to right, same as every native Windows title bar.
+            this.btnMinimizeWin.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnMinimizeWin.FlatAppearance.BorderSize = 0;
+            this.btnMinimizeWin.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(55)))), ((int)(((byte)(82)))));
+            this.btnMinimizeWin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnMinimizeWin.Font = new System.Drawing.Font("Segoe MDL2 Assets", 9.5F);
+            this.btnMinimizeWin.ForeColor = System.Drawing.Color.White;
+            this.btnMinimizeWin.Location = new System.Drawing.Point(1362, 0);
+            this.btnMinimizeWin.Name = "btnMinimizeWin";
+            this.btnMinimizeWin.Size = new System.Drawing.Size(46, 34);
+            this.btnMinimizeWin.TabIndex = 1;
+            this.btnMinimizeWin.Text = "";
+            this.btnMinimizeWin.UseVisualStyleBackColor = false;
+            this.btnMinimizeWin.Click += new System.EventHandler(this.btnMinimizeWin_Click);
+            //
+            // btnMaximizeRestore
+            //
+            this.btnMaximizeRestore.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnMaximizeRestore.FlatAppearance.BorderSize = 0;
+            this.btnMaximizeRestore.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(55)))), ((int)(((byte)(82)))));
+            this.btnMaximizeRestore.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnMaximizeRestore.Font = new System.Drawing.Font("Segoe MDL2 Assets", 9.5F);
+            this.btnMaximizeRestore.ForeColor = System.Drawing.Color.White;
+            this.btnMaximizeRestore.Location = new System.Drawing.Point(1408, 0);
+            this.btnMaximizeRestore.Name = "btnMaximizeRestore";
+            this.btnMaximizeRestore.Size = new System.Drawing.Size(46, 34);
+            this.btnMaximizeRestore.TabIndex = 2;
+            this.btnMaximizeRestore.Text = "";
+            this.btnMaximizeRestore.UseVisualStyleBackColor = false;
+            this.btnMaximizeRestore.Click += new System.EventHandler(this.btnMaximizeRestore_Click);
+            //
+            // btnCloseWin
+            //
+            this.btnCloseWin.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCloseWin.FlatAppearance.BorderSize = 0;
+            this.btnCloseWin.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(196)))), ((int)(((byte)(43)))), ((int)(((byte)(48)))));
+            this.btnCloseWin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCloseWin.Font = new System.Drawing.Font("Segoe MDL2 Assets", 9.5F);
+            this.btnCloseWin.ForeColor = System.Drawing.Color.White;
+            this.btnCloseWin.Location = new System.Drawing.Point(1454, 0);
+            this.btnCloseWin.Name = "btnCloseWin";
+            this.btnCloseWin.Size = new System.Drawing.Size(46, 34);
+            this.btnCloseWin.TabIndex = 3;
+            this.btnCloseWin.Text = "";
+            this.btnCloseWin.UseVisualStyleBackColor = false;
+            this.btnCloseWin.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             //
             // pnlSidebar
             //
@@ -98,9 +201,9 @@ namespace PharmacySystem
             this.pnlSidebarItems.Controls.Add(this.lblGroupOperacion);
             this.pnlSidebarItems.Controls.Add(this.btnHome);
             this.pnlSidebarItems.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlSidebarItems.Location = new System.Drawing.Point(0, 80);
+            this.pnlSidebarItems.Location = new System.Drawing.Point(0, 92);
             this.pnlSidebarItems.Name = "pnlSidebarItems";
-            this.pnlSidebarItems.Size = new System.Drawing.Size(210, 711);
+            this.pnlSidebarItems.Size = new System.Drawing.Size(210, 699);
             this.pnlSidebarItems.TabIndex = 1;
             //
             // btnHome
@@ -347,43 +450,57 @@ namespace PharmacySystem
             // Inicio, not tucked at the bottom under Salir like before.
             this.pnlSidebarHeader.Controls.Add(this.label5);
             this.pnlSidebarHeader.Controls.Add(this.lbluser);
+            this.pnlSidebarHeader.Controls.Add(this.lblUserRole);
             this.pnlSidebarHeader.Controls.Add(this.pnlSidebarHeaderDivider);
             this.pnlSidebarHeader.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlSidebarHeader.Location = new System.Drawing.Point(0, 0);
             this.pnlSidebarHeader.Name = "pnlSidebarHeader";
-            this.pnlSidebarHeader.Size = new System.Drawing.Size(210, 80);
+            this.pnlSidebarHeader.Size = new System.Drawing.Size(210, 92);
             this.pnlSidebarHeader.TabIndex = 0;
             //
             // label5
             //
             this.label5.AutoSize = true;
-            this.label5.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label5.ForeColor = System.Drawing.Color.White;
-            this.label5.Location = new System.Drawing.Point(14, 16);
+            // "Bienvenido" is now a small caption above the name, instead of the biggest line in
+            // the block - the name is what actually identifies who's logged in, the role (added
+            // below) is what identifies what they can do.
+            this.label5.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label5.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(169)))), ((int)(((byte)(196)))));
+            this.label5.Location = new System.Drawing.Point(14, 14);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(85, 20);
+            this.label5.Size = new System.Drawing.Size(60, 13);
             this.label5.TabIndex = 0;
             this.label5.Text = "Bienvenido";
             //
             // lbluser
             //
             this.lbluser.AutoSize = true;
-            this.lbluser.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbluser.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(169)))), ((int)(((byte)(196)))));
-            this.lbluser.Location = new System.Drawing.Point(14, 41);
+            this.lbluser.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbluser.ForeColor = System.Drawing.Color.White;
+            this.lbluser.Location = new System.Drawing.Point(14, 29);
             this.lbluser.Name = "lbluser";
-            this.lbluser.Size = new System.Drawing.Size(53, 15);
+            this.lbluser.Size = new System.Drawing.Size(53, 21);
             this.lbluser.TabIndex = 1;
             this.lbluser.Text = "Usuario:";
+            //
+            // lblUserRole
+            //
+            this.lblUserRole.AutoSize = true;
+            this.lblUserRole.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblUserRole.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(169)))), ((int)(((byte)(196)))));
+            this.lblUserRole.Location = new System.Drawing.Point(14, 55);
+            this.lblUserRole.Name = "lblUserRole";
+            this.lblUserRole.Size = new System.Drawing.Size(30, 14);
+            this.lblUserRole.TabIndex = 2;
             //
             // pnlSidebarHeaderDivider
             //
             this.pnlSidebarHeaderDivider.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(55)))), ((int)(((byte)(82)))));
             this.pnlSidebarHeaderDivider.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlSidebarHeaderDivider.Location = new System.Drawing.Point(0, 79);
+            this.pnlSidebarHeaderDivider.Location = new System.Drawing.Point(0, 91);
             this.pnlSidebarHeaderDivider.Name = "pnlSidebarHeaderDivider";
             this.pnlSidebarHeaderDivider.Size = new System.Drawing.Size(210, 1);
-            this.pnlSidebarHeaderDivider.TabIndex = 2;
+            this.pnlSidebarHeaderDivider.TabIndex = 3;
             //
             // pnlSidebarBottom
             //
@@ -430,13 +547,18 @@ namespace PharmacySystem
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ButtonFace;
-            this.ClientSize = new System.Drawing.Size(1500, 861);
+            this.ClientSize = new System.Drawing.Size(1500, 897);
+            // pnlTitleBar (Top) is added BEFORE pnlSidebar (Left) so it spans the full width above
+            // the sidebar, instead of the sidebar running up under it.
             this.Controls.Add(this.pnlSidebar);
+            this.Controls.Add(this.pnlTitleBar);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.IsMdiContainer = true;
-            this.MinimumSize = new System.Drawing.Size(1500, 700);
+            this.MinimumSize = new System.Drawing.Size(1500, 736);
             this.Name = "MainForm";
             this.Text = "Pharmacy System";
             this.Load += new System.EventHandler(this.MainForm_Load);
+            this.pnlTitleBar.ResumeLayout(false);
             this.pnlSidebar.ResumeLayout(false);
             this.pnlSidebarItems.ResumeLayout(false);
             this.pnlSidebarItems.PerformLayout();
@@ -450,6 +572,11 @@ namespace PharmacySystem
         #endregion
 
         private System.Windows.Forms.Timer timerNotification;
+        private System.Windows.Forms.Panel pnlTitleBar;
+        private System.Windows.Forms.Label lblTitleBarText;
+        private System.Windows.Forms.Button btnMinimizeWin;
+        private System.Windows.Forms.Button btnMaximizeRestore;
+        private System.Windows.Forms.Button btnCloseWin;
         private System.Windows.Forms.Panel pnlSidebar;
         private System.Windows.Forms.Panel pnlSidebarItems;
         private System.Windows.Forms.Button btnHome;
@@ -468,6 +595,7 @@ namespace PharmacySystem
         private System.Windows.Forms.Panel pnlSidebarHeader;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label lbluser;
+        private System.Windows.Forms.Label lblUserRole;
         private System.Windows.Forms.Panel pnlSidebarHeaderDivider;
         private System.Windows.Forms.Panel pnlSidebarBottom;
         private System.Windows.Forms.Panel pnlSidebarBottomDivider;

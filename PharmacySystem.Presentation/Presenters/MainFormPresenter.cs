@@ -26,8 +26,9 @@ namespace PharmacySystem.Presentation
             Store store = _storeService.ListStore();
             CultureInfoHelper.SetCurrency(store?.currencyCulture);
 
-            _view.SetUserName(person.name);
-            _view.SetAdministrativeMenusVisible(person.oPersonType.idPersonType != 2);
+            _view.SetUserName(person.name, person.oPersonType.description);
+            // Anyone who isn't Empleado (both admin tiers) sees the admin sections.
+            _view.SetAdministrativeMenusVisible(person.oPersonType.idPersonType != (int)PersonType.Empleado);
         }
 
         public void RefreshAlerts()

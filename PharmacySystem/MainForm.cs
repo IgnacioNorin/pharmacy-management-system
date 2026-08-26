@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -57,7 +58,11 @@ namespace PharmacySystem
         // same non-blocking path as every other alert check instead of assuming the caller's thread.
         private void OnInventoryChangedElsewhere() => checkNotifications();
 
-        public void SetUserName(string name) => lbluser.Text = name;
+        public void SetUserName(string name, string role)
+        {
+            lbluser.Text = name;
+            lblUserRole.Text = role;
+        }
 
         public void SetAdministrativeMenusVisible(bool visible)
         {
@@ -268,5 +273,129 @@ namespace PharmacySystem
             checkNotifications();
 
         }
+
+        #region Custom title bar (Fase 8)
+
+        // FormBorderStyle.None removes every bit of native chrome - caption, system menu, resize
+        // borders, minimize/maximize/close - so pnlTitleBar and everything below replaces it by
+        // hand. WM_GETMINMAXINFO stops a maximized borderless window from overhanging the taskbar
+        // (a well-known side effect of FormBorderStyle.None with no border to clip it).
+        //
+        // Dragging is NOT done via WM_NCHITTEST on the Form's own WndProc - pnlTitleBar and
+        // lblTitleBarText are themselves real child windows (Panel/Label both have their own
+        // HWND), so Windows delivers WM_NCHITTEST/mouse messages to THEM, and MainForm's WndProc
+        // never sees it for that area. ReleaseCapture + SendMessage(WM_NCLBUTTONDOWN, HTCAPTION)
+        // sidesteps that entirely by asking the OS to treat the current drag as if it had started
+        // on a native caption - Aero Snap included, and no per-pixel mouse tracking needed.
+        private const int WM_GETMINMAXINFO = 0x0024;
+        private const int WM_NCLBUTTONDOWN = 0x00A1;
+        private const int HTCAPTION = 2;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINTAPI { public int X; public int Y; }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MINMAXINFO
+        {
+            public POINTAPI ptReserved;
+            public POINTAPI ptMaxSize;
+            public POINTAPI ptMaxPosition;
+            public POINTAPI ptMinTrackSize;
+            public POINTAPI ptMaxTrackSize;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MONITORINFO
+        {
+            public int cbSize;
+            public RECT rcMonitor;
+            public RECT rcWork;
+            public int dwFlags;
+        }
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr handle, int flags);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        [DllImport("user32.dll")]
+        private static extern bool ReleaseCapture();
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
+
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == WM_GETMINMAXINFO)
+            {
+                base.WndProc(ref m);
+                ClampMaximizedSizeToWorkArea(ref m);
+                return;
+            }
+
+            base.WndProc(ref m);
+        }
+
+        private void ClampMaximizedSizeToWorkArea(ref Message m)
+        {
+            MINMAXINFO mmi = (MINMAXINFO)Marshal.PtrToStructure(m.LParam, typeof(MINMAXINFO));
+
+            IntPtr monitor = MonitorFromWindow(Handle, 2 /* MONITOR_DEFAULTTONEAREST */);
+            if (monitor != IntPtr.Zero)
+            {
+                var monitorInfo = new MONITORINFO { cbSize = Marshal.SizeOf(typeof(MONITORINFO)) };
+                // A failed call leaves monitorInfo zeroed - falling through to StructureToPtr
+                // with that would send ptMaxSize (0,0) and maximize the window into nothing.
+                if (!GetMonitorInfo(monitor, ref monitorInfo))
+                {
+                    Marshal.StructureToPtr(mmi, m.LParam, true);
+                    return;
+                }
+
+                RECT work = monitorInfo.rcWork;
+                RECT bounds = monitorInfo.rcMonitor;
+
+                mmi.ptMaxPosition.X = Math.Abs(work.Left - bounds.Left);
+                mmi.ptMaxPosition.Y = Math.Abs(work.Top - bounds.Top);
+                mmi.ptMaxSize.X = Math.Abs(work.Right - work.Left);
+                mmi.ptMaxSize.Y = Math.Abs(work.Bottom - work.Top);
+            }
+
+            Marshal.StructureToPtr(mmi, m.LParam, true);
+        }
+
+        private void pnlTitleBar_MouseDown(object sender, MouseEventArgs e)
+        {
+            // e.Clicks > 1 is the second MouseDown of a double-click: handing that one to the OS
+            // drag loop too swallows its matching MouseUp before WinForms can pair the two clicks,
+            // so pnlTitleBar_DoubleClick never fires and maximize-by-double-click goes silent.
+            if (e.Button != MouseButtons.Left || e.Clicks > 1) return;
+
+            ReleaseCapture();
+            SendMessage(Handle, WM_NCLBUTTONDOWN, HTCAPTION, 0);
+        }
+
+        private void pnlTitleBar_DoubleClick(object sender, EventArgs e) => ToggleMaximizeRestore();
+
+        private void btnMinimizeWin_Click(object sender, EventArgs e) => WindowState = FormWindowState.Minimized;
+
+        private void btnMaximizeRestore_Click(object sender, EventArgs e) => ToggleMaximizeRestore();
+
+        private void ToggleMaximizeRestore()
+        {
+            WindowState = WindowState == FormWindowState.Maximized
+                ? FormWindowState.Normal
+                : FormWindowState.Maximized;
+
+            //  = restore-down glyph,  = maximize glyph (Segoe MDL2 Assets) - swapped
+            // to match whichever action the button performs next, same as the native title bar.
+            btnMaximizeRestore.Text = WindowState == FormWindowState.Maximized ? "" : "";
+        }
+
+        #endregion
     }
 }

@@ -2,9 +2,9 @@ using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
 {
-    // What the grid displays for a client (person_type_id = 3). Separate from PersonService's
-    // full Supplier-shaped list, and from SupplierRow, so this view never needs to know person
-    // has a password/person type at all.
+    // What the grid displays for a client (person_type_id = PersonType.Cliente). Separate from
+    // PersonService's full Supplier-shaped list, and from SupplierRow, so this view never needs
+    // to know person has a password/person type at all.
     public class ClientRow
     {
         public int Id { get; set; }

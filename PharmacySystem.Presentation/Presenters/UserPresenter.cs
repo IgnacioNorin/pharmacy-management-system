@@ -21,7 +21,7 @@ namespace PharmacySystem.Presentation
         public void OnLoad()
         {
             var users = _service.List()
-                .Where(p => p.oPersonType.idPersonType != 3)
+                .Where(p => p.oPersonType.idPersonType != (int)PersonType.Cliente)
                 .Select(p => new UserRow
                 {
                     Id = p.idPerson,
