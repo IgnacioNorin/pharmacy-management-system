@@ -152,6 +152,16 @@ CREATE TABLE [dbo].[product](
 )
 GO
 
+-- Backs the stock-critical and expiring-soon alert queries (NotificationConfigRepository), which
+-- filter by status plus one of these columns and used to do a full table scan of every active
+-- product on every poll.
+CREATE INDEX [ix_product_status_stock] ON [dbo].[product] ([status], [stock]) INCLUDE ([code], [name])
+GO
+
+CREATE INDEX [ix_product_status_expired] ON [dbo].[product] ([status], [date_expired]) INCLUDE ([code], [name])
+    WHERE [date_expired] IS NOT NULL
+GO
+
 CREATE TABLE [dbo].[store](
     [id] [int] NOT NULL,
     [document_store] [varchar](50) NULL,
@@ -214,6 +224,42 @@ CREATE TABLE [dbo].[sale_detail](
     [date_registered] [datetime] NULL,
     PRIMARY KEY CLUSTERED ([id] ASC)
 )
+GO
+
+-- Fase 4 of the alerts rework (traceability): one row per open-or-resolved stock/expiration
+-- alert on a product. Written only on a state transition (a new alert appears, its severity
+-- changes, or it clears) - not on every poll - so this grows with real inventory activity, not
+-- with the passage of time. alert_type: 1 = stock, 2 = expiration. severity: 1 = low/expiring
+-- soon, 2 = critical/expired (mirrors PharmacySystem.Model.AlertType/AlertSeverity).
+CREATE TABLE [dbo].[product_alert_history](
+    [id] [int] IDENTITY(1,1) NOT NULL,
+    [product_id] [int] NOT NULL,
+    [alert_type] [tinyint] NOT NULL,
+    [severity] [tinyint] NOT NULL,
+    [trigger_value] [decimal](10, 2) NULL,
+    [detected_at] [datetime] NOT NULL,
+    [resolved_at] [datetime] NULL,
+    [acknowledged_by] [int] NULL,
+    [acknowledged_at] [datetime] NULL,
+    [muted_at] [datetime] NULL,
+    CONSTRAINT [PK_product_alert_history] PRIMARY KEY CLUSTERED ([id] ASC),
+    CONSTRAINT [FK_product_alert_history_product] FOREIGN KEY ([product_id]) REFERENCES [dbo].[product] ([id]),
+    CONSTRAINT [FK_product_alert_history_person] FOREIGN KEY ([acknowledged_by]) REFERENCES [dbo].[person] ([id])
+)
+GO
+
+-- QUOTED_IDENTIFIER must be ON at CREATE time for a filtered index, same reason as
+-- ix_product_status_expired above.
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- Backs both the "is this product's alert already open" lookup (product_id + alert_type, one
+-- open row at a time) and the general history browse.
+CREATE INDEX [ix_product_alert_history_open] ON [dbo].[product_alert_history] ([product_id], [alert_type])
+    WHERE [resolved_at] IS NULL
+GO
+
+CREATE INDEX [ix_product_alert_history_detected] ON [dbo].[product_alert_history] ([detected_at])
 GO
 
 -- DEFAULTS
@@ -314,6 +360,29 @@ GO
 INSERT INTO [dbo].[state_product] (id, name, description) VALUES (0, 'Inactivo', 'Producto dado de baja')
 GO
 
+-- Administrador General (1) is the only role that can see/edit the Tienda tab in frmManagement
+-- (name, tax data, currency) - see frmManagement.frmManagement_Load. Administrador (2) is the
+-- day-to-day admin role - full access except that tab.
+INSERT INTO [dbo].[person_type] (id, description, status, date_created) VALUES (1, 'Administrador General', 1, GETDATE())
+GO
+INSERT INTO [dbo].[person_type] (id, description, status, date_created) VALUES (2, 'Administrador', 1, GETDATE())
+GO
+INSERT INTO [dbo].[person_type] (id, description, status, date_created) VALUES (3, 'Empleado', 1, GETDATE())
+GO
+INSERT INTO [dbo].[person_type] (id, description, status, date_created) VALUES (4, 'Cliente', 1, GETDATE())
+GO
+
+-- Default Administrador General account so a fresh database has someone who can log in and
+-- reach the Tienda tab (person_type 1) right away. Plain-text password on purpose: LoginPresenter
+-- (VerifyPassword) accepts a plain-text match on first login and rewrites it as a hash
+-- immediately after, the same legacy migration path every pre-existing account went through.
+IF NOT EXISTS (SELECT 1 FROM [dbo].[person] WHERE document_number = '1010101010')
+BEGIN
+    INSERT INTO [dbo].[person] (document_number, name, address, phone, password, person_type_id, status, date_created)
+    VALUES ('1010101010', 'Administrador General', 'N/A', 'N/A', '12345678', 1, 1, GETDATE())
+END
+GO
+
 -- STORED PROCEDURES
 CREATE PROC [dbo].[sp_create_category]
 @description VARCHAR(50),
@@ -411,6 +480,12 @@ BEGIN
     ELSE
         SET @result = 0;
 END
+GO
+
+-- QUOTED_IDENTIFIER must be ON at CREATE time for any procedure that modifies a table backed by
+-- a filtered index (see ix_product_status_expired above) - SQL Server bakes that setting into the
+-- compiled procedure, so it does not matter what the caller's session has at execution time.
+SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE PROCEDURE [dbo].[sp_delete_product]

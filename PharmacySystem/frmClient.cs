@@ -1,26 +1,89 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using PharmacySystem.Model;
-using PharmacySystem.Logical;
+using PharmacySystem.Presentation;
 using PharmacySystem.Validators;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace PharmacySystem
-
-
 {
-    public partial class frmClient : Form
+    public partial class frmClient : Form, IClientView
     {
+        private readonly ClientPresenter _presenter;
+
         public frmClient()
         {
             InitializeComponent();
+            _presenter = CompositionRoot.CreateClientPresenter(this);
         }
+
+        #region IClientView
+
+        public int SelectedIndex => int.Parse(txtindex.Text);
+        public int PersonId => int.Parse(txtid.Text);
+        public string Document => txtdocument.Text;
+        string IClientView.Name => txtname.Text;
+        public string Address => txtaddress.Text;
+        public string Phone => txtphone.Text;
+
+        List<string> IClientView.Validate()
+        {
+            var errors = new List<string>();
+
+            foreach (var camp in campWithRules)
+            {
+                foreach (var ruleName in camp.Value)
+                {
+                    var rule = Validations.rules[ruleName];
+                    if (!rule.Validate(camp.Key.Text))
+                    {
+                        errors.Add($"{namesMessages[camp.Key.Name]} : {rule.MessageError}");
+                    }
+                }
+            }
+
+            return errors;
+        }
+
+        public bool ConfirmDelete() =>
+            MessageBox.Show("¿Desea eliminar el cliente?", "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+
+        public void LoadClients(IEnumerable<ClientRow> clients)
+        {
+            foreach (ClientRow row in clients)
+            {
+                AddRow(row);
+            }
+        }
+
+        public void AddRow(ClientRow row)
+        {
+            int rowId = dgdata.Rows.Add();
+            WriteRow(dgdata.Rows[rowId], row);
+        }
+
+        public void ReplaceRow(int index, ClientRow row) => WriteRow(dgdata.Rows[index], row);
+
+        public void RemoveRow(int index) => dgdata.Rows.RemoveAt(index);
+
+        public void ClearForm() => Clean();
+
+        public void ShowMessage(string message) =>
+            MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+        public void ShowValidationErrors(IReadOnlyList<string> errors) =>
+            MessageBox.Show(string.Join("\n", errors), "Errores de Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+        private static void WriteRow(DataGridViewRow gridRow, ClientRow row)
+        {
+            gridRow.Cells["Id"].Value = row.Id.ToString();
+            gridRow.Cells["NumeroDocumento"].Value = row.Document;
+            gridRow.Cells["NombreCompleto"].Value = row.Name;
+            gridRow.Cells["Direccion"].Value = row.Address;
+            gridRow.Cells["Telefono"].Value = row.Phone;
+        }
+
+        #endregion
 
         private Dictionary<TextBox, List<string>> campWithRules = new Dictionary<TextBox, List<string>>();
         private Dictionary<string, string> namesMessages = new Dictionary<string, string>
@@ -61,81 +124,23 @@ namespace PharmacySystem
 
             dgdata.Columns["Id"].Visible = false;
 
-
-         
             foreach (DataGridViewColumn cl in dgdata.Columns)
             {
                 if (cl.Visible == true && cl.Name != "btnSeleccionar")
                 {
-                    cbosearch.Items.Add(new ComboBoxItem() { Value = cl.Name, Text = cl.HeaderText });
+                    cbosearch.Items.Add(new PharmacySystem.Model.ComboBoxItem() { Value = cl.Name, Text = cl.HeaderText });
                 }
             }
             cbosearch.DisplayMember = "Text";
             cbosearch.ValueMember = "Value";
             cbosearch.SelectedIndex = 0;
 
-            foreach (Person p in PersonService.Instance.ListPerson().Where(p => p.oPersonType.idPersonType == 3).ToList())
-            {
-                int rowId = dgdata.Rows.Add();
-                DataGridViewRow row = dgdata.Rows[rowId];
-                row.Cells["Id"].Value = p.idPerson.ToString();
-                row.Cells["NumeroDocumento"].Value = p.document;
-                row.Cells["NombreCompleto"].Value = p.name;
-                row.Cells["Direccion"].Value = p.address;
-                row.Cells["Telefono"].Value = p.phone;
-            }
+            _presenter.OnLoad();
         }
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            if (!ValidateForm()) return;
-            Person obj = new Person()
-            {
-                idPerson = int.Parse(txtid.Text),
-                document = txtdocument.Text.Trim(),
-                name = txtname.Text.Trim(),
-                address = txtaddress.Text.Trim(),
-                phone = txtphone.Text.Trim(),
-                password = "",
-                oPersonType = new TypePerson() { idPersonType = 3}
-            };
-
-            var result = false;
-            if (int.Parse(txtid.Text) == 0)
-            {
-                result = PersonService.Instance.RegisterPerson(obj);
-
-                if (result) {
-                    int rowId = dgdata.Rows.Add();
-                    DataGridViewRow row = dgdata.Rows[rowId];
-                    row.Cells["Id"].Value = txtid.Text;
-                    row.Cells["NumeroDocumento"].Value = txtdocument.Text.Trim();
-                    row.Cells["NombreCompleto"].Value = txtname.Text.Trim();
-                    row.Cells["Direccion"].Value = txtaddress.Text.Trim();
-                    row.Cells["Telefono"].Value = txtphone.Text.Trim();
-                }
-                
-
-            }
-            else {
-                result = PersonService.Instance.UpdatePerson(obj);
-                if (result)
-                {
-                    DataGridViewRow row = dgdata.Rows[int.Parse(txtindex.Text) - 1];
-                    row.Cells["Id"].Value = txtid.Text;
-                    row.Cells["NumeroDocumento"].Value = txtdocument.Text.Trim();
-                    row.Cells["NombreCompleto"].Value = txtname.Text.Trim();
-                    row.Cells["Direccion"].Value = txtaddress.Text.Trim();
-                    row.Cells["Telefono"].Value = txtphone.Text.Trim();
-                }
-                
-            }
-
-            if (result)
-                Clean();
-            else
-                MessageBox.Show("No se pudo guardar los cambios\nRevise los datos", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            
+            _presenter.OnSave();
         }
 
         private void dgdata_CellMouseEnter(object sender, DataGridViewCellEventArgs e)
@@ -151,14 +156,13 @@ namespace PharmacySystem
                     dgdata.Cursor = Cursors.Hand;
                 }
             }
-           
         }
 
         private void dgdata_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
         {
             if(e.RowIndex < 0)
                 return;
-            
+
             if (e.ColumnIndex == 0)
             {
                 e.Paint(e.CellBounds, DataGridViewPaintParts.All);
@@ -178,7 +182,6 @@ namespace PharmacySystem
             Clean();
         }
         private void Clean() {
-            
             txtindex.Text = "0";
             txtid.Text = "0";
             txtdocument.Text = "";
@@ -206,28 +209,12 @@ namespace PharmacySystem
 
         private void btnDelete_Click(object sender, EventArgs e)
         {
-            if (int.Parse(txtindex.Text) > 0) {
-
-                if (MessageBox.Show("¿Desea eliminar el cliente?", "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes) {
-                    bool result = PersonService.Instance.DeletePerson(int.Parse(txtid.Text));
-                    if (result)
-                    {
-                        dgdata.Rows.RemoveAt(int.Parse(txtindex.Text) - 1);
-                        Clean();
-                    }
-                    else
-                        MessageBox.Show("No se pudo eliminar el registro\nRevise los datos", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                }
-
-                
-
-            }
-            
+            _presenter.OnDelete();
         }
 
         private void btnsearch_Click(object sender, EventArgs e)
         {
-            string columnFilter = ((ComboBoxItem)cbosearch.SelectedItem).Value.ToString();
+            string columnFilter = ((PharmacySystem.Model.ComboBoxItem)cbosearch.SelectedItem).Value.ToString();
 
             if (dgdata.Rows.Count > 0) {
                 foreach (DataGridViewRow row in dgdata.Rows)
@@ -240,8 +227,6 @@ namespace PharmacySystem
                         row.Visible = false;
                 }
             }
-
-           
         }
 
         private void btnClear_Click(object sender, EventArgs e)
@@ -251,30 +236,6 @@ namespace PharmacySystem
             {
                 row.Visible = true;
             }
-        }
-
-        private bool ValidateForm()
-        {
-            var errors = new List<string>();
-
-            foreach (var camp in campWithRules)
-            {
-                foreach (var rulePassword in camp.Value)
-                {
-                    var rule = Validations.rules[rulePassword];
-                    if (!rule.Validate(camp.Key.Text))
-                    {
-                        errors.Add($"{namesMessages[camp.Key.Name]} : {rule.MessageError}");
-                    }
-                }
-
-            }
-            if (errors.Count > 0)
-            {
-                MessageBox.Show(string.Join("\n", errors), "Errores de Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;
-            }
-            return true;
         }
     }
 }

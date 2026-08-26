@@ -18,7 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PharmacySystem\PharmacySystem.csproj" />
+    <ProjectReference Include="..\PharmacySystem.Domain\PharmacySystem.Domain.csproj" />
+    <ProjectReference Include="..\PharmacySystem.Data\PharmacySystem.Data.csproj" />
+    <ProjectReference Include="..\PharmacySystem.Business\PharmacySystem.Business.csproj" />
+    <ProjectReference Include="..\PharmacySystem.Presentation\PharmacySystem.Presentation.csproj" />
   </ItemGroup>
 
   <ItemGroup>

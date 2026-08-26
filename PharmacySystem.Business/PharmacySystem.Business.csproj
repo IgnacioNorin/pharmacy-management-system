@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>PharmacySystem.Business</RootNamespace>
+    <AssemblyName>PharmacySystem.Business</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PharmacySystem.Domain\PharmacySystem.Domain.csproj" />
+    <ProjectReference Include="..\PharmacySystem.Data\PharmacySystem.Data.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,283 @@
+using System.Collections.Generic;
+using PharmacySystem.Model;
+using PharmacySystem.Presentation;
+using Xunit;
+
+namespace PharmacySystem.Tests.Presentation
+{
+    public class PurchasePresenterTests
+    {
+        private static PurchasePresenter CreatePresenter(FakePurchaseView view, FakePurchaseService purchaseService, FakeProductService productService, int idPerson = 1)
+            => new PurchasePresenter(view, purchaseService, productService, idPerson);
+
+        // The cart lives inside the Presenter now, not the View, so tests that need an existing
+        // cart line build it through the real OnAddProduct() path instead of pre-seeding view state.
+        private static void AddLine(PurchasePresenter presenter, FakePurchaseView view, int productId, decimal amount, string pricePurchaseText, string priceSaleText = "1.00")
+        {
+            view.SelectedProductId = productId;
+            view.SelectedProductCode = "P" + productId;
+            view.SelectedProductName = "Product " + productId;
+            view.Amount = amount;
+            view.PricePurchaseText = pricePurchaseText;
+            view.PriceSaleText = priceSaleText;
+            presenter.OnAddProduct();
+        }
+
+        [Fact]
+        public void OnProductCodeEntered_KnownCode_SelectsProduct()
+        {
+            var view = new FakePurchaseView();
+            var productService = new FakeProductService
+            {
+                ListResult = new List<Product> { new Product { idProduct = 5, code = "P1", name = "Paracetamol" } }
+            };
+
+            CreatePresenter(view, new FakePurchaseService(), productService).OnProductCodeEntered("P1");
+
+            Assert.Equal((5, "P1", "Paracetamol"), view.SelectedProductSetTo);
+        }
+
+        [Fact]
+        public void OnProductCodeEntered_UnknownCode_DoesNothing()
+        {
+            var view = new FakePurchaseView();
+            var productService = new FakeProductService { ListResult = new List<Product>() };
+
+            CreatePresenter(view, new FakePurchaseService(), productService).OnProductCodeEntered("nope");
+
+            Assert.Null(view.SelectedProductSetTo);
+        }
+
+        [Fact]
+        public void OnAddProduct_ValidationErrors_ShowsThemAndNeverAdds()
+        {
+            var view = new FakePurchaseView { ValidationErrors = new List<string> { "Cantidad requerida" } };
+
+            CreatePresenter(view, new FakePurchaseService(), new FakeProductService()).OnAddProduct();
+
+            Assert.Equal(new[] { "Cantidad requerida" }, view.ShownValidationErrors);
+            Assert.Empty(view.RenderedCartLines);
+        }
+
+        [Fact]
+        public void OnAddProduct_NoProductSelected_ShowsMessage()
+        {
+            var view = new FakePurchaseView { SelectedProductId = 0 };
+
+            CreatePresenter(view, new FakePurchaseService(), new FakeProductService()).OnAddProduct();
+
+            Assert.Equal(new[] { "Debe seleccionar un producto primero" }, view.ShownMessages);
+            Assert.Empty(view.RenderedCartLines);
+        }
+
+        [Fact]
+        public void OnAddProduct_InvalidPurchasePrice_ShowsMessage()
+        {
+            var view = new FakePurchaseView { SelectedProductId = 1, PricePurchaseText = "not-a-number", PriceSaleText = "5.00" };
+
+            CreatePresenter(view, new FakePurchaseService(), new FakeProductService()).OnAddProduct();
+
+            Assert.Equal(new[] { "Error al convertir el tipo de moneda - Precio Compra\nEjemplo Formato ##.##" }, view.ShownMessages);
+            Assert.Empty(view.RenderedCartLines);
+        }
+
+        [Fact]
+        public void OnAddProduct_InvalidSalePrice_ShowsMessage()
+        {
+            var view = new FakePurchaseView { SelectedProductId = 1, PricePurchaseText = "5.00", PriceSaleText = "not-a-number" };
+
+            CreatePresenter(view, new FakePurchaseService(), new FakeProductService()).OnAddProduct();
+
+            Assert.Equal(new[] { "Error al convertir el tipo de moneda - Precio Venta\nEjemplo Formato ##.##" }, view.ShownMessages);
+            Assert.Empty(view.RenderedCartLines);
+        }
+
+        [Fact]
+        public void OnAddProduct_ValidEntry_AddsLineRecalculatesTotalAndClearsEntry()
+        {
+            var view = new FakePurchaseView
+            {
+                SelectedProductId = 1,
+                SelectedProductCode = "P1",
+                SelectedProductName = "Paracetamol",
+                Amount = 3,
+                PricePurchaseText = "2.00",
+                PriceSaleText = "5.00"
+            };
+
+            CreatePresenter(view, new FakePurchaseService(), new FakeProductService()).OnAddProduct();
+
+            Assert.Single(view.RenderedCartLines);
+            Assert.Equal(1, view.RenderedCartLines[0].ProductId);
+            Assert.Equal(6m, view.RenderedCartLines[0].SubTotal); // 3 * 2.00
+            Assert.True(view.ProductEntryCleared);
+            Assert.NotNull(view.TotalText);
+        }
+
+        [Fact]
+        public void OnAddProduct_ProductAlreadyInCart_DoesNothingSilently()
+        {
+            var view = new FakePurchaseView();
+            var presenter = CreatePresenter(view, new FakePurchaseService(), new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "2.00", priceSaleText: "5.00");
+
+            view.SelectedProductId = 1;
+            view.PricePurchaseText = "2.00";
+            view.PriceSaleText = "5.00";
+            presenter.OnAddProduct();
+
+            Assert.Single(view.RenderedCartLines); // unchanged - no second line rendered
+            Assert.Empty(view.ShownMessages);
+        }
+
+        [Fact]
+        public void OnRemoveProduct_RemovesLineAndRecalculatesTotal()
+        {
+            var view = new FakePurchaseView();
+            var presenter = CreatePresenter(view, new FakePurchaseService(), new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "10.00");
+            AddLine(presenter, view, productId: 2, amount: 1, pricePurchaseText: "20.00");
+
+            presenter.OnRemoveProduct(0);
+
+            Assert.Single(view.RenderedCartLines);
+            Assert.Equal(2, view.RenderedCartLines[0].ProductId);
+            Assert.NotNull(view.TotalText);
+        }
+
+        [Fact]
+        public void OnFinishPurchase_NoDocumentNumber_ShowsMessageAndFocuses()
+        {
+            var view = new FakePurchaseView { DocumentNumber = "" };
+
+            CreatePresenter(view, new FakePurchaseService(), new FakeProductService()).OnFinishPurchase();
+
+            Assert.Equal(new[] { "Debe ingresar el numero de documento\npara registrar una compra" }, view.ShownMessages);
+            Assert.True(view.DocumentNumberFocused);
+        }
+
+        [Fact]
+        public void OnFinishPurchase_NoSupplierSelected_ShowsMessage()
+        {
+            var view = new FakePurchaseView { DocumentNumber = "001", SelectedSupplierId = 0 };
+
+            CreatePresenter(view, new FakePurchaseService(), new FakeProductService()).OnFinishPurchase();
+
+            Assert.Equal(new[] { "Debe seleccionar un proveedor\npara registrar una compra" }, view.ShownMessages);
+        }
+
+        [Fact]
+        public void OnFinishPurchase_NoProductsInCart_ShowsMessage()
+        {
+            var view = new FakePurchaseView { DocumentNumber = "001", SelectedSupplierId = 3 };
+
+            CreatePresenter(view, new FakePurchaseService(), new FakeProductService()).OnFinishPurchase();
+
+            Assert.Equal(new[] { "Debe ingresar un producto como minimo\npara registrar una compra" }, view.ShownMessages);
+        }
+
+        [Fact]
+        public void OnFinishPurchase_Succeeds_RegistersPurchaseClearsAndShowsMessage()
+        {
+            var view = new FakePurchaseView { DocumentType = "Factura" };
+            var purchaseService = new FakePurchaseService { RegisterResult = true };
+            var presenter = CreatePresenter(view, purchaseService, new FakeProductService(), idPerson: 42);
+            AddLine(presenter, view, productId: 1, amount: 2, pricePurchaseText: "5.00", priceSaleText: "8.00");
+
+            view.DocumentNumber = " 001 ";
+            view.SelectedSupplierId = 3;
+            presenter.OnFinishPurchase();
+
+            Assert.NotNull(purchaseService.RegisteredWith);
+            Assert.Equal("001", purchaseService.RegisteredWith.documentNumber);
+            Assert.Equal(3, purchaseService.RegisteredWith.oSupplier.idSupplier);
+            Assert.Equal(42, purchaseService.RegisteredWith.oPerson.idPerson);
+            Assert.Equal(10m, purchaseService.RegisteredWith.totalAmount);
+            Assert.Single(purchaseService.RegisteredWith.oPurchaseDetail);
+            Assert.True(view.PurchaseCleared);
+            Assert.Equal(new[] { "La compra fue registrada" }, view.ShownMessages);
+        }
+
+        [Fact]
+        public void OnFinishPurchase_ServiceFails_ShowsErrorAndDoesNotClear()
+        {
+            var view = new FakePurchaseView();
+            var purchaseService = new FakePurchaseService { RegisterResult = false };
+            var presenter = CreatePresenter(view, purchaseService, new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "10.00");
+
+            view.DocumentNumber = "001";
+            view.SelectedSupplierId = 3;
+            presenter.OnFinishPurchase();
+
+            Assert.Equal(new[] { "No se pudo registrar la compra" }, view.ShownMessages);
+            Assert.False(view.PurchaseCleared);
+        }
+
+        // Fase 2 of the alerts rework: a successful purchase must let MainForm know stock just
+        // changed, instead of it waiting up to 5 minutes for the next safety-net timer tick.
+        [Fact]
+        public void OnFinishPurchase_Succeeds_RaisesInventoryChangedNotification()
+        {
+            var view = new FakePurchaseView { DocumentNumber = "001", SelectedSupplierId = 3 };
+            var purchaseService = new FakePurchaseService { RegisterResult = true };
+            var presenter = CreatePresenter(view, purchaseService, new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "10.00");
+
+            bool raised = false;
+            void Handler() => raised = true;
+            InventoryChangeNotifier.StockChanged += Handler;
+            try
+            {
+                presenter.OnFinishPurchase();
+            }
+            finally
+            {
+                InventoryChangeNotifier.StockChanged -= Handler;
+            }
+
+            Assert.True(raised);
+        }
+
+        [Fact]
+        public void OnFinishPurchase_ServiceFails_DoesNotRaiseInventoryChangedNotification()
+        {
+            var view = new FakePurchaseView { DocumentNumber = "001", SelectedSupplierId = 3 };
+            var purchaseService = new FakePurchaseService { RegisterResult = false };
+            var presenter = CreatePresenter(view, purchaseService, new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "10.00");
+
+            bool raised = false;
+            void Handler() => raised = true;
+            InventoryChangeNotifier.StockChanged += Handler;
+            try
+            {
+                presenter.OnFinishPurchase();
+            }
+            finally
+            {
+                InventoryChangeNotifier.StockChanged -= Handler;
+            }
+
+            Assert.False(raised);
+        }
+
+        [Fact]
+        public void OnFinishPurchase_Succeeds_ClearsThePresenterOwnedCartToo()
+        {
+            var view = new FakePurchaseView { DocumentNumber = "001", SelectedSupplierId = 3 };
+            var purchaseService = new FakePurchaseService { RegisterResult = true };
+            var presenter = CreatePresenter(view, purchaseService, new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "10.00");
+
+            presenter.OnFinishPurchase();
+
+            // A second finish attempt with nothing re-added must behave as an empty cart again -
+            // proves the cart was actually cleared, not just the grid the View renders.
+            view.ShownMessages.Clear();
+            presenter.OnFinishPurchase();
+
+            Assert.Equal(new[] { "Debe ingresar un producto como minimo\npara registrar una compra" }, view.ShownMessages);
+        }
+    }
+}

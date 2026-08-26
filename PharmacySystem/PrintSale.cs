@@ -1,5 +1,7 @@
-﻿using PharmacySystem.Logical;
+﻿using PharmacySystem.Business;
+using PharmacySystem.Data;
 using PharmacySystem.Model;
+using PharmacySystem.Presentation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -17,171 +19,28 @@ namespace PharmacySystem
 {
     public partial class PrintSale : Form
     {
-        StringBuilder linea = new StringBuilder();
-        int maxCant = 50;
         int _IdSale;
+        private readonly IStoreService _storeService;
+        private readonly ISaleService _saleService;
 
         public PrintSale(int idsale = 0)
         {
             InitializeComponent();
             _IdSale = idsale;
+            _storeService = new StoreService(new StoreRepository(CompositionRoot.ConnectionFactory));
+            _saleService = new SaleService(new SaleRepository(CompositionRoot.ConnectionFactory));
         }
-
-        #region Plain Text Formatting Helpers
-        private void AddCharacter(string c)
-        {
-            string text = "";
-            for (int i = 0; i < maxCant; i++)
-            {
-                text += c;
-            }
-            linea.AppendLine(text);
-        }
-
-        private void AddCenteredText(string text)
-        {
-            if (text.Length > maxCant)
-            {
-                // If text is too long, truncate it
-                linea.AppendLine(text.Substring(0, maxCant));
-            }
-            else
-            {
-                decimal spacesToAdd = Math.Truncate(Convert.ToDecimal((maxCant - text.Length) / 2));
-                string spaces = "";
-                for (int i = 0; i < spacesToAdd; i++)
-                {
-                    spaces += " ";
-                }
-                linea.AppendLine(spaces + text);
-            }
-        }
-
-        private void AddTwoColumns(string leftText, string rightText)
-        {
-            int totalTextLength = leftText.Length + rightText.Length;
-            if (totalTextLength > maxCant)
-            {
-                // If it doesn't fit, truncate the first text to make space
-                int availableSpace = maxCant - rightText.Length - 1; // -1 for at least one space
-                if (availableSpace > 0)
-                {
-                    leftText = leftText.Substring(0, Math.Min(leftText.Length, availableSpace));
-                    linea.AppendLine(leftText + " " + rightText);
-                }
-                else
-                {
-                    // If it still doesn't fit, put each text on its own line
-                    linea.AppendLine(leftText.Length > maxCant ? leftText.Substring(0, maxCant) : leftText);
-                    linea.AppendLine(rightText.Length > maxCant ? rightText.Substring(0, maxCant) : rightText);
-                }
-            }
-            else
-            {
-                int spacesCount = maxCant - totalTextLength;
-                string spaces = "";
-                for (int i = 0; i < spacesCount; i++)
-                {
-                    spaces += " ";
-                }
-                linea.AppendLine(leftText + spaces + rightText);
-            }
-        }
-        #endregion
 
         #region Plain Text Ticket Generation
         private string GenerateFormattedPharmacyTicket()
         {
-            Store store = StoreService.Instance.ListStore();
-            Sale sale = SaleService.Instance.ListSale().Where(v => v.idSale == _IdSale).FirstOrDefault();
-            List<SaleDetail> saleDetails = SaleService.Instance.ListSaleDetail().Where(dv => dv.idSale == _IdSale).ToList();
+            Store store = _storeService.ListStore();
+            Sale sale = _saleService.ListSale().Where(v => v.idSale == _IdSale).FirstOrDefault();
+            List<SaleDetail> saleDetails = _saleService.ListSaleDetail().Where(dv => dv.idSale == _IdSale).ToList();
 
-            if (sale == null || saleDetails == null || !saleDetails.Any())
-            {
-                return "Error: Sale not found or no details available.";
-            }
-
-            // Reset the StringBuilder
-            linea.Clear();
-
-            string date = sale.registrationDate.ToString("dd/MM/yyyy");
-            string time = sale.registrationDate.ToString("HH:mm:ss");
-
-            // Company header
-            AddCenteredText(store.companyName.ToUpper());
-            AddCenteredText($"RUC: {store.document}");
-            AddCenteredText(store.address.ToUpper());
-            if (!string.IsNullOrEmpty(store.phone))
-                AddCenteredText($"Tel: {store.phone}");
-            if (!string.IsNullOrEmpty(store.email))
-                AddCenteredText(store.email);
-
-            AddCharacter("-");
-
-            // Sale information
-            AddTwoColumns("Tipo Doc:", sale.typeDocument);
-            AddTwoColumns("Número:", sale.numberDocument);
-            AddTwoColumns("Fecha:", date);
-            AddTwoColumns("Hora:", time);
-            AddCenteredText("Cliente: Público General");
-
-            AddCharacter("-");
-
-            // Product headers
-            string header = string.Format("{0,-4} {1,-20} {2,-8} {3,8}", "Cant", "Producto", "Precio", "Subtotal");
-            if (header.Length > maxCant)
-            {
-                linea.AppendLine("Cant Producto           P.Unit  Subtot");
-            }
-            else
-            {
-                linea.AppendLine(header);
-            }
-            AddCharacter("-");
-
-            // Product details
-            foreach (SaleDetail detail in saleDetails)
-            {
-                string productName = detail.oProduct.name.Length > 20 ?
-                    detail.oProduct.name.Substring(0, 17) + "..." : detail.oProduct.name;
-
-                string priceStr = CultureInfoHelper.FormatAsCurrency(detail.salePrice);
-                string subtotalStr = CultureInfoHelper.FormatAsCurrency(detail.subtotal);
-
-                string productLine = string.Format("{0,-4} {1,-20} {2,-8} {3,8}",
-                    detail.amount.ToString(),
-                    productName,
-                    priceStr,
-                    subtotalStr);
-
-                if (productLine.Length > maxCant)
-                {
-                    // Alternative format for very long lines
-                    linea.AppendLine($"{detail.amount} {productName}");
-                    AddTwoColumns($"  {priceStr} x {detail.amount}", subtotalStr);
-                }
-                else
-                {
-                    linea.AppendLine(productLine);
-                }
-            }
-
-            AddCharacter("-");
-
-            // Totals
-            AddTwoColumns("TOTAL A PAGAR:", CultureInfoHelper.FormatAsCurrency(sale.totalPay));
-            AddTwoColumns("PAGO CON:", CultureInfoHelper.FormatAsCurrency(sale.payWith));
-            AddTwoColumns("CAMBIO:", CultureInfoHelper.FormatAsCurrency(sale.change));
-
-            AddCharacter("-");
-            AddCenteredText("¡Gracias por su compra!");
-            AddCenteredText("¡Vuelva pronto!");
-
-            // Final spaces for paper cutting
-            linea.AppendLine("\n\n\n");
-
-            Console.WriteLine(linea.ToString());
-            return linea.ToString();
+            string ticketText = PharmacyTicketBuilder.Build(store, sale, saleDetails);
+            Console.WriteLine(ticketText);
+            return ticketText;
         }
         #endregion
 
@@ -300,8 +159,8 @@ namespace PharmacySystem
         {
             try
             {
-                Store store = StoreService.Instance.ListStore();
-                Sale sale = SaleService.Instance.ListSale().Where(v => v.idSale == _IdSale).FirstOrDefault();
+                Store store = _storeService.ListStore();
+                Sale sale = _saleService.ListSale().Where(v => v.idSale == _IdSale).FirstOrDefault();
 
                 if (sale == null)
                 {
@@ -311,7 +170,7 @@ namespace PharmacySystem
                     return;
                 }
 
-                List<SaleDetail> saleDetails = SaleService.Instance.ListSaleDetail().Where(dv => dv.idSale == _IdSale).ToList();
+                List<SaleDetail> saleDetails = _saleService.ListSaleDetail().Where(dv => dv.idSale == _IdSale).ToList();
 
                 if (saleDetails == null || !saleDetails.Any())
                 {

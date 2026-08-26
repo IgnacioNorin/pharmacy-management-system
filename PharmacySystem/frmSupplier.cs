@@ -1,24 +1,112 @@
-﻿using PharmacySystem.Logical;
-using PharmacySystem.Model;
+using PharmacySystem.Presentation;
 using PharmacySystem.Validators;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PharmacySystem
 {
-    public partial class frmSupplier : Form
+    // Pilot migration to MVP: this Form only reads/writes its own controls and forwards user
+    // intent to SupplierPresenter, which owns every decision (which message, which row changes,
+    // whether the form clears). Grid painting and the free-text search filter stay here - they
+    // never touched SupplierService even before this migration, so they aren't presenter concerns.
+    public partial class frmSupplier : Form, ISupplierView
     {
+        private readonly SupplierPresenter _presenter;
+
         public frmSupplier()
         {
             InitializeComponent();
+            _presenter = CompositionRoot.CreateSupplierPresenter(this);
         }
+
+        #region ISupplierView
+
+        public int SelectedIndex => int.Parse(txtindex.Text);
+        public int RowCount => dgdata.Rows.Count;
+        public int SupplierId => int.Parse(txtid.Text);
+        public string Document => txtdocument.Text;
+        // Explicit interface implementation: Control.CompanyName and ContainerControl.Validate()
+        // (below) are both inherited members this Form already has; qualifying them explicitly
+        // avoids silently shadowing those instead of implementing the interface.
+        string ISupplierView.CompanyName => txtcompanyname.Text;
+        public string Email => txtemail.Text;
+        public string Phone => txtphone.Text;
+
+        List<string> ISupplierView.Validate()
+        {
+            var errors = new List<string>();
+
+            foreach (var camp in campWithRules)
+            {
+                foreach (var ruleName in camp.Value)
+                {
+                    var rule = Validations.rules[ruleName];
+                    if (!rule.Validate(camp.Key.Text))
+                    {
+                        errors.Add($"{namesMessages[camp.Key.Name]} : {rule.MessageError}");
+                    }
+                }
+            }
+
+            return errors;
+        }
+
+        public bool ConfirmDelete()
+        {
+            return MessageBox.Show("¿Desea eliminar el proveedor?", "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+        }
+
+        public void LoadSuppliers(IEnumerable<SupplierRow> suppliers)
+        {
+            foreach (SupplierRow row in suppliers)
+            {
+                AddRow(row);
+            }
+        }
+
+        public void AddRow(SupplierRow row)
+        {
+            int rowId = dgdata.Rows.Add();
+            WriteRow(dgdata.Rows[rowId], row);
+        }
+
+        public void ReplaceRow(int index, SupplierRow row)
+        {
+            WriteRow(dgdata.Rows[index], row);
+        }
+
+        public void RemoveRow(int index)
+        {
+            dgdata.Rows.RemoveAt(index);
+        }
+
+        public void ClearForm()
+        {
+            Clean();
+        }
+
+        public void ShowMessage(string message)
+        {
+            MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+        }
+
+        public void ShowValidationErrors(IReadOnlyList<string> errors)
+        {
+            MessageBox.Show(string.Join("\n", errors), "Errores de Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+
+        private static void WriteRow(DataGridViewRow gridRow, SupplierRow row)
+        {
+            gridRow.Cells["Id"].Value = row.Id.ToString();
+            gridRow.Cells["NumeroDocumento"].Value = row.Document;
+            gridRow.Cells["RazonSocial"].Value = row.CompanyName;
+            gridRow.Cells["Correo"].Value = row.Email;
+            gridRow.Cells["Telefono"].Value = row.Phone;
+        }
+
+        #endregion
 
         private Dictionary<TextBox, List<string>> campWithRules = new Dictionary<TextBox, List<string>>();
         private Dictionary<string, string> namesMessages = new Dictionary<string, string>
@@ -41,7 +129,6 @@ namespace PharmacySystem
 
         private void frmSupplier_Load(object sender, EventArgs e)
         {
-
             InitializeValidators();
 
             DataGridViewButtonColumn Button = new DataGridViewButtonColumn()
@@ -51,9 +138,7 @@ namespace PharmacySystem
                 Text = "",
                 Name = "btnSeleccionar",
                 UseColumnTextForButtonValue = true,
-
             };
-           
 
             dgdata.Columns.Add(Button);
             dgdata.Columns.Add("Id", "Id");
@@ -67,99 +152,28 @@ namespace PharmacySystem
             {
                 if (cl.Visible == true && cl.Name != "btnSeleccionar")
                 {
-                    cbosearch.Items.Add(new ComboBoxItem() { Value = cl.Name, Text = cl.HeaderText });
+                    cbosearch.Items.Add(new PharmacySystem.Model.ComboBoxItem() { Value = cl.Name, Text = cl.HeaderText });
                 }
             }
             cbosearch.DisplayMember = "Text";
             cbosearch.ValueMember = "Value";
             cbosearch.SelectedIndex = 0;
-           
 
-            foreach (Supplier p in SupplierService.Instance.ListSupplier())
-            {
-                int rowId = dgdata.Rows.Add();
-                DataGridViewRow row = dgdata.Rows[rowId];
-                row.Cells["Id"].Value = p.idSupplier.ToString();
-                row.Cells["NumeroDocumento"].Value = p.document;
-                row.Cells["RazonSocial"].Value = p.companyName;
-                row.Cells["Correo"].Value = p.email;
-                row.Cells["Telefono"].Value = p.phone;
-            }
-
+            _presenter.OnLoad();
         }
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            if (!ValidateForm()) return;
-
-            int txtindexParse = int.Parse(txtindex.Text);
-            int txtidParse = int.Parse(txtid.Text);
-            bool result = false;
-
-            if (txtindexParse < 0 || txtindexParse > dgdata.Rows.Count) return;
- 
-
-            Supplier obj = new Supplier()
-            {
-                idSupplier = txtidParse,
-                document = txtdocument.Text.Trim(),
-                companyName = txtcompanyname.Text.Trim(),
-                email = txtemail.Text.Trim(),
-                phone = txtphone.Text.Trim()
-            };
-
-            if (txtidParse == 0)
-            {
-                int id = SupplierService.Instance.RegisterSupplier(obj);
-
-                result = id != 0 ? true : false;
-
-                if (!result)
-                {
-                    MessageBox.Show("Ya existe un proveedor con esa CI/RUC", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                    return;
-                }
-
-                int rowId = dgdata.Rows.Add();
-                DataGridViewRow row = dgdata.Rows[rowId];
-                row.Cells["Id"].Value = id.ToString();
-                row.Cells["NumeroDocumento"].Value = txtdocument.Text.Trim();
-                row.Cells["RazonSocial"].Value = txtcompanyname.Text.Trim();
-                row.Cells["Correo"].Value = txtemail.Text.Trim();
-                row.Cells["Telefono"].Value = txtphone.Text.Trim();
-
-            }
-            else
-            {
-                result = SupplierService.Instance.UpdateSupplier(obj);
-
-                if (!result) return;
-
-                DataGridViewRow row = dgdata.Rows[txtindexParse -1];
-                row.Cells["Id"].Value = txtid.Text;
-                row.Cells["NumeroDocumento"].Value = txtdocument.Text.Trim();
-                row.Cells["RazonSocial"].Value = txtcompanyname.Text.Trim();
-                row.Cells["Correo"].Value = txtemail.Text.Trim();
-                row.Cells["Telefono"].Value = txtphone.Text.Trim();
-
-            }
-
-            if (result)
-                Clean();
-            else
-                MessageBox.Show("No se pudo guardar los cambios\nRevise los datos", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-
+            _presenter.OnSave();
         }
 
         private void dgdata_CellMouseEnter(object sender, DataGridViewCellEventArgs e)
         {
             if (e.ColumnIndex < 0) return;
-       
-            dgdata.Cursor = dgdata.Columns[e.ColumnIndex].Name == "btnSeleccionar" 
-                            ? Cursors.Hand 
-                            : Cursors.Default;
-            
 
+            dgdata.Cursor = dgdata.Columns[e.ColumnIndex].Name == "btnSeleccionar"
+                            ? Cursors.Hand
+                            : Cursors.Default;
         }
 
         private void dgdata_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
@@ -176,7 +190,6 @@ namespace PharmacySystem
 
             e.Graphics.DrawImage(Properties.Resources.check20, new Rectangle(x, y, w, h));
             e.Handled = true;
-
         }
 
         private void btnClean_Click(object sender, EventArgs e)
@@ -186,7 +199,6 @@ namespace PharmacySystem
 
         private void Clean()
         {
-
             txtindex.Text = "0";
             txtid.Text = "0";
             txtdocument.Text = "";
@@ -206,47 +218,18 @@ namespace PharmacySystem
             txtcompanyname.Text = dgdata.Rows[index].Cells["RazonSocial"].Value.ToString();
             txtemail.Text = dgdata.Rows[index].Cells["Correo"].Value.ToString();
             txtphone.Text = dgdata.Rows[index].Cells["Telefono"].Value.ToString();
-
         }
 
         private void btnDelete_Click(object sender, EventArgs e)
         {
-            int txtindexParse = int.Parse(txtindex.Text);
-            int txtintParse = int.Parse(txtid.Text);
-
-            bool result;
-            DialogResult dialogResult;
-            if (txtindexParse <= 0)
-            {
-                MessageBox.Show("No se pudo eliminar, seleccione un proveedor", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-
-            dialogResult = MessageBox.Show("¿Desea eliminar el proveedor?", "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (dialogResult != DialogResult.Yes) return;
-
-            result = SupplierService.Instance.DeleteSupplier(txtintParse);
-
-            if (!result)
-            {
-                MessageBox.Show("No se pudo eliminar el registro\nRevise los datos", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-      
-            dgdata.Rows.RemoveAt(txtindexParse - 1);
-            Clean();
-         
-               
-
-
+            _presenter.OnDelete();
         }
 
         private void btnsearch_Click(object sender, EventArgs e)
         {
             if (dgdata.Rows.Count <= 0) return;
 
-            string columnFilter = ((ComboBoxItem)cbosearch.SelectedItem).Value.ToString();
+            string columnFilter = ((PharmacySystem.Model.ComboBoxItem)cbosearch.SelectedItem).Value.ToString();
             string value;
 
             foreach (DataGridViewRow row in dgdata.Rows)
@@ -258,8 +241,6 @@ namespace PharmacySystem
                 else
                     row.Visible = false;
             }
-
-
         }
 
         private void btnClear_Click(object sender, EventArgs e)
@@ -270,30 +251,5 @@ namespace PharmacySystem
                 row.Visible = true;
             }
         }
-
-        private bool ValidateForm()
-        {
-            var errors = new List<string>();
-
-            foreach (var camp in campWithRules)
-            {
-                foreach (var rulePassword in camp.Value)
-                {
-                    var rule = Validations.rules[rulePassword];
-                    if (!rule.Validate(camp.Key.Text))
-                    {
-                        errors.Add($"{namesMessages[camp.Key.Name]} : {rule.MessageError}");
-                    }
-                }
-
-            }
-            if (errors.Count > 0)
-            {
-                MessageBox.Show(string.Join("\n", errors), "Errores de Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;
-            }
-            return true;
-        }
-
     }
 }

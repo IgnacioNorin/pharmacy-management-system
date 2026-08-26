@@ -36,6 +36,8 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
             this.tabManagement = new System.Windows.Forms.TabControl();
             this.tabProduct = new System.Windows.Forms.TabPage();
             this.dgdatasale = new System.Windows.Forms.DataGridView();
@@ -70,6 +72,17 @@
             this.btnExportProduct = new System.Windows.Forms.Button();
             this.label14 = new System.Windows.Forms.Label();
             this.label15 = new System.Windows.Forms.Label();
+            this.tabAlertHistory = new System.Windows.Forms.TabPage();
+            this.dgdataalerthistory = new System.Windows.Forms.DataGridView();
+            this.txtenddatealerthistory = new System.Windows.Forms.DateTimePicker();
+            this.txtstartdatealerthistory = new System.Windows.Forms.DateTimePicker();
+            this.labelAlertHistoryEnd = new System.Windows.Forms.Label();
+            this.labelAlertHistoryStart = new System.Windows.Forms.Label();
+            this.labelAlertHistoryTitle = new System.Windows.Forms.Label();
+            this.btnConsultAlertHistory = new System.Windows.Forms.Button();
+            this.btnExportAlertHistory = new System.Windows.Forms.Button();
+            this.labelAlertHistoryTopBorder = new System.Windows.Forms.Label();
+            this.labelAlertHistoryBottomBorder = new System.Windows.Forms.Label();
             this.tabManagement.SuspendLayout();
             this.tabProduct.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgdatasale)).BeginInit();
@@ -77,6 +90,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.dgdatapurchase)).BeginInit();
             this.tabStore.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgdataproduct)).BeginInit();
+            this.tabAlertHistory.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgdataalerthistory)).BeginInit();
             this.SuspendLayout();
             // 
             // tabManagement
@@ -87,6 +102,7 @@
             this.tabManagement.Controls.Add(this.tabProduct);
             this.tabManagement.Controls.Add(this.tabCategory);
             this.tabManagement.Controls.Add(this.tabStore);
+            this.tabManagement.Controls.Add(this.tabAlertHistory);
             this.tabManagement.Cursor = System.Windows.Forms.Cursors.Default;
             this.tabManagement.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabManagement.Location = new System.Drawing.Point(12, 5);
@@ -98,7 +114,7 @@
             // 
             // tabProduct
             // 
-            this.tabProduct.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(169)))), ((int)(((byte)(196)))));
+            this.tabProduct.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
             this.tabProduct.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.tabProduct.Controls.Add(this.dgdatasale);
             this.tabProduct.Controls.Add(this.txtenddate);
@@ -126,7 +142,7 @@
             this.dgdatasale.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgdatasale.BackgroundColor = System.Drawing.Color.WhiteSmoke;
             dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(169)))), ((int)(((byte)(196)))));
+            dataGridViewCellStyle1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(237)))), ((int)(((byte)(241)))), ((int)(((byte)(244)))));
             dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             dataGridViewCellStyle1.ForeColor = System.Drawing.Color.Black;
             dataGridViewCellStyle1.Padding = new System.Windows.Forms.Padding(1);
@@ -143,7 +159,7 @@
             this.dgdatasale.ReadOnly = true;
             this.dgdatasale.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
             dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(169)))), ((int)(((byte)(196)))));
+            dataGridViewCellStyle2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(237)))), ((int)(((byte)(241)))), ((int)(((byte)(244)))));
             dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.WindowText;
             dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
@@ -267,7 +283,7 @@
             // 
             // tabCategory
             // 
-            this.tabCategory.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(169)))), ((int)(((byte)(196)))));
+            this.tabCategory.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
             this.tabCategory.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.tabCategory.Controls.Add(this.dgdatapurchase);
             this.tabCategory.Controls.Add(this.btnConsultPurchase);
@@ -299,7 +315,7 @@
             this.dgdatapurchase.BackgroundColor = System.Drawing.Color.WhiteSmoke;
             this.dgdatapurchase.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.SingleHorizontal;
             dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(169)))), ((int)(((byte)(196)))));
+            dataGridViewCellStyle4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(237)))), ((int)(((byte)(241)))), ((int)(((byte)(244)))));
             dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             dataGridViewCellStyle4.ForeColor = System.Drawing.Color.White;
             dataGridViewCellStyle4.Padding = new System.Windows.Forms.Padding(1);
@@ -324,7 +340,7 @@
             dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
             this.dgdatapurchase.RowHeadersDefaultCellStyle = dataGridViewCellStyle5;
             this.dgdatapurchase.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToDisplayedHeaders;
-            dataGridViewCellStyle6.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(169)))), ((int)(((byte)(196)))));
+            dataGridViewCellStyle6.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(237)))), ((int)(((byte)(241)))), ((int)(((byte)(244)))));
             dataGridViewCellStyle6.ForeColor = System.Drawing.Color.Black;
             dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
             this.dgdatapurchase.RowsDefaultCellStyle = dataGridViewCellStyle6;
@@ -465,7 +481,7 @@
             // 
             // tabStore
             // 
-            this.tabStore.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(169)))), ((int)(((byte)(196)))));
+            this.tabStore.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
             this.tabStore.Controls.Add(this.dgdataproduct);
             this.tabStore.Controls.Add(this.btnConsultProduct);
             this.tabStore.Controls.Add(this.cbocategory);
@@ -490,7 +506,7 @@
             this.dgdataproduct.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgdataproduct.BackgroundColor = System.Drawing.Color.WhiteSmoke;
             dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle7.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(169)))), ((int)(((byte)(196)))));
+            dataGridViewCellStyle7.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(237)))), ((int)(((byte)(241)))), ((int)(((byte)(244)))));
             dataGridViewCellStyle7.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             dataGridViewCellStyle7.ForeColor = System.Drawing.Color.White;
             dataGridViewCellStyle7.Padding = new System.Windows.Forms.Padding(1);
@@ -507,7 +523,7 @@
             this.dgdataproduct.ReadOnly = true;
             this.dgdataproduct.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
             dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle8.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(169)))), ((int)(((byte)(196)))));
+            dataGridViewCellStyle8.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(237)))), ((int)(((byte)(241)))), ((int)(((byte)(244)))));
             dataGridViewCellStyle8.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             dataGridViewCellStyle8.ForeColor = System.Drawing.SystemColors.WindowText;
             dataGridViewCellStyle8.SelectionBackColor = System.Drawing.SystemColors.Highlight;
@@ -610,11 +626,180 @@
             this.label15.Size = new System.Drawing.Size(1215, 417);
             this.label15.TabIndex = 55;
             // 
+            // tabAlertHistory
+            //
+            this.tabAlertHistory.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
+            this.tabAlertHistory.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.tabAlertHistory.Controls.Add(this.dgdataalerthistory);
+            this.tabAlertHistory.Controls.Add(this.txtenddatealerthistory);
+            this.tabAlertHistory.Controls.Add(this.txtstartdatealerthistory);
+            this.tabAlertHistory.Controls.Add(this.labelAlertHistoryEnd);
+            this.tabAlertHistory.Controls.Add(this.labelAlertHistoryStart);
+            this.tabAlertHistory.Controls.Add(this.labelAlertHistoryTitle);
+            this.tabAlertHistory.Controls.Add(this.btnConsultAlertHistory);
+            this.tabAlertHistory.Controls.Add(this.btnExportAlertHistory);
+            this.tabAlertHistory.Controls.Add(this.labelAlertHistoryTopBorder);
+            this.tabAlertHistory.Controls.Add(this.labelAlertHistoryBottomBorder);
+            this.tabAlertHistory.Location = new System.Drawing.Point(4, 25);
+            this.tabAlertHistory.Name = "tabAlertHistory";
+            this.tabAlertHistory.Padding = new System.Windows.Forms.Padding(3);
+            this.tabAlertHistory.Size = new System.Drawing.Size(1237, 522);
+            this.tabAlertHistory.TabIndex = 3;
+            this.tabAlertHistory.Text = "Historial de Alertas";
+            //
+            // dgdataalerthistory
+            //
+            this.dgdataalerthistory.AllowUserToAddRows = false;
+            this.dgdataalerthistory.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.dgdataalerthistory.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgdataalerthistory.BackgroundColor = System.Drawing.Color.WhiteSmoke;
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle9.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(237)))), ((int)(((byte)(241)))), ((int)(((byte)(244)))));
+            dataGridViewCellStyle9.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle9.ForeColor = System.Drawing.Color.White;
+            dataGridViewCellStyle9.Padding = new System.Windows.Forms.Padding(1);
+            dataGridViewCellStyle9.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle9.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dgdataalerthistory.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle9;
+            this.dgdataalerthistory.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgdataalerthistory.EnableHeadersVisualStyles = false;
+            this.dgdataalerthistory.GridColor = System.Drawing.Color.DimGray;
+            this.dgdataalerthistory.Location = new System.Drawing.Point(23, 157);
+            this.dgdataalerthistory.MultiSelect = false;
+            this.dgdataalerthistory.Name = "dgdataalerthistory";
+            this.dgdataalerthistory.ReadOnly = true;
+            this.dgdataalerthistory.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
+            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle10.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(237)))), ((int)(((byte)(241)))), ((int)(((byte)(244)))));
+            dataGridViewCellStyle10.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle10.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle10.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle10.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle10.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dgdataalerthistory.RowHeadersDefaultCellStyle = dataGridViewCellStyle10;
+            this.dgdataalerthistory.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToDisplayedHeaders;
+            this.dgdataalerthistory.RowTemplate.DefaultCellStyle.BackColor = System.Drawing.Color.White;
+            this.dgdataalerthistory.RowTemplate.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.White;
+            this.dgdataalerthistory.RowTemplate.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black;
+            this.dgdataalerthistory.RowTemplate.Height = 30;
+            this.dgdataalerthistory.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgdataalerthistory.Size = new System.Drawing.Size(1189, 352);
+            this.dgdataalerthistory.TabIndex = 65;
+            //
+            // txtenddatealerthistory
+            //
+            this.txtenddatealerthistory.CustomFormat = "dd-MM-yyyy";
+            this.txtenddatealerthistory.Format = System.Windows.Forms.DateTimePickerFormat.Short;
+            this.txtenddatealerthistory.Location = new System.Drawing.Point(395, 45);
+            this.txtenddatealerthistory.Name = "txtenddatealerthistory";
+            this.txtenddatealerthistory.Size = new System.Drawing.Size(187, 23);
+            this.txtenddatealerthistory.TabIndex = 66;
+            //
+            // txtstartdatealerthistory
+            //
+            this.txtstartdatealerthistory.CustomFormat = "dd-MM-yyyy";
+            this.txtstartdatealerthistory.Format = System.Windows.Forms.DateTimePickerFormat.Short;
+            this.txtstartdatealerthistory.Location = new System.Drawing.Point(107, 45);
+            this.txtstartdatealerthistory.Name = "txtstartdatealerthistory";
+            this.txtstartdatealerthistory.Size = new System.Drawing.Size(187, 23);
+            this.txtstartdatealerthistory.TabIndex = 66;
+            //
+            // labelAlertHistoryEnd
+            //
+            this.labelAlertHistoryEnd.AutoSize = true;
+            this.labelAlertHistoryEnd.BackColor = System.Drawing.Color.White;
+            this.labelAlertHistoryEnd.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.labelAlertHistoryEnd.Location = new System.Drawing.Point(313, 50);
+            this.labelAlertHistoryEnd.Name = "labelAlertHistoryEnd";
+            this.labelAlertHistoryEnd.Size = new System.Drawing.Size(64, 15);
+            this.labelAlertHistoryEnd.TabIndex = 67;
+            this.labelAlertHistoryEnd.Text = "Fecha Fin:";
+            //
+            // labelAlertHistoryStart
+            //
+            this.labelAlertHistoryStart.AutoSize = true;
+            this.labelAlertHistoryStart.BackColor = System.Drawing.Color.White;
+            this.labelAlertHistoryStart.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.labelAlertHistoryStart.Location = new System.Drawing.Point(25, 50);
+            this.labelAlertHistoryStart.Name = "labelAlertHistoryStart";
+            this.labelAlertHistoryStart.Size = new System.Drawing.Size(76, 15);
+            this.labelAlertHistoryStart.TabIndex = 67;
+            this.labelAlertHistoryStart.Text = "Fecha Inicio:";
+            //
+            // labelAlertHistoryTitle
+            //
+            this.labelAlertHistoryTitle.AutoSize = true;
+            this.labelAlertHistoryTitle.BackColor = System.Drawing.Color.White;
+            this.labelAlertHistoryTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.labelAlertHistoryTitle.Location = new System.Drawing.Point(22, 14);
+            this.labelAlertHistoryTitle.Name = "labelAlertHistoryTitle";
+            this.labelAlertHistoryTitle.Size = new System.Drawing.Size(230, 20);
+            this.labelAlertHistoryTitle.TabIndex = 68;
+            this.labelAlertHistoryTitle.Text = "Historial de Alertas";
+            //
+            // btnConsultAlertHistory
+            //
+            this.btnConsultAlertHistory.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.btnConsultAlertHistory.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnConsultAlertHistory.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnConsultAlertHistory.Image = global::PharmacySystem.Properties.Resources.search16;
+            this.btnConsultAlertHistory.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.btnConsultAlertHistory.Location = new System.Drawing.Point(611, 43);
+            this.btnConsultAlertHistory.Name = "btnConsultAlertHistory";
+            this.btnConsultAlertHistory.Size = new System.Drawing.Size(134, 25);
+            this.btnConsultAlertHistory.TabIndex = 69;
+            this.btnConsultAlertHistory.Text = "Consultar";
+            this.btnConsultAlertHistory.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
+            this.btnConsultAlertHistory.UseVisualStyleBackColor = false;
+            this.btnConsultAlertHistory.Click += new System.EventHandler(this.btnConsultAlertHistory_Click);
+            //
+            // btnExportAlertHistory
+            //
+            this.btnExportAlertHistory.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.btnExportAlertHistory.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnExportAlertHistory.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnExportAlertHistory.Image = global::PharmacySystem.Properties.Resources.excel;
+            this.btnExportAlertHistory.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.btnExportAlertHistory.Location = new System.Drawing.Point(23, 111);
+            this.btnExportAlertHistory.Name = "btnExportAlertHistory";
+            this.btnExportAlertHistory.Size = new System.Drawing.Size(134, 40);
+            this.btnExportAlertHistory.TabIndex = 70;
+            this.btnExportAlertHistory.Text = "Exportar";
+            this.btnExportAlertHistory.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
+            this.btnExportAlertHistory.UseVisualStyleBackColor = false;
+            this.btnExportAlertHistory.Click += new System.EventHandler(this.btnExportAlertHistory_Click);
+            //
+            // labelAlertHistoryTopBorder
+            //
+            this.labelAlertHistoryTopBorder.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.labelAlertHistoryTopBorder.BackColor = System.Drawing.Color.White;
+            this.labelAlertHistoryTopBorder.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.labelAlertHistoryTopBorder.Location = new System.Drawing.Point(14, 5);
+            this.labelAlertHistoryTopBorder.Name = "labelAlertHistoryTopBorder";
+            this.labelAlertHistoryTopBorder.Size = new System.Drawing.Size(1215, 84);
+            this.labelAlertHistoryTopBorder.TabIndex = 71;
+            //
+            // labelAlertHistoryBottomBorder
+            //
+            this.labelAlertHistoryBottomBorder.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.labelAlertHistoryBottomBorder.BackColor = System.Drawing.Color.White;
+            this.labelAlertHistoryBottomBorder.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.labelAlertHistoryBottomBorder.Location = new System.Drawing.Point(14, 99);
+            this.labelAlertHistoryBottomBorder.Name = "labelAlertHistoryBottomBorder";
+            this.labelAlertHistoryBottomBorder.Size = new System.Drawing.Size(1215, 418);
+            this.labelAlertHistoryBottomBorder.TabIndex = 72;
+            //
             // frmReport
-            // 
+            //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(169)))), ((int)(((byte)(196)))));
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
             this.ClientSize = new System.Drawing.Size(1269, 568);
             this.ControlBox = false;
             this.Controls.Add(this.tabManagement);
@@ -631,6 +816,9 @@
             this.tabStore.ResumeLayout(false);
             this.tabStore.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgdataproduct)).EndInit();
+            this.tabAlertHistory.ResumeLayout(false);
+            this.tabAlertHistory.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgdataalerthistory)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -671,5 +859,16 @@
         private System.Windows.Forms.Button btnConsultProduct;
         private System.Windows.Forms.DataGridView dgdatapurchase;
         private System.Windows.Forms.DataGridView dgdataproduct;
+        private System.Windows.Forms.TabPage tabAlertHistory;
+        private System.Windows.Forms.DataGridView dgdataalerthistory;
+        private System.Windows.Forms.DateTimePicker txtenddatealerthistory;
+        private System.Windows.Forms.DateTimePicker txtstartdatealerthistory;
+        private System.Windows.Forms.Label labelAlertHistoryEnd;
+        private System.Windows.Forms.Label labelAlertHistoryStart;
+        private System.Windows.Forms.Label labelAlertHistoryTitle;
+        private System.Windows.Forms.Button btnConsultAlertHistory;
+        private System.Windows.Forms.Button btnExportAlertHistory;
+        private System.Windows.Forms.Label labelAlertHistoryTopBorder;
+        private System.Windows.Forms.Label labelAlertHistoryBottomBorder;
     }
 }

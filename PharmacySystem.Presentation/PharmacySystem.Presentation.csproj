@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Deliberately has no reference to System.Windows.Forms: presenters and view
+       interfaces must stay free of UI types so they can be unit tested without a Form. -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>PharmacySystem.Presentation</RootNamespace>
+    <AssemblyName>PharmacySystem.Presentation</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PharmacySystem.Domain\PharmacySystem.Domain.csproj" />
+    <ProjectReference Include="..\PharmacySystem.Business\PharmacySystem.Business.csproj" />
+  </ItemGroup>
+
+</Project>

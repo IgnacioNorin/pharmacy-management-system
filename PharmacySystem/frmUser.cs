@@ -1,24 +1,97 @@
-﻿using PharmacySystem.Logical;
 using PharmacySystem.Model;
+using PharmacySystem.Presentation;
 using PharmacySystem.Validators;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PharmacySystem
 {
-    public partial class frmUser : Form
+    public partial class frmUser : Form, IUserView
     {
+        private readonly UserPresenter _presenter;
+
         public frmUser()
         {
             InitializeComponent();
+            _presenter = CompositionRoot.CreateUserPresenter(this);
         }
+
+        #region IUserView
+
+        public int SelectedIndex => int.Parse(txtindex.Text);
+        public int RowCount => dgdata.Rows.Count;
+        public int UserId => int.Parse(txtid.Text);
+        public string Document => txtdocument.Text;
+        string IUserView.Name => txtname.Text;
+        public string Password => txtpassword.Text;
+        public string ConfirmPassword => txtconfirmpassword.Text;
+        public int RoleId => Convert.ToInt32(((ComboBoxItem)cborol.SelectedItem).Value.ToString());
+        public string RoleText => ((ComboBoxItem)cborol.SelectedItem).Text;
+
+        List<string> IUserView.Validate()
+        {
+            var errors = new List<string>();
+
+            foreach (var camp in campWithRules)
+            {
+                foreach (var ruleName in camp.Value)
+                {
+                    var rule = Validations.rules[ruleName];
+                    if (!rule.Validate(camp.Key.Text))
+                    {
+                        errors.Add($"{namesMessages[camp.Key.Name]} : {rule.MessageError}");
+                    }
+                }
+            }
+
+            return errors;
+        }
+
+        public bool ConfirmDelete() =>
+            MessageBox.Show("¿Desea eliminar el usuario?", "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+
+        public void LoadUsers(IEnumerable<UserRow> users)
+        {
+            foreach (UserRow row in users)
+            {
+                AddRow(row);
+            }
+        }
+
+        public void AddRow(UserRow row)
+        {
+            int rowId = dgdata.Rows.Add();
+            WriteRow(dgdata.Rows[rowId], row);
+        }
+
+        public void ReplaceRow(int index, UserRow row) => WriteRow(dgdata.Rows[index], row);
+
+        public void RemoveRow(int index) => dgdata.Rows.RemoveAt(index);
+
+        public void ClearForm() => Clean();
+
+        public void ShowMessage(string message) =>
+            MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+        public void ShowValidationErrors(IReadOnlyList<string> errors) =>
+            MessageBox.Show(string.Join("\n", errors), "Errores de Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+        public void ShowPasswordMismatch() =>
+            MessageBox.Show("Las contraseñas no coinciden\nRevise nuevamente", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+        private static void WriteRow(DataGridViewRow gridRow, UserRow row)
+        {
+            gridRow.Cells["Id"].Value = row.Id.ToString();
+            gridRow.Cells["NumeroDocumento"].Value = row.Document;
+            gridRow.Cells["NombreCompleto"].Value = row.Name;
+            gridRow.Cells["Rol"].Value = row.RoleText;
+            gridRow.Cells["Clave"].Value = row.Password;
+        }
+
+        #endregion
 
         private Dictionary<TextBox, List<string>> campWithRules = new Dictionary<TextBox, List<string>>();
         private Dictionary<string, string> namesMessages = new Dictionary<string, string>
@@ -39,7 +112,7 @@ namespace PharmacySystem
             };
         }
 
-        
+
         private void frmUser_Load(object sender, EventArgs e)
         {
             // Initializes validations for the form
@@ -48,8 +121,9 @@ namespace PharmacySystem
 
             var roles = new[]
             {
-                new ComboBoxItem() { Value = 1, Text = "Administrador" },
-                new ComboBoxItem() { Value = 2, Text = "Empleado" }
+                new ComboBoxItem() { Value = (int)PersonType.Administrador, Text = "Administrador" },
+                new ComboBoxItem() { Value = (int)PersonType.AdministradorGeneral, Text = "Administrador General" },
+                new ComboBoxItem() { Value = (int)PersonType.Empleado, Text = "Empleado" }
             };
             foreach (var rol in roles)
             {
@@ -95,96 +169,22 @@ namespace PharmacySystem
             cbosearch.ValueMember = "Value";
             cbosearch.SelectedIndex = 0;
 
-            foreach (Person p in PersonService.Instance.ListPerson().Where(p => p.oPersonType.idPersonType != 3).ToList())
-            {
-                int rowId = dgdata.Rows.Add();
-                DataGridViewRow row = dgdata.Rows[rowId];
-                row.Cells["Id"].Value = p.idPerson.ToString();
-                row.Cells["NumeroDocumento"].Value = p.document;
-                row.Cells["NombreCompleto"].Value = p.name;
-                row.Cells["Rol"].Value = p.oPersonType.description;
-                row.Cells["Clave"].Value = p.password;
-            }
-
-            
-
+            _presenter.OnLoad();
         }
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            if (!ValidateForm() || !SpecialValidators()) return;
-            bool result = false;
-            int txtidParse = int.Parse(txtid.Text);
-            int txtindexParse = int.Parse(txtindex.Text);
-
-            if (txtindexParse < 0 || txtindexParse > dgdata.Rows.Count) return;
-
-
-            var comBoxCborol = (ComboBoxItem)cborol.SelectedItem;
-
-            Person obj = new Person()
-            {
-                idPerson = txtidParse,
-                document = txtdocument.Text.Trim(),
-                name = txtname.Text.Trim(),
-                address = "",
-                phone = "",
-                password = txtpassword.Text,
-                oPersonType = new TypePerson() { idPersonType = Convert.ToInt32((comBoxCborol.Value.ToString())) }
-            };
-
-            
-            if (txtidParse  == 0)
-            {
-                result = PersonService.Instance.RegisterPerson(obj);
-
-                if (!result)
-                {
-                    MessageBox.Show("Ya existe un usuario con esa Cedula de Identidad", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                    return;
-                }
-
-                int rowId = dgdata.Rows.Add();
-                DataGridViewRow row = dgdata.Rows[rowId];
-                row.Cells["Id"].Value = txtid.Text;
-                row.Cells["NumeroDocumento"].Value = txtdocument.Text.Trim();
-                row.Cells["NombreCompleto"].Value = txtname.Text.Trim();
-                row.Cells["Rol"].Value = comBoxCborol.Text;
-                row.Cells["Clave"].Value = txtpassword.Text;
-
-
-
-            }
-            else
-            {
-                result = PersonService.Instance.UpdatePerson(obj);
-
-                if (!result) return;
-
-                DataGridViewRow row = dgdata.Rows[txtindexParse - 1];
-                row.Cells["Id"].Value = txtid.Text;
-                row.Cells["NumeroDocumento"].Value = txtdocument.Text.Trim();
-                row.Cells["NombreCompleto"].Value = txtname.Text.Trim();
-                row.Cells["Rol"].Value = comBoxCborol.Text;
-                row.Cells["Clave"].Value = txtpassword.Text;
-
-
-            }
-
-            if (result)
-                Clean();
-            else
-                MessageBox.Show("No se pudo guardar los cambios\nRevise los datos", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            _presenter.OnSave();
         }
 
         private void dgdata_CellMouseEnter(object sender, DataGridViewCellEventArgs e)
         {
             if (e.ColumnIndex < 0) return;
 
-            dgdata.Cursor = dgdata.Columns[e.ColumnIndex].Name == "btnSleccionar" 
-                        ? Cursors.Hand 
+            dgdata.Cursor = dgdata.Columns[e.ColumnIndex].Name == "btnSleccionar"
+                        ? Cursors.Hand
                         : Cursors.Default;
-          
+
 
         }
 
@@ -253,29 +253,7 @@ namespace PharmacySystem
 
         private void btnDelete_Click(object sender, EventArgs e)
         {
-            DialogResult dialogResult;
-            bool result;
-            int parseTxtId = int.Parse(txtid.Text);
-            int parseTxtIndex = int.Parse(txtindex.Text);
-
-            if (parseTxtIndex <= 0) {
-                MessageBox.Show("No se pudo eliminar, seleccione un usuario","Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            
-            }
-            
-            dialogResult = MessageBox.Show("¿Desea eliminar el usuario?", "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (dialogResult != DialogResult.Yes) return;
-
-            result = PersonService.Instance.DeletePerson(parseTxtId);
-            if (!result) {
-                MessageBox.Show("No se pudo eliminar el registro\nRevise los datos", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-            dgdata.Rows.RemoveAt(parseTxtIndex - 1);
-            Clean();
-
+            _presenter.OnDelete();
         }
 
         private void btnsearch_Click(object sender, EventArgs e)
@@ -304,39 +282,5 @@ namespace PharmacySystem
                 row.Visible = true;
             }
         }
-        private bool ValidateForm()
-        {
-            var errors = new List<string>();
-
-            foreach (var camp in campWithRules)
-            {
-                foreach (var rulePassword in camp.Value)
-                {
-                    var rule = Validations.rules[rulePassword];
-                    if (!rule.Validate(camp.Key.Text))
-                    {
-                        errors.Add($"{namesMessages[camp.Key.Name]} : {rule.MessageError}");
-                    }
-                }
-
-            }
-            if (errors.Count > 0)
-            {
-                MessageBox.Show(string.Join("\n", errors), "Errores de Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;
-            }
-            return true;
-        }
-
-        private bool SpecialValidators()
-        {
-            if (txtpassword.Text != txtconfirmpassword.Text) {
-                 MessageBox.Show("Las contraseñas no coinciden\nRevise nuevamente", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return false;
-            }
-
-             return true;
-        }
-
     }
 }

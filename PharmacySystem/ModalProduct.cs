@@ -1,37 +1,45 @@
-﻿using PharmacySystem.Logical;
-using PharmacySystem.Model;
-using PharmacySystem.Helpers;
+using PharmacySystem.Presentation;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PharmacySystem
 {
-    public partial class ModalProduct : Form
+    public partial class ModalProduct : Form, IProductPickerView
     {
-
         public int idProduct { get; set; }
         public string code { get; set; }
         public string name { get; set; }
         public string priceSale { get; set; }
         public string stock { get; set; }
 
-        private string formOrigin;
+        private readonly ProductPickerPresenter _presenter;
+
         public ModalProduct(string origin)
         {
             InitializeComponent();
-            formOrigin = origin;
+            _presenter = CompositionRoot.CreateProductPickerPresenter(this, origin);
         }
+
+        public void LoadProducts(IEnumerable<ProductPickerRow> products)
+        {
+            foreach (ProductPickerRow p in products)
+            {
+                int rowId = dgdataproduct.Rows.Add();
+                DataGridViewRow row = dgdataproduct.Rows[rowId];
+                row.Cells["Id"].Value = p.Id.ToString();
+                row.Cells["Codigo"].Value = p.Code;
+                row.Cells["Nombre"].Value = p.Name;
+                row.Cells["Descripcion"].Value = p.Description;
+                row.Cells["Categoria"].Value = p.CategoryDescription;
+                row.Cells["Stock"].Value = p.Stock;
+                row.Cells["PrecioVenta"].Value = p.SalePrice;
+            }
+        }
+
         private void ModalProducto_Load(object sender, EventArgs e)
         {
-
             //AGREGAR BOTON ELIMINAR
             DataGridViewButtonColumn Button = new DataGridViewButtonColumn();
             Button.HeaderText = "Seleccionar";
@@ -63,62 +71,14 @@ namespace PharmacySystem
             {
                 if (cl.Visible == true && cl.Name != "btnSeleccionar")
                 {
-                    cbosearchproduct.Items.Add(new ComboBoxItem() { Value = cl.Name, Text = cl.HeaderText });
+                    cbosearchproduct.Items.Add(new PharmacySystem.Model.ComboBoxItem() { Value = cl.Name, Text = cl.HeaderText });
                 }
             }
             cbosearchproduct.DisplayMember = "Text";
             cbosearchproduct.ValueMember = "Value";
             cbosearchproduct.SelectedIndex = 0;
 
-            fillProductList();
-        }
-        
-        private void fillProductList()
-        {
-            switch (formOrigin)
-            {
-                case "frmPurchase":
-                    foreach (Product p in ProductService.Instance.ListProduct())
-                    {
-
-                        if (p != null)
-                        {
-
-                            int rowId = dgdataproduct.Rows.Add();
-                            DataGridViewRow row = dgdataproduct.Rows[rowId];
-                            row.Cells["Id"].Value = p.idProduct.ToString();
-                            row.Cells["Codigo"].Value = p.code;
-                            row.Cells["Nombre"].Value = p.name;
-                            row.Cells["Descripcion"].Value = p.description;
-                            row.Cells["Categoria"].Value = p.oCategory.description;
-                            row.Cells["Stock"].Value = p.stock;
-                            row.Cells["PrecioVenta"].Value = p.salePrice;
-                        }
-
-                    }
-                    break;
-                case "frmSale":
-                    foreach (Product p in ProductService.Instance.ListProduct())
-                    {
-
-                        if (p != null && p.expirationDate != null && p.stock > 0)
-                        {
-
-                            int rowId = dgdataproduct.Rows.Add();
-                            DataGridViewRow row = dgdataproduct.Rows[rowId];
-                            row.Cells["Id"].Value = p.idProduct.ToString();
-                            row.Cells["Codigo"].Value = p.code;
-                            row.Cells["Nombre"].Value = p.name;
-                            row.Cells["Descripcion"].Value = p.description;
-                            row.Cells["Categoria"].Value = p.oCategory.description;
-                            row.Cells["Stock"].Value = p.stock;
-                            row.Cells["PrecioVenta"].Value = p.salePrice;
-                        }
-
-                    }
-
-                    break;
-            }
+            _presenter.OnLoad();
         }
 
         private void dgdataproduct_CellMouseEnter(object sender, DataGridViewCellEventArgs e)
@@ -168,7 +128,7 @@ namespace PharmacySystem
                     name = dgdataproduct.Rows[index].Cells["Nombre"].Value.ToString();
                     priceSale = dgdataproduct.Rows[index].Cells["PrecioVenta"].Value.ToString();
                     stock = dgdataproduct.Rows[index].Cells["Stock"].Value.ToString();
-                    
+
                     this.DialogResult = DialogResult.OK;
                     this.Close();
                 }
@@ -177,7 +137,7 @@ namespace PharmacySystem
 
         private void btnsearch_Click(object sender, EventArgs e)
         {
-            string columnFilter = ((ComboBoxItem)cbosearchproduct.SelectedItem).Value.ToString();
+            string columnFilter = ((PharmacySystem.Model.ComboBoxItem)cbosearchproduct.SelectedItem).Value.ToString();
 
             if (dgdataproduct.Rows.Count > 0)
             {
