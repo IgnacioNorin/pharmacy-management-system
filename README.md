@@ -44,35 +44,35 @@ Dentro de `Data`, `Business` y `Presentation`, los archivos están organizados e
 
 - **Visual Studio 2022** (o superior) con la carga de trabajo **".NET desktop development"** instalada — necesaria para compilar el proyecto WinForms (`PharmacySystem`), que usa `packages.config` en lugar de `PackageReference`.
 - **SQL Server** (local o accesible en red) con permisos para crear la base de datos y sus objetos.
-- El SQL Server Client SDK / `sqlcmd`, si preferís ejecutar el script de base de datos desde la línea de comandos en vez de SSMS.
+- El SQL Server Client SDK / `sqlcmd`, si se prefiere ejecutar el script de base de datos desde la línea de comandos en vez de SSMS.
 
-> ⚠️ **`dotnet build` / `dotnet test` no compilan el proyecto `PharmacySystem`** (falla con MSB3822/3823 por ser un proyecto WinForms de .NET Framework con `packages.config`). Usá Visual Studio, o `MSBuild.exe`/`vstest.console.exe` desde la instalación de Visual Studio, para compilar y correr pruebas sobre toda la solución.
+> ⚠️ **`dotnet build` / `dotnet test` no compilan el proyecto `PharmacySystem`** (falla con MSB3822/3823 por ser un proyecto WinForms de .NET Framework con `packages.config`). Usar Visual Studio, o `MSBuild.exe`/`vstest.console.exe` desde la instalación de Visual Studio, para compilar y correr pruebas sobre toda la solución.
 
 ## Instalación
 
-1. Cloná el repositorio:
+1. Clonar el repositorio:
 
    ```bash
    git clone https://github.com/IgnacioNorin/pharmacy-management-system.git
    ```
 
-2. Creá la base de datos ejecutando **`Database/PharmacyDB.sql`** contra tu instancia de SQL Server (desde SSMS, Azure Data Studio, o `sqlcmd`). El script crea las tablas, índices, procedimientos almacenados, y siembra los datos iniciales: los 4 roles y una cuenta `Administrador General` por defecto (ver más abajo).
+2. Crear la base de datos ejecutando **`Database/PharmacyDB.sql`** contra la instancia de SQL Server (desde SSMS, Azure Data Studio, o `sqlcmd`). El script crea las tablas, índices, procedimientos almacenados, y siembra los datos iniciales: los 4 roles y una cuenta `Administrador General` por defecto (ver más abajo).
 
-3. Abrí la solución en Visual Studio:
+3. Abrir la solución en Visual Studio:
 
    ```
    PharmacySystem.sln
    ```
 
-   Al abrirla, Visual Studio restaura automáticamente los paquetes NuGet (o hacelo manualmente con clic derecho sobre la solución → *Restaurar paquetes NuGet*).
+   Al abrirla, Visual Studio restaura automáticamente los paquetes NuGet (o de forma manual con clic derecho sobre la solución → *Restaurar paquetes NuGet*).
 
-4. Configurá la cadena de conexión. El proyecto no usa `App.config` directamente — usa un archivo `ConnectionStrings.config` separado (ignorado por git) en cada uno de estos tres proyectos:
+4. Configurar la cadena de conexión. El proyecto no usa `App.config` directamente — usa un archivo `ConnectionStrings.config` separado (ignorado por git) en cada uno de estos tres proyectos:
 
    - `PharmacySystem/ConnectionStrings.config`
    - `PharmacySystem.Tests/ConnectionStrings.config`
    - `PharmacySystem.UiTests/ConnectionStrings.config`
 
-   Cada carpeta tiene un archivo `ConnectionStrings.config.example` de plantilla. Copiá cada uno a `ConnectionStrings.config` (mismo directorio, sin el `.example`) y completá tus credenciales:
+   Cada carpeta tiene un archivo `ConnectionStrings.config.example` de plantilla. Copiar cada uno a `ConnectionStrings.config` (mismo directorio, sin el `.example`) y completar las credenciales correspondientes:
 
    ```bash
    cp PharmacySystem/ConnectionStrings.config.example PharmacySystem/ConnectionStrings.config
@@ -90,7 +90,7 @@ Dentro de `Data`, `Business` y `Presentation`, los archivos están organizados e
 
    `PharmacySystem.Tests` corre pruebas de integración reales contra esta base (limpian sus propias filas al terminar), y `PharmacySystem.UiTests` solo necesita que el archivo exista y esté bien formado — no ejecuta consultas reales.
 
-5. Compilá y ejecutá (F5) el proyecto `PharmacySystem`.
+5. Compilar y ejecutar (F5) el proyecto `PharmacySystem`.
 
 ## Ejecutar las pruebas
 
@@ -123,7 +123,7 @@ Documento:   1010101010
 Contraseña:  12345678
 ```
 
-⚠️ **Cambiá esta contraseña antes de usar el sistema en producción.** La contraseña se almacena en texto plano solo hasta el primer inicio de sesión; en ese momento se re-hashea automáticamente (PBKDF2) y queda protegida.
+⚠️ **Cambiar esta contraseña antes de usar el sistema en producción.** La contraseña se almacena en texto plano solo hasta el primer inicio de sesión; en ese momento se re-hashea automáticamente (PBKDF2) y queda protegida.
 
 ## Licencia
 
