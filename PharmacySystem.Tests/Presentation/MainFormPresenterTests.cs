@@ -52,6 +52,7 @@ namespace PharmacySystem.Tests.Presentation
             Assert.False(p.Suppliers);
             Assert.False(p.Management);
             Assert.False(p.Users);
+            Assert.False(p.Roles);
             Assert.False(p.Reports);
         }
 
@@ -75,10 +76,10 @@ namespace PharmacySystem.Tests.Presentation
             presenter.OnLoad(User("Admin", "Administrador General",
                 "ventas.acceso", "compras.acceso", "clientes.acceso", "proveedores.acceso",
                 "productos.acceso", "categorias.acceso", "tienda.acceso",
-                "usuarios.acceso", "reportes.acceso", "alertas.acceso"));
+                "usuarios.acceso", "roles.gestionar", "reportes.acceso", "alertas.acceso"));
 
             var p = view.AppliedSidebarPermissions;
-            Assert.True(p.Sales && p.Purchases && p.Clients && p.Suppliers && p.Management && p.Users && p.Reports && p.Alerts);
+            Assert.True(p.Sales && p.Purchases && p.Clients && p.Suppliers && p.Management && p.Users && p.Roles && p.Reports && p.Alerts);
         }
 
         // Fase 3: severity classification itself is tested at the Business layer

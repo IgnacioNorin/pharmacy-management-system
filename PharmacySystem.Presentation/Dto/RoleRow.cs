@@ -7,5 +7,8 @@ namespace PharmacySystem.Presentation
         public int Id { get; set; }
         public string Name { get; set; }
         public bool IsSystem { get; set; }
+
+        // Shown in the roles list.
+        public override string ToString() => IsSystem ? Name + "  (sistema)" : Name;
     }
 }

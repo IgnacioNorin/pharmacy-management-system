@@ -7,5 +7,8 @@ namespace PharmacySystem.Presentation
         public string Section { get; set; }
         public string Description { get; set; }
         public bool Checked { get; set; }
+
+        // Shown in the permissions checklist.
+        public override string ToString() => "[" + Section + "] " + Description;
     }
 }

@@ -38,6 +38,7 @@ namespace PharmacySystem.Presentation
                 Suppliers  = user.Can("proveedores.acceso"),
                 Management = user.Can("productos.acceso") || user.Can("categorias.acceso") || user.Can("tienda.acceso"),
                 Users      = user.Can("usuarios.acceso"),
+                Roles      = user.Can("roles.gestionar"),
                 Reports    = user.Can("reportes.acceso"),
                 Alerts     = user.Can("alertas.acceso")
             });

@@ -25,7 +25,7 @@ namespace PharmacySystem
         private Button[] NavButtons => new[]
         {
             btnHome, btnSales, btnPurchases, btnManagement, btnSuppliers,
-            btnClients, btnUsers, btnReports, btnAlerts
+            btnClients, btnUsers, btnRoles, btnReports, btnAlerts
         };
 
         public MainForm(CurrentUser session = null)
@@ -79,6 +79,7 @@ namespace PharmacySystem
             btnSuppliers.Visible = p.Suppliers;
             btnManagement.Visible = p.Management;
             btnUsers.Visible = p.Users;
+            btnRoles.Visible = p.Roles;
             btnReports.Visible = p.Reports;
             btnAlerts.Visible = p.Alerts;
             if (!p.Alerts) lblAlertBadge.Visible = false;
@@ -102,11 +103,12 @@ namespace PharmacySystem
             y = PlaceGroupHeader(lblGroupOperacion, y, headerGapBefore, itemGap, btnSales, btnPurchases);
             y = PlaceItem(btnSales, y, itemGap);
             y = PlaceItem(btnPurchases, y, itemGap);
-            y = PlaceGroupHeader(lblGroupGestion, y, headerGapBefore, itemGap, btnManagement, btnSuppliers, btnClients, btnUsers);
+            y = PlaceGroupHeader(lblGroupGestion, y, headerGapBefore, itemGap, btnManagement, btnSuppliers, btnClients, btnUsers, btnRoles);
             y = PlaceItem(btnManagement, y, itemGap);
             y = PlaceItem(btnSuppliers, y, itemGap);
             y = PlaceItem(btnClients, y, itemGap);
             y = PlaceItem(btnUsers, y, itemGap);
+            y = PlaceItem(btnRoles, y, itemGap);
             y = PlaceGroupHeader(lblGroupConsulta, y, headerGapBefore, itemGap, btnReports, btnAlerts);
             y = PlaceItem(btnReports, y, itemGap);
             PlaceItem(btnAlerts, y, itemGap);
@@ -233,6 +235,13 @@ namespace PharmacySystem
         private void btnUsers_Click(object sender, EventArgs e)
         {
             frmUser childForm = new frmUser();
+
+            ShowForm(childForm, sender);
+        }
+
+        private void btnRoles_Click(object sender, EventArgs e)
+        {
+            frmRoles childForm = new frmRoles();
 
             ShowForm(childForm, sender);
         }

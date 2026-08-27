@@ -108,6 +108,18 @@ namespace PharmacySystem.UiTests
         }
 
         [Fact]
+        public void FrmRoles_ConstructsAndImplementsView()
+        {
+            StaThread.Run(() =>
+            {
+                using (var form = new frmRoles())
+                {
+                    Assert.IsAssignableFrom<IRolesView>(form);
+                }
+            });
+        }
+
+        [Fact]
         public void FrmManagement_ConstructsAndImplementsAllThreeTabViews()
         {
             StaThread.Run(() =>
