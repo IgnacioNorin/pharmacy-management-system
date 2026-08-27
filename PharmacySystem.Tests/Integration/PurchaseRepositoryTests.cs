@@ -184,5 +184,73 @@ namespace PharmacySystem.Tests.Integration
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
             }
         }
+
+        // Regression test: GetTotalAmount used to join purchase_detail, so a purchase with N
+        // detail lines had its header total_amount summed N times. Here one purchase with a
+        // header total of 100 and two detail lines must still total 100, not 200.
+        [Fact]
+        public void GetTotalAmount_PurchaseWithMultipleDetailLines_CountsHeaderTotalOnce()
+        {
+            string document = SqlTestHelper.NewTag();
+            PersonRepo.Register(new Person
+            {
+                document = document,
+                name = "Multi-line tester",
+                address = "Address",
+                phone = "0999999999",
+                password = "Passw0rd!",
+                oPersonType = new TypePerson { idPersonType = PersonTypeId() }
+            });
+            Person person = PersonRepo.GetByDocument(document);
+
+            int supplierId = SupplierRepo.Register(new Supplier
+            {
+                document = SqlTestHelper.NewTag(),
+                companyName = "Multi-line supplier",
+                email = "supplier@test.local",
+                phone = "0999999999"
+            });
+
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productA = ProductRepo.Register(new Product { code = SqlTestHelper.NewTag(), name = "A", description = "A", oCategory = new Categories { IdCategory = categoryId } });
+            int productB = ProductRepo.Register(new Product { code = SqlTestHelper.NewTag(), name = "B", description = "B", oCategory = new Categories { IdCategory = categoryId } });
+
+            int purchaseId = 0;
+            try
+            {
+                string documentNumber = SqlTestHelper.NewTag();
+                Assert.True(Repository.Register(new Purchase
+                {
+                    oPerson = person,
+                    oSupplier = new Supplier { idSupplier = supplierId },
+                    totalAmount = 100m,
+                    documentType = "Factura",
+                    documentNumber = documentNumber,
+                    oPurchaseDetail = new List<PurchaseDetail>
+                    {
+                        new PurchaseDetail { oProduct = new Product { idProduct = productA }, quantity = 1, expirationDate = DateTime.Today.AddYears(1), purchasePrice = 40m, salePrice = 55m, total = 40m },
+                        new PurchaseDetail { oProduct = new Product { idProduct = productB }, quantity = 1, expirationDate = DateTime.Today.AddYears(1), purchasePrice = 60m, salePrice = 80m, total = 60m }
+                    }
+                }));
+                purchaseId = SqlTestHelper.ExecuteScalarInt("SELECT id FROM purchase WHERE document_number = @doc", new SqlParameter("@doc", documentNumber));
+
+                DateTime purchaseDate = new DateTime(2026, 3, 18);
+                SqlTestHelper.ExecuteNonQuery("UPDATE purchase SET date_registered = @date WHERE id = @id",
+                    new SqlParameter("@date", purchaseDate), new SqlParameter("@id", purchaseId));
+
+                decimal totalAmount = Repository.GetTotalAmount(supplierId.ToString(), purchaseDate, purchaseDate);
+
+                Assert.Equal(100m, totalAmount);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase_detail WHERE purchase_id = @id", new SqlParameter("@id", purchaseId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase WHERE id = @id", new SqlParameter("@id", purchaseId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id IN (@a, @b)", new SqlParameter("@a", productA), new SqlParameter("@b", productB));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM supplier WHERE id = @id", new SqlParameter("@id", supplierId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
     }
 }

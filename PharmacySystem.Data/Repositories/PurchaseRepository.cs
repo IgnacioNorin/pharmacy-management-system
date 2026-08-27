@@ -134,12 +134,12 @@ namespace PharmacySystem.Data
             {
                 try
                 {
+                    // total_amount is a purchase-header column: it must NOT be joined to
+                    // purchase_detail, or the sum is multiplied by the number of detail lines
+                    // (a 3-line purchase counted its total three times).
                     const string sql =
                         "SELECT ISNULL(SUM(pu.total_amount),0) AS total_amount " +
                         "FROM purchase pu " +
-                        "INNER JOIN supplier su ON su.id = pu.supplier_id " +
-                        "INNER JOIN purchase_detail pd ON pd.purchase_id = pu.id " +
-                        "INNER JOIN product pr ON pr.id = pd.product_id " +
                         "WHERE pu.date_registered >= @startDate AND pu.date_registered < DATEADD(DAY, 1, @endDate) " +
                         "AND (@supplier_id = 0 OR pu.supplier_id = @supplier_id)";
 
