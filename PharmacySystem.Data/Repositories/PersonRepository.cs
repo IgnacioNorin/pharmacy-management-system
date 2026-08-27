@@ -146,8 +146,15 @@ namespace PharmacySystem.Data
             {
                 try
                 {
-                    oConnection.Execute("DELETE FROM person WHERE id = @id", new { id = idPerson });
-                    return true;
+                    var parameters = new DynamicParameters();
+                    parameters.Add("id_person", idPerson);
+                    parameters.Add("result", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+
+                    // sp_delete_person hard-deletes when unreferenced, otherwise soft-deletes
+                    // (status = 0) - same pattern as products and categories.
+                    oConnection.Execute("sp_delete_person", parameters, commandType: CommandType.StoredProcedure);
+
+                    return parameters.Get<bool>("result");
                 }
                 catch (Exception ex)
                 {

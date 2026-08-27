@@ -151,8 +151,7 @@ namespace PharmacySystem.Data
                         "p.sale_price AS SalePrice, p.date_expired AS DateExpired, s.name AS StatusName " +
                         "FROM product p INNER JOIN category c ON c.id = p.category_id " +
                         "INNER JOIN state_product s ON s.id = p.status " +
-                        "WHERE c.id = case @category_id when '0' then c.id when 0 then c.id else @category_id end " +
-                        "and p.date_expired IS NOT NULL";
+                        "WHERE c.id = case @category_id when '0' then c.id when 0 then c.id else @category_id end";
 
                     return oConnection.Query<ProductReportRow>(sql, new { category_id = categoryId }).ToList();
                 }

@@ -22,7 +22,7 @@ namespace PharmacySystem.Presentation
         {
             Person person = _personService.GetByDocument(_view.Document?.Trim());
 
-            if (person != null && person.oPersonType.idPersonType != (int)PersonType.Cliente && VerifyPassword(person, _view.Password))
+            if (person != null && person.Estado && person.oPersonType.idPersonType != (int)PersonType.Cliente && VerifyPassword(person, _view.Password))
             {
                 _view.LoginSucceeded(person);
             }

@@ -72,9 +72,15 @@ namespace PharmacySystem.Data
             {
                 try
                 {
-                    string query = string.Format("UPDATE product SET stock = (stock {0} @amount) WHERE id = @idproduct", subtract ? "-" : "+");
-                    oConnection.Execute(query, new { amount, idproduct });
-                    return true;
+                    // When subtracting, refuse to drive stock negative: the guard makes an oversell
+                    // a no-op (0 rows) instead of leaving a product at a negative quantity. The
+                    // return value now reflects whether a row actually changed, so a missing
+                    // product id or an insufficient-stock line no longer reports success.
+                    string query = subtract
+                        ? "UPDATE product SET stock = (stock - @amount) WHERE id = @idproduct AND stock >= @amount"
+                        : "UPDATE product SET stock = (stock + @amount) WHERE id = @idproduct";
+
+                    return oConnection.Execute(query, new { amount, idproduct }) > 0;
                 }
                 catch (Exception ex)
                 {

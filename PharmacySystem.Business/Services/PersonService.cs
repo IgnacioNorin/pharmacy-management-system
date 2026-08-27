@@ -25,7 +25,10 @@ namespace PharmacySystem.Business
 
         public bool Update(Person person)
         {
-            person.password = HashIfNeeded(person.password);
+            // A blank password on an edit means "keep the current one": pass null straight
+            // through so sp_update_person leaves person.password untouched, instead of storing
+            // the hash of an empty string and locking the user out.
+            person.password = string.IsNullOrWhiteSpace(person.password) ? null : HashIfNeeded(person.password);
             return _repository.Update(person);
         }
 

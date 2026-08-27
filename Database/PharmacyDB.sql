@@ -12,9 +12,9 @@ ALTER DATABASE [PharmacyDB] SET COMPATIBILITY_LEVEL = 150
 GO
 ALTER DATABASE [PharmacyDB] SET ANSI_NULL_DEFAULT OFF
 GO
-ALTER DATABASE [PharmacyDB] SET ANSI_NULLS OFF
+ALTER DATABASE [PharmacyDB] SET ANSI_NULLS ON
 GO
-ALTER DATABASE [PharmacyDB] SET ANSI_PADDING OFF
+ALTER DATABASE [PharmacyDB] SET ANSI_PADDING ON
 GO
 ALTER DATABASE [PharmacyDB] SET ANSI_WARNINGS OFF
 GO
@@ -30,11 +30,11 @@ ALTER DATABASE [PharmacyDB] SET CURSOR_CLOSE_ON_COMMIT OFF
 GO
 ALTER DATABASE [PharmacyDB] SET CURSOR_DEFAULT GLOBAL
 GO
-ALTER DATABASE [PharmacyDB] SET CONCAT_NULL_YIELDS_NULL OFF
+ALTER DATABASE [PharmacyDB] SET CONCAT_NULL_YIELDS_NULL ON
 GO
 ALTER DATABASE [PharmacyDB] SET NUMERIC_ROUNDABORT OFF
 GO
-ALTER DATABASE [PharmacyDB] SET QUOTED_IDENTIFIER OFF
+ALTER DATABASE [PharmacyDB] SET QUOTED_IDENTIFIER ON
 GO
 ALTER DATABASE [PharmacyDB] SET RECURSIVE_TRIGGERS OFF
 GO
@@ -74,6 +74,14 @@ GO
 USE [PharmacyDB]
 GO
 
+-- Required ON for the filtered indexes below and baked into every procedure created here.
+-- Set once for the whole session so the script does not depend on the client's own defaults
+-- (SSMS connects with these ON, the legacy sqlcmd ODBC driver connects with them OFF).
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_NULLS ON
+GO
+
 CREATE TABLE [dbo].[category](
     [id] [int] IDENTITY(1,1) NOT NULL,
     [description] [varchar](50) NULL,
@@ -87,7 +95,9 @@ CREATE TABLE [dbo].[notification_settings](
     [id] [int] NOT NULL,
     [critical_stock] [int] NULL,
     [notify_day] [int] NULL,
-    CONSTRAINT [PK_ConfigNotificacion] PRIMARY KEY CLUSTERED ([id] ASC)
+    CONSTRAINT [PK_ConfigNotificacion] PRIMARY KEY CLUSTERED ([id] ASC),
+    -- Single-row configuration table: the app always reads/writes id = 1.
+    CONSTRAINT [CK_notification_settings_singleton] CHECK ([id] = 1)
 )
 GO
 
@@ -170,7 +180,9 @@ CREATE TABLE [dbo].[store](
     [phone] [varchar](50) NULL,
     [address] [varchar](50) NULL,
     [currency_culture] [varchar](10) NULL,
-    PRIMARY KEY CLUSTERED ([id] ASC)
+    PRIMARY KEY CLUSTERED ([id] ASC),
+    -- Single-row store profile: the app always reads/writes id = 1.
+    CONSTRAINT [CK_store_singleton] CHECK ([id] = 1)
 )
 GO
 
@@ -354,6 +366,46 @@ GO
 ALTER TABLE [dbo].[sale_detail] CHECK CONSTRAINT [FK__DETALLE_V__IdVen__571DF1D5]
 GO
 
+-- UNIQUE KEYS AND SUPPORTING INDEXES
+-- Filtered UNIQUE indexes need ANSI_NULLS / QUOTED_IDENTIFIER ON at CREATE time; modern clients
+-- already connect that way, but set it explicitly so the script is not client-dependent.
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- Natural keys the stored procedures only guarded with a race-prone NOT EXISTS check.
+CREATE UNIQUE INDEX [UX_person_document] ON [dbo].[person] ([document_number]) WHERE [document_number] IS NOT NULL
+GO
+CREATE UNIQUE INDEX [UX_supplier_document] ON [dbo].[supplier] ([document_number]) WHERE [document_number] IS NOT NULL
+GO
+CREATE UNIQUE INDEX [UX_product_code] ON [dbo].[product] ([code]) WHERE [code] IS NOT NULL
+GO
+CREATE UNIQUE INDEX [UX_category_description] ON [dbo].[category] ([description]) WHERE [description] IS NOT NULL
+GO
+
+-- Foreign-key columns joined/filtered by reports and detail lookups (all unindexed before).
+CREATE INDEX [IX_product_category] ON [dbo].[product] ([category_id])
+GO
+CREATE INDEX [IX_sale_user] ON [dbo].[sale] ([user_id])
+GO
+CREATE INDEX [IX_sale_date_registered] ON [dbo].[sale] ([date_registered])
+GO
+CREATE INDEX [IX_sale_detail_sale] ON [dbo].[sale_detail] ([sale_id])
+GO
+CREATE INDEX [IX_sale_detail_product] ON [dbo].[sale_detail] ([product_id])
+GO
+CREATE INDEX [IX_purchase_person] ON [dbo].[purchase] ([person_id])
+GO
+CREATE INDEX [IX_purchase_supplier] ON [dbo].[purchase] ([supplier_id])
+GO
+CREATE INDEX [IX_purchase_date_registered] ON [dbo].[purchase] ([date_registered])
+GO
+CREATE INDEX [IX_purchase_detail_purchase] ON [dbo].[purchase_detail] ([purchase_id])
+GO
+CREATE INDEX [IX_purchase_detail_product] ON [dbo].[purchase_detail] ([product_id])
+GO
+
 -- SEED DATA
 INSERT INTO [dbo].[state_product] (id, name, description) VALUES (1, 'Activo', 'Producto disponible para la venta')
 GO
@@ -380,6 +432,22 @@ IF NOT EXISTS (SELECT 1 FROM [dbo].[person] WHERE document_number = '1010101010'
 BEGIN
     INSERT INTO [dbo].[person] (document_number, name, address, phone, password, person_type_id, status, date_created)
     VALUES ('1010101010', 'Administrador General', 'N/A', 'N/A', '12345678', 1, 1, GETDATE())
+END
+GO
+
+-- Single-row config tables. Without these rows a fresh database can never persist the store
+-- profile (UpdateStoreRow only UPDATEs id = 1) nor the alert thresholds
+-- (sp_update_notificacion_settings only UPDATEs id = 1), and the alert queries read 0/0.
+IF NOT EXISTS (SELECT 1 FROM [dbo].[store] WHERE id = 1)
+BEGIN
+    INSERT INTO [dbo].[store] (id, document_store, company_name, email, phone, address, currency_culture)
+    VALUES (1, '', 'Mi Farmacia', '', '', '', 'es-EC')
+END
+GO
+IF NOT EXISTS (SELECT 1 FROM [dbo].[notification_settings] WHERE id = 1)
+BEGIN
+    INSERT INTO [dbo].[notification_settings] (id, critical_stock, notify_day)
+    VALUES (1, 10, 30)
 END
 GO
 
@@ -426,9 +494,9 @@ END
 GO
 
 CREATE PROC [dbo].[sp_create_product](
-@code VARCHAR(20),
-@name VARCHAR(30),
-@description VARCHAR(30),
+@code VARCHAR(50),
+@name VARCHAR(50),
+@description VARCHAR(500),
 @category_id INT,
 @result INT OUTPUT
 ) AS
@@ -495,8 +563,11 @@ AS
 BEGIN
     SET NOCOUNT ON;
     SET @result = 0;
+    -- product_alert_history also has an FK to product (added in the alerts rework): a product
+    -- that only ever triggered an alert would fail the physical DELETE without this check.
     IF NOT EXISTS (SELECT 1 FROM purchase_detail WHERE product_id = @id_product)
        AND NOT EXISTS (SELECT 1 FROM sale_detail WHERE product_id = @id_product)
+       AND NOT EXISTS (SELECT 1 FROM product_alert_history WHERE product_id = @id_product)
     BEGIN
         DELETE FROM product WHERE id = @id_product;
         SET @result = 1;
@@ -509,6 +580,31 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE [dbo].[sp_delete_person]
+    @id_person INT,
+    @result BIT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET @result = 0;
+    -- Same soft-delete pattern as products/categories: a person referenced by a sale, a
+    -- purchase or an acknowledged alert cannot be physically removed (FK), so deactivate them
+    -- instead. LoginPresenter must reject status = 0 so a former employee cannot sign in.
+    IF NOT EXISTS (SELECT 1 FROM sale WHERE user_id = @id_person)
+       AND NOT EXISTS (SELECT 1 FROM purchase WHERE person_id = @id_person)
+       AND NOT EXISTS (SELECT 1 FROM product_alert_history WHERE acknowledged_by = @id_person)
+    BEGIN
+        DELETE FROM person WHERE id = @id_person;
+        SET @result = 1;
+    END
+    ELSE
+    BEGIN
+        UPDATE person SET status = 0 WHERE id = @id_person;
+        SET @result = 1;
+    END
+END
+GO
+
 CREATE PROCEDURE [dbo].[sp_update_category](
 @category_id INT,
 @description VARCHAR(50),
@@ -516,7 +612,8 @@ CREATE PROCEDURE [dbo].[sp_update_category](
 ) AS
 BEGIN
     SET @result = 1
-    IF NOT EXISTS (SELECT * FROM category WHERE description = @description AND id != @category_id)
+    -- Case-insensitive duplicate check, same criterion sp_create_category uses.
+    IF NOT EXISTS (SELECT * FROM category WHERE UPPER(description) = UPPER(@description) AND id != @category_id)
         UPDATE category SET description = @description WHERE id = @category_id
     ELSE
         SET @result = 0
@@ -533,7 +630,7 @@ BEGIN
     IF EXISTS (SELECT * FROM notification_settings WHERE id = 1)
         UPDATE notification_settings SET critical_stock = @critical_stock, notify_day = @notify_day WHERE id = 1
     ELSE
-        SET @result = 0
+        INSERT INTO notification_settings (id, critical_stock, notify_day) VALUES (1, @critical_stock, @notify_day)
 END
 GO
 
@@ -550,12 +647,14 @@ CREATE PROCEDURE [dbo].[sp_update_person](
 BEGIN
     SET @result = 1
     IF NOT EXISTS (SELECT * FROM person WHERE document_number = @document AND id != @id_person)
+        -- A NULL @password means "keep the current one" - the caller sends NULL when the edit
+        -- form leaves the password field blank, so an unrelated edit never rehashes/clears it.
         UPDATE person SET
             document_number = @document,
             name = @name,
             address = @address,
             phone = @phone,
-            password = @password,
+            password = ISNULL(@password, password),
             person_type_id = @person_type_id
         WHERE id = @id_person
     ELSE
@@ -565,9 +664,9 @@ GO
 
 CREATE PROCEDURE [dbo].[sp_update_product](
 @id_product INT,
-@code VARCHAR(20),
-@name VARCHAR(30),
-@description VARCHAR(30),
+@code VARCHAR(50),
+@name VARCHAR(50),
+@description VARCHAR(500),
 @category_id INT,
 @result BIT OUTPUT
 ) AS

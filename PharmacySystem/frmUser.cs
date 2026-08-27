@@ -88,7 +88,6 @@ namespace PharmacySystem
             gridRow.Cells["NumeroDocumento"].Value = row.Document;
             gridRow.Cells["NombreCompleto"].Value = row.Name;
             gridRow.Cells["Rol"].Value = row.RoleText;
-            gridRow.Cells["Clave"].Value = row.Password;
         }
 
         #endregion
@@ -107,8 +106,8 @@ namespace PharmacySystem
             {
                 { txtdocument, new List<string>{ "NotEmpty", "ValidatorRUC/CI" } },
                 { txtname, new List<string>{ "NotEmpty" } },
-                { txtpassword, new List<string>{ "NotEmpty" } },
-                { txtconfirmpassword, new List<string>{ "NotEmpty" } },
+                // Password fields are not force-validated here: UserPresenter requires a password
+                // only for a new user; on an edit a blank field means "keep the current one".
             };
         }
 
@@ -149,14 +148,12 @@ namespace PharmacySystem
             dgdata.Columns.Add("NumeroDocumento", "Numero Documento");
             dgdata.Columns.Add("NombreCompleto", "Nombre Completo");
             dgdata.Columns.Add("Rol", "Rol");
-            dgdata.Columns.Add("Clave", "Clave");
 
             dgdata.Columns["btnSeleccionar"].Width = 80;
             dgdata.Columns["NumeroDocumento"].Width = 150;
             dgdata.Columns["NombreCompleto"].Width = 260;
             dgdata.Columns["Rol"].Width = 300;
             dgdata.Columns["Id"].Visible = false;
-            dgdata.Columns["Clave"].Visible = false;
 
             foreach (DataGridViewColumn cl in dgdata.Columns)
             {
@@ -234,8 +231,10 @@ namespace PharmacySystem
             txtid.Text = dgdata.Rows[index].Cells["Id"].Value.ToString();
             txtdocument.Text = dgdata.Rows[index].Cells["NumeroDocumento"].Value.ToString();
             txtname.Text = dgdata.Rows[index].Cells["NombreCompleto"].Value.ToString();
-            txtpassword.Text = dgdata.Rows[index].Cells["Clave"].Value.ToString();
-            txtconfirmpassword.Text = dgdata.Rows[index].Cells["Clave"].Value.ToString();
+            // Leave the password fields blank on select: an edit that does not touch them keeps
+            // the user's current password (see UserPresenter / sp_update_person).
+            txtpassword.Text = "";
+            txtconfirmpassword.Text = "";
             foreach (ComboBoxItem item in cborol.Items)
             {
                 if (item.Text == dgdata.Rows[index].Cells["Rol"].Value.ToString())

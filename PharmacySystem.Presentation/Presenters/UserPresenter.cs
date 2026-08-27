@@ -27,8 +27,7 @@ namespace PharmacySystem.Presentation
                     Id = p.idPerson,
                     Document = p.document,
                     Name = p.name,
-                    RoleText = p.oPersonType.description,
-                    Password = p.password
+                    RoleText = p.oPersonType.description
                 });
             _view.LoadUsers(users);
         }
@@ -50,6 +49,16 @@ namespace PharmacySystem.Presentation
 
             if (_view.SelectedIndex < 0 || _view.SelectedIndex > _view.RowCount)
             {
+                return;
+            }
+
+            bool isNewUser = _view.UserId == 0;
+
+            // On a new user the password is mandatory; on an edit a blank field means "keep the
+            // current password" and PersonService.Update turns it into a no-op.
+            if (isNewUser && string.IsNullOrWhiteSpace(_view.Password))
+            {
+                _view.ShowMessage("Debe ingresar una contraseña para el usuario nuevo");
                 return;
             }
 
@@ -77,8 +86,7 @@ namespace PharmacySystem.Presentation
                     Id = person.idPerson,
                     Document = person.document,
                     Name = person.name,
-                    RoleText = _view.RoleText,
-                    Password = person.password
+                    RoleText = _view.RoleText
                 });
                 _view.ClearForm();
             }
@@ -94,8 +102,7 @@ namespace PharmacySystem.Presentation
                     Id = person.idPerson,
                     Document = person.document,
                     Name = person.name,
-                    RoleText = _view.RoleText,
-                    Password = person.password
+                    RoleText = _view.RoleText
                 });
                 _view.ClearForm();
             }

@@ -76,18 +76,30 @@ namespace PharmacySystem.Data
             {
                 try
                 {
-                    oConnection.Execute(
+                    var parameters = new
+                    {
+                        document = obj.document,
+                        companyName = obj.companyName,
+                        email = obj.email,
+                        phone = obj.phone,
+                        address = obj.address,
+                        currencyCulture = obj.currencyCulture
+                    };
+
+                    int affected = oConnection.Execute(
                         "UPDATE store SET document_store = @document, company_name = @companyName, email = @email, " +
                         "phone = @phone, address = @address, currency_culture = @currencyCulture WHERE id = 1",
-                        new
-                        {
-                            document = obj.document,
-                            companyName = obj.companyName,
-                            email = obj.email,
-                            phone = obj.phone,
-                            address = obj.address,
-                            currencyCulture = obj.currencyCulture
-                        });
+                        parameters);
+
+                    // Fresh database: the singleton row may not have been seeded yet. Insert it so
+                    // the store profile / currency is not silently dropped on a "successful" save.
+                    if (affected == 0)
+                    {
+                        oConnection.Execute(
+                            "INSERT INTO store(id, document_store, company_name, email, phone, address, currency_culture) " +
+                            "VALUES (1, @document, @companyName, @email, @phone, @address, @currencyCulture)",
+                            parameters);
+                    }
 
                     return true;
                 }
