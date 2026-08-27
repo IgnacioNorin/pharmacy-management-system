@@ -1,5 +1,6 @@
 using PharmacySystem.Business;
 using PharmacySystem.Data;
+using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 
 namespace PharmacySystem
@@ -23,6 +24,7 @@ namespace PharmacySystem
         private static readonly INotificationConfigService _notificationConfigService = new NotificationConfigService(new NotificationConfigRepository(ConnectionFactory), new ProductAlertHistoryRepository(ConnectionFactory));
         private static readonly IPurchaseService _purchaseService = new PurchaseService(new PurchaseRepository(ConnectionFactory));
         private static readonly ISaleService _saleService = new SaleService(new SaleRepository(ConnectionFactory));
+        private static readonly IPermissionService _permissionService = new PermissionService(new PermissionRepository(ConnectionFactory));
 
         #region Supplier
 
@@ -97,6 +99,17 @@ namespace PharmacySystem
 
         public static HomePresenter CreateHomePresenter(IHomeView view) =>
             new HomePresenter(view, _saleService, _notificationConfigService);
+
+        #endregion
+
+        #region Permissions / session
+
+        // Resolves the logged-in user's permission set from their role. Built once, right after
+        // login, and handed to the screens that need to gate actions or hide UI.
+        public static CurrentUser CreateCurrentUser(Person person) =>
+            new CurrentUser(person, _permissionService.GetPermissionsForRole(person.oPersonType?.idPersonType ?? 0));
+
+        public static IPermissionService PermissionService => _permissionService;
 
         #endregion
     }

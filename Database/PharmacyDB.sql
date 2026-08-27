@@ -106,7 +106,32 @@ CREATE TABLE [dbo].[person_type](
     [description] [varchar](50) NULL,
     [status] [bit] NULL,
     [date_created] [datetime] NULL,
+    -- 1 for the four built-in roles: the roles admin screen must not let them be renamed or
+    -- deleted. Custom roles (is_system = 0) use ids >= 100.
+    [is_system] [bit] NOT NULL CONSTRAINT [DF_person_type_is_system] DEFAULT ((0)),
     PRIMARY KEY CLUSTERED ([id] ASC)
+)
+GO
+
+-- Flat catalogue of permissions, seeded by the app and not edited by users.
+CREATE TABLE [dbo].[permission](
+    [id] [int] IDENTITY(1,1) NOT NULL,
+    [code] [varchar](60) NOT NULL,
+    [section] [varchar](30) NOT NULL,
+    [description] [varchar](150) NOT NULL,
+    CONSTRAINT [PK_permission] PRIMARY KEY CLUSTERED ([id] ASC),
+    CONSTRAINT [UX_permission_code] UNIQUE ([code])
+)
+GO
+
+-- Which permissions each role grants. A user's effective permissions = the rows here for their
+-- person_type_id.
+CREATE TABLE [dbo].[role_permission](
+    [person_type_id] [int] NOT NULL,
+    [permission_id] [int] NOT NULL,
+    CONSTRAINT [PK_role_permission] PRIMARY KEY CLUSTERED ([person_type_id] ASC, [permission_id] ASC),
+    CONSTRAINT [FK_role_permission_role] FOREIGN KEY ([person_type_id]) REFERENCES [dbo].[person_type] ([id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_role_permission_permission] FOREIGN KEY ([permission_id]) REFERENCES [dbo].[permission] ([id]) ON DELETE CASCADE
 )
 GO
 
@@ -421,13 +446,57 @@ GO
 -- Administrador General (1) is the only role that can see/edit the Tienda tab in frmManagement
 -- (name, tax data, currency) - see frmManagement.frmManagement_Load. Administrador (2) is the
 -- day-to-day admin role - full access except that tab.
-INSERT INTO [dbo].[person_type] (id, description, status, date_created) VALUES (1, 'Administrador General', 1, GETDATE())
+INSERT INTO [dbo].[person_type] (id, description, status, date_created, is_system) VALUES (1, 'Administrador General', 1, GETDATE(), 1)
 GO
-INSERT INTO [dbo].[person_type] (id, description, status, date_created) VALUES (2, 'Administrador', 1, GETDATE())
+INSERT INTO [dbo].[person_type] (id, description, status, date_created, is_system) VALUES (2, 'Administrador', 1, GETDATE(), 1)
 GO
-INSERT INTO [dbo].[person_type] (id, description, status, date_created) VALUES (3, 'Empleado', 1, GETDATE())
+INSERT INTO [dbo].[person_type] (id, description, status, date_created, is_system) VALUES (3, 'Empleado', 1, GETDATE(), 1)
 GO
-INSERT INTO [dbo].[person_type] (id, description, status, date_created) VALUES (4, 'Cliente', 1, GETDATE())
+INSERT INTO [dbo].[person_type] (id, description, status, date_created, is_system) VALUES (4, 'Cliente', 1, GETDATE(), 1)
+GO
+
+-- Permission catalogue (section.action). '<section>.acceso' gates entering the section.
+INSERT INTO [dbo].[permission] (code, section, description) VALUES
+    ('ventas.acceso',          'ventas',      'Usar el punto de venta'),
+    ('compras.acceso',         'compras',     'Registrar compras a proveedores'),
+    ('clientes.acceso',        'clientes',    'Ver la seccion de clientes'),
+    ('clientes.gestionar',     'clientes',    'Crear, editar y eliminar clientes'),
+    ('proveedores.acceso',     'proveedores', 'Ver la seccion de proveedores'),
+    ('proveedores.gestionar',  'proveedores', 'Crear, editar y eliminar proveedores'),
+    ('productos.acceso',       'productos',   'Ver la seccion de productos'),
+    ('productos.gestionar',    'productos',   'Crear y editar productos'),
+    ('productos.editar_precios','productos',  'Modificar precios de compra y de venta'),
+    ('productos.eliminar',     'productos',   'Eliminar o dar de baja productos'),
+    ('categorias.acceso',      'categorias',  'Ver la seccion de categorias'),
+    ('categorias.gestionar',   'categorias',  'Crear, editar y eliminar categorias'),
+    ('tienda.acceso',          'tienda',      'Ver los datos de la tienda'),
+    ('tienda.editar',          'tienda',      'Modificar nombre, datos fiscales y moneda'),
+    ('usuarios.acceso',        'usuarios',    'Ver la seccion de usuarios'),
+    ('usuarios.gestionar',     'usuarios',    'Crear, editar y eliminar usuarios'),
+    ('roles.gestionar',        'usuarios',    'Administrar roles y sus permisos'),
+    ('reportes.acceso',        'reportes',    'Ver reportes'),
+    ('reportes.exportar',      'reportes',    'Exportar reportes a Excel'),
+    ('alertas.acceso',         'alertas',     'Ver el centro de notificaciones'),
+    ('alertas.reconocer',      'alertas',     'Reconocer alertas de inventario'),
+    ('alertas.silenciar',      'alertas',     'Silenciar alertas puntuales'),
+    ('alertas.configurar',     'alertas',     'Cambiar los umbrales de alerta')
+GO
+
+-- Seed role_permission so the four built-in roles behave exactly as before this feature:
+--   1 Administrador General -> everything
+--   2 Administrador         -> everything except the Tienda section
+--   3 Empleado              -> Ventas, Clientes and Alertas (view + acknowledge/mute)
+--   4 Cliente               -> nothing (cannot sign in)
+INSERT INTO [dbo].[role_permission] (person_type_id, permission_id)
+    SELECT 1, id FROM [dbo].[permission]
+GO
+INSERT INTO [dbo].[role_permission] (person_type_id, permission_id)
+    SELECT 2, id FROM [dbo].[permission] WHERE section <> 'tienda'
+GO
+INSERT INTO [dbo].[role_permission] (person_type_id, permission_id)
+    SELECT 3, id FROM [dbo].[permission]
+    WHERE code IN ('ventas.acceso', 'clientes.acceso', 'clientes.gestionar',
+                   'alertas.acceso', 'alertas.reconocer', 'alertas.silenciar')
 GO
 
 -- Default Administrador General account so a fresh database has someone who can log in and
