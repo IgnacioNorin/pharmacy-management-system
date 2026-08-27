@@ -19,6 +19,8 @@
 | Script | Lleva de | a |
 |---|---|---|
 | `001_upgrade_to_1_1_0.sql` | 1.0 | 1.1.0 |
+| `002_user_permissions.sql` | 1.1.0 | 1.2.0 (tablas de permisos + roles) |
+| `003_role_admin.sql` | 1.2.0 | 1.2.0 (procedimientos de la pantalla de roles) |
 
 ## Si un paso falla por datos preexistentes
 

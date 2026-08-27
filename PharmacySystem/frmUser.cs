@@ -53,6 +53,19 @@ namespace PharmacySystem
         public bool ConfirmDelete() =>
             MessageBox.Show("¿Desea eliminar el usuario?", "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
 
+        public void LoadRoleOptions(IEnumerable<ComboBoxItem> options)
+        {
+            cborol.Items.Clear();
+            foreach (ComboBoxItem option in options)
+            {
+                cborol.Items.Add(option);
+            }
+            if (cborol.Items.Count > 0)
+            {
+                cborol.SelectedIndex = 0;
+            }
+        }
+
         public void LoadUsers(IEnumerable<UserRow> users)
         {
             foreach (UserRow row in users)
@@ -118,20 +131,10 @@ namespace PharmacySystem
 
             InitializeValidators();
 
-            var roles = new[]
-            {
-                new ComboBoxItem() { Value = (int)PersonType.Administrador, Text = "Administrador" },
-                new ComboBoxItem() { Value = (int)PersonType.AdministradorGeneral, Text = "Administrador General" },
-                new ComboBoxItem() { Value = (int)PersonType.Empleado, Text = "Empleado" }
-            };
-            foreach (var rol in roles)
-            {
-                cborol.Items.Add(rol);
-            }
-
+            // The role list comes from person_type now (built-ins + any custom role), loaded by
+            // the presenter via LoadRoleOptions.
             cborol.DisplayMember = "Text";
             cborol.ValueMember = "Value";
-            cborol.SelectedIndex = 0;
 
             DataGridViewButtonColumn Button = new DataGridViewButtonColumn()
             {

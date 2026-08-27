@@ -12,18 +12,27 @@ namespace PharmacySystem.Presentation
         private readonly IUserView _view;
         private readonly IPersonService _service;
         private readonly CurrentUser _currentUser;
+        private readonly IPermissionService _permissionService;
 
-        public UserPresenter(IUserView view, IPersonService service, CurrentUser currentUser)
+        public UserPresenter(IUserView view, IPersonService service, CurrentUser currentUser, IPermissionService permissionService)
         {
             _view = view;
             _service = service;
             _currentUser = currentUser;
+            _permissionService = permissionService;
         }
 
         private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
 
         public void OnLoad()
         {
+            // Roles come from person_type: the built-ins plus any custom role, minus Cliente
+            // (a client cannot sign in, so it is not a valid role for a user account).
+            var roleOptions = _permissionService.GetRoles()
+                .Where(r => r.idPersonType != (int)PersonType.Cliente)
+                .Select(r => new ComboBoxItem { Value = r.idPersonType, Text = r.description });
+            _view.LoadRoleOptions(roleOptions);
+
             var users = _service.List()
                 .Where(p => p.oPersonType.idPersonType != (int)PersonType.Cliente)
                 .Select(p => new UserRow

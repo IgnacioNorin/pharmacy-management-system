@@ -1,10 +1,10 @@
 namespace PharmacySystem.Model
 {
-    // Mirrors the person_type table's id column. Renumbered once already (Administrador General
-    // introduced as 1, pushing Administrador/Empleado/Cliente down) - that renumbering required
-    // hand-editing idPersonType comparisons across seven files because none of them referenced a
-    // shared name. Compare against these members instead of the raw int from here on, so the next
-    // change to this table only touches this file.
+    // Mirrors the person_type table's built-in id column (is_system = 1). Custom roles use ids
+    // >= 100 and have no member here. Since the permissions rework, application logic branches
+    // on permissions, not on the role - the only member still referenced in code is Cliente
+    // (a client is a data-only role that cannot sign in). The other three are kept as
+    // documentation of the seeded ids.
     public enum PersonType
     {
         AdministradorGeneral = 1,

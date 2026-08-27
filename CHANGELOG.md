@@ -2,6 +2,27 @@
 
 El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
+## [1.2.0]
+
+### Agregado
+
+- **Permisos por rol.** El acceso deja de estar fijo por rol: cada permiso
+  (`seccion.accion`, 23 en total) se puede asignar o quitar de un rol, y se
+  pueden crear roles nuevos además de los cuatro de siempre.
+  - Nueva pantalla **Roles y permisos** (barra lateral → Gestión): checklist
+    de permisos por rol, alta / renombrar / eliminar de roles personalizados.
+    Los cuatro roles del sistema se pueden re-permisar pero no renombrar ni
+    eliminar; un rol con usuarios asignados no se puede eliminar.
+  - La barra lateral y las pestañas de Gestión se muestran según los permisos
+    del usuario. Cada acción sensible (crear/editar/eliminar en cada sección,
+    editar la tienda, configurar alertas, exportar reportes, reconocer/silenciar
+    alertas) se valida en el presenter y además deshabilita el botón.
+  - El combo de rol en la pantalla de Usuarios se arma desde `person_type`, así
+    que muestra también los roles personalizados.
+  - Migraciones `Database/Migrations/002_user_permissions.sql` y
+    `003_role_admin.sql`. Tras aplicarlas el comportamiento es idéntico al de
+    la 1.1.0 hasta que un administrador edite un rol.
+
 ## [1.1.0]
 
 ### Corregido

@@ -10,7 +10,7 @@ Sistema de gestión integral para farmacias que incluye punto de venta (POS), co
 - **Alertas de inventario:** detección de stock crítico/bajo y productos vencidos o por vencer, con severidad, centro de notificaciones, historial con trazabilidad (quién y cuándo se reconoció cada alerta) y opción de silenciar una alerta puntual.
 - **Clientes:** base de datos de clientes.
 - **Proveedores:** gestión de proveedores.
-- **Usuarios y roles:** Administrador General, Administrador, Empleado y Cliente (ver [Roles y usuario por defecto](#roles-y-usuario-por-defecto)).
+- **Usuarios y roles:** roles con permisos configurables por sección y acción, roles personalizados, y una pantalla de administración de roles (ver [Roles y usuario por defecto](#roles-y-usuario-por-defecto)).
 - **Reportes:** ventas, compras, inventario e historial de alertas, con exportación a Excel.
 - **Pantalla de inicio:** tablero con ventas del día, alertas abiertas y accesos rápidos.
 
@@ -111,16 +111,24 @@ Desde línea de comandos, usando las herramientas de Visual Studio (no `dotnet t
 
 ## Roles y usuario por defecto
 
-| Rol | `person_type_id` | Acceso |
+| Rol | `person_type_id` | Acceso inicial |
 |---|---|---|
 | Administrador General | 1 | Acceso total, incluida la pestaña Tienda (nombre, datos fiscales y moneda). |
 | Administrador | 2 | Todo el sistema, excepto la pestaña Tienda. |
 | Empleado | 3 | Solo Clientes, Ventas y Alertas. |
 | Cliente | 4 | No puede iniciar sesión en la aplicación (rol de datos únicamente). |
 
+Los permisos de cada rol son **configurables**. El acceso a cada sección y cada
+acción sensible (crear/editar/eliminar, editar la tienda, configurar alertas,
+exportar reportes, etc.) es un permiso que se asigna o quita por rol desde la
+pantalla **Roles y permisos** (barra lateral → Gestión, requiere el permiso
+`roles.gestionar`). Ahí también se crean roles nuevos. Los cuatro roles de la
+tabla se pueden re-permisar pero no renombrar ni eliminar. La tabla de arriba es
+el acceso con el que quedan sembrados; se puede cambiar sin tocar código.
+
 Al eliminar un usuario que ya tiene ventas, compras o alertas reconocidas, se lo
 desactiva (`status = 0`) en vez de borrarlo; un usuario desactivado no puede
-iniciar sesión.
+iniciar sesión. Un rol con usuarios asignados tampoco se puede eliminar.
 
 El script de base de datos siembra una cuenta `Administrador General` por defecto:
 

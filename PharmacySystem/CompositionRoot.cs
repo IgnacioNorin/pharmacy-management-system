@@ -42,7 +42,7 @@ namespace PharmacySystem
             new ClientPresenter(view, _personService, MainForm.Session);
 
         public static UserPresenter CreateUserPresenter(IUserView view) =>
-            new UserPresenter(view, _personService, MainForm.Session);
+            new UserPresenter(view, _personService, MainForm.Session, _permissionService);
 
         public static ClientPickerPresenter CreateClientPickerPresenter(IClientPickerView view) =>
             new ClientPickerPresenter(view, _personService);

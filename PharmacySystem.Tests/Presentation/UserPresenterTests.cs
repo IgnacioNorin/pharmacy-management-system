@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using PharmacySystem.Model;
 using Xunit;
 
@@ -7,13 +8,16 @@ namespace PharmacySystem.Tests.Presentation
     public class UserPresenterTests
     {
         private static PharmacySystem.Presentation.UserPresenter CreatePresenter(FakeUserView view, FakePersonService service)
-            => new PharmacySystem.Presentation.UserPresenter(view, service, TestUser.With("usuarios.gestionar"));
+            => CreatePresenter(view, service, new FakePermissionService());
+
+        private static PharmacySystem.Presentation.UserPresenter CreatePresenter(FakeUserView view, FakePersonService service, FakePermissionService permissionService)
+            => new PharmacySystem.Presentation.UserPresenter(view, service, TestUser.With("usuarios.gestionar"), permissionService);
 
         [Fact]
         public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotRegister()
         {
             var view = ValidView();
-            new PharmacySystem.Presentation.UserPresenter(view, new FakePersonService(), TestUser.With()).OnSave();
+            new PharmacySystem.Presentation.UserPresenter(view, new FakePersonService(), TestUser.With(), new FakePermissionService()).OnSave();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
             Assert.Empty(view.AddedRows);
@@ -23,10 +27,29 @@ namespace PharmacySystem.Tests.Presentation
         public void OnDelete_WithoutManagePermission_ShowsDeniedAndDoesNotRemove()
         {
             var view = new FakeUserView { SelectedIndex = 3, UserId = 9 };
-            new PharmacySystem.Presentation.UserPresenter(view, new FakePersonService(), TestUser.With()).OnDelete();
+            new PharmacySystem.Presentation.UserPresenter(view, new FakePersonService(), TestUser.With(), new FakePermissionService()).OnDelete();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
             Assert.Empty(view.RemovedIndexes);
+        }
+
+        [Fact]
+        public void OnLoad_LoadsRoleOptionsFromPersonTypesExceptCliente()
+        {
+            var view = new FakeUserView();
+            var permissions = new FakePermissionService
+            {
+                Roles = new List<TypePerson>
+                {
+                    new TypePerson { idPersonType = 2, description = "Administrador" },
+                    new TypePerson { idPersonType = 4, description = "Cliente" },
+                    new TypePerson { idPersonType = 100, description = "Cajero senior" }
+                }
+            };
+
+            CreatePresenter(view, new FakePersonService(), permissions).OnLoad();
+
+            Assert.Equal(new[] { "Administrador", "Cajero senior" }, view.LoadedRoleOptions.Select(o => o.Text));
         }
 
         private static FakeUserView ValidView() => new FakeUserView
