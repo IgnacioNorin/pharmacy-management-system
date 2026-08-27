@@ -13,6 +13,9 @@ packages/
 x64/
 x86/
 
+# Distribution packages (deploy\package.ps1 output)
+dist/
+
 # SQL Server files
 *.mdf
 *.ldf

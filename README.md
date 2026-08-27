@@ -56,7 +56,9 @@ Dentro de `Data`, `Business` y `Presentation`, los archivos están organizados e
    git clone https://github.com/IgnacioNorin/pharmacy-management-system.git
    ```
 
-2. Crear la base de datos ejecutando **`Database/PharmacyDB.sql`** contra la instancia de SQL Server (desde SSMS, Azure Data Studio, o `sqlcmd`). El script crea las tablas, índices, procedimientos almacenados, y siembra los datos iniciales: los 4 roles y una cuenta `Administrador General` por defecto (ver más abajo).
+2. Crear la base de datos ejecutando **`Database/PharmacyDB.sql`** contra la instancia de SQL Server (desde SSMS, Azure Data Studio, o `sqlcmd`). El script crea las tablas, índices, procedimientos almacenados, y siembra los datos iniciales: los 4 roles, una cuenta `Administrador General` por defecto (ver más abajo) y las filas de configuración de tienda y de alertas.
+
+   > Si ya hay una base `PharmacyDB` desplegada de una versión anterior, **no** volver a correr este script (contiene `DROP DATABASE`). Aplicar en su lugar los scripts incrementales de **`Database/Migrations/`** en orden — ver `Database/Migrations/README.md`.
 
 3. Abrir la solución en Visual Studio:
 
@@ -116,6 +118,10 @@ Desde línea de comandos, usando las herramientas de Visual Studio (no `dotnet t
 | Empleado | 3 | Solo Clientes, Ventas y Alertas. |
 | Cliente | 4 | No puede iniciar sesión en la aplicación (rol de datos únicamente). |
 
+Al eliminar un usuario que ya tiene ventas, compras o alertas reconocidas, se lo
+desactiva (`status = 0`) en vez de borrarlo; un usuario desactivado no puede
+iniciar sesión.
+
 El script de base de datos siembra una cuenta `Administrador General` por defecto:
 
 ```
@@ -124,6 +130,15 @@ Contraseña:  12345678
 ```
 
 ⚠️ **Cambiar esta contraseña antes de usar el sistema en producción.** La contraseña se almacena en texto plano solo hasta el primer inicio de sesión; en ese momento se re-hashea automáticamente (PBKDF2) y queda protegida.
+
+## Despliegue en un cliente
+
+`deploy/package.ps1` compila en Release y arma un paquete de distribución en
+`dist/` (binarios + scripts de base + plantilla de configuración). El
+procedimiento completo de instalación, actualización, backup y primer arranque
+está en **[DEPLOY.md](DEPLOY.md)**.
+
+El historial de cambios por versión está en **[CHANGELOG.md](CHANGELOG.md)**.
 
 ## Licencia
 
