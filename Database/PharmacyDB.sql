@@ -484,14 +484,17 @@ GO
 
 -- Seed role_permission so the four built-in roles behave exactly as before this feature:
 --   1 Administrador General -> everything
---   2 Administrador         -> everything except the Tienda section
+--   2 Administrador         -> everything except the Tienda section and roles.gestionar
+--                              (only the Administrador General administers roles, so a regular
+--                              Administrador cannot re-permission its own role past the Tienda
+--                              boundary)
 --   3 Empleado              -> Ventas, Clientes and Alertas (view + acknowledge/mute)
 --   4 Cliente               -> nothing (cannot sign in)
 INSERT INTO [dbo].[role_permission] (person_type_id, permission_id)
     SELECT 1, id FROM [dbo].[permission]
 GO
 INSERT INTO [dbo].[role_permission] (person_type_id, permission_id)
-    SELECT 2, id FROM [dbo].[permission] WHERE section <> 'tienda'
+    SELECT 2, id FROM [dbo].[permission] WHERE section <> 'tienda' AND code <> 'roles.gestionar'
 GO
 INSERT INTO [dbo].[role_permission] (person_type_id, permission_id)
     SELECT 3, id FROM [dbo].[permission]

@@ -11,14 +11,28 @@ namespace PharmacySystem.Presentation
     {
         private readonly IRolesView _view;
         private readonly IPermissionService _service;
+        private readonly CurrentUser _currentUser;
 
         private List<Permission> _catalogue = new List<Permission>();
         private List<TypePerson> _roles = new List<TypePerson>();
 
-        public RolesPresenter(IRolesView view, IPermissionService service)
+        public RolesPresenter(IRolesView view, IPermissionService service, CurrentUser currentUser)
         {
             _view = view;
             _service = service;
+            _currentUser = currentUser;
+        }
+
+        // Every mutating action re-checks the permission, not just the sidebar button that opened
+        // this screen (same rule as the fase 3 presenters).
+        private bool DeniedRoleAdmin()
+        {
+            if (_currentUser?.Can("roles.gestionar") ?? false)
+            {
+                return false;
+            }
+            _view.ShowMessage("No tiene permiso para administrar roles.");
+            return true;
         }
 
         public void OnLoad()
@@ -53,6 +67,11 @@ namespace PharmacySystem.Presentation
 
         public void OnSavePermissions()
         {
+            if (DeniedRoleAdmin())
+            {
+                return;
+            }
+
             int? roleId = _view.SelectedRoleId;
             if (roleId == null)
             {
@@ -67,6 +86,11 @@ namespace PharmacySystem.Presentation
 
         public void OnCreateRole()
         {
+            if (DeniedRoleAdmin())
+            {
+                return;
+            }
+
             string name = (_view.RoleNameInput ?? "").Trim();
             if (name.Length == 0)
             {
@@ -82,10 +106,16 @@ namespace PharmacySystem.Presentation
 
             _view.ClearRoleNameInput();
             RefreshRoles();
+            ClearPermissionPanel();
         }
 
         public void OnRenameRole()
         {
+            if (DeniedRoleAdmin())
+            {
+                return;
+            }
+
             int? roleId = _view.SelectedRoleId;
             if (roleId == null)
             {
@@ -109,6 +139,7 @@ namespace PharmacySystem.Presentation
             {
                 _view.ClearRoleNameInput();
                 RefreshRoles();
+                ClearPermissionPanel();
             }
             else
             {
@@ -118,6 +149,11 @@ namespace PharmacySystem.Presentation
 
         public void OnDeleteRole()
         {
+            if (DeniedRoleAdmin())
+            {
+                return;
+            }
+
             int? roleId = _view.SelectedRoleId;
             if (roleId == null)
             {

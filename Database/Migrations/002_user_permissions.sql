@@ -100,18 +100,22 @@ PRINT '3. permission catalogue seeded';
 GO
 
 -- -----------------------------------------------------------------------------
--- 4. Seed role_permission for the built-in roles (missing rows only, so an
---    admin who already customised a role is not clobbered on a re-run)
+-- 4. Seed role_permission for the built-in roles.
+--    Uses a per-row NOT EXISTS so a partial re-run completes without a PK
+--    violation. NOTE: this is not "customisation-safe" - if an admin has
+--    already removed a seeded permission from a built-in role, re-running this
+--    script puts it back. Migrations are meant to run once.
 -- -----------------------------------------------------------------------------
 -- 1 Administrador General -> everything
 INSERT INTO dbo.role_permission (person_type_id, permission_id)
 SELECT 1, p.id FROM dbo.permission p
 WHERE NOT EXISTS (SELECT 1 FROM dbo.role_permission rp WHERE rp.person_type_id = 1 AND rp.permission_id = p.id);
 
--- 2 Administrador -> everything except the Tienda section
+-- 2 Administrador -> everything except the Tienda section and roles.gestionar
+--   (only Administrador General administers roles)
 INSERT INTO dbo.role_permission (person_type_id, permission_id)
 SELECT 2, p.id FROM dbo.permission p
-WHERE p.section <> 'tienda'
+WHERE p.section <> 'tienda' AND p.code <> 'roles.gestionar'
   AND NOT EXISTS (SELECT 1 FROM dbo.role_permission rp WHERE rp.person_type_id = 2 AND rp.permission_id = p.id);
 
 -- 3 Empleado -> Ventas, Clientes and Alertas (view + acknowledge/mute)

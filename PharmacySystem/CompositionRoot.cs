@@ -110,7 +110,7 @@ namespace PharmacySystem
             new CurrentUser(person, _permissionService.GetPermissionsForRole(person.oPersonType?.idPersonType ?? 0));
 
         public static RolesPresenter CreateRolesPresenter(IRolesView view) =>
-            new RolesPresenter(view, _permissionService);
+            new RolesPresenter(view, _permissionService, MainForm.Session);
 
         public static IPermissionService PermissionService => _permissionService;
 

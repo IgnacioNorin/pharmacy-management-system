@@ -36,12 +36,15 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void GetCodesForRole_Administrador_ExcludesTiendaSection()
+        public void GetCodesForRole_Administrador_ExcludesTiendaSectionAndRolesGestionar()
         {
             var codes = Repository.GetCodesForRole(2);
 
             Assert.NotEmpty(codes);
             Assert.DoesNotContain(codes, c => c.StartsWith("tienda."));
+            // Only Administrador General administers roles, otherwise a regular Administrador
+            // could re-permission its own role past the Tienda boundary.
+            Assert.DoesNotContain("roles.gestionar", codes);
         }
 
         [Fact]

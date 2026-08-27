@@ -31,7 +31,7 @@ namespace PharmacySystem.Tests.Presentation
         {
             var view = new FakeRolesView();
             var service = ServiceWithRoles();
-            return (new RolesPresenter(view, service), view, service);
+            return (new RolesPresenter(view, service, TestUser.With("roles.gestionar")), view, service);
         }
 
         [Fact]
@@ -115,9 +115,12 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void OnCreateRole_Succeeds_ReloadsRolesAndClearsInput()
+        public void OnCreateRole_Succeeds_ReloadsRolesClearsInputAndPermissionPanel()
         {
             var (presenter, view, service) = Create();
+            presenter.OnLoad();
+            view.SelectedRoleId = 100;
+            presenter.OnRoleSelected();
             service.CreateRoleResult = 101;
             view.RoleNameInput = "Deposito";
 
@@ -125,6 +128,28 @@ namespace PharmacySystem.Tests.Presentation
 
             Assert.Equal(1, view.ClearRoleNameInputCount);
             Assert.NotNull(view.LoadedRoles);
+            Assert.Empty(view.ShownPermissions);
+            Assert.False(view.PermissionsEditable);
+        }
+
+        [Fact]
+        public void MutatingActions_WithoutRolesGestionar_AreRejected()
+        {
+            var view = new FakeRolesView { SelectedRoleId = 100, RoleNameInput = "X" };
+            var service = ServiceWithRoles();
+            var presenter = new RolesPresenter(view, service, TestUser.With());
+
+            presenter.OnSavePermissions();
+            presenter.OnCreateRole();
+            presenter.OnRenameRole();
+            presenter.OnDeleteRole();
+
+            Assert.All(view.ShownMessages, m => Assert.Contains("No tiene permiso", m));
+            Assert.Equal(4, view.ShownMessages.Count);
+            Assert.Null(service.SavedRolePermissions);
+            Assert.Null(service.CreatedRoleName);
+            Assert.Null(service.RenamedRole);
+            Assert.Null(service.DeletedRoleId);
         }
 
         [Fact]
