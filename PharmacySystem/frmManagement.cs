@@ -52,7 +52,7 @@ namespace PharmacySystem
                 #region STORE
                 ["tabStore"] = new Dictionary<Control, List<string>>
                 {
-                    { txttaxid, new List<string>{ "NotEmpty", "ValidatorRUC/CI" } },
+                    { txttaxid, new List<string>{ "NotEmpty", "ValidateDocument" } },
                     { txtlegalName, new List<string>{ "NotEmpty", "ValidateMaxLength" } },
                     { txtemail, new List<string>{ "NotEmpty","ValidateEmail", "ValidateMaxLength" } },
                     { txtphone, new List<string>{ "NotEmpty","OnlyNumbers" } },

@@ -113,7 +113,7 @@ namespace PharmacySystem.Presentation
 
             DataTable dt = new DataTable();
             dt.Columns.Add("Fecha Compra", typeof(string));
-            dt.Columns.Add("RUC", typeof(string));
+            dt.Columns.Add("Documento Proveedor", typeof(string));
             dt.Columns.Add("Razon Social", typeof(string));
             dt.Columns.Add("Tipo Documento", typeof(string));
             dt.Columns.Add("Numero Documento", typeof(string));

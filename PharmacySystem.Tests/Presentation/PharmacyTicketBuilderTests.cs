@@ -73,7 +73,7 @@ namespace PharmacySystem.Tests.Presentation
             }
 
             Assert.Contains("FARMACIA CENTRAL", ticket);
-            Assert.Contains("RUC: 0102030405", ticket);
+            Assert.Contains("Documento: 0102030405", ticket);
             Assert.Contains("Paracetamol", ticket);
             Assert.Contains("17/03/2026", ticket);
         }

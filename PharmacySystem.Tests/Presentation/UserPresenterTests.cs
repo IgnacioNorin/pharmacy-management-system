@@ -131,7 +131,7 @@ namespace PharmacySystem.Tests.Presentation
 
             CreatePresenter(view, service).OnSave();
 
-            Assert.Equal(new[] { "Ya existe un usuario con esa Cedula de Identidad" }, view.ShownMessages);
+            Assert.Equal(new[] { "Ya existe un usuario con ese documento" }, view.ShownMessages);
             Assert.Empty(view.AddedRows);
             Assert.False(view.ClearFormCalled);
         }

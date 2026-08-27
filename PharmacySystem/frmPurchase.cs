@@ -23,7 +23,7 @@ namespace PharmacySystem
         private Dictionary<string, string> namesMessages = new Dictionary<string, string>
         {
             { "txtnumberdocument", "Número Documento" },
-            { "txtdocumentsupplier", "RUC/ Documento Proveedor" },
+            { "txtdocumentsupplier", "Documento Proveedor" },
             { "txtnamesupplier", "Razón Social Proveedor" },
             { "txtcodeproduct", "Código Producto" },
             { "txtnameproduct", "Nombre Producto" },
@@ -37,8 +37,8 @@ namespace PharmacySystem
             txtAmountInternal.Name = "txtcantidad";
             campWithRules = new Dictionary<TextBox, List<string>>
             {
-                { txtnumberdocument, new List<string>{ "NotEmpty", "ValidatorRUC/CI" } },
-                { txtdocumentsupplier, new List<string>{ "NotEmpty", "ValidatorRUC/CI" } },
+                { txtnumberdocument, new List<string>{ "NotEmpty", "ValidateDocument" } },
+                { txtdocumentsupplier, new List<string>{ "NotEmpty", "ValidateDocument" } },
                 { txtnamesupplier, new List<string>{ "NotEmpty" } },
                 { txtcodeproduct, new List<string>{ "NotEmpty" } },
                 { txtnameproduct, new List<string>{ "NotEmpty" } },

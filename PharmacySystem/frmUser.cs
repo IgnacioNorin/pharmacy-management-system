@@ -117,7 +117,7 @@ namespace PharmacySystem
         {
             campWithRules = new Dictionary<TextBox, List<string>>
             {
-                { txtdocument, new List<string>{ "NotEmpty", "ValidatorRUC/CI" } },
+                { txtdocument, new List<string>{ "NotEmpty", "ValidateDocument" } },
                 { txtname, new List<string>{ "NotEmpty" } },
                 // Password fields are not force-validated here: UserPresenter requires a password
                 // only for a new user; on an edit a blank field means "keep the current one".

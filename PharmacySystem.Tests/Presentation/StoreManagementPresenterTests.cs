@@ -64,12 +64,12 @@ namespace PharmacySystem.Tests.Presentation
         [Fact]
         public void OnSave_ValidationErrors_ShowsThemAndNeverCallsService()
         {
-            var view = new FakeStoreManagementView { ValidationErrors = new System.Collections.Generic.List<string> { "El RUC/CI es requerido" } };
+            var view = new FakeStoreManagementView { ValidationErrors = new System.Collections.Generic.List<string> { "El documento es requerido" } };
             var service = new FakeStoreService();
 
             CreatePresenter(view, service).OnSave();
 
-            Assert.Equal(new System.Collections.Generic.List<string> { "El RUC/CI es requerido" }, view.ShownValidationErrors);
+            Assert.Equal(new System.Collections.Generic.List<string> { "El documento es requerido" }, view.ShownValidationErrors);
             Assert.Null(service.UpdatedWith);
         }
 

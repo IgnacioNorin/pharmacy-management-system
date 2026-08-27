@@ -23,7 +23,7 @@ namespace PharmacySystem.Presentation
 
             // Company header
             formatter.AddCenteredText(store.companyName.ToUpper());
-            formatter.AddCenteredText($"RUC: {store.document}");
+            formatter.AddCenteredText($"Documento: {store.document}");
             formatter.AddCenteredText(store.address.ToUpper());
             if (!string.IsNullOrEmpty(store.phone))
                 formatter.AddCenteredText($"Tel: {store.phone}");

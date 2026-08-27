@@ -179,7 +179,7 @@
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(157, 15);
             this.label3.TabIndex = 12;
-            this.label3.Text = "RUC / Número Documento:";
+            this.label3.Text = "Número Documento:";
             // 
             // label2
             // 

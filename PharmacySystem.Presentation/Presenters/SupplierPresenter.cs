@@ -72,7 +72,7 @@ namespace PharmacySystem.Presentation
             int id = _service.Register(supplier);
             if (id == 0)
             {
-                _view.ShowMessage("Ya existe un proveedor con esa CI/RUC");
+                _view.ShowMessage("Ya existe un proveedor con ese documento");
                 return;
             }
 

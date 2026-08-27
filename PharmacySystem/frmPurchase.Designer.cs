@@ -280,7 +280,7 @@
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(168, 15);
             this.label14.TabIndex = 0;
-            this.label14.Text = "RUC / Documento Proveedor:";
+            this.label14.Text = "Documento Proveedor:";
             // 
             // label15
             // 

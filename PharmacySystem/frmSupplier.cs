@@ -111,7 +111,7 @@ namespace PharmacySystem
         private Dictionary<TextBox, List<string>> campWithRules = new Dictionary<TextBox, List<string>>();
         private Dictionary<string, string> namesMessages = new Dictionary<string, string>
         {
-            { "txtdocument", "RUC/Número Documento" },
+            { "txtdocument", "Número Documento" },
             { "txtcompanyname", "Razón Social" },
             { "txtemail", "Correo" },
             { "txtphone", "Teléfono" },
@@ -120,7 +120,7 @@ namespace PharmacySystem
         {
             campWithRules = new Dictionary<TextBox, List<string>>
             {
-                { txtdocument, new List<string>{ "NotEmpty", "ValidatorRUC/CI" } },
+                { txtdocument, new List<string>{ "NotEmpty", "ValidateDocument" } },
                 { txtcompanyname, new List<string>{ "NotEmpty" } },
                 { txtemail, new List<string>{ "NotEmpty", "ValidateEmail" } },
                 { txtphone, new List<string>{ "NotEmpty", "OnlyNumbers" } },

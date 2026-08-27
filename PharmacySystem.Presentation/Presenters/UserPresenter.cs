@@ -96,7 +96,7 @@ namespace PharmacySystem.Presentation
             {
                 if (!_service.Register(person))
                 {
-                    _view.ShowMessage("Ya existe un usuario con esa Cedula de Identidad");
+                    _view.ShowMessage("Ya existe un usuario con ese documento");
                     return;
                 }
 

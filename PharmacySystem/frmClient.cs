@@ -97,7 +97,7 @@ namespace PharmacySystem
         {
             campWithRules = new Dictionary<TextBox, List<string>>
             {
-                { txtdocument, new List<string>{ "NotEmpty", "ValidatorRUC/CI" } },
+                { txtdocument, new List<string>{ "NotEmpty", "ValidateDocument" } },
                 { txtname, new List<string>{ "NotEmpty" } },
                 { txtaddress, new List<string>{ "NotEmpty" } },
                 { txtphone, new List<string>{ "NotEmpty" } },

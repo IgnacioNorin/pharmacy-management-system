@@ -97,7 +97,7 @@ namespace PharmacySystem.Tests.Presentation
 
             CreatePresenter(view, service).OnSave();
 
-            Assert.Equal(new[] { "Ya existe un proveedor con esa CI/RUC" }, view.ShownMessages);
+            Assert.Equal(new[] { "Ya existe un proveedor con ese documento" }, view.ShownMessages);
             Assert.Empty(view.AddedRows);
             Assert.False(view.ClearFormCalled);
         }

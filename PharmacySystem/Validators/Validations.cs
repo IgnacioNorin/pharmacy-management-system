@@ -11,7 +11,8 @@ using System.Windows.Forms;
 namespace PharmacySystem.Validators
 {
     // UI-side rule table: maps a rule name to a predicate and the message shown to the user.
-    // The check-digit algorithm it delegates to lives in PharmacySystem.Domain (RUCValidator).
+    // Document validation is country-agnostic (DocumentValidator in PharmacySystem.Domain):
+    // a national check-digit scheme would tie the system to one jurisdiction.
     public static class Validations
     {
         private static string pattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
@@ -38,9 +39,9 @@ namespace PharmacySystem.Validators
                     "Correo inválido")
             },
             {
-                "ValidatorRUC/CI", new RuleValidation(
-                    value => RUCValidator.ValidarIdentificacion(value.Trim()),
-                    "Número inválido, ingrese nuevamente")
+                "ValidateDocument", new RuleValidation(
+                    value => DocumentValidator.IsValid(value),
+                    "Documento inválido: use entre 3 y 20 letras, números, punto o guion")
             },
             {
                 "ValidateMaxLength", new RuleValidation(
