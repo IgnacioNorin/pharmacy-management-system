@@ -24,16 +24,22 @@ namespace PharmacySystem.Data
             {
                 try
                 {
-                    var parameters = new DynamicParameters();
-                    parameters.Add("code", obj.code);
-                    parameters.Add("name", obj.name);
-                    parameters.Add("description", obj.description);
-                    parameters.Add("category_id", obj.oCategory.IdCategory);
-                    parameters.Add("result", dbType: DbType.Int32, direction: ParameterDirection.Output);
+                    const string sql =
+                        "INSERT INTO product(code, name, description, category_id) " +
+                        "VALUES (@code, @name, @description, @category_id); " +
+                        "SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
-                    oConnection.Execute("sp_create_product", parameters, commandType: CommandType.StoredProcedure);
-
-                    return parameters.Get<int>("result");
+                    return oConnection.ExecuteScalar<int>(sql, new
+                    {
+                        code = obj.code,
+                        name = obj.name,
+                        description = obj.description,
+                        category_id = obj.oCategory.IdCategory
+                    });
+                }
+                catch (Exception ex) when (SqlErrorCodes.IsUniqueViolation(ex))
+                {
+                    return 0; // a product with that code already exists
                 }
                 catch (Exception ex)
                 {
@@ -49,17 +55,24 @@ namespace PharmacySystem.Data
             {
                 try
                 {
-                    var parameters = new DynamicParameters();
-                    parameters.Add("id_product", obj.idProduct);
-                    parameters.Add("code", obj.code);
-                    parameters.Add("name", obj.name);
-                    parameters.Add("description", obj.description);
-                    parameters.Add("category_id", obj.oCategory.IdCategory);
-                    parameters.Add("result", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+                    const string sql =
+                        "UPDATE product SET code = @code, name = @name, description = @description, " +
+                        "category_id = @category_id WHERE id = @id_product;";
 
-                    oConnection.Execute("sp_update_product", parameters, commandType: CommandType.StoredProcedure);
+                    oConnection.Execute(sql, new
+                    {
+                        id_product = obj.idProduct,
+                        code = obj.code,
+                        name = obj.name,
+                        description = obj.description,
+                        category_id = obj.oCategory.IdCategory
+                    });
 
-                    return parameters.Get<bool>("result");
+                    return true;
+                }
+                catch (Exception ex) when (SqlErrorCodes.IsUniqueViolation(ex))
+                {
+                    return false; // another product already uses that code
                 }
                 catch (Exception ex)
                 {

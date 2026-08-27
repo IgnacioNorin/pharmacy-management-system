@@ -563,60 +563,10 @@ BEGIN
 END
 GO
 
-CREATE PROC [dbo].[sp_create_person](
-@document VARCHAR(50),
-@name VARCHAR(50),
-@address VARCHAR(50),
-@phone VARCHAR(50),
-@password VARCHAR(255),
-@person_type_id INT,
-@result INT OUTPUT
-) AS
-BEGIN
-    SET @result = 0
-    IF NOT EXISTS (SELECT * FROM person WHERE document_number = @document)
-    BEGIN
-        INSERT INTO person(document_number,name,address,phone,password,person_type_id)
-        VALUES (@document,@name,@address,@phone,@password,@person_type_id)
-        SET @result = SCOPE_IDENTITY()
-    END
-END
-GO
-
-CREATE PROC [dbo].[sp_create_product](
-@code VARCHAR(50),
-@name VARCHAR(50),
-@description VARCHAR(500),
-@category_id INT,
-@result INT OUTPUT
-) AS
-BEGIN
-    SET @result = 0
-    IF NOT EXISTS (SELECT * FROM product WHERE code = @code)
-    BEGIN
-        INSERT INTO product(code,name,description,category_id) VALUES (@code,@name,@description,@category_id)
-        SET @result = SCOPE_IDENTITY()
-    END
-END
-GO
-
-CREATE PROCEDURE [dbo].[sp_create_supplier](
-@document VARCHAR(50),
-@company_name VARCHAR(50),
-@email VARCHAR(50),
-@phone VARCHAR(50),
-@result INT OUTPUT
-) AS
-BEGIN
-    SET @result = 0
-    IF NOT EXISTS (SELECT * FROM supplier WHERE document_number = @document)
-    BEGIN
-        INSERT INTO supplier(document_number, company_name, email, phone)
-        VALUES (@document,@company_name,@email,@phone)
-        SET @result = SCOPE_IDENTITY()
-    END
-END
-GO
+-- Note: sp_create_person / sp_create_product / sp_create_supplier and the plain
+-- sp_update_product / sp_update_supplier / sp_update_category were removed - their only job
+-- was a race-prone "IF NOT EXISTS" duplicate check that the UNIQUE indexes already enforce.
+-- The repositories now issue the INSERT/UPDATE directly and map error 2601/2627 to "duplicate".
 
 CREATE PROCEDURE [dbo].[sp_delete_category]
     @category_id INT,
@@ -775,21 +725,6 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE [dbo].[sp_update_category](
-@category_id INT,
-@description VARCHAR(50),
-@result BIT OUTPUT
-) AS
-BEGIN
-    SET @result = 1
-    -- Case-insensitive duplicate check, same criterion sp_create_category uses.
-    IF NOT EXISTS (SELECT * FROM category WHERE UPPER(description) = UPPER(@description) AND id != @category_id)
-        UPDATE category SET description = @description WHERE id = @category_id
-    ELSE
-        SET @result = 0
-END
-GO
-
 CREATE PROCEDURE [dbo].[sp_update_notificacion_settings](
 @critical_stock INT,
 @notify_day INT,
@@ -837,50 +772,6 @@ BEGIN
         WHERE id = @id_person;
         SET @result = 1;
     END
-END
-GO
-
-CREATE PROCEDURE [dbo].[sp_update_product](
-@id_product INT,
-@code VARCHAR(50),
-@name VARCHAR(50),
-@description VARCHAR(500),
-@category_id INT,
-@result BIT OUTPUT
-) AS
-BEGIN
-    SET @result = 1
-    IF NOT EXISTS (SELECT * FROM product WHERE code = @code AND id != @id_product)
-        UPDATE product SET
-            code = @code,
-            name = @name,
-            description = @description,
-            category_id = @category_id
-        WHERE id = @id_product
-    ELSE
-        SET @result = 0
-END
-GO
-
-CREATE PROCEDURE [dbo].[sp_update_supplier](
-@id_supplier INT,
-@document VARCHAR(50),
-@company_name VARCHAR(50),
-@email VARCHAR(50),
-@phone VARCHAR(50),
-@result BIT OUTPUT
-) AS
-BEGIN
-    SET @result = 1
-    IF NOT EXISTS (SELECT * FROM supplier WHERE document_number = @document AND id != @id_supplier)
-        UPDATE supplier SET
-            document_number = @document,
-            company_name = @company_name,
-            email = @email,
-            phone = @phone
-        WHERE id = @id_supplier
-    ELSE
-        SET @result = 0
 END
 GO
 

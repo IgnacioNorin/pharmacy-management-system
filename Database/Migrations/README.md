@@ -23,6 +23,7 @@
 | `003_role_admin.sql` | 1.2.0 | 1.2.0 (procedimientos de la pantalla de roles) |
 | `004_report_permissions.sql` | 1.2.0 | 1.2.0 (`permission.parent_code` + reportes por tipo: acceso / ver / exportar) |
 | `005_protect_admin_general.sql` | 1.2.0 | 1.2.0 (no se puede eliminar ni degradar al último Administrador General) |
+| `006_drop_redundant_sps.sql` | 1.2.0 | 1.2.0 (elimina 6 SPs de alta/edición redundantes con los índices únicos) |
 
 ## Si un paso falla por datos preexistentes
 

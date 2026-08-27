@@ -41,6 +41,17 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
     `005_protect_admin_general.sql`. Tras aplicarlas el comportamiento es
     idéntico al de la 1.1.0 hasta que un administrador edite un rol.
 
+### Interno
+
+- Se quitó la referencia muerta a Entity Framework 6 del proyecto WinForms
+  (no se usaba y hacía fallar el build en un clon sin la carpeta `packages`).
+- Se eliminaron seis procedimientos almacenados de alta/edición
+  (`sp_create_person` / `_product` / `_supplier`, `sp_update_product` /
+  `_supplier` / `_category`): solo hacían un chequeo de duplicado con
+  `IF NOT EXISTS` que ya cubren los índices únicos. Los repositorios ahora
+  ejecutan el `INSERT` / `UPDATE` directo y mapean el error 2601/2627 a
+  "duplicado". Migración `006_drop_redundant_sps.sql`.
+
 ## [1.1.0]
 
 ### Corregido

@@ -31,18 +31,25 @@ namespace PharmacySystem.Data
             {
                 try
                 {
-                    var parameters = new DynamicParameters();
-                    parameters.Add("document", person.document);
-                    parameters.Add("name", person.name);
-                    parameters.Add("address", person.address);
-                    parameters.Add("phone", person.phone);
-                    parameters.Add("password", person.password);
-                    parameters.Add("person_type_id", person.oPersonType.idPersonType);
-                    parameters.Add("result", dbType: DbType.Int32, direction: ParameterDirection.Output);
+                    const string sql =
+                        "INSERT INTO person(document_number, name, address, phone, password, person_type_id) " +
+                        "VALUES (@document, @name, @address, @phone, @password, @person_type_id);";
 
-                    oConnection.Execute("sp_create_person", parameters, commandType: CommandType.StoredProcedure);
+                    oConnection.Execute(sql, new
+                    {
+                        document = person.document,
+                        name = person.name,
+                        address = person.address,
+                        phone = person.phone,
+                        password = person.password,
+                        person_type_id = person.oPersonType.idPersonType
+                    });
 
-                    return Convert.ToBoolean(parameters.Get<int>("result"));
+                    return true;
+                }
+                catch (Exception ex) when (SqlErrorCodes.IsUniqueViolation(ex))
+                {
+                    return false; // a person with that document already exists
                 }
                 catch (Exception ex)
                 {
