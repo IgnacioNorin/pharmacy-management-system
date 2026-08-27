@@ -9,10 +9,12 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 - **Permisos por rol.** El acceso deja de estar fijo por rol: cada permiso
   (`seccion.accion`, 23 en total) se puede asignar o quitar de un rol, y se
   pueden crear roles nuevos además de los cuatro de siempre.
-  - Nueva pantalla **Roles y permisos** (barra lateral → Gestión): checklist
-    de permisos por rol, alta / renombrar / eliminar de roles personalizados.
-    Los cuatro roles del sistema se pueden re-permisar pero no renombrar ni
-    eliminar; un rol con usuarios asignados no se puede eliminar.
+  - Nueva pantalla **Roles y permisos** (barra lateral → Gestión, solo la abre
+    quien tiene `roles.gestionar`, que de fábrica es únicamente el
+    Administrador General): checklist de permisos por rol, alta / renombrar /
+    eliminar de roles personalizados. Los cuatro roles del sistema se pueden
+    re-permisar pero no renombrar ni eliminar; un rol con usuarios asignados
+    no se puede eliminar.
   - La barra lateral y las pestañas de Gestión se muestran según los permisos
     del usuario. Cada acción sensible (crear/editar/eliminar en cada sección,
     editar la tienda, configurar alertas, exportar reportes, reconocer/silenciar
