@@ -186,8 +186,8 @@ namespace PharmacySystem
             // Fill-docked BEFORE pnlSidebarBottom is added below with Dock=Bottom, so the bottom
             // block claims its fixed strip and this one takes whatever remains above it. Its
             // children are positioned by MainForm.LayoutSidebarItems() at runtime, skipping
-            // whichever are hidden for the current role - not a fixed Designer layout, since which
-            // items show depends on SetAdministrativeMenusVisible.
+            // whichever are hidden for the current user - not a fixed Designer layout, since which
+            // items show depends on ApplySidebarPermissions.
             this.pnlSidebarItems.Controls.Add(this.btnAlerts);
             this.pnlSidebarItems.Controls.Add(this.btnReports);
             this.pnlSidebarItems.Controls.Add(this.lblGroupConsulta);

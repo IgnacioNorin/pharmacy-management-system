@@ -163,12 +163,32 @@ namespace PharmacySystem
             cbosearchproduct.SelectedIndex = 0;
             #endregion
 
-            _categoryPresenter.OnLoad();
-            _productPresenter.OnLoad();
+            // Each tab is shown only if the user's role grants access to that section; a tab the
+            // user cannot use is removed rather than left disabled.
+            bool canCategories = CanSee("categorias.acceso");
+            bool canProducts = CanSee("productos.acceso");
 
-            // Only Administrador General can see/edit the store's own name, tax data and
-            // currency - the regular Administrador keeps every other tab.
-            if (MainForm.oPerson.oPersonType.idPersonType == (int)PersonType.AdministradorGeneral)
+            // The category list also backs the product form's category combo, so load it whenever
+            // either tab is going to be shown.
+            if (canCategories || canProducts)
+            {
+                _categoryPresenter.OnLoad();
+            }
+            if (!canCategories)
+            {
+                tabManagement.TabPages.Remove(tabCategory);
+            }
+
+            if (canProducts)
+            {
+                _productPresenter.OnLoad();
+            }
+            else
+            {
+                tabManagement.TabPages.Remove(tabProduct);
+            }
+
+            if (CanSee("tienda.acceso"))
             {
                 _storePresenter.OnLoad();
             }
@@ -177,6 +197,10 @@ namespace PharmacySystem
                 tabManagement.TabPages.Remove(tabStore);
             }
         }
+
+        // Falls back to allowed when there is no session (e.g. the form-construction smoke test),
+        // which never reaches this code path in the real app.
+        private static bool CanSee(string permission) => MainForm.Session?.Can(permission) ?? true;
 
         #region ICategoryManagementView
 

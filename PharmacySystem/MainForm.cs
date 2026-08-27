@@ -12,6 +12,9 @@ namespace PharmacySystem
 {
     public partial class MainForm : Form, IMainFormView
     {
+        // The signed-in user and their resolved permission set. Child forms still read oPerson
+        // for the person id; anything gating on permissions uses Session.
+        public static CurrentUser Session;
         public static Person oPerson;
 
         private readonly MainFormPresenter _presenter;
@@ -25,17 +28,21 @@ namespace PharmacySystem
             btnClients, btnUsers, btnReports, btnAlerts
         };
 
-        public MainForm(Person obj = null)
+        public MainForm(CurrentUser session = null)
         {
             InitializeComponent();
-            oPerson = obj;
+            Session = session;
+            oPerson = session?.Person;
             _presenter = CompositionRoot.CreateMainFormPresenter(this);
             InventoryChangeNotifier.StockChanged += OnInventoryChangedElsewhere;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            _presenter.OnLoad(oPerson);
+            if (Session != null)
+            {
+                _presenter.OnLoad(Session);
+            }
 
             timerNotification.Start();
             // Safety net only - a sale or purchase now triggers an immediate recheck via
@@ -64,16 +71,20 @@ namespace PharmacySystem
             lblUserRole.Text = role;
         }
 
-        public void SetAdministrativeMenusVisible(bool visible)
+        public void ApplySidebarPermissions(SidebarPermissions p)
         {
-            btnUsers.Visible = visible;
-            btnManagement.Visible = visible;
-            btnSuppliers.Visible = visible;
-            btnReports.Visible = visible;
-            btnPurchases.Visible = visible;
+            btnSales.Visible = p.Sales;
+            btnPurchases.Visible = p.Purchases;
+            btnClients.Visible = p.Clients;
+            btnSuppliers.Visible = p.Suppliers;
+            btnManagement.Visible = p.Management;
+            btnUsers.Visible = p.Users;
+            btnReports.Visible = p.Reports;
+            btnAlerts.Visible = p.Alerts;
+            if (!p.Alerts) lblAlertBadge.Visible = false;
 
             // Hiding/showing items above changes which sidebar rows should butt up against each
-            // other - re-stack everything below the highest hidden row.
+            // other - re-stack everything (and hide a group header whose items are all hidden).
             LayoutSidebarItems();
         }
 
@@ -88,15 +99,15 @@ namespace PharmacySystem
             int y = 14;
 
             y = PlaceItem(btnHome, y, itemGap);
-            y = PlaceHeader(lblGroupOperacion, y, headerGapBefore, itemGap);
+            y = PlaceGroupHeader(lblGroupOperacion, y, headerGapBefore, itemGap, btnSales, btnPurchases);
             y = PlaceItem(btnSales, y, itemGap);
             y = PlaceItem(btnPurchases, y, itemGap);
-            y = PlaceHeader(lblGroupGestion, y, headerGapBefore, itemGap);
+            y = PlaceGroupHeader(lblGroupGestion, y, headerGapBefore, itemGap, btnManagement, btnSuppliers, btnClients, btnUsers);
             y = PlaceItem(btnManagement, y, itemGap);
             y = PlaceItem(btnSuppliers, y, itemGap);
             y = PlaceItem(btnClients, y, itemGap);
             y = PlaceItem(btnUsers, y, itemGap);
-            y = PlaceHeader(lblGroupConsulta, y, headerGapBefore, itemGap);
+            y = PlaceGroupHeader(lblGroupConsulta, y, headerGapBefore, itemGap, btnReports, btnAlerts);
             y = PlaceItem(btnReports, y, itemGap);
             PlaceItem(btnAlerts, y, itemGap);
         }
@@ -108,8 +119,14 @@ namespace PharmacySystem
             return y + control.Height + gap;
         }
 
-        private static int PlaceHeader(Control header, int y, int gapBefore, int gapAfter)
+        // Hides the group header when every item in the group is hidden (a custom role can now
+        // leave a whole group with nothing in it), otherwise places it like before.
+        private static int PlaceGroupHeader(Control header, int y, int gapBefore, int gapAfter, params Control[] items)
         {
+            bool anyVisible = items.Any(c => c.Visible);
+            header.Visible = anyVisible;
+            if (!anyVisible) return y;
+
             header.Top = y + gapBefore;
             return header.Top + header.Height + gapAfter;
         }
@@ -132,7 +149,8 @@ namespace PharmacySystem
             int unmutedCount = alerts.Count(a => a.MutedAt == null);
 
             lblAlertBadge.Text = unmutedCount > 99 ? "99+" : unmutedCount.ToString();
-            lblAlertBadge.Visible = unmutedCount > 0;
+            // No badge for a user whose role can't open the notification center.
+            lblAlertBadge.Visible = btnAlerts.Visible && unmutedCount > 0;
         }
 
         // The query now hits an indexed, server-filtered SELECT (Fase 1), but it still crosses the

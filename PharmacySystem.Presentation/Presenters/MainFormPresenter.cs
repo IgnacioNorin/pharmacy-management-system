@@ -21,14 +21,26 @@ namespace PharmacySystem.Presentation
             _notificationService = notificationService;
         }
 
-        public void OnLoad(Person person)
+        public void OnLoad(CurrentUser user)
         {
             Store store = _storeService.ListStore();
             CultureInfoHelper.SetCurrency(store?.currencyCulture);
 
-            _view.SetUserName(person.name, person.oPersonType.description);
-            // Anyone who isn't Empleado (both admin tiers) sees the admin sections.
-            _view.SetAdministrativeMenusVisible(person.oPersonType.idPersonType != (int)PersonType.Empleado);
+            _view.SetUserName(user.Person.name, user.Person.oPersonType?.description);
+
+            // Sidebar visibility is driven by permissions now, not by the role. Gestión is a
+            // container for three tabs, so its button shows if the user can reach any of them.
+            _view.ApplySidebarPermissions(new SidebarPermissions
+            {
+                Sales      = user.Can("ventas.acceso"),
+                Purchases  = user.Can("compras.acceso"),
+                Clients    = user.Can("clientes.acceso"),
+                Suppliers  = user.Can("proveedores.acceso"),
+                Management = user.Can("productos.acceso") || user.Can("categorias.acceso") || user.Can("tienda.acceso"),
+                Users      = user.Can("usuarios.acceso"),
+                Reports    = user.Can("reportes.acceso"),
+                Alerts     = user.Can("alertas.acceso")
+            });
         }
 
         public void RefreshAlerts()
