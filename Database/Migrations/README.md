@@ -22,6 +22,7 @@
 | `002_user_permissions.sql` | 1.1.0 | 1.2.0 (tablas de permisos + roles) |
 | `003_role_admin.sql` | 1.2.0 | 1.2.0 (procedimientos de la pantalla de roles) |
 | `004_report_permissions.sql` | 1.2.0 | 1.2.0 (`permission.parent_code` + reportes por tipo: acceso / ver / exportar) |
+| `005_protect_admin_general.sql` | 1.2.0 | 1.2.0 (no se puede eliminar ni degradar al último Administrador General) |
 
 ## Si un paso falla por datos preexistentes
 

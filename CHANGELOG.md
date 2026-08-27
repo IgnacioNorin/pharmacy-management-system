@@ -31,10 +31,15 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
     ventana principal validan el permiso antes de abrir la sección.
   - El combo de rol en la pantalla de Usuarios se arma desde `person_type`, así
     que muestra también los roles personalizados.
+  - **Rol Administrador General protegido.** Un usuario que no es Administrador
+    General no puede crear, editar, eliminar ni asignar ese rol, y nadie puede
+    eliminar ni degradar al último Administrador General activo (dejaría el
+    sistema sin quien administre roles y tienda). Se valida en el presenter de
+    Usuarios y en `sp_delete_person` / `sp_update_person`.
   - Migraciones `Database/Migrations/002_user_permissions.sql`,
-    `003_role_admin.sql` y `004_report_permissions.sql`. Tras aplicarlas el
-    comportamiento es idéntico al de la 1.1.0 hasta que un administrador edite
-    un rol.
+    `003_role_admin.sql`, `004_report_permissions.sql` y
+    `005_protect_admin_general.sql`. Tras aplicarlas el comportamiento es
+    idéntico al de la 1.1.0 hasta que un administrador edite un rol.
 
 ## [1.1.0]
 

@@ -138,5 +138,87 @@ namespace PharmacySystem.Tests.Integration
         {
             Assert.Null(Repository.GetByDocument(SqlTestHelper.NewTag()));
         }
+
+        // --- Administrador General protection (migration 005) ---
+        // The seeded account id 1 is an active Administrador General; these tests either lean on
+        // it as a second active one, or deactivate it inside a try/finally to isolate the case.
+
+        private static int InsertAdminGeneral(string document)
+        {
+            SqlTestHelper.ExecuteNonQuery(
+                "INSERT INTO person(document_number, name, person_type_id, status) VALUES (@d, 'AG test', 1, 1)",
+                new SqlParameter("@d", document));
+            return SqlTestHelper.ExecuteScalarInt(
+                "SELECT id FROM person WHERE document_number = @d", new SqlParameter("@d", document));
+        }
+
+        [Fact]
+        public void Delete_AdminGeneral_NotTheLastActiveOne_Succeeds()
+        {
+            string document = SqlTestHelper.NewTag();
+            int id = InsertAdminGeneral(document);
+
+            try
+            {
+                Assert.True(Repository.Delete(id)); // seeded id 1 is still an active Administrador General
+                Assert.Null(Repository.GetByDocument(document));
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @d", new SqlParameter("@d", document));
+            }
+        }
+
+        [Fact]
+        public void Delete_LastActiveAdminGeneral_IsRejected()
+        {
+            string document = SqlTestHelper.NewTag();
+            int id = InsertAdminGeneral(document);
+            SqlTestHelper.ExecuteNonQuery("UPDATE person SET status = 0 WHERE id = 1");
+
+            try
+            {
+                Assert.False(Repository.Delete(id));
+
+                Person still = Repository.GetByDocument(document);
+                Assert.NotNull(still);
+                Assert.True(still.Estado);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("UPDATE person SET status = 1 WHERE id = 1");
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @d", new SqlParameter("@d", document));
+            }
+        }
+
+        [Fact]
+        public void Update_DemotingLastActiveAdminGeneral_IsRejected()
+        {
+            string document = SqlTestHelper.NewTag();
+            int id = InsertAdminGeneral(document);
+            SqlTestHelper.ExecuteNonQuery("UPDATE person SET status = 0 WHERE id = 1");
+
+            try
+            {
+                bool result = Repository.Update(new Person
+                {
+                    idPerson = id,
+                    document = document,
+                    name = "AG test",
+                    address = "",
+                    phone = "",
+                    password = "keep",
+                    oPersonType = new TypePerson { idPersonType = 2 } // demote to Administrador
+                });
+
+                Assert.False(result);
+                Assert.Equal(1, Repository.GetByDocument(document).oPersonType.idPersonType);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("UPDATE person SET status = 1 WHERE id = 1");
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @d", new SqlParameter("@d", document));
+            }
+        }
     }
 }
