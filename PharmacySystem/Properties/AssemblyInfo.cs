@@ -19,6 +19,10 @@ using System.Runtime.InteropServices;
 // COM, establezca el atributo ComVisible en true en este tipo.
 [assembly: ComVisible(false)]
 
+// The UI test project exercises a few view-side helpers (e.g. frmHome.ResolveAccess) that are
+// internal to the application assembly.
+[assembly: InternalsVisibleTo("PharmacySystem.UiTests")]
+
 // El siguiente GUID sirve como id. de typelib si este proyecto se expone a COM.
 [assembly: Guid("fa1b9ac9-71cc-4293-8fb1-a1147f8c8efe")]
 

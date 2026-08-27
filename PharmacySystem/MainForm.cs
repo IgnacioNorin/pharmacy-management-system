@@ -165,9 +165,14 @@ namespace PharmacySystem
         // frmManagement's existing search, instead of leaving the user to find it manually.
         private void OpenAlertsCenter(object sender, EventArgs e)
         {
+            if (!CanNavigate("alertas.acceso")) return;
+
             using (var modal = new ModalAlerts(_currentAlerts, CompositionRoot.NotificationConfigService, oPerson.idPerson))
             {
-                if (modal.ShowDialog(this) == DialogResult.OK && !string.IsNullOrEmpty(modal.SelectedProductCode))
+                // The click-through opens the Producto tab in frmManagement; skip it for a role
+                // that can see alerts but not the products section (that tab is not loaded).
+                bool canOpenProduct = Session?.Can("productos.acceso") ?? true;
+                if (modal.ShowDialog(this) == DialogResult.OK && canOpenProduct && !string.IsNullOrEmpty(modal.SelectedProductCode))
                 {
                     frmManagement childForm = new frmManagement();
                     ShowForm(childForm, btnManagement);
@@ -197,8 +202,16 @@ namespace PharmacySystem
             ShowForm(childForm, btnHome);
         }
 
+        // Navigation gate. The sidebar already hides what the role cannot reach, but frmHome's
+        // quick-access buttons call these same handlers through callbacks - this keeps a hidden
+        // destination unreachable even if something triggers its handler. Open when there is no
+        // session (design time / tests).
+        private static bool CanNavigate(string permission) => Session?.Can(permission) ?? true;
+
         private void btnClients_Click(object sender, EventArgs e)
         {
+            if (!CanNavigate("clientes.acceso")) return;
+
             frmClient childForm = new frmClient();
 
             ShowForm(childForm, sender);
@@ -206,6 +219,8 @@ namespace PharmacySystem
 
         private void btnSuppliers_Click(object sender, EventArgs e)
         {
+            if (!CanNavigate("proveedores.acceso")) return;
+
             frmSupplier childForm = new frmSupplier();
 
             ShowForm(childForm, sender);
@@ -213,6 +228,11 @@ namespace PharmacySystem
 
         private void btnManagement_Click(object sender, EventArgs e)
         {
+            if (!(CanNavigate("productos.acceso") || CanNavigate("categorias.acceso") || CanNavigate("tienda.acceso")))
+            {
+                return;
+            }
+
             frmManagement childForm = new frmManagement();
 
             ShowForm(childForm, sender);
@@ -220,6 +240,8 @@ namespace PharmacySystem
 
         private void btnPurchases_Click(object sender, EventArgs e)
         {
+            if (!CanNavigate("compras.acceso")) return;
+
             frmPurchase childForm = new frmPurchase(oPerson.idPerson);
 
             ShowForm(childForm, sender);
@@ -227,6 +249,8 @@ namespace PharmacySystem
 
         private void btnSales_Click(object sender, EventArgs e)
         {
+            if (!CanNavigate("ventas.acceso")) return;
+
             frmSale childForm = new frmSale(oPerson.idPerson);
 
             ShowForm(childForm, sender);
@@ -234,6 +258,8 @@ namespace PharmacySystem
 
         private void btnUsers_Click(object sender, EventArgs e)
         {
+            if (!CanNavigate("usuarios.acceso")) return;
+
             frmUser childForm = new frmUser();
 
             ShowForm(childForm, sender);
@@ -241,6 +267,8 @@ namespace PharmacySystem
 
         private void btnRoles_Click(object sender, EventArgs e)
         {
+            if (!CanNavigate("roles.gestionar")) return;
+
             frmRoles childForm = new frmRoles();
 
             ShowForm(childForm, sender);
@@ -248,6 +276,8 @@ namespace PharmacySystem
 
         private void btnReports_Click(object sender, EventArgs e)
         {
+            if (!CanNavigate("reportes.acceso")) return;
+
             frmReport childForm = new frmReport();
 
             ShowForm(childForm, sender);
