@@ -113,12 +113,16 @@ CREATE TABLE [dbo].[person_type](
 )
 GO
 
--- Flat catalogue of permissions, seeded by the app and not edited by users.
+-- Catalogue of permissions, seeded by the app and not edited by users. parent_code gives the
+-- two-level shape the roles admin screen renders: a section root (parent_code IS NULL, code
+-- '<section>.acceso') with its inner permissions underneath, and the report "exportar" leaves
+-- hanging off their "ver" permission.
 CREATE TABLE [dbo].[permission](
     [id] [int] IDENTITY(1,1) NOT NULL,
     [code] [varchar](60) NOT NULL,
     [section] [varchar](30) NOT NULL,
     [description] [varchar](150) NOT NULL,
+    [parent_code] [varchar](60) NULL,
     CONSTRAINT [PK_permission] PRIMARY KEY CLUSTERED ([id] ASC),
     CONSTRAINT [UX_permission_code] UNIQUE ([code])
 )
@@ -455,31 +459,39 @@ GO
 INSERT INTO [dbo].[person_type] (id, description, status, date_created, is_system) VALUES (4, 'Cliente', 1, GETDATE(), 1)
 GO
 
--- Permission catalogue (section.action). '<section>.acceso' gates entering the section.
-INSERT INTO [dbo].[permission] (code, section, description) VALUES
-    ('ventas.acceso',          'ventas',      'Usar el punto de venta'),
-    ('compras.acceso',         'compras',     'Registrar compras a proveedores'),
-    ('clientes.acceso',        'clientes',    'Ver la seccion de clientes'),
-    ('clientes.gestionar',     'clientes',    'Crear, editar y eliminar clientes'),
-    ('proveedores.acceso',     'proveedores', 'Ver la seccion de proveedores'),
-    ('proveedores.gestionar',  'proveedores', 'Crear, editar y eliminar proveedores'),
-    ('productos.acceso',       'productos',   'Ver la seccion de productos'),
-    ('productos.gestionar',    'productos',   'Crear y editar productos'),
-    ('productos.editar_precios','productos',  'Modificar precios de compra y de venta'),
-    ('productos.eliminar',     'productos',   'Eliminar o dar de baja productos'),
-    ('categorias.acceso',      'categorias',  'Ver la seccion de categorias'),
-    ('categorias.gestionar',   'categorias',  'Crear, editar y eliminar categorias'),
-    ('tienda.acceso',          'tienda',      'Ver los datos de la tienda'),
-    ('tienda.editar',          'tienda',      'Modificar nombre, datos fiscales y moneda'),
-    ('usuarios.acceso',        'usuarios',    'Ver la seccion de usuarios'),
-    ('usuarios.gestionar',     'usuarios',    'Crear, editar y eliminar usuarios'),
-    ('roles.gestionar',        'usuarios',    'Administrar roles y sus permisos'),
-    ('reportes.acceso',        'reportes',    'Ver reportes'),
-    ('reportes.exportar',      'reportes',    'Exportar reportes a Excel'),
-    ('alertas.acceso',         'alertas',     'Ver el centro de notificaciones'),
-    ('alertas.reconocer',      'alertas',     'Reconocer alertas de inventario'),
-    ('alertas.silenciar',      'alertas',     'Silenciar alertas puntuales'),
-    ('alertas.configurar',     'alertas',     'Cambiar los umbrales de alerta')
+-- Permission catalogue (section.action). Each section has a '<section>.acceso' root
+-- (parent_code IS NULL); the rest hang off it, and each report "exportar" hangs off its "ver".
+INSERT INTO [dbo].[permission] (code, section, description, parent_code) VALUES
+    ('ventas.acceso',           'ventas',      'Usar el punto de venta',                   NULL),
+    ('compras.acceso',          'compras',     'Registrar compras a proveedores',          NULL),
+    ('clientes.acceso',         'clientes',    'Ver la seccion de clientes',               NULL),
+    ('clientes.gestionar',      'clientes',    'Crear, editar y eliminar clientes',        'clientes.acceso'),
+    ('proveedores.acceso',      'proveedores', 'Ver la seccion de proveedores',            NULL),
+    ('proveedores.gestionar',   'proveedores', 'Crear, editar y eliminar proveedores',     'proveedores.acceso'),
+    ('productos.acceso',        'productos',   'Ver la seccion de productos',              NULL),
+    ('productos.gestionar',     'productos',   'Crear y editar productos',                 'productos.acceso'),
+    ('productos.editar_precios','productos',   'Modificar precios de compra y de venta',   'productos.acceso'),
+    ('productos.eliminar',      'productos',   'Eliminar o dar de baja productos',         'productos.acceso'),
+    ('categorias.acceso',       'categorias',  'Ver la seccion de categorias',            NULL),
+    ('categorias.gestionar',    'categorias',  'Crear, editar y eliminar categorias',      'categorias.acceso'),
+    ('tienda.acceso',           'tienda',      'Ver los datos de la tienda',               NULL),
+    ('tienda.editar',           'tienda',      'Modificar nombre, datos fiscales y moneda','tienda.acceso'),
+    ('usuarios.acceso',         'usuarios',    'Ver la seccion de usuarios',               NULL),
+    ('usuarios.gestionar',      'usuarios',    'Crear, editar y eliminar usuarios',        'usuarios.acceso'),
+    ('roles.gestionar',         'usuarios',    'Administrar roles y sus permisos',         'usuarios.acceso'),
+    ('reportes.acceso',            'reportes', 'Abrir la seccion de reportes',             NULL),
+    ('reportes.ventas',            'reportes', 'Ver el reporte de ventas',                 'reportes.acceso'),
+    ('reportes.ventas.exportar',   'reportes', 'Exportar el reporte de ventas',            'reportes.ventas'),
+    ('reportes.compras',           'reportes', 'Ver el reporte de compras',                'reportes.acceso'),
+    ('reportes.compras.exportar',  'reportes', 'Exportar el reporte de compras',           'reportes.compras'),
+    ('reportes.productos',         'reportes', 'Ver el reporte de productos',              'reportes.acceso'),
+    ('reportes.productos.exportar','reportes', 'Exportar el reporte de productos',         'reportes.productos'),
+    ('reportes.alertas',           'reportes', 'Ver el historial de alertas',              'reportes.acceso'),
+    ('reportes.alertas.exportar',  'reportes', 'Exportar el historial de alertas',         'reportes.alertas'),
+    ('alertas.acceso',          'alertas',     'Ver el centro de notificaciones',          NULL),
+    ('alertas.reconocer',       'alertas',     'Reconocer alertas de inventario',          'alertas.acceso'),
+    ('alertas.silenciar',       'alertas',     'Silenciar alertas puntuales',              'alertas.acceso'),
+    ('alertas.configurar',      'alertas',     'Cambiar los umbrales de alerta',           'alertas.acceso')
 GO
 
 -- Seed role_permission so the four built-in roles behave exactly as before this feature:

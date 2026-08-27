@@ -24,8 +24,35 @@ namespace PharmacySystem.Tests.Presentation
             var purchases = new FakePurchaseService();
             var products = new FakeProductService();
             var notifications = new FakeNotificationConfigService();
-            var presenter = new ReportPresenter(view, suppliers, categories, sales, purchases, products, notifications);
+            var presenter = new ReportPresenter(view, suppliers, categories, sales, purchases, products, notifications,
+                TestUser.With("reportes.ventas", "reportes.compras", "reportes.productos", "reportes.alertas"));
             return (presenter, view, suppliers, categories, sales, purchases, products, notifications);
+        }
+
+        private static ReportPresenter PresenterFor(FakeReportView view, params string[] permissions) =>
+            new ReportPresenter(view, new FakeSupplierService(), new FakeCategoryService(), new FakeSaleService(),
+                new FakePurchaseService(), new FakeProductService(), new FakeNotificationConfigService(),
+                TestUser.With(permissions));
+
+        [Fact]
+        public void OnConsult_WithoutTheMatchingReportPermission_ProducesNothing()
+        {
+            var view = new FakeReportView();
+
+            // A role that can see only the purchases report.
+            var presenter = PresenterFor(view, "reportes.compras");
+
+            presenter.OnConsultSale();
+            presenter.OnConsultProduct();
+            presenter.OnConsultAlertHistory();
+
+            Assert.Null(view.SaleReport);
+            Assert.Null(view.ProductReport);
+            Assert.Null(view.AlertHistoryReport);
+
+            // The one it is allowed to run still works.
+            presenter.OnConsultPurchase();
+            Assert.NotNull(view.PurchaseReport);
         }
 
         [Fact]

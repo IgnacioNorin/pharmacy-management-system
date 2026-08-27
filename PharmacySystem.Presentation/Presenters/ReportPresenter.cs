@@ -23,6 +23,7 @@ namespace PharmacySystem.Presentation
         private readonly IPurchaseService _purchaseService;
         private readonly IProductService _productService;
         private readonly INotificationConfigService _notificationConfigService;
+        private readonly CurrentUser _currentUser;
 
         public ReportPresenter(
             IReportView view,
@@ -31,7 +32,8 @@ namespace PharmacySystem.Presentation
             ISaleService saleService,
             IPurchaseService purchaseService,
             IProductService productService,
-            INotificationConfigService notificationConfigService)
+            INotificationConfigService notificationConfigService,
+            CurrentUser currentUser)
         {
             _view = view;
             _supplierService = supplierService;
@@ -40,7 +42,12 @@ namespace PharmacySystem.Presentation
             _purchaseService = purchaseService;
             _productService = productService;
             _notificationConfigService = notificationConfigService;
+            _currentUser = currentUser;
         }
+
+        // Each report type has its own permission. frmReport already hides the tab a role cannot
+        // see; this is the fail-closed gate for the consult action behind it.
+        private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
 
         public void OnLoad()
         {
@@ -55,6 +62,8 @@ namespace PharmacySystem.Presentation
 
         public void OnConsultSale()
         {
+            if (!Can("reportes.ventas")) return;
+
             DateTime startDate = _view.SaleStartDate;
             DateTime endDate = _view.SaleEndDate;
 
@@ -101,6 +110,8 @@ namespace PharmacySystem.Presentation
 
         public void OnConsultPurchase()
         {
+            if (!Can("reportes.compras")) return;
+
             DateTime startDate = _view.PurchaseStartDate;
             DateTime endDate = _view.PurchaseEndDate;
             string supplierId = _view.SelectedSupplierId;
@@ -150,6 +161,8 @@ namespace PharmacySystem.Presentation
 
         public void OnConsultProduct()
         {
+            if (!Can("reportes.productos")) return;
+
             List<ProductReportRow> rows = _productService.Report(_view.SelectedCategoryId);
 
             DataTable dt = new DataTable();
@@ -187,6 +200,8 @@ namespace PharmacySystem.Presentation
         // pharmacy can answer "when was this flagged, and was it handled" on demand.
         public void OnConsultAlertHistory()
         {
+            if (!Can("reportes.alertas")) return;
+
             List<ProductAlertHistoryEntry> rows = _notificationConfigService.GetAlertHistory(
                 _view.AlertHistoryStartDate, _view.AlertHistoryEndDate);
 

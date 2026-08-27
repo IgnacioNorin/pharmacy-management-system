@@ -82,23 +82,37 @@ namespace PharmacySystem
 
         #endregion
 
+        // Falls back to allowed when there is no session (form-construction smoke test).
+        private static bool CanSee(string permission) => MainForm.Session?.Can(permission) ?? true;
+
         private void frmReport_Load(object sender, EventArgs e)
         {
             _presenter.OnLoad();
 
             ChangeMaxDate(txtstartdate, txtenddate, txtstartdatepurchase, txtenddatepurchase, txtstartdatealerthistory, txtenddatealerthistory);
 
-            // Consulting a report is covered by reportes.acceso (the sidebar button); exporting to
-            // Excel needs reportes.exportar on top of that.
-            bool canExport = MainForm.Session?.Can("reportes.exportar") ?? false;
-            btnExportSale.Enabled = canExport;
-            btnExportPurchases.Enabled = canExport;
-            btnExportProduct.Enabled = canExport;
-            btnExportAlertHistory.Enabled = canExport;
+            // Each report type has its own view permission: drop the tab the role cannot see, and
+            // enable its Excel export only with the matching "<tipo>.exportar" permission on top.
+            bool canSales = CanSee("reportes.ventas");
+            bool canPurchases = CanSee("reportes.compras");
+            bool canProducts = CanSee("reportes.productos");
+            bool canAlertHistory = CanSee("reportes.alertas");
+
+            if (!canSales) tabManagement.TabPages.Remove(tabProduct);
+            if (!canPurchases) tabManagement.TabPages.Remove(tabCategory);
+            if (!canProducts) tabManagement.TabPages.Remove(tabStore);
+            if (!canAlertHistory) tabManagement.TabPages.Remove(tabAlertHistory);
+
+            btnExportSale.Enabled = canSales && CanSee("reportes.ventas.exportar");
+            btnExportPurchases.Enabled = canPurchases && CanSee("reportes.compras.exportar");
+            btnExportProduct.Enabled = canProducts && CanSee("reportes.productos.exportar");
+            btnExportAlertHistory.Enabled = canAlertHistory && CanSee("reportes.alertas.exportar");
         }
 
         private void btnExportSale_Click(object sender, EventArgs e)
         {
+            if (!CanSee("reportes.ventas.exportar")) return;
+
             if (dgdatasale.Rows.Count > 0)
             {
                 SaveFileDialog savefile = new SaveFileDialog();
@@ -139,6 +153,8 @@ namespace PharmacySystem
 
         private void btnExportPurchases_Click(object sender, EventArgs e)
         {
+            if (!CanSee("reportes.compras.exportar")) return;
+
             if (dgdatapurchase.Rows.Count > 0)
             {
                 SaveFileDialog savefile = new SaveFileDialog();
@@ -173,6 +189,8 @@ namespace PharmacySystem
 
         private void btnExportProduct_Click(object sender, EventArgs e)
         {
+            if (!CanSee("reportes.productos.exportar")) return;
+
             if (dgdataproduct.Rows.Count > 0)
             {
                 SaveFileDialog savefile = new SaveFileDialog();
@@ -207,6 +225,8 @@ namespace PharmacySystem
 
         private void btnExportAlertHistory_Click(object sender, EventArgs e)
         {
+            if (!CanSee("reportes.alertas.exportar")) return;
+
             if (dgdataalerthistory.Rows.Count > 0)
             {
                 SaveFileDialog savefile = new SaveFileDialog();

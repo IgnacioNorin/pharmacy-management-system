@@ -68,6 +68,23 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
+        public void OnLoad_ReportsButton_FollowsReportesAcceso()
+        {
+            var view = new FakeMainFormView();
+            var presenter = CreatePresenter(view, new FakeStoreService { ListStoreResult = new Store() }, new FakeNotificationConfigService());
+
+            // A "reponedor" role: opens reports, but inside only sees purchases and products.
+            presenter.OnLoad(User("Reponedor", "Custom", "reportes.acceso", "reportes.compras", "reportes.productos"));
+            Assert.True(view.AppliedSidebarPermissions.Reports);
+
+            // Holding an inner report permission without reportes.acceso does not show the button.
+            var view2 = new FakeMainFormView();
+            CreatePresenter(view2, new FakeStoreService { ListStoreResult = new Store() }, new FakeNotificationConfigService())
+                .OnLoad(User("Sin acceso", "Custom", "reportes.compras"));
+            Assert.False(view2.AppliedSidebarPermissions.Reports);
+        }
+
+        [Fact]
         public void OnLoad_FullPermissions_ShowsEverySection()
         {
             var view = new FakeMainFormView();
@@ -76,7 +93,7 @@ namespace PharmacySystem.Tests.Presentation
             presenter.OnLoad(User("Admin", "Administrador General",
                 "ventas.acceso", "compras.acceso", "clientes.acceso", "proveedores.acceso",
                 "productos.acceso", "categorias.acceso", "tienda.acceso",
-                "usuarios.acceso", "roles.gestionar", "reportes.acceso", "alertas.acceso"));
+                "usuarios.acceso", "roles.gestionar", "alertas.acceso", "reportes.acceso"));
 
             var p = view.AppliedSidebarPermissions;
             Assert.True(p.Sales && p.Purchases && p.Clients && p.Suppliers && p.Management && p.Users && p.Roles && p.Reports && p.Alerts);

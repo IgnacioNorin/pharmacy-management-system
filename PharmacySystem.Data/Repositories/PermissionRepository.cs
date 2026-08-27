@@ -25,7 +25,7 @@ namespace PharmacySystem.Data
                 try
                 {
                     return oConnection.Query<Permission>(
-                        "SELECT id AS Id, code AS Code, section AS Section, description AS Description " +
+                        "SELECT id AS Id, code AS Code, section AS Section, description AS Description, parent_code AS ParentCode " +
                         "FROM permission ORDER BY section, code")
                         .ToList();
                 }

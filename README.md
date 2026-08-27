@@ -118,11 +118,16 @@ Desde línea de comandos, usando las herramientas de Visual Studio (no `dotnet t
 | Empleado | 3 | Solo Clientes, Ventas y Alertas. |
 | Cliente | 4 | No puede iniciar sesión en la aplicación (rol de datos únicamente). |
 
-Los permisos de cada rol son **configurables**. El acceso a cada sección y cada
-acción sensible (crear/editar/eliminar, editar la tienda, configurar alertas,
-exportar reportes, etc.) es un permiso que se asigna o quita por rol desde la
-pantalla **Roles y permisos** (barra lateral → Gestión, requiere el permiso
-`roles.gestionar`). Ahí también se crean roles nuevos. Los cuatro roles de la
+Los permisos de cada rol son **configurables**. Desde la pantalla
+**Roles y permisos** (barra lateral → Gestión, requiere el permiso
+`roles.gestionar`) se ven como un árbol: cada sección tiene su permiso de
+acceso y, debajo, los permisos internos (crear/editar/eliminar, editar la
+tienda, configurar alertas, etc.). Tildar un permiso interno marca también el
+acceso de su sección; destildar el acceso limpia los de adentro. Ahí también
+se crean roles nuevos. Los reportes van más fino: `reportes.acceso` abre la
+pantalla y adentro hay un permiso de ver y otro de exportar **por tipo**
+(ventas, compras, productos, historial de alertas), así un rol de reposición
+puede ver compras y productos sin ver ventas. Los cuatro roles de la
 tabla se pueden re-permisar pero no renombrar ni eliminar. La tabla de arriba es
 el acceso con el que quedan sembrados; se puede cambiar sin tocar código.
 

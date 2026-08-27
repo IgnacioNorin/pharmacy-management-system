@@ -14,8 +14,9 @@ namespace PharmacySystem.Tests.Presentation
             {
                 Catalogue = new List<Permission>
                 {
-                    new Permission { Id = 1, Code = "ventas.acceso", Section = "ventas", Description = "Vender" },
-                    new Permission { Id = 2, Code = "productos.eliminar", Section = "productos", Description = "Eliminar productos" }
+                    new Permission { Id = 1, Code = "ventas.acceso", Section = "ventas", Description = "Vender", ParentCode = null },
+                    new Permission { Id = 2, Code = "productos.acceso", Section = "productos", Description = "Ver productos", ParentCode = null },
+                    new Permission { Id = 3, Code = "productos.eliminar", Section = "productos", Description = "Eliminar productos", ParentCode = "productos.acceso" }
                 },
                 Roles = new List<TypePerson>
                 {
@@ -59,6 +60,36 @@ namespace PharmacySystem.Tests.Presentation
             Assert.False(view.ShownPermissions.Single(p => p.Id == 2).Checked);
             Assert.True(view.PermissionsEditable);
             Assert.Equal((true, true), view.RoleActionsEnabled);
+        }
+
+        [Fact]
+        public void OnRoleSelected_BuildsATreeWithSectionRootsAndNestedChildren()
+        {
+            var (presenter, view, _) = Create();
+            presenter.OnLoad();
+            view.SelectedRoleId = 100;
+
+            presenter.OnRoleSelected();
+
+            // Two section roots (ventas.acceso, productos.acceso); productos.eliminar sits under
+            // productos.acceso, not at the top level.
+            Assert.Equal(new[] { 1, 2 }, view.ShownPermissionRoots.Select(n => n.Id).ToArray());
+            PermissionNode productos = view.ShownPermissionRoots.Single(n => n.Id == 2);
+            Assert.Equal(new[] { 3 }, productos.Children.Select(c => c.Id).ToArray());
+        }
+
+        [Fact]
+        public void OnSavePermissions_ChildWithoutItsParent_StillSavesTheParent()
+        {
+            var (presenter, view, service) = Create();
+            presenter.OnLoad();
+            view.SelectedRoleId = 100;
+            view.CheckedPermissionIds = new List<int> { 3 }; // productos.eliminar only
+
+            presenter.OnSavePermissions();
+
+            // productos.acceso (2) is pulled in as the ancestor of productos.eliminar (3).
+            Assert.Equal(new[] { 2, 3 }, service.SavedRolePermissions.Value.Ids);
         }
 
         [Fact]

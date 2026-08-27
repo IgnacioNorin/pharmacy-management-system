@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using PharmacySystem.Business;
@@ -52,13 +53,7 @@ namespace PharmacySystem.Presentation
             }
 
             var granted = new HashSet<int>(_service.GetPermissionIdsForRole(roleId.Value));
-            _view.ShowRolePermissions(_catalogue.Select(p => new PermissionCheckItem
-            {
-                Id = p.Id,
-                Section = p.Section,
-                Description = p.Description,
-                Checked = granted.Contains(p.Id)
-            }));
+            _view.ShowRolePermissions(BuildTree(null, granted));
             _view.SetPermissionsEditable(true);
 
             bool isSystem = IsSystem(roleId.Value);
@@ -79,7 +74,11 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            _view.ShowMessage(_service.SaveRolePermissions(roleId.Value, _view.CheckedPermissionIds)
+            // Store a consistent set: a checked permission always drags its ancestors in, so a
+            // role can never end up with "ver ventas" but not "abrir reportes".
+            var toSave = ExpandAncestors(_view.CheckedPermissionIds);
+
+            _view.ShowMessage(_service.SaveRolePermissions(roleId.Value, toSave)
                 ? "Permisos guardados."
                 : "No se pudieron guardar los permisos.");
         }
@@ -194,11 +193,60 @@ namespace PharmacySystem.Presentation
 
         private void ClearPermissionPanel()
         {
-            _view.ShowRolePermissions(Enumerable.Empty<PermissionCheckItem>());
+            _view.ShowRolePermissions(Enumerable.Empty<PermissionNode>());
             _view.SetPermissionsEditable(false);
             _view.SetRoleActionsEnabled(false, false);
         }
 
         private bool IsSystem(int roleId) => _roles.Any(r => r.idPersonType == roleId && r.IsSystem);
+
+        // Builds the permission forest under parentCode (null = section roots), preserving the
+        // catalogue order the repository already returns.
+        private List<PermissionNode> BuildTree(string parentCode, HashSet<int> granted)
+        {
+            List<PermissionNode> nodes = new List<PermissionNode>();
+            foreach (Permission p in _catalogue.Where(p => IsChildOf(p, parentCode)))
+            {
+                PermissionNode node = new PermissionNode
+                {
+                    Id = p.Id,
+                    Description = p.Description,
+                    Checked = granted.Contains(p.Id)
+                };
+                node.Children.AddRange(BuildTree(p.Code, granted));
+                nodes.Add(node);
+            }
+            return nodes;
+        }
+
+        private static bool IsChildOf(Permission p, string parentCode) =>
+            string.IsNullOrEmpty(parentCode)
+                ? string.IsNullOrEmpty(p.ParentCode)
+                : string.Equals(p.ParentCode, parentCode, StringComparison.OrdinalIgnoreCase);
+
+        // Every checked id plus the id of each of its ancestors in the catalogue tree.
+        private IReadOnlyCollection<int> ExpandAncestors(IEnumerable<int> checkedIds)
+        {
+            Dictionary<int, Permission> byId = _catalogue.ToDictionary(p => p.Id);
+            Dictionary<string, Permission> byCode =
+                _catalogue.GroupBy(p => p.Code, StringComparer.OrdinalIgnoreCase)
+                          .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+            HashSet<int> result = new HashSet<int>(checkedIds ?? Enumerable.Empty<int>());
+            foreach (int id in result.ToList())
+            {
+                if (!byId.TryGetValue(id, out Permission current))
+                {
+                    continue;
+                }
+                string parent = current.ParentCode;
+                while (!string.IsNullOrEmpty(parent) && byCode.TryGetValue(parent, out Permission ancestor))
+                {
+                    result.Add(ancestor.Id);
+                    parent = ancestor.ParentCode;
+                }
+            }
+            return result.OrderBy(x => x).ToList();
+        }
     }
 }

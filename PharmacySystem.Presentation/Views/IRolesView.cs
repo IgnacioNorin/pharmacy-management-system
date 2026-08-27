@@ -11,7 +11,7 @@ namespace PharmacySystem.Presentation
         bool ConfirmDeleteRole();
 
         void LoadRoles(IEnumerable<RoleRow> roles);
-        void ShowRolePermissions(IEnumerable<PermissionCheckItem> permissions);
+        void ShowRolePermissions(IEnumerable<PermissionNode> permissionTree);
         void SetPermissionsEditable(bool editable);
         void SetRoleActionsEnabled(bool canRename, bool canDelete);
         void ClearRoleNameInput();

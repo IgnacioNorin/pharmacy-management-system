@@ -10,6 +10,7 @@ namespace PharmacySystem
     public partial class frmRoles : Form, IRolesView
     {
         private readonly RolesPresenter _presenter;
+        private bool _suppressAfterCheck;
 
         public frmRoles()
         {
@@ -26,7 +27,7 @@ namespace PharmacySystem
         public string RoleNameInput => txtRoleName.Text;
 
         public IReadOnlyCollection<int> CheckedPermissionIds =>
-            clbPermissions.CheckedItems.Cast<PermissionCheckItem>().Select(p => p.Id).ToList();
+            AllNodes(tvPermissions.Nodes).Where(n => n.Checked).Select(n => (int)n.Tag).ToList();
 
         public bool ConfirmDeleteRole() =>
             MessageBox.Show("¿Eliminar el rol seleccionado?", "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
@@ -42,18 +43,73 @@ namespace PharmacySystem
             lstRoles.SelectedIndexChanged += lstRoles_SelectedIndexChanged;
         }
 
-        public void ShowRolePermissions(IEnumerable<PermissionCheckItem> permissions)
+        public void ShowRolePermissions(IEnumerable<PermissionNode> permissionTree)
         {
-            clbPermissions.Items.Clear();
-            foreach (PermissionCheckItem permission in permissions)
+            _suppressAfterCheck = true;
+            tvPermissions.BeginUpdate();
+            tvPermissions.Nodes.Clear();
+            foreach (PermissionNode node in permissionTree)
             {
-                clbPermissions.Items.Add(permission, permission.Checked);
+                tvPermissions.Nodes.Add(ToTreeNode(node));
             }
+            tvPermissions.ExpandAll();
+            tvPermissions.EndUpdate();
+            _suppressAfterCheck = false;
+        }
+
+        private static TreeNode ToTreeNode(PermissionNode node)
+        {
+            TreeNode tn = new TreeNode(node.Description) { Tag = node.Id, Checked = node.Checked };
+            foreach (PermissionNode child in node.Children)
+            {
+                tn.Nodes.Add(ToTreeNode(child));
+            }
+            return tn;
+        }
+
+        private static IEnumerable<TreeNode> AllNodes(TreeNodeCollection nodes)
+        {
+            foreach (TreeNode node in nodes)
+            {
+                yield return node;
+                foreach (TreeNode child in AllNodes(node.Nodes))
+                {
+                    yield return child;
+                }
+            }
+        }
+
+        // Checking a node pulls in its ancestors; unchecking a node clears its descendants -
+        // "no child without its parent". _suppressAfterCheck guards the re-entrancy from setting
+        // Checked inside this handler (and from the initial ShowRolePermissions load).
+        private void tvPermissions_AfterCheck(object sender, TreeViewEventArgs e)
+        {
+            if (_suppressAfterCheck)
+            {
+                return;
+            }
+
+            _suppressAfterCheck = true;
+            if (e.Node.Checked)
+            {
+                for (TreeNode ancestor = e.Node.Parent; ancestor != null; ancestor = ancestor.Parent)
+                {
+                    ancestor.Checked = true;
+                }
+            }
+            else
+            {
+                foreach (TreeNode descendant in AllNodes(e.Node.Nodes))
+                {
+                    descendant.Checked = false;
+                }
+            }
+            _suppressAfterCheck = false;
         }
 
         public void SetPermissionsEditable(bool editable)
         {
-            clbPermissions.Enabled = editable;
+            tvPermissions.Enabled = editable;
             btnSavePermissions.Enabled = editable;
         }
 

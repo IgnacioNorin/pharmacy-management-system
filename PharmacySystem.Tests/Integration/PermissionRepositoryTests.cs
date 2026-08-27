@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using PharmacySystem.Data;
@@ -21,12 +22,33 @@ namespace PharmacySystem.Tests.Integration
         {
             var all = Repository.GetAll();
 
-            Assert.Equal(23, all.Count);
+            Assert.Equal(30, all.Count);
             Assert.Contains(all, p => p.Code == "ventas.acceso");
             Assert.Contains(all, p => p.Code == "roles.gestionar");
+            Assert.Contains(all, p => p.Code == "reportes.acceso");
+            Assert.Contains(all, p => p.Code == "reportes.ventas");
+            Assert.Contains(all, p => p.Code == "reportes.alertas.exportar");
             Assert.All(all, p => Assert.False(string.IsNullOrWhiteSpace(p.Section)));
             Assert.Equal(all.OrderBy(p => p.Section).ThenBy(p => p.Code).Select(p => p.Code),
                          all.Select(p => p.Code));
+        }
+
+        [Fact]
+        public void GetAll_ParentCode_GivesEachSectionArootAndNestsTheChildren()
+        {
+            var all = Repository.GetAll();
+
+            // Section roots have no parent and their code is "<section>.acceso".
+            Assert.All(all.Where(p => p.ParentCode == null), p => Assert.EndsWith(".acceso", p.Code));
+            Assert.Null(all.Single(p => p.Code == "reportes.acceso").ParentCode);
+
+            Assert.Equal("productos.acceso", all.Single(p => p.Code == "productos.eliminar").ParentCode);
+            Assert.Equal("reportes.acceso", all.Single(p => p.Code == "reportes.ventas").ParentCode);
+            Assert.Equal("reportes.ventas", all.Single(p => p.Code == "reportes.ventas.exportar").ParentCode);
+
+            // Every non-root parent_code points at a real permission.
+            var codes = new HashSet<string>(all.Select(p => p.Code));
+            Assert.All(all.Where(p => p.ParentCode != null), p => Assert.Contains(p.ParentCode, codes));
         }
 
         [Fact]

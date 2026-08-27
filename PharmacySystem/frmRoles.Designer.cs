@@ -24,7 +24,7 @@ namespace PharmacySystem
             this.btnRenameRole = new System.Windows.Forms.Button();
             this.btnDeleteRole = new System.Windows.Forms.Button();
             this.lblPermissions = new System.Windows.Forms.Label();
-            this.clbPermissions = new System.Windows.Forms.CheckedListBox();
+            this.tvPermissions = new System.Windows.Forms.TreeView();
             this.btnSavePermissions = new System.Windows.Forms.Button();
             this.SuspendLayout();
             //
@@ -93,16 +93,18 @@ namespace PharmacySystem
             this.lblPermissions.TabIndex = 6;
             this.lblPermissions.Text = "Permisos del rol";
             //
-            // clbPermissions
+            // tvPermissions
             //
-            this.clbPermissions.CheckOnClick = true;
-            this.clbPermissions.Enabled = false;
-            this.clbPermissions.FormattingEnabled = true;
-            this.clbPermissions.IntegralHeight = false;
-            this.clbPermissions.Location = new System.Drawing.Point(243, 30);
-            this.clbPermissions.Name = "clbPermissions";
-            this.clbPermissions.Size = new System.Drawing.Size(300, 300);
-            this.clbPermissions.TabIndex = 7;
+            this.tvPermissions.CheckBoxes = true;
+            this.tvPermissions.Enabled = false;
+            this.tvPermissions.FullRowSelect = true;
+            this.tvPermissions.HideSelection = false;
+            this.tvPermissions.Location = new System.Drawing.Point(243, 30);
+            this.tvPermissions.Name = "tvPermissions";
+            this.tvPermissions.ShowRootLines = false;
+            this.tvPermissions.Size = new System.Drawing.Size(300, 300);
+            this.tvPermissions.TabIndex = 7;
+            this.tvPermissions.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.tvPermissions_AfterCheck);
             //
             // btnSavePermissions
             //
@@ -121,7 +123,7 @@ namespace PharmacySystem
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(555, 404);
             this.Controls.Add(this.btnSavePermissions);
-            this.Controls.Add(this.clbPermissions);
+            this.Controls.Add(this.tvPermissions);
             this.Controls.Add(this.lblPermissions);
             this.Controls.Add(this.btnDeleteRole);
             this.Controls.Add(this.btnRenameRole);
@@ -149,7 +151,7 @@ namespace PharmacySystem
         private System.Windows.Forms.Button btnRenameRole;
         private System.Windows.Forms.Button btnDeleteRole;
         private System.Windows.Forms.Label lblPermissions;
-        private System.Windows.Forms.CheckedListBox clbPermissions;
+        private System.Windows.Forms.TreeView tvPermissions;
         private System.Windows.Forms.Button btnSavePermissions;
     }
 }
