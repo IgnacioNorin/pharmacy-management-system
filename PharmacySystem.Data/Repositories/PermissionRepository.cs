@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using Dapper;
@@ -53,6 +54,124 @@ namespace PharmacySystem.Data
                 {
                     Logger.LogError(ex);
                     return new List<string>();
+                }
+            }
+        }
+
+        public List<TypePerson> GetRoles()
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    return oConnection.Query<TypePerson>(
+                        "SELECT id AS idPersonType, description, is_system AS IsSystem " +
+                        "FROM person_type ORDER BY id")
+                        .ToList();
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return new List<TypePerson>();
+                }
+            }
+        }
+
+        public List<int> GetPermissionIdsForRole(int personTypeId)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    return oConnection.Query<int>(
+                        "SELECT permission_id FROM role_permission WHERE person_type_id = @personTypeId",
+                        new { personTypeId })
+                        .ToList();
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return new List<int>();
+                }
+            }
+        }
+
+        public bool SetRolePermissions(int personTypeId, IEnumerable<int> permissionIds)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    string csv = string.Join(",", (permissionIds ?? Enumerable.Empty<int>()).Distinct());
+
+                    oConnection.Execute("sp_set_role_permissions",
+                        new { person_type_id = personTypeId, permission_ids = csv },
+                        commandType: CommandType.StoredProcedure);
+
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return false;
+                }
+            }
+        }
+
+        public int CreateRole(string description)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    var parameters = new DynamicParameters();
+                    parameters.Add("description", description);
+                    parameters.Add("result", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+                    oConnection.Execute("sp_create_person_type", parameters, commandType: CommandType.StoredProcedure);
+
+                    return parameters.Get<int>("result");
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return 0;
+                }
+            }
+        }
+
+        public bool RenameRole(int personTypeId, string description)
+        {
+            return ExecuteRoleBitProc("sp_update_person_type", p =>
+            {
+                p.Add("id", personTypeId);
+                p.Add("description", description);
+            });
+        }
+
+        public bool DeleteRole(int personTypeId)
+        {
+            return ExecuteRoleBitProc("sp_delete_person_type", p => p.Add("id", personTypeId));
+        }
+
+        private bool ExecuteRoleBitProc(string procName, Action<DynamicParameters> addInputs)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    var parameters = new DynamicParameters();
+                    addInputs(parameters);
+                    parameters.Add("result", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+
+                    oConnection.Execute(procName, parameters, commandType: CommandType.StoredProcedure);
+
+                    return parameters.Get<bool>("result");
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return false;
                 }
             }
         }

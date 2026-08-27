@@ -8,6 +8,13 @@ namespace PharmacySystem.Tests.Business
     {
         public List<Permission> AllResult { get; set; } = new List<Permission>();
         public List<string> CodesForRoleResult { get; set; } = new List<string>();
+        public List<TypePerson> RolesResult { get; set; } = new List<TypePerson>();
+        public List<int> PermissionIdsForRoleResult { get; set; } = new List<int>();
+        public bool SetRolePermissionsResult { get; set; } = true;
+        public int CreateRoleResult { get; set; } = 100;
+        public bool RenameRoleResult { get; set; } = true;
+        public bool DeleteRoleResult { get; set; } = true;
+
         public int? RequestedRoleId { get; private set; }
 
         public List<Permission> GetAll() => AllResult;
@@ -17,5 +24,17 @@ namespace PharmacySystem.Tests.Business
             RequestedRoleId = personTypeId;
             return CodesForRoleResult;
         }
+
+        public List<TypePerson> GetRoles() => RolesResult;
+
+        public List<int> GetPermissionIdsForRole(int personTypeId) => PermissionIdsForRoleResult;
+
+        public bool SetRolePermissions(int personTypeId, IEnumerable<int> permissionIds) => SetRolePermissionsResult;
+
+        public int CreateRole(string description) => CreateRoleResult;
+
+        public bool RenameRole(int personTypeId, string description) => RenameRoleResult;
+
+        public bool DeleteRole(int personTypeId) => DeleteRoleResult;
     }
 }

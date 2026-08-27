@@ -109,6 +109,9 @@ namespace PharmacySystem
         public static CurrentUser CreateCurrentUser(Person person) =>
             new CurrentUser(person, _permissionService.GetPermissionsForRole(person.oPersonType?.idPersonType ?? 0));
 
+        public static RolesPresenter CreateRolesPresenter(IRolesView view) =>
+            new RolesPresenter(view, _permissionService);
+
         public static IPermissionService PermissionService => _permissionService;
 
         #endregion

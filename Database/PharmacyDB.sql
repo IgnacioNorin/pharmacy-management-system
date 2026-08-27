@@ -680,6 +680,77 @@ BEGIN
 END
 GO
 
+-- Roles admin (frmRoles). Custom roles use ids >= 100; the four built-ins (is_system = 1)
+-- can have their permission set edited but cannot be renamed or deleted.
+
+CREATE PROCEDURE [dbo].[sp_set_role_permissions]
+    @person_type_id INT,
+    @permission_ids VARCHAR(MAX)   -- comma-separated permission ids, may be empty
+AS
+BEGIN
+    SET NOCOUNT ON;
+    BEGIN TRANSACTION;
+        DELETE FROM role_permission WHERE person_type_id = @person_type_id;
+
+        INSERT INTO role_permission (person_type_id, permission_id)
+        SELECT DISTINCT @person_type_id, TRY_CONVERT(INT, value)
+        FROM STRING_SPLIT(ISNULL(@permission_ids, ''), ',')
+        WHERE TRY_CONVERT(INT, value) IN (SELECT id FROM permission);
+    COMMIT TRANSACTION;
+END
+GO
+
+CREATE PROCEDURE [dbo].[sp_create_person_type]
+    @description VARCHAR(50),
+    @result INT OUTPUT            -- new id, or 0 if the description already exists
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET @result = 0;
+    IF NOT EXISTS (SELECT 1 FROM person_type WHERE UPPER(description) = UPPER(@description))
+    BEGIN
+        DECLARE @newId INT = (SELECT ISNULL(MAX(id), 99) + 1 FROM person_type WHERE id >= 100);
+        IF @newId < 100 SET @newId = 100;
+        INSERT INTO person_type (id, description, status, date_created, is_system)
+        VALUES (@newId, @description, 1, GETDATE(), 0);
+        SET @result = @newId;
+    END
+END
+GO
+
+CREATE PROCEDURE [dbo].[sp_update_person_type]
+    @id INT,
+    @description VARCHAR(50),
+    @result BIT OUTPUT            -- 0 if it is a system role or the name is taken
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET @result = 0;
+    IF EXISTS (SELECT 1 FROM person_type WHERE id = @id AND is_system = 0)
+       AND NOT EXISTS (SELECT 1 FROM person_type WHERE UPPER(description) = UPPER(@description) AND id <> @id)
+    BEGIN
+        UPDATE person_type SET description = @description WHERE id = @id;
+        SET @result = 1;
+    END
+END
+GO
+
+CREATE PROCEDURE [dbo].[sp_delete_person_type]
+    @id INT,
+    @result BIT OUTPUT            -- 0 if it is a system role or still has users assigned
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET @result = 0;
+    IF EXISTS (SELECT 1 FROM person_type WHERE id = @id AND is_system = 0)
+       AND NOT EXISTS (SELECT 1 FROM person WHERE person_type_id = @id)
+    BEGIN
+        DELETE FROM person_type WHERE id = @id;   -- role_permission rows cascade
+        SET @result = 1;
+    END
+END
+GO
+
 CREATE PROCEDURE [dbo].[sp_update_category](
 @category_id INT,
 @description VARCHAR(50),

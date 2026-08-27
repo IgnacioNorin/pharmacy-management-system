@@ -10,5 +10,19 @@ namespace PharmacySystem.Business
 
         // The effective permission codes for a role, as a case-insensitive set.
         IReadOnlyCollection<string> GetPermissionsForRole(int personTypeId);
+
+        // --- roles admin (frmRoles) ---
+
+        List<TypePerson> GetRoles();
+
+        List<int> GetPermissionIdsForRole(int personTypeId);
+
+        bool SaveRolePermissions(int personTypeId, IEnumerable<int> permissionIds);
+
+        int CreateRole(string description);
+
+        bool RenameRole(int personTypeId, string description);
+
+        bool DeleteRole(int personTypeId);
     }
 }
