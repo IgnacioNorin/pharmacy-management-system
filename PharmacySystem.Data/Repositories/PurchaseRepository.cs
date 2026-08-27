@@ -100,7 +100,7 @@ namespace PharmacySystem.Data
             }
         }
 
-        public List<PurchaseReportRow> ReportPurchase(string idSupplier, string startDate, string endDate)
+        public List<PurchaseReportRow> ReportPurchase(string idSupplier, DateTime startDate, DateTime endDate)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
@@ -114,11 +114,11 @@ namespace PharmacySystem.Data
                         "INNER JOIN supplier su ON su.id = pu.supplier_id " +
                         "INNER JOIN purchase_detail pd ON pd.purchase_id = pu.id " +
                         "INNER JOIN product pr on pr.id = pd.product_id " +
-                        "WHERE CAST(pu.date_registered AS DATE) BETWEEN @startDate and @endDate " +
+                        "WHERE pu.date_registered >= @startDate AND pu.date_registered < DATEADD(DAY, 1, @endDate) " +
                         "and pu.supplier_id =  CASE @supplier_id WHEN '0' THEN pu.supplier_id " +
                         "WHEN 0 THEN pu.supplier_id ELSE @supplier_id END";
 
-                    return oConnection.Query<PurchaseReportRow>(sql, new { startDate, endDate, supplier_id = idSupplier }).ToList();
+                    return oConnection.Query<PurchaseReportRow>(sql, new { startDate = startDate.Date, endDate = endDate.Date, supplier_id = idSupplier }).ToList();
                 }
                 catch (Exception ex)
                 {
@@ -128,23 +128,22 @@ namespace PharmacySystem.Data
             }
         }
 
-        public decimal GetTotalAmount(string idSupplier, string startDate, string endDate)
+        public decimal GetTotalAmount(string idSupplier, DateTime startDate, DateTime endDate)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
                     const string sql =
-                        "SET DATEFORMAT dmy " +
                         "SELECT ISNULL(SUM(pu.total_amount),0) AS total_amount " +
                         "FROM purchase pu " +
                         "INNER JOIN supplier su ON su.id = pu.supplier_id " +
                         "INNER JOIN purchase_detail pd ON pd.purchase_id = pu.id " +
                         "INNER JOIN product pr ON pr.id = pd.product_id " +
-                        "WHERE CONVERT(DATE, pu.date_registered) BETWEEN @startDate AND @endDate " +
+                        "WHERE pu.date_registered >= @startDate AND pu.date_registered < DATEADD(DAY, 1, @endDate) " +
                         "AND (@supplier_id = 0 OR pu.supplier_id = @supplier_id)";
 
-                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate, endDate, supplier_id = idSupplier });
+                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate = startDate.Date, endDate = endDate.Date, supplier_id = idSupplier });
                 }
                 catch (Exception ex)
                 {
@@ -154,23 +153,22 @@ namespace PharmacySystem.Data
             }
         }
 
-        public decimal GetTotalPurchasePrice(string idSupplier, string startDate, string endDate)
+        public decimal GetTotalPurchasePrice(string idSupplier, DateTime startDate, DateTime endDate)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
                     const string sql =
-                        "SET DATEFORMAT dmy " +
                         "SELECT ISNULL(SUM(pd.purchase_price),0) AS purchase_price " +
                         "FROM purchase pu " +
                         "INNER JOIN supplier su ON su.id = pu.supplier_id " +
                         "INNER JOIN purchase_detail pd ON pd.purchase_id = pu.id " +
                         "INNER JOIN product pr ON pr.id = pd.product_id " +
-                        "WHERE CONVERT(DATE,pu.date_registered) BETWEEN @startDate AND @endDate " +
+                        "WHERE pu.date_registered >= @startDate AND pu.date_registered < DATEADD(DAY, 1, @endDate) " +
                         "AND pu.supplier_id = CASE @supplier_id WHEN '0' THEN pu.supplier_id WHEN 0 THEN pu.supplier_id ELSE @supplier_id END";
 
-                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate, endDate, supplier_id = idSupplier });
+                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate = startDate.Date, endDate = endDate.Date, supplier_id = idSupplier });
                 }
                 catch (Exception ex)
                 {
@@ -180,26 +178,25 @@ namespace PharmacySystem.Data
             }
         }
 
-        public int GetTotalQuantity(string idSupplier, string startDate, string endDate)
+        public int GetTotalQuantity(string idSupplier, DateTime startDate, DateTime endDate)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
                     const string sql =
-                        "SET DATEFORMAT dmy " +
                         "SELECT ISNULL(SUM(pd.stock), 0) AS stock " +
                         "FROM purchase pu " +
                         "INNER JOIN supplier su ON su.id = pu.supplier_id " +
                         "INNER JOIN purchase_detail pd ON pd.purchase_id = pu.id " +
                         "INNER JOIN product pr ON pr.id = pd.product_id " +
-                        "WHERE CONVERT(DATE,pu.date_registered) BETWEEN @startDate AND @endDate " +
+                        "WHERE pu.date_registered >= @startDate AND pu.date_registered < DATEADD(DAY, 1, @endDate) " +
                         "AND pu.supplier_id = CASE @supplier_id WHEN '0' THEN pu.supplier_id WHEN 0 THEN pu.supplier_id ELSE @supplier_id END";
 
                     // Matches the original Convert.ToInt16(...) precision exactly (including its
                     // silent overflow past short.MaxValue, which is a pre-existing quirk, not
                     // something this migration is meant to fix).
-                    return oConnection.ExecuteScalar<short>(sql, new { startDate, endDate, supplier_id = idSupplier });
+                    return oConnection.ExecuteScalar<short>(sql, new { startDate = startDate.Date, endDate = endDate.Date, supplier_id = idSupplier });
                 }
                 catch (Exception ex)
                 {
@@ -209,23 +206,22 @@ namespace PharmacySystem.Data
             }
         }
 
-        public decimal GetTotalSalesPrice(string idSupplier, string startDate, string endDate)
+        public decimal GetTotalSalesPrice(string idSupplier, DateTime startDate, DateTime endDate)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
                     const string sql =
-                        "SET DATEFORMAT dmy " +
                         "SELECT ISNULL(SUM(pd.sale_price), 0) AS sale_price " +
                         "FROM purchase pu " +
                         "INNER JOIN supplier su ON su.id = pu.supplier_id " +
                         "INNER JOIN purchase_detail pd ON pd.purchase_id = pu.id " +
                         "INNER JOIN product pr ON pr.id = pd.product_id " +
-                        "WHERE CONVERT(DATE,pu.date_registered) BETWEEN @startDate AND @endDate " +
+                        "WHERE pu.date_registered >= @startDate AND pu.date_registered < DATEADD(DAY, 1, @endDate) " +
                         "AND pu.supplier_id = CASE @supplier_id WHEN '0' THEN pu.supplier_id WHEN 0 THEN pu.supplier_id ELSE @supplier_id END";
 
-                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate, endDate, supplier_id = idSupplier });
+                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate = startDate.Date, endDate = endDate.Date, supplier_id = idSupplier });
                 }
                 catch (Exception ex)
                 {
@@ -235,23 +231,22 @@ namespace PharmacySystem.Data
             }
         }
 
-        public decimal GetSubTotal(string idSupplier, string startDate, string endDate)
+        public decimal GetSubTotal(string idSupplier, DateTime startDate, DateTime endDate)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
                     const string sql =
-                        "SET DATEFORMAT dmy " +
                         "SELECT ISNULL(SUM(pd.total_amount), 0) AS total_amount " +
                         "FROM purchase pu " +
                         "INNER JOIN supplier su ON su.id = pu.supplier_id " +
                         "INNER JOIN purchase_detail pd ON pd.purchase_id = pu.id " +
                         "INNER JOIN product pr ON pr.id = pd.product_id " +
-                        "WHERE CONVERT(DATE,pu.date_registered) BETWEEN @startDate AND @endDate " +
+                        "WHERE pu.date_registered >= @startDate AND pu.date_registered < DATEADD(DAY, 1, @endDate) " +
                         "AND pu.supplier_id = CASE @supplier_id WHEN '0' THEN pu.supplier_id WHEN 0 THEN pu.supplier_id ELSE @supplier_id END";
 
-                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate, endDate, supplier_id = idSupplier });
+                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate = startDate.Date, endDate = endDate.Date, supplier_id = idSupplier });
                 }
                 catch (Exception ex)
                 {

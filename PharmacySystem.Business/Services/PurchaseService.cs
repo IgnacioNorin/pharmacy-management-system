@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using PharmacySystem.Data;
 using PharmacySystem.Model;
@@ -18,22 +19,22 @@ namespace PharmacySystem.Business
 
         public bool Register(Purchase purchase) => _repository.Register(purchase);
 
-        public List<PurchaseReportRow> ReportPurchase(string idSupplier, string startDate, string endDate) =>
+        public List<PurchaseReportRow> ReportPurchase(string idSupplier, DateTime startDate, DateTime endDate) =>
             _repository.ReportPurchase(idSupplier, startDate, endDate);
 
-        public decimal GetTotalAmount(string idSupplier, string startDate, string endDate) =>
+        public decimal GetTotalAmount(string idSupplier, DateTime startDate, DateTime endDate) =>
             _repository.GetTotalAmount(idSupplier, startDate, endDate);
 
-        public decimal GetTotalPurchasePrice(string idSupplier, string startDate, string endDate) =>
+        public decimal GetTotalPurchasePrice(string idSupplier, DateTime startDate, DateTime endDate) =>
             _repository.GetTotalPurchasePrice(idSupplier, startDate, endDate);
 
-        public int GetTotalQuantity(string idSupplier, string startDate, string endDate) =>
+        public int GetTotalQuantity(string idSupplier, DateTime startDate, DateTime endDate) =>
             _repository.GetTotalQuantity(idSupplier, startDate, endDate);
 
-        public decimal GetTotalSalesPrice(string idSupplier, string startDate, string endDate) =>
+        public decimal GetTotalSalesPrice(string idSupplier, DateTime startDate, DateTime endDate) =>
             _repository.GetTotalSalesPrice(idSupplier, startDate, endDate);
 
-        public decimal GetSubTotal(string idSupplier, string startDate, string endDate) =>
+        public decimal GetSubTotal(string idSupplier, DateTime startDate, DateTime endDate) =>
             _repository.GetSubTotal(idSupplier, startDate, endDate);
     }
 }

@@ -27,7 +27,7 @@ namespace PharmacySystem.Presentation
 
         public void OnLoad()
         {
-            string today = DateHelper.FormatDateBackend(DateTime.Today);
+            DateTime today = DateTime.Today;
 
             List<ProductAlert> alerts = _notificationService.GetActiveAlerts()
                 .Where(a => a.MutedAt == null)

@@ -164,14 +164,13 @@ namespace PharmacySystem.Tests.Integration
                 // DateTime.Today range: the application clock and the SQL Server clock can sit on
                 // opposite sides of midnight when they run in different time zones, so the row is
                 // stamped with one date while the range is built from another and matches nothing.
-                const string purchaseDay = "2026-03-17";
                 DateTime purchaseDate = new DateTime(2026, 3, 17);
                 SqlTestHelper.ExecuteNonQuery(
                     "UPDATE purchase SET date_registered = @date WHERE id = @id",
                     new SqlParameter("@date", purchaseDate),
                     new SqlParameter("@id", purchaseId));
 
-                decimal totalAmount = Repository.GetTotalAmount(supplierId.ToString(), purchaseDay, purchaseDay);
+                decimal totalAmount = Repository.GetTotalAmount(supplierId.ToString(), purchaseDate, purchaseDate);
 
                 Assert.Equal(42.50m, totalAmount);
             }

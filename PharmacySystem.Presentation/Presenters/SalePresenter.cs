@@ -13,11 +13,11 @@ namespace PharmacySystem.Presentation
     //   it) - inconsistent under any culture that doesn't use "." as decimal separator. It also
     //   never actually returned false, so the "Error al convertir..." message it could show was
     //   dead code; a real try/catch now makes that message reachable.
-    // - OnFinishSale used to run an extra ControlStock() check against the *product-entry* fields
-    //   (SelectedProductId/Amount) before the per-cart-line loop that already does this properly.
-    //   Those fields are back to "0"/1 after CleanProduct() runs on the last add, so in practice
-    //   that check updated stock for product id 0 (a no-op) and never actually gated anything -
-    //   removed as dead weight; the per-line ControlStock in the loop below is the real check.
+    // - OnFinishSale used to discount stock line by line through a separate ControlStock() call
+    //   (its own connection, no transaction) before persisting the sale, so a failure midway
+    //   left stock already subtracted with no sale and no rollback. Stock is now discounted
+    //   inside SaleRepository.Register's transaction, with a stock >= amount guard; this loop
+    //   only verifies each product still exists.
     //
     // The cart is owned here rather than read back from the grid, for the same reason as
     // PurchasePresenter's cart: the Presenter is the single source of truth for cart state, the
@@ -187,31 +187,19 @@ namespace PharmacySystem.Presentation
 
             foreach (SaleCartLine line in _cart)
             {
-                bool existsProduct = _productService.Verify(line.ProductId);
-
-                if (existsProduct)
-                {
-                    details.Add(new SaleDetail
-                    {
-                        oProduct = new Product { idProduct = line.ProductId },
-                        amount = (int)line.Quantity,
-                        salePrice = line.SalePrice,
-                        subtotal = line.SubTotal
-                    });
-
-                    bool subtractStock = _saleService.ControlStock(line.ProductId, (int)line.Quantity, true);
-                    if (!subtractStock)
-                    {
-                        details.Clear();
-                        _view.ShowMessage("No se pudo registrar la venta\n Problema con Stock");
-                        return;
-                    }
-                }
-                else
+                if (!_productService.Verify(line.ProductId))
                 {
                     _view.ShowMessage("No se pudo registrar la venta\n Problema con producto");
                     return;
                 }
+
+                details.Add(new SaleDetail
+                {
+                    oProduct = new Product { idProduct = line.ProductId },
+                    amount = (int)line.Quantity,
+                    salePrice = line.SalePrice,
+                    subtotal = line.SubTotal
+                });
             }
 
             Sale sale = new Sale
@@ -237,7 +225,10 @@ namespace PharmacySystem.Presentation
             }
             else
             {
-                _view.ShowMessage("No se pudo registrar la venta");
+                // Register returns 0 for any reason the sale could not be committed, including a
+                // line whose stock ran out between adding it to the cart and finishing the sale
+                // (the stock check is now inside Register's transaction).
+                _view.ShowMessage("No se pudo registrar la venta.\nVerifique el stock disponible.");
             }
         }
     }

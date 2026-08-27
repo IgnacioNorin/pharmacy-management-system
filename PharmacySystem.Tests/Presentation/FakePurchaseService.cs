@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using PharmacySystem.Business;
 using PharmacySystem.Model;
@@ -20,11 +21,11 @@ namespace PharmacySystem.Tests.Presentation
             RegisteredWith = purchase;
             return RegisterResult;
         }
-        public List<PurchaseReportRow> ReportPurchase(string idSupplier, string startDate, string endDate) => ReportResult;
-        public decimal GetTotalAmount(string idSupplier, string startDate, string endDate) => TotalAmountResult;
-        public decimal GetTotalPurchasePrice(string idSupplier, string startDate, string endDate) => TotalPurchasePriceResult;
-        public int GetTotalQuantity(string idSupplier, string startDate, string endDate) => TotalQuantityResult;
-        public decimal GetTotalSalesPrice(string idSupplier, string startDate, string endDate) => TotalSalesPriceResult;
-        public decimal GetSubTotal(string idSupplier, string startDate, string endDate) => SubTotalResult;
+        public List<PurchaseReportRow> ReportPurchase(string idSupplier, DateTime startDate, DateTime endDate) => ReportResult;
+        public decimal GetTotalAmount(string idSupplier, DateTime startDate, DateTime endDate) => TotalAmountResult;
+        public decimal GetTotalPurchasePrice(string idSupplier, DateTime startDate, DateTime endDate) => TotalPurchasePriceResult;
+        public int GetTotalQuantity(string idSupplier, DateTime startDate, DateTime endDate) => TotalQuantityResult;
+        public decimal GetTotalSalesPrice(string idSupplier, DateTime startDate, DateTime endDate) => TotalSalesPriceResult;
+        public decimal GetSubTotal(string idSupplier, DateTime startDate, DateTime endDate) => SubTotalResult;
     }
 }

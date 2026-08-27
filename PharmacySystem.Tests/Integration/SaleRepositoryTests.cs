@@ -35,11 +35,8 @@ namespace PharmacySystem.Tests.Integration
             return PersonRepo.GetByDocument(document);
         }
 
-        [Fact]
-        public void RegisterSale_ValidDetail_InsertsHeaderAndDetail()
+        private static int CreateProductWithStock(int categoryId, int stock)
         {
-            Person person = CreatePerson(out string document);
-            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
             int productId = ProductRepo.Register(new Product
             {
                 code = SqlTestHelper.NewTag(),
@@ -47,6 +44,17 @@ namespace PharmacySystem.Tests.Integration
                 description = "Sale product",
                 oCategory = new Categories { IdCategory = categoryId }
             });
+            SqlTestHelper.ExecuteNonQuery("UPDATE product SET stock = @stock WHERE id = @id",
+                new SqlParameter("@stock", stock), new SqlParameter("@id", productId));
+            return productId;
+        }
+
+        [Fact]
+        public void RegisterSale_ValidDetail_InsertsHeaderAndDetailAndDiscountsStock()
+        {
+            Person person = CreatePerson(out string document);
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = CreateProductWithStock(categoryId, 10);
 
             int saleId = 0;
             try
@@ -77,6 +85,7 @@ namespace PharmacySystem.Tests.Integration
                 Assert.True(saleId > 0);
                 Assert.Contains(Repository.ListSale(), s => s.idSale == saleId && s.nameClient == "Walk-in client");
                 Assert.Contains(Repository.ListSaleDetail(), d => d.idSale == saleId && d.subtotal == 15m);
+                Assert.Equal(7, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId)));
             }
             finally
             {
@@ -89,56 +98,96 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void ControlStock_Subtract_DecreasesStock()
+        public void RegisterSale_InsufficientStockOnOneLine_RollsBackWholeSale()
         {
+            Person person = CreatePerson(out string document);
             int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
-            int productId = ProductRepo.Register(new Product
-            {
-                code = SqlTestHelper.NewTag(),
-                name = "Stock product",
-                description = "Stock product",
-                oCategory = new Categories { IdCategory = categoryId }
-            });
-            SqlTestHelper.ExecuteNonQuery("UPDATE product SET stock = 10 WHERE id = @id", new SqlParameter("@id", productId));
+            int okProductId = CreateProductWithStock(categoryId, 10);
+            int shortProductId = CreateProductWithStock(categoryId, 2);
 
             try
             {
-                bool result = Repository.ControlStock(productId, 4, subtract: true);
+                Sale sale = new Sale
+                {
+                    typeDocument = "Boleta",
+                    oPerson = person,
+                    documentClient = "9999999999",
+                    nameClient = "Walk-in client",
+                    totalPay = 30m,
+                    payWith = 30m,
+                    change = 0m,
+                    oSaleDetail = new List<SaleDetail>
+                    {
+                        new SaleDetail { oProduct = new Product { idProduct = okProductId }, amount = 1, salePrice = 5m, subtotal = 5m },
+                        new SaleDetail { oProduct = new Product { idProduct = shortProductId }, amount = 5, salePrice = 5m, subtotal = 25m }
+                    }
+                };
 
-                Assert.True(result);
-                Assert.Equal(6, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId)));
+                int saleId = Repository.Register(sale);
+
+                Assert.Equal(0, saleId);
+                // Nothing persisted, and the first line's stock was not left decremented.
+                Assert.Equal(0, SqlTestHelper.ExecuteScalarInt(
+                    "SELECT COUNT(*) FROM sale WHERE document_client = '9999999999' AND name_client = 'Walk-in client' AND total_amount = 30"));
+                Assert.Equal(10, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", okProductId)));
+                Assert.Equal(2, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", shortProductId)));
             }
             finally
             {
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id IN (@a, @b)",
+                    new SqlParameter("@a", okProductId), new SqlParameter("@b", shortProductId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
             }
         }
 
         [Fact]
-        public void ControlStock_Add_IncreasesStock()
+        public void RegisterSale_AssignsSequentialReceiptNumbers()
         {
+            Person person = CreatePerson(out string document);
             int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
-            int productId = ProductRepo.Register(new Product
-            {
-                code = SqlTestHelper.NewTag(),
-                name = "Stock product",
-                description = "Stock product",
-                oCategory = new Categories { IdCategory = categoryId }
-            });
-            SqlTestHelper.ExecuteNonQuery("UPDATE product SET stock = 10 WHERE id = @id", new SqlParameter("@id", productId));
+            int productId = CreateProductWithStock(categoryId, 100);
 
+            var saleIds = new List<int>();
             try
             {
-                bool result = Repository.ControlStock(productId, 4, subtract: false);
+                for (int i = 0; i < 2; i++)
+                {
+                    saleIds.Add(Repository.Register(new Sale
+                    {
+                        typeDocument = "Boleta",
+                        oPerson = person,
+                        documentClient = "9999999999",
+                        nameClient = "Walk-in client",
+                        totalPay = 5m,
+                        payWith = 5m,
+                        change = 0m,
+                        oSaleDetail = new List<SaleDetail>
+                        {
+                            new SaleDetail { oProduct = new Product { idProduct = productId }, amount = 1, salePrice = 5m, subtotal = 5m }
+                        }
+                    }));
+                }
 
-                Assert.True(result);
-                Assert.Equal(14, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId)));
+                var numbers = new List<string>();
+                foreach (int id in saleIds)
+                {
+                    numbers.Add((string)SqlTestHelper.ExecuteScalar("SELECT document_number FROM sale WHERE id = @id", new SqlParameter("@id", id)));
+                }
+
+                Assert.All(numbers, n => Assert.False(string.IsNullOrWhiteSpace(n)));
+                Assert.Equal(numbers.Count, new HashSet<string>(numbers).Count);
             }
             finally
             {
+                foreach (int id in saleIds)
+                {
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", id));
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", id));
+                }
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
             }
         }
 
@@ -153,13 +202,7 @@ namespace PharmacySystem.Tests.Integration
         {
             Person person = CreatePerson(out string document);
             int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
-            int productId = ProductRepo.Register(new Product
-            {
-                code = SqlTestHelper.NewTag(),
-                name = "Bulk product",
-                description = "Bulk product",
-                oCategory = new Categories { IdCategory = categoryId }
-            });
+            int productId = CreateProductWithStock(categoryId, 500);
 
             int saleId = 0;
             try

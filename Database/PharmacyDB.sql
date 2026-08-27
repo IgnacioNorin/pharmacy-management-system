@@ -16,9 +16,9 @@ ALTER DATABASE [PharmacyDB] SET ANSI_NULLS ON
 GO
 ALTER DATABASE [PharmacyDB] SET ANSI_PADDING ON
 GO
-ALTER DATABASE [PharmacyDB] SET ANSI_WARNINGS OFF
+ALTER DATABASE [PharmacyDB] SET ANSI_WARNINGS ON
 GO
-ALTER DATABASE [PharmacyDB] SET ARITHABORT OFF
+ALTER DATABASE [PharmacyDB] SET ARITHABORT ON
 GO
 ALTER DATABASE [PharmacyDB] SET AUTO_CLOSE OFF
 GO
@@ -151,8 +151,8 @@ CREATE TABLE [dbo].[product](
     [description] [varchar](500) NULL,
     [category_id] [int] NULL,
     [stock] [int] NULL,
-    [purchase_price] [decimal](10, 2) NULL,
-    [sale_price] [decimal](10, 2) NULL,
+    [purchase_price] [decimal](18, 2) NULL,
+    [sale_price] [decimal](18, 2) NULL,
     [status] [int] NULL,
     [date_created] [datetime] NULL,
     [date_expired] [datetime] NULL,
@@ -190,7 +190,7 @@ CREATE TABLE [dbo].[purchase](
     [id] [int] IDENTITY(1,1) NOT NULL,
     [person_id] [int] NULL,
     [supplier_id] [int] NULL,
-    [total_amount] [decimal](10, 2) NULL,
+    [total_amount] [decimal](18, 2) NULL,
     [document_type] [varchar](50) NULL,
     [document_number] [varchar](50) NULL,
     [date_registered] [datetime] NULL,
@@ -203,9 +203,9 @@ CREATE TABLE [dbo].[purchase_detail](
     [purchase_id] [int] NULL,
     [product_id] [int] NULL,
     [stock] [int] NULL,
-    [purchase_price] [decimal](10, 2) NULL,
-    [sale_price] [decimal](10, 2) NULL,
-    [total_amount] [decimal](10, 2) NULL,
+    [purchase_price] [decimal](18, 2) NULL,
+    [sale_price] [decimal](18, 2) NULL,
+    [total_amount] [decimal](18, 2) NULL,
     [date_registered] [datetime] NULL,
     PRIMARY KEY CLUSTERED ([id] ASC)
 )
@@ -218,9 +218,9 @@ CREATE TABLE [dbo].[sale](
     [user_id] [int] NULL,
     [document_client] [varchar](50) NULL,
     [name_client] [varchar](50) NULL,
-    [total_amount] [decimal](10, 2) NULL,
-    [amount_received] [decimal](10, 2) NOT NULL,
-    [change_amount] [decimal](10, 2) NULL,
+    [total_amount] [decimal](18, 2) NULL,
+    [amount_received] [decimal](18, 2) NOT NULL,
+    [change_amount] [decimal](18, 2) NULL,
     [date_registered] [datetime] NULL,
     CONSTRAINT [PK__VENTA__BC1240BD8994C395] PRIMARY KEY CLUSTERED ([id] ASC)
 )
@@ -231,8 +231,8 @@ CREATE TABLE [dbo].[sale_detail](
     [sale_id] [int] NULL,
     [product_id] [int] NULL,
     [stock] [int] NULL,
-    [sale_price] [decimal](10, 2) NULL,
-    [subtotal] [decimal](10, 2) NULL,
+    [sale_price] [decimal](18, 2) NULL,
+    [subtotal] [decimal](18, 2) NULL,
     [date_registered] [datetime] NULL,
     PRIMARY KEY CLUSTERED ([id] ASC)
 )
@@ -248,7 +248,7 @@ CREATE TABLE [dbo].[product_alert_history](
     [product_id] [int] NOT NULL,
     [alert_type] [tinyint] NOT NULL,
     [severity] [tinyint] NOT NULL,
-    [trigger_value] [decimal](10, 2) NULL,
+    [trigger_value] [decimal](18, 2) NULL,
     [detected_at] [datetime] NOT NULL,
     [resolved_at] [datetime] NULL,
     [acknowledged_by] [int] NULL,
@@ -382,6 +382,12 @@ GO
 CREATE UNIQUE INDEX [UX_product_code] ON [dbo].[product] ([code]) WHERE [code] IS NOT NULL
 GO
 CREATE UNIQUE INDEX [UX_category_description] ON [dbo].[category] ([description]) WHERE [description] IS NOT NULL
+GO
+-- Sale receipt number: monotonic and concurrency-safe (was RIGHT(..., COUNT(*) + 1), which
+-- collided under concurrent sales and repeated after a delete). Gaps are acceptable.
+CREATE SEQUENCE [dbo].[seq_sale_folio] AS INT START WITH 1 INCREMENT BY 1
+GO
+CREATE UNIQUE INDEX [UX_sale_document_number] ON [dbo].[sale] ([document_number]) WHERE [document_number] IS NOT NULL
 GO
 
 -- Foreign-key columns joined/filtered by reports and detail lookups (all unindexed before).

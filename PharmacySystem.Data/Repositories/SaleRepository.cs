@@ -66,30 +66,6 @@ namespace PharmacySystem.Data
             }
         }
 
-        public bool ControlStock(int idproduct, int amount, bool subtract)
-        {
-            using (SqlConnection oConnection = _connectionFactory.Create())
-            {
-                try
-                {
-                    // When subtracting, refuse to drive stock negative: the guard makes an oversell
-                    // a no-op (0 rows) instead of leaving a product at a negative quantity. The
-                    // return value now reflects whether a row actually changed, so a missing
-                    // product id or an insufficient-stock line no longer reports success.
-                    string query = subtract
-                        ? "UPDATE product SET stock = (stock - @amount) WHERE id = @idproduct AND stock >= @amount"
-                        : "UPDATE product SET stock = (stock + @amount) WHERE id = @idproduct";
-
-                    return oConnection.Execute(query, new { amount, idproduct }) > 0;
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex);
-                    return false;
-                }
-            }
-        }
-
         public int Register(Sale obj)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
@@ -101,12 +77,16 @@ namespace PharmacySystem.Data
 
                     try
                     {
+                        // Receipt number comes from a sequence, generated inside the transaction
+                        // so it is concurrency-safe (the old RIGHT(..., COUNT(*) + 1) handed the
+                        // same number to two simultaneous sales).
                         const string insertSaleQuery =
+                            "DECLARE @folio INT = NEXT VALUE FOR dbo.seq_sale_folio; " +
                             "INSERT INTO sale(document_type, document_number, user_id, document_client, name_client, total_amount, amount_received, change_amount) " +
-                            "VALUES (@document_type, (SELECT RIGHT('000000' + CAST((SELECT count(*) + 1 FROM sale) AS VARCHAR), 6)), @user_id, @document_client, @name_client, @total_amount, @amount_received, @change_amount); " +
-                            "SELECT SCOPE_IDENTITY();";
+                            "VALUES (@document_type, RIGHT('000000' + CAST(@folio AS VARCHAR(20)), 6), @user_id, @document_client, @name_client, @total_amount, @amount_received, @change_amount); " +
+                            "SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
-                        object rawId = oConnection.ExecuteScalar<object>(insertSaleQuery, new
+                        int idSale = oConnection.ExecuteScalar<int>(insertSaleQuery, new
                         {
                             document_type = obj.typeDocument,
                             user_id = obj.oPerson.idPerson,
@@ -117,16 +97,33 @@ namespace PharmacySystem.Data
                             change_amount = obj.change
                         }, objTransacion);
 
-                        int.TryParse(rawId?.ToString(), out int idSale);
-
                         if (idSale != 0)
                         {
+                            const string subtractStockQuery =
+                                "UPDATE product SET stock = stock - @amount WHERE id = @product_id AND stock >= @amount";
+
                             const string insertDetailQuery =
                                 "INSERT INTO sale_detail(sale_id, product_id, stock, sale_price, subtotal) " +
                                 "VALUES (@sale_id, @product_id, @stock, @sale_price, @subtotal)";
 
                             foreach (SaleDetail dv in obj.oSaleDetail)
                             {
+                                // Stock is discounted in the same transaction as the sale rows.
+                                // The stock >= @amount guard makes an oversell (or a missing
+                                // product) update 0 rows, which aborts the whole sale - no
+                                // partial, un-rolled-back inventory movement.
+                                int stockRows = oConnection.Execute(subtractStockQuery, new
+                                {
+                                    amount = dv.amount,
+                                    product_id = dv.oProduct.idProduct
+                                }, objTransacion);
+
+                                if (stockRows == 0)
+                                {
+                                    objTransacion.Rollback();
+                                    return 0;
+                                }
+
                                 oConnection.Execute(insertDetailQuery, new
                                 {
                                     sale_id = idSale,
@@ -161,7 +158,7 @@ namespace PharmacySystem.Data
             }
         }
 
-        public List<SaleReportRow> ReportSale(string startDate, string endDate)
+        public List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
@@ -173,9 +170,9 @@ namespace PharmacySystem.Data
                         "s.total_amount AS TotalAmount, s.amount_received AS AmountReceived, s.change_amount AS ChangeAmount " +
                         "FROM sale s " +
                         "INNER JOIN person p ON p.id = s.user_id " +
-                        "WHERE CAST(s.date_registered AS DATE) BETWEEN @startDate AND @endDate";
+                        "WHERE s.date_registered >= @startDate AND s.date_registered < DATEADD(DAY, 1, @endDate)";
 
-                    return oConnection.Query<SaleReportRow>(sql, new { startDate, endDate }).ToList();
+                    return oConnection.Query<SaleReportRow>(sql, new { startDate = startDate.Date, endDate = endDate.Date }).ToList();
                 }
                 catch (Exception ex)
                 {
@@ -185,7 +182,7 @@ namespace PharmacySystem.Data
             }
         }
 
-        public decimal SumTotalPay(string startDate, string endDate)
+        public decimal SumTotalPay(DateTime startDate, DateTime endDate)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
@@ -194,9 +191,9 @@ namespace PharmacySystem.Data
                     const string sql =
                         "SELECT ISNULL(SUM(s.total_amount), 0) AS total_amount " +
                         "FROM sale s INNER JOIN person p ON p.id = s.user_id " +
-                        "WHERE CAST(s.date_registered AS DATE) BETWEEN @startDate AND @endDate";
+                        "WHERE s.date_registered >= @startDate AND s.date_registered < DATEADD(DAY, 1, @endDate)";
 
-                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate, endDate });
+                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate = startDate.Date, endDate = endDate.Date });
                 }
                 catch (Exception ex)
                 {
@@ -206,7 +203,7 @@ namespace PharmacySystem.Data
             }
         }
 
-        public decimal SumAmountReceived(string startDate, string endDate)
+        public decimal SumAmountReceived(DateTime startDate, DateTime endDate)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
@@ -215,9 +212,9 @@ namespace PharmacySystem.Data
                     const string sql =
                         "SELECT ISNULL(SUM(s.amount_received), 0) AS amount_received " +
                         "FROM sale s INNER JOIN person p ON p.id = s.user_id " +
-                        "WHERE CAST(s.date_registered AS DATE) BETWEEN @startDate AND @endDate";
+                        "WHERE s.date_registered >= @startDate AND s.date_registered < DATEADD(DAY, 1, @endDate)";
 
-                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate, endDate });
+                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate = startDate.Date, endDate = endDate.Date });
                 }
                 catch (Exception ex)
                 {
@@ -227,7 +224,7 @@ namespace PharmacySystem.Data
             }
         }
 
-        public decimal SumChangeAmount(string startDate, string endDate)
+        public decimal SumChangeAmount(DateTime startDate, DateTime endDate)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
@@ -236,9 +233,9 @@ namespace PharmacySystem.Data
                     const string sql =
                         "SELECT ISNULL(SUM(s.change_amount), 0) AS change_amount " +
                         "FROM sale s INNER JOIN person p ON p.id = s.user_id " +
-                        "WHERE CAST(s.date_registered AS DATE) BETWEEN @startDate and @endDate";
+                        "WHERE s.date_registered >= @startDate AND s.date_registered < DATEADD(DAY, 1, @endDate)";
 
-                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate, endDate });
+                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate = startDate.Date, endDate = endDate.Date });
                 }
                 catch (Exception ex)
                 {

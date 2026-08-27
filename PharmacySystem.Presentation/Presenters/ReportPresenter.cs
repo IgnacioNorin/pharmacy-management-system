@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -54,8 +55,8 @@ namespace PharmacySystem.Presentation
 
         public void OnConsultSale()
         {
-            string startDate = DateHelper.FormatDateBackend(_view.SaleStartDate);
-            string endDate = DateHelper.FormatDateBackend(_view.SaleEndDate);
+            DateTime startDate = _view.SaleStartDate;
+            DateTime endDate = _view.SaleEndDate;
 
             decimal sumTotalPay = _saleService.SumTotalPay(startDate, endDate);
             decimal sumAmountReceived = _saleService.SumAmountReceived(startDate, endDate);
@@ -100,8 +101,8 @@ namespace PharmacySystem.Presentation
 
         public void OnConsultPurchase()
         {
-            string startDate = DateHelper.FormatDateBackend(_view.PurchaseStartDate);
-            string endDate = DateHelper.FormatDateBackend(_view.PurchaseEndDate);
+            DateTime startDate = _view.PurchaseStartDate;
+            DateTime endDate = _view.PurchaseEndDate;
             string supplierId = _view.SelectedSupplierId;
 
             List<PurchaseReportRow> rows = _purchaseService.ReportPurchase(supplierId, startDate, endDate);
