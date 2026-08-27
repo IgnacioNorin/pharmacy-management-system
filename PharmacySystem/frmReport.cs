@@ -87,6 +87,14 @@ namespace PharmacySystem
             _presenter.OnLoad();
 
             ChangeMaxDate(txtstartdate, txtenddate, txtstartdatepurchase, txtenddatepurchase, txtstartdatealerthistory, txtenddatealerthistory);
+
+            // Consulting a report is covered by reportes.acceso (the sidebar button); exporting to
+            // Excel needs reportes.exportar on top of that.
+            bool canExport = MainForm.Session?.Can("reportes.exportar") ?? false;
+            btnExportSale.Enabled = canExport;
+            btnExportPurchases.Enabled = canExport;
+            btnExportProduct.Enabled = canExport;
+            btnExportAlertHistory.Enabled = canExport;
         }
 
         private void btnExportSale_Click(object sender, EventArgs e)

@@ -7,7 +7,27 @@ namespace PharmacySystem.Tests.Presentation
     public class UserPresenterTests
     {
         private static PharmacySystem.Presentation.UserPresenter CreatePresenter(FakeUserView view, FakePersonService service)
-            => new PharmacySystem.Presentation.UserPresenter(view, service);
+            => new PharmacySystem.Presentation.UserPresenter(view, service, TestUser.With("usuarios.gestionar"));
+
+        [Fact]
+        public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotRegister()
+        {
+            var view = ValidView();
+            new PharmacySystem.Presentation.UserPresenter(view, new FakePersonService(), TestUser.With()).OnSave();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Empty(view.AddedRows);
+        }
+
+        [Fact]
+        public void OnDelete_WithoutManagePermission_ShowsDeniedAndDoesNotRemove()
+        {
+            var view = new FakeUserView { SelectedIndex = 3, UserId = 9 };
+            new PharmacySystem.Presentation.UserPresenter(view, new FakePersonService(), TestUser.With()).OnDelete();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Empty(view.RemovedIndexes);
+        }
 
         private static FakeUserView ValidView() => new FakeUserView
         {

@@ -13,12 +13,14 @@ namespace PharmacySystem.Presentation
         private readonly IProductManagementView _view;
         private readonly IProductService _productService;
         private readonly ICategoryService _categoryService;
+        private readonly CurrentUser _currentUser;
 
-        public ProductManagementPresenter(IProductManagementView view, IProductService productService, ICategoryService categoryService)
+        public ProductManagementPresenter(IProductManagementView view, IProductService productService, ICategoryService categoryService, CurrentUser currentUser)
         {
             _view = view;
             _productService = productService;
             _categoryService = categoryService;
+            _currentUser = currentUser;
         }
 
         public void OnLoad()
@@ -32,6 +34,12 @@ namespace PharmacySystem.Presentation
 
         public void OnSave()
         {
+            if (!Can("productos.gestionar"))
+            {
+                _view.ShowMessage("No tiene permiso para crear o editar productos.");
+                return;
+            }
+
             var errors = _view.Validate();
             if (errors.Count > 0)
             {
@@ -97,6 +105,12 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
+            if (!Can("productos.eliminar"))
+            {
+                _view.ShowMessage("No tiene permiso para eliminar productos.");
+                return;
+            }
+
             if (!_view.ConfirmDelete())
             {
                 return;
@@ -111,6 +125,8 @@ namespace PharmacySystem.Presentation
             _view.RemoveRow(_view.SelectedIndex - 1);
             _view.ClearForm();
         }
+
+        private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
 
         private static ManagementProductRow ToRow(Product p)
         {

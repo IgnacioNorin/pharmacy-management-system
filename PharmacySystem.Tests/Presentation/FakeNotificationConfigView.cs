@@ -13,6 +13,7 @@ namespace PharmacySystem.Tests.Presentation
         public int EmptyFieldsErrorCount { get; private set; }
         public int SaveSucceededCount { get; private set; }
         public int SaveFailedCount { get; private set; }
+        public string ShownMessage { get; private set; }
 
         public void SetDays(string value) => SetDaysValue = value;
         public void SetStock(string value) => SetStockValue = value;
@@ -20,5 +21,6 @@ namespace PharmacySystem.Tests.Presentation
         public void ShowEmptyFieldsError() => EmptyFieldsErrorCount++;
         public void ShowSaveSucceeded() => SaveSucceededCount++;
         public void ShowSaveFailed() => SaveFailedCount++;
+        public void ShowMessage(string message) => ShownMessage = message;
     }
 }

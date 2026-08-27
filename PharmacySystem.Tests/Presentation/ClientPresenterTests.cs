@@ -8,7 +8,27 @@ namespace PharmacySystem.Tests.Presentation
     public class ClientPresenterTests
     {
         private static ClientPresenter CreatePresenter(FakeClientView view, FakePersonService service)
-            => new ClientPresenter(view, service);
+            => new ClientPresenter(view, service, TestUser.With("clientes.gestionar"));
+
+        [Fact]
+        public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotRegister()
+        {
+            var view = new FakeClientView { PersonId = 0, Document = "1", Name = "N", Address = "A", Phone = "9" };
+            new ClientPresenter(view, new FakePersonService(), TestUser.With()).OnSave();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Empty(view.AddedRows);
+        }
+
+        [Fact]
+        public void OnDelete_WithoutManagePermission_ShowsDeniedAndDoesNotRemove()
+        {
+            var view = new FakeClientView { SelectedIndex = 2, PersonId = 4 };
+            new ClientPresenter(view, new FakePersonService(), TestUser.With()).OnDelete();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Empty(view.RemovedIndexes);
+        }
 
         [Fact]
         public void OnLoad_OnlyIncludesClientRole()

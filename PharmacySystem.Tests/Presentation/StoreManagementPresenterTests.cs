@@ -12,7 +12,17 @@ namespace PharmacySystem.Tests.Presentation
     public class StoreManagementPresenterTests
     {
         private static StoreManagementPresenter CreatePresenter(FakeStoreManagementView view, FakeStoreService service)
-            => new StoreManagementPresenter(view, service);
+            => new StoreManagementPresenter(view, service, TestUser.With("tienda.editar"));
+
+        [Fact]
+        public void OnSave_WithoutEditPermission_ShowsDeniedAndDoesNotSave()
+        {
+            var view = new FakeStoreManagementView { Document = "1", CompanyName = "C", Email = "e@e.co", Phone = "9", Address = "A", SelectedCurrency = "es-EC" };
+            new StoreManagementPresenter(view, new FakeStoreService(), TestUser.With()).OnSave();
+
+            Assert.Contains(view.ErrorMessages, m => m.Contains("No tiene permiso"));
+            Assert.Empty(view.InfoMessages);
+        }
 
         [Fact]
         public void OnLoad_PopulatesFieldsAndCurrencyOptions()

@@ -29,7 +29,7 @@ namespace PharmacySystem
         #region Supplier
 
         public static SupplierPresenter CreateSupplierPresenter(ISupplierView view) =>
-            new SupplierPresenter(view, _supplierService);
+            new SupplierPresenter(view, _supplierService, MainForm.Session);
 
         public static SupplierPickerPresenter CreateSupplierPickerPresenter(ISupplierPickerView view) =>
             new SupplierPickerPresenter(view, _supplierService);
@@ -39,10 +39,10 @@ namespace PharmacySystem
         #region Person (client / user / login)
 
         public static ClientPresenter CreateClientPresenter(IClientView view) =>
-            new ClientPresenter(view, _personService);
+            new ClientPresenter(view, _personService, MainForm.Session);
 
         public static UserPresenter CreateUserPresenter(IUserView view) =>
-            new UserPresenter(view, _personService);
+            new UserPresenter(view, _personService, MainForm.Session);
 
         public static ClientPickerPresenter CreateClientPickerPresenter(IClientPickerView view) =>
             new ClientPickerPresenter(view, _personService);
@@ -58,20 +58,20 @@ namespace PharmacySystem
             new ProductPickerPresenter(view, _productService, origin);
 
         public static CategoryManagementPresenter CreateCategoryManagementPresenter(ICategoryManagementView view) =>
-            new CategoryManagementPresenter(view, _categoryService);
+            new CategoryManagementPresenter(view, _categoryService, MainForm.Session);
 
         public static ProductManagementPresenter CreateProductManagementPresenter(IProductManagementView view) =>
-            new ProductManagementPresenter(view, _productService, _categoryService);
+            new ProductManagementPresenter(view, _productService, _categoryService, MainForm.Session);
 
         #endregion
 
         #region Store / Notifications
 
         public static StoreManagementPresenter CreateStoreManagementPresenter(IStoreManagementView view) =>
-            new StoreManagementPresenter(view, _storeService);
+            new StoreManagementPresenter(view, _storeService, MainForm.Session);
 
         public static NotificationConfigPresenter CreateNotificationConfigPresenter(INotificationConfigView view) =>
-            new NotificationConfigPresenter(view, _notificationConfigService);
+            new NotificationConfigPresenter(view, _notificationConfigService, MainForm.Session);
 
         public static MainFormPresenter CreateMainFormPresenter(IMainFormView view) =>
             new MainFormPresenter(view, _storeService, _notificationConfigService);

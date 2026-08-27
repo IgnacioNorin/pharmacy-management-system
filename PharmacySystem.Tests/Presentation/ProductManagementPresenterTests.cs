@@ -30,7 +30,27 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         private static ProductManagementPresenter CreatePresenter(FakeProductManagementView view, FakeProductService productService, FakeCategoryService categoryService)
-            => new ProductManagementPresenter(view, productService, categoryService);
+            => new ProductManagementPresenter(view, productService, categoryService, TestUser.With("productos.gestionar", "productos.eliminar"));
+
+        [Fact]
+        public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotRegister()
+        {
+            var view = new FakeProductManagementView { ProductId = 0, Code = "P", Name = "N", Description = "D", SelectedCategoryId = 1 };
+            new ProductManagementPresenter(view, new FakeProductService(), new FakeCategoryService(), TestUser.With()).OnSave();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Empty(view.AddedRows);
+        }
+
+        [Fact]
+        public void OnDelete_WithoutDeletePermission_ShowsDeniedAndDoesNotRemove()
+        {
+            var view = new FakeProductManagementView { SelectedIndex = 2, ProductId = 5 };
+            new ProductManagementPresenter(view, new FakeProductService(), new FakeCategoryService(), TestUser.With("productos.gestionar")).OnDelete();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Empty(view.RemovedIndexes);
+        }
 
         [Fact]
         public void OnLoad_PopulatesCategoryOptionsAndProducts()

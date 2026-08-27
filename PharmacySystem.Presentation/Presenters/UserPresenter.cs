@@ -11,12 +11,16 @@ namespace PharmacySystem.Presentation
     {
         private readonly IUserView _view;
         private readonly IPersonService _service;
+        private readonly CurrentUser _currentUser;
 
-        public UserPresenter(IUserView view, IPersonService service)
+        public UserPresenter(IUserView view, IPersonService service, CurrentUser currentUser)
         {
             _view = view;
             _service = service;
+            _currentUser = currentUser;
         }
+
+        private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
 
         public void OnLoad()
         {
@@ -34,6 +38,12 @@ namespace PharmacySystem.Presentation
 
         public void OnSave()
         {
+            if (!Can("usuarios.gestionar"))
+            {
+                _view.ShowMessage("No tiene permiso para crear o editar usuarios.");
+                return;
+            }
+
             var errors = _view.Validate();
             if (errors.Count > 0)
             {
@@ -113,6 +123,12 @@ namespace PharmacySystem.Presentation
             if (_view.SelectedIndex <= 0)
             {
                 _view.ShowMessage("No se pudo eliminar, seleccione un usuario");
+                return;
+            }
+
+            if (!Can("usuarios.gestionar"))
+            {
+                _view.ShowMessage("No tiene permiso para eliminar usuarios.");
                 return;
             }
 

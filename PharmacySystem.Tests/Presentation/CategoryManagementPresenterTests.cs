@@ -8,7 +8,27 @@ namespace PharmacySystem.Tests.Presentation
     public class CategoryManagementPresenterTests
     {
         private static CategoryManagementPresenter CreatePresenter(FakeCategoryManagementView view, FakeCategoryService service)
-            => new CategoryManagementPresenter(view, service);
+            => new CategoryManagementPresenter(view, service, TestUser.With("categorias.gestionar"));
+
+        [Fact]
+        public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotRegister()
+        {
+            var view = new FakeCategoryManagementView { CategoryId = 0, Description = "Analgesicos" };
+            new CategoryManagementPresenter(view, new FakeCategoryService(), TestUser.With()).OnSave();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Empty(view.AddedRows);
+        }
+
+        [Fact]
+        public void OnDelete_WithoutManagePermission_ShowsDeniedAndDoesNotRemove()
+        {
+            var view = new FakeCategoryManagementView { SelectedIndex = 2, CategoryId = 9 };
+            new CategoryManagementPresenter(view, new FakeCategoryService(), TestUser.With()).OnDelete();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Empty(view.RemovedIndexes);
+        }
 
         [Fact]
         public void OnLoad_PopulatesViewFromService()

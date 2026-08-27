@@ -136,6 +136,12 @@ namespace PharmacySystem
             cbosearch.SelectedIndex = 0;
 
             _presenter.OnLoad();
+
+            // Read-only for a role without clientes.gestionar - the presenter also rejects the
+            // action, this just greys out the buttons.
+            bool canManage = MainForm.Session?.Can("clientes.gestionar") ?? false;
+            btnSave.Enabled = canManage;
+            btnDelete.Enabled = canManage;
         }
 
         private void btnSave_Click(object sender, EventArgs e)

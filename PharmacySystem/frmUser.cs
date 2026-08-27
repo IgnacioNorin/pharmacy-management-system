@@ -167,6 +167,10 @@ namespace PharmacySystem
             cbosearch.SelectedIndex = 0;
 
             _presenter.OnLoad();
+
+            bool canManage = MainForm.Session?.Can("usuarios.gestionar") ?? false;
+            btnSave.Enabled = canManage;
+            btnDelete.Enabled = canManage;
         }
 
         private void btnSave_Click(object sender, EventArgs e)
