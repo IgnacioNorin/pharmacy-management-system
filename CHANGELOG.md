@@ -81,8 +81,30 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   Conectar un proveedor DTE es escribir una implementación nueva de la interfaz y
   cambiar el registro en `CompositionRoot`. Migración `011_fiscal_document_hook.sql`.
 
+### Cambiado
+
+- **Reportes: datos tipados en vez de una tabla de textos.** El presenter de
+  Reportes ahora entrega cada informe como una definición de columnas
+  (`encabezado` + tipo + selector) más los datos crudos (`decimal` / `DateTime`
+  sin formatear) y una fila de totales de la misma forma; el formateo pasó a la
+  vista.
+- **Reportes: los totales salen del área ordenable.** En Ventas y Compras, los
+  totales dejan de ser una fila del grid (ordenar una columna ya no los
+  desacomoda) y pasan a una franja de solo lectura debajo de la grilla. La
+  exportación a Excel los sigue incluyendo como fila "Total:".
+- **Reportes: nombres de columna neutros.** En el informe de ventas, "CI
+  Vendedor" / "CI Cliente" pasan a llamarse "Documento Vendedor" / "Documento
+  Cliente".
+
 ### Interno
 
+- Reportes: los totales de ventas y las columnas de línea de compras se calculan
+  a partir de las filas ya consultadas. Se eliminaron `SumAmountReceived` /
+  `SumChangeAmount` (ventas) y `GetTotalPurchasePrice` / `GetTotalQuantity` /
+  `GetTotalSalesPrice` / `GetSubTotal` (compras) de servicios y repositorios.
+  El informe de ventas pasa de cinco consultas a una; el de compras, de cinco a
+  dos (se conserva `GetTotalAmount`, el total de cabecera con su test de
+  regresión, y `SumTotalPay`, que usa el tablero de Inicio).
 - Se quitó la referencia muerta a Entity Framework 6 del proyecto WinForms
   (no se usaba y hacía fallar el build en un clon sin la carpeta `packages`).
 - Se eliminaron seis procedimientos almacenados de alta/edición

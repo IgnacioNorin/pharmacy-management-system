@@ -24,17 +24,5 @@ namespace PharmacySystem.Business
 
         public decimal GetTotalAmount(string idSupplier, DateTime startDate, DateTime endDate) =>
             _repository.GetTotalAmount(idSupplier, startDate, endDate);
-
-        public decimal GetTotalPurchasePrice(string idSupplier, DateTime startDate, DateTime endDate) =>
-            _repository.GetTotalPurchasePrice(idSupplier, startDate, endDate);
-
-        public int GetTotalQuantity(string idSupplier, DateTime startDate, DateTime endDate) =>
-            _repository.GetTotalQuantity(idSupplier, startDate, endDate);
-
-        public decimal GetTotalSalesPrice(string idSupplier, DateTime startDate, DateTime endDate) =>
-            _repository.GetTotalSalesPrice(idSupplier, startDate, endDate);
-
-        public decimal GetSubTotal(string idSupplier, DateTime startDate, DateTime endDate) =>
-            _repository.GetSubTotal(idSupplier, startDate, endDate);
     }
 }

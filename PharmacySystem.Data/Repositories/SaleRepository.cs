@@ -394,46 +394,5 @@ namespace PharmacySystem.Data
             }
         }
 
-        public decimal SumAmountReceived(DateTime startDate, DateTime endDate)
-        {
-            using (SqlConnection oConnection = _connectionFactory.Create())
-            {
-                try
-                {
-                    const string sql =
-                        "SELECT ISNULL(SUM(s.amount_received), 0) AS amount_received " +
-                        "FROM sale s INNER JOIN person p ON p.id = s.user_id " +
-                        "WHERE s.date_registered >= @startDate AND s.date_registered < DATEADD(DAY, 1, @endDate)";
-
-                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate = startDate.Date, endDate = endDate.Date });
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex);
-                    return 0;
-                }
-            }
-        }
-
-        public decimal SumChangeAmount(DateTime startDate, DateTime endDate)
-        {
-            using (SqlConnection oConnection = _connectionFactory.Create())
-            {
-                try
-                {
-                    const string sql =
-                        "SELECT ISNULL(SUM(s.change_amount), 0) AS change_amount " +
-                        "FROM sale s INNER JOIN person p ON p.id = s.user_id " +
-                        "WHERE s.date_registered >= @startDate AND s.date_registered < DATEADD(DAY, 1, @endDate)";
-
-                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate = startDate.Date, endDate = endDate.Date });
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex);
-                    return 0;
-                }
-            }
-        }
     }
 }

@@ -48,6 +48,7 @@
             this.label10 = new System.Windows.Forms.Label();
             this.btnConsultSale = new System.Windows.Forms.Button();
             this.btnExportSale = new System.Windows.Forms.Button();
+            this.lblSaleTotals = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.tabCategory = new System.Windows.Forms.TabPage();
@@ -61,6 +62,7 @@
             this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.btnExportPurchases = new System.Windows.Forms.Button();
+            this.lblPurchaseTotals = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.tabStore = new System.Windows.Forms.TabPage();
@@ -117,6 +119,7 @@
             this.tabProduct.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
             this.tabProduct.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.tabProduct.Controls.Add(this.dgdatasale);
+            this.tabProduct.Controls.Add(this.lblSaleTotals);
             this.tabProduct.Controls.Add(this.txtenddate);
             this.tabProduct.Controls.Add(this.txtstartdate);
             this.tabProduct.Controls.Add(this.label1);
@@ -172,8 +175,20 @@
             this.dgdatasale.RowTemplate.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black;
             this.dgdatasale.RowTemplate.Height = 30;
             this.dgdatasale.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgdatasale.Size = new System.Drawing.Size(1189, 352);
+            this.dgdatasale.Size = new System.Drawing.Size(1189, 326);
             this.dgdatasale.TabIndex = 44;
+            //
+            // lblSaleTotals
+            //
+            this.lblSaleTotals.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblSaleTotals.BackColor = System.Drawing.Color.White;
+            this.lblSaleTotals.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.lblSaleTotals.Location = new System.Drawing.Point(26, 490);
+            this.lblSaleTotals.Name = "lblSaleTotals";
+            this.lblSaleTotals.Size = new System.Drawing.Size(1189, 22);
+            this.lblSaleTotals.TabIndex = 45;
+            this.lblSaleTotals.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // txtenddate
             // 
@@ -286,6 +301,7 @@
             this.tabCategory.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
             this.tabCategory.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.tabCategory.Controls.Add(this.dgdatapurchase);
+            this.tabCategory.Controls.Add(this.lblPurchaseTotals);
             this.tabCategory.Controls.Add(this.btnConsultPurchase);
             this.tabCategory.Controls.Add(this.cbosupplier);
             this.tabCategory.Controls.Add(this.txtenddatepurchase);
@@ -349,8 +365,20 @@
             this.dgdatapurchase.RowTemplate.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black;
             this.dgdatapurchase.RowTemplate.Height = 30;
             this.dgdatapurchase.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgdatapurchase.Size = new System.Drawing.Size(1189, 352);
+            this.dgdatapurchase.Size = new System.Drawing.Size(1189, 326);
             this.dgdatapurchase.TabIndex = 56;
+            //
+            // lblPurchaseTotals
+            //
+            this.lblPurchaseTotals.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblPurchaseTotals.BackColor = System.Drawing.Color.White;
+            this.lblPurchaseTotals.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.lblPurchaseTotals.Location = new System.Drawing.Point(22, 489);
+            this.lblPurchaseTotals.Name = "lblPurchaseTotals";
+            this.lblPurchaseTotals.Size = new System.Drawing.Size(1189, 22);
+            this.lblPurchaseTotals.TabIndex = 57;
+            this.lblPurchaseTotals.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // btnConsultPurchase
             // 
@@ -830,6 +858,8 @@
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Button btnExportSale;
+        private System.Windows.Forms.Label lblSaleTotals;
+        private System.Windows.Forms.Label lblPurchaseTotals;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TabPage tabCategory;

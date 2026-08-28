@@ -1,16 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using Xunit;
 
 namespace PharmacySystem.Tests.Presentation
 {
-    // ReportPresenter calls CultureInfoHelper.FormatAsCurrency, which reads a process-wide
-    // mutable static field. Shares the "Database" collection with CultureInfoHelperTests (which
-    // mutates that field via SetCurrency) so the two can never run concurrently - same reasoning
-    // as putting CultureInfoHelperTests there in the first place.
-    [Collection("Database")]
     public class ReportPresenterTests
     {
         private static (ReportPresenter Presenter, FakeReportView View, FakeSupplierService Suppliers,
@@ -33,6 +29,9 @@ namespace PharmacySystem.Tests.Presentation
             new ReportPresenter(view, new FakeSupplierService(), new FakeCategoryService(), new FakeSaleService(),
                 new FakePurchaseService(), new FakeProductService(), new FakeNotificationConfigService(),
                 TestUser.With(permissions));
+
+        private static object Cell<TRow>(ReportDefinition<TRow> definition, TRow row, string header) =>
+            definition.Columns.First(c => c.Header == header).Value(row);
 
         [Fact]
         public void OnConsult_WithoutTheMatchingReportPermission_ProducesNothing()
@@ -75,7 +74,7 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void OnConsultSale_BuildsRowsAndAlignedTotalRow()
+        public void OnConsultSale_PassesRawRowsThroughAndSumsTheTotalsFromThem()
         {
             var f = Create();
             f.Sales.ReportResult = new List<SaleReportRow>
@@ -89,41 +88,48 @@ namespace PharmacySystem.Tests.Presentation
                     SellerName = "Vendor",
                     ClientDocument = "222",
                     ClientName = "Client",
-                    NetAmount = 13m,
-                    TaxAmount = 2m,
-                    ExemptAmount = 0m,
-                    TotalAmount = 15m,
-                    AmountReceived = 20m,
-                    ChangeAmount = 5m
+                    NetAmount = 13m, TaxAmount = 2m, ExemptAmount = 0m,
+                    TotalAmount = 15m, AmountReceived = 20m, ChangeAmount = 5m
+                },
+                new SaleReportRow
+                {
+                    NetAmount = 7m, TaxAmount = 1m, ExemptAmount = 4m,
+                    TotalAmount = 12m, AmountReceived = 12m, ChangeAmount = 0m
                 }
             };
-            f.Sales.SumTotalPayResult = 15m;
-            f.Sales.SumAmountReceivedResult = 20m;
-            f.Sales.SumChangeAmountResult = 5m;
 
             f.Presenter.OnConsultSale();
 
-            var dt = f.View.SaleReport;
-            Assert.Equal(13, dt.Columns.Count);
-            Assert.Equal("Nombre Cliente", dt.Columns[6].ColumnName);
-            Assert.Equal("Neto", dt.Columns[7].ColumnName);
-            Assert.Equal("IVA", dt.Columns[8].ColumnName);
-            Assert.Equal("Exento", dt.Columns[9].ColumnName);
-            Assert.Equal(3, dt.Rows.Count); // 1 data row + 1 blank spacer + 1 total row
+            var result = f.View.SaleReport;
+            Assert.Equal(2, result.Rows.Count);
+            Assert.Same(f.Sales.ReportResult[0], result.Rows[0]);   // rows handed through untouched, unformatted
+            Assert.Equal(13m, result.Rows[0].NetAmount);
 
-            Assert.Equal("17-03-2026", dt.Rows[0]["Fecha Venta"]);
-            Assert.Equal("Client", dt.Rows[0]["Nombre Cliente"]);
-            Assert.Contains("$", (string)dt.Rows[0]["Neto"]);
-            Assert.Contains("$", (string)dt.Rows[0]["Total Pagar"]);
-
-            // Total row: "Total:" still lands under "Nombre Cliente" (index 6); the sums follow
-            // under Neto / IVA / Exento / Total Pagar / Pago Con / Cambio.
-            Assert.Equal("Total:", dt.Rows[2][6]);
-            Assert.Equal(DBNull.Value, dt.Rows[2][0]);
+            Assert.True(result.HasTotals);
+            Assert.Equal(20m, result.Totals.NetAmount);
+            Assert.Equal(3m, result.Totals.TaxAmount);
+            Assert.Equal(4m, result.Totals.ExemptAmount);
+            Assert.Equal(27m, result.Totals.TotalAmount);
+            Assert.Equal(32m, result.Totals.AmountReceived);
+            Assert.Equal(5m, result.Totals.ChangeAmount);
         }
 
         [Fact]
-        public void OnConsultPurchase_BuildsRowsAndAlignedTotalRow()
+        public void SaleDefinition_UsesNeutralDocumentColumnNames()
+        {
+            var f = Create();
+
+            f.Presenter.OnConsultSale();
+
+            var headers = f.View.SaleDefinition.Columns.Select(c => c.Header).ToList();
+            Assert.Contains("Documento Vendedor", headers);
+            Assert.Contains("Documento Cliente", headers);
+            Assert.DoesNotContain("CI Vendedor", headers);
+            Assert.DoesNotContain("CI Cliente", headers);
+        }
+
+        [Fact]
+        public void OnConsultPurchase_SumsLineColumnsFromRowsButTakesTheHeaderTotalFromTheService()
         {
             var f = Create();
             f.Purchases.ReportResult = new List<PurchaseReportRow>
@@ -131,40 +137,35 @@ namespace PharmacySystem.Tests.Presentation
                 new PurchaseReportRow
                 {
                     DateRegistered = new DateTime(2026, 3, 17),
-                    SupplierDocument = "111",
-                    CompanyName = "Acme",
-                    DocumentType = "Factura",
-                    DocumentNumber = "000001",
-                    TotalAmount = 42.50m,
-                    ProductName = "Widget",
-                    Quantity = 10,
-                    PurchasePrice = 3m,
-                    SalePrice = 5m
+                    SupplierDocument = "111", CompanyName = "Acme",
+                    DocumentType = "Factura", DocumentNumber = "000001",
+                    TotalAmount = 42.50m, ProductName = "Widget",
+                    Quantity = 10, PurchasePrice = 3m, SalePrice = 5m
+                },
+                new PurchaseReportRow
+                {
+                    TotalAmount = 42.50m, ProductName = "Gadget",
+                    Quantity = 4, PurchasePrice = 2m, SalePrice = 6m
                 }
             };
+            // Both lines belong to the same purchase: its header total must be counted once.
             f.Purchases.TotalAmountResult = 42.50m;
-            f.Purchases.TotalQuantityResult = 10;
-            f.Purchases.TotalPurchasePriceResult = 3m;
-            f.Purchases.TotalSalesPriceResult = 5m;
 
             f.Presenter.OnConsultPurchase();
 
-            var dt = f.View.PurchaseReport;
-            Assert.Equal(10, dt.Columns.Count);
-            Assert.Equal(3, dt.Rows.Count);
+            var result = f.View.PurchaseReport;
+            Assert.Equal(2, result.Rows.Count);
+            Assert.Equal("Widget", result.Rows[0].ProductName);
 
-            Assert.Equal("Widget", dt.Rows[0]["Nombre,"]);
-            Assert.Equal("10", dt.Rows[0]["Cantidad"]);
-
-            // "Total:" lands under "Numero Documento" (index 4), sum under "Monto Total" (5),
-            // "Nombre," (6) stays null, quantity/purchase/sale price fill the rest.
-            Assert.Equal("Total:", dt.Rows[2][4]);
-            Assert.Equal(DBNull.Value, dt.Rows[2][6]);
-            Assert.Equal("10", dt.Rows[2][7]);
+            Assert.True(result.HasTotals);
+            Assert.Equal(42.50m, result.Totals.TotalAmount);   // from GetTotalAmount, not the row sum (which would be 85)
+            Assert.Equal(14, result.Totals.Quantity);
+            Assert.Equal(5m, result.Totals.PurchasePrice);
+            Assert.Equal(11m, result.Totals.SalePrice);
         }
 
         [Fact]
-        public void OnConsultProduct_BuildsRowsWithNoTotalRow()
+        public void OnConsultProduct_PassesRowsThroughWithNoTotalsRow()
         {
             var f = Create();
             f.Products.ReportResult = new List<ProductReportRow>
@@ -172,92 +173,73 @@ namespace PharmacySystem.Tests.Presentation
                 new ProductReportRow
                 {
                     DateCreated = new DateTime(2026, 1, 1),
-                    Code = "A1",
-                    Name = "Aspirin",
-                    Description = "Pain relief",
-                    CategoryDescription = "Meds",
-                    Stock = 20,
-                    PurchasePrice = 1m,
-                    SalePrice = 2m,
-                    DateExpired = new DateTime(2027, 1, 1),
-                    StatusName = "Activo"
+                    Code = "A1", Name = "Aspirin", Description = "Pain relief",
+                    CategoryDescription = "Meds", Stock = 20,
+                    PurchasePrice = 1m, SalePrice = 2m,
+                    DateExpired = new DateTime(2027, 1, 1), StatusName = "Activo"
                 }
             };
 
             f.Presenter.OnConsultProduct();
 
-            var dt = f.View.ProductReport;
-            Assert.Equal(10, dt.Columns.Count);
-            Assert.Single(dt.Rows); // no "Total:" row for products, matching the original
-            Assert.Equal("Aspirin", dt.Rows[0]["Nombre"]);
-            Assert.Equal("20", dt.Rows[0]["Stock"]);
+            var result = f.View.ProductReport;
+            Assert.Single(result.Rows);
+            Assert.False(result.HasTotals);
+            Assert.Equal("Aspirin", result.Rows[0].Name);
+            Assert.Equal(10, f.View.ProductDefinition.Columns.Count);
         }
 
-        // Fase 4 of the alerts rework (traceability).
+        // Fase 4 of the alerts rework (traceability). The type / severity / "Abierta" labels now
+        // live in the column selectors, so they are exercised through the definition.
         [Fact]
-        public void OnConsultAlertHistory_OpenAndResolvedRows_FormatEachStateCorrectly()
+        public void OnConsultAlertHistory_ColumnSelectorsLabelEachState()
         {
             var f = Create();
             f.Notifications.GetAlertHistoryResult = new List<ProductAlertHistoryEntry>
             {
                 new ProductAlertHistoryEntry
                 {
-                    ProductCode = "P1",
-                    ProductName = "Paracetamol",
-                    AlertType = AlertType.Stock,
-                    Severity = AlertSeverity.Critical,
-                    TriggerValue = 0m,
-                    DetectedAt = new DateTime(2026, 3, 10),
-                    ResolvedAt = null,
-                    AcknowledgedByName = null,
-                    AcknowledgedAt = null
+                    ProductCode = "P1", ProductName = "Paracetamol",
+                    AlertType = AlertType.Stock, Severity = AlertSeverity.Critical,
+                    TriggerValue = 0m, DetectedAt = new DateTime(2026, 3, 10),
+                    ResolvedAt = null, AcknowledgedByName = null, AcknowledgedAt = null
                 },
                 new ProductAlertHistoryEntry
                 {
-                    ProductCode = "P2",
-                    ProductName = "Amoxicilina",
-                    AlertType = AlertType.Expiration,
-                    Severity = AlertSeverity.Expired,
-                    TriggerValue = null,
-                    DetectedAt = new DateTime(2026, 3, 1),
+                    ProductCode = "P2", ProductName = "Amoxicilina",
+                    AlertType = AlertType.Expiration, Severity = AlertSeverity.Expired,
+                    TriggerValue = null, DetectedAt = new DateTime(2026, 3, 1),
                     ResolvedAt = new DateTime(2026, 3, 5),
-                    AcknowledgedByName = "Juan Pérez",
-                    AcknowledgedAt = new DateTime(2026, 3, 2)
+                    AcknowledgedByName = "Juan Pérez", AcknowledgedAt = new DateTime(2026, 3, 2)
                 }
             };
 
             f.Presenter.OnConsultAlertHistory();
 
-            var dt = f.View.AlertHistoryReport;
-            Assert.Equal(9, dt.Columns.Count);
-            Assert.Equal(2, dt.Rows.Count);
+            var def = f.View.AlertHistoryDefinition;
+            var rows = f.View.AlertHistoryReport.Rows;
+            Assert.Equal(2, rows.Count);
+            Assert.False(f.View.AlertHistoryReport.HasTotals);
 
-            Assert.Equal("Paracetamol", dt.Rows[0]["Producto"]);
-            Assert.Equal("Stock", dt.Rows[0]["Tipo"]);
-            Assert.Equal("Crítico", dt.Rows[0]["Severidad"]);
-            Assert.Equal("Abierta", dt.Rows[0]["Fecha Resuelta"]);
-            Assert.Equal("", dt.Rows[0]["Reconocido Por"]);
+            Assert.Equal("Stock", Cell(def, rows[0], "Tipo"));
+            Assert.Equal("Crítico", Cell(def, rows[0], "Severidad"));
+            Assert.Equal("Abierta", Cell(def, rows[0], "Fecha Resuelta"));
+            Assert.Equal("", Cell(def, rows[0], "Reconocido Por"));
 
-            Assert.Equal("Vencimiento", dt.Rows[1]["Tipo"]);
-            Assert.Equal("Vencido", dt.Rows[1]["Severidad"]);
-            Assert.Equal("05-03-2026", dt.Rows[1]["Fecha Resuelta"]);
-            Assert.Equal("Juan Pérez", dt.Rows[1]["Reconocido Por"]);
+            Assert.Equal("Vencimiento", Cell(def, rows[1], "Tipo"));
+            Assert.Equal("Vencido", Cell(def, rows[1], "Severidad"));
+            Assert.Equal(new DateTime(2026, 3, 5), Cell(def, rows[1], "Fecha Resuelta"));
+            Assert.Equal("Juan Pérez", Cell(def, rows[1], "Reconocido Por"));
         }
 
         [Fact]
-        public void OnConsultAlertHistory_PassesSelectedDateRangeToService()
+        public void OnConsultAlertHistory_ForwardsWhateverTheServiceReturns()
         {
             var f = Create();
             f.View.AlertHistoryStartDate = new DateTime(2026, 1, 1);
             f.View.AlertHistoryEndDate = new DateTime(2026, 1, 31);
+            f.Notifications.GetAlertHistoryResult = new List<ProductAlertHistoryEntry>();
 
-            f.Presenter.OnConsultAlertHistory();
-
-            // FakeNotificationConfigService.GetAlertHistory doesn't currently record its args, but
-            // it must not throw and must forward whatever the service returns for that call -
-            // covered by returning a distinct result instance and asserting identity.
-            var expected = new List<ProductAlertHistoryEntry>();
-            f.Notifications.GetAlertHistoryResult = expected;
             f.Presenter.OnConsultAlertHistory();
 
             Assert.Empty(f.View.AlertHistoryReport.Rows);

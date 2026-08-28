@@ -1,19 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using PharmacySystem.Business;
-using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
 {
-    // Ported from frmReport.cs. The three Report*/ReportPurchase/ReportSale methods used to
-    // build a pre-formatted-string DataTable directly inside the WinForms-side adapter, because
-    // that's where CultureInfoHelper/DateHelper lived. Now that those helpers are in Domain, the
-    // repositories return raw typed rows and this presenter builds the exact same DataTable
-    // shape (same column names/order, same "Total:" summary row) - it's what both the grid
-    // binding and the Excel export in frmReport.cs's Export*_Click handlers still consume.
+    // Builds each report as a typed (ReportDefinition, ReportResult) pair: the definition
+    // declares the columns once, the result carries raw rows plus an optional totals row of
+    // the same shape. No formatting and no DataTable here - the view/exporters decide how the
+    // typed values look. Totals are derived from the rows themselves; the only surviving
+    // aggregate query is the purchase header total (see PurchaseTotals).
     public class ReportPresenter
     {
         private readonly IReportView _view;
@@ -64,57 +61,8 @@ namespace PharmacySystem.Presentation
         {
             if (!Can("reportes.ventas")) return;
 
-            DateTime startDate = _view.SaleStartDate;
-            DateTime endDate = _view.SaleEndDate;
-
-            decimal sumTotalPay = _saleService.SumTotalPay(startDate, endDate);
-            decimal sumAmountReceived = _saleService.SumAmountReceived(startDate, endDate);
-            decimal sumChangeAmount = _saleService.SumChangeAmount(startDate, endDate);
-            List<SaleReportRow> rows = _saleService.ReportSale(startDate, endDate);
-
-            DataTable dt = new DataTable();
-            dt.Columns.Add("Fecha Venta", typeof(string));
-            dt.Columns.Add("Tipo Documento", typeof(string));
-            dt.Columns.Add("Numero Documento", typeof(string));
-            dt.Columns.Add("CI Vendedor", typeof(string));
-            dt.Columns.Add("Nombre Vendedor", typeof(string));
-            dt.Columns.Add("CI Cliente", typeof(string));
-            dt.Columns.Add("Nombre Cliente", typeof(string));
-            dt.Columns.Add("Neto", typeof(string));
-            dt.Columns.Add("IVA", typeof(string));
-            dt.Columns.Add("Exento", typeof(string));
-            dt.Columns.Add("Total Pagar", typeof(string));
-            dt.Columns.Add("Pago Con", typeof(string));
-            dt.Columns.Add("Cambio", typeof(string));
-
-            foreach (SaleReportRow r in rows)
-            {
-                dt.Rows.Add(
-                    DateHelper.FormatDatePresentation(r.DateRegistered),
-                    r.DocumentType,
-                    r.DocumentNumber,
-                    r.SellerDocument,
-                    r.SellerName,
-                    r.ClientDocument,
-                    r.ClientName,
-                    CultureInfoHelper.FormatAsCurrency(r.NetAmount),
-                    CultureInfoHelper.FormatAsCurrency(r.TaxAmount),
-                    CultureInfoHelper.FormatAsCurrency(r.ExemptAmount),
-                    CultureInfoHelper.FormatAsCurrency(r.TotalAmount),
-                    CultureInfoHelper.FormatAsCurrency(r.AmountReceived),
-                    CultureInfoHelper.FormatAsCurrency(r.ChangeAmount));
-            }
-
-            dt.Rows.Add(null, null);
-            dt.Rows.Add(null, null, null, null, null, null, "Total:",
-                CultureInfoHelper.FormatAsCurrency(rows.Sum(r => r.NetAmount)),
-                CultureInfoHelper.FormatAsCurrency(rows.Sum(r => r.TaxAmount)),
-                CultureInfoHelper.FormatAsCurrency(rows.Sum(r => r.ExemptAmount)),
-                CultureInfoHelper.FormatAsCurrency(sumTotalPay),
-                CultureInfoHelper.FormatAsCurrency(sumAmountReceived),
-                CultureInfoHelper.FormatAsCurrency(sumChangeAmount));
-
-            _view.SetSaleReport(dt);
+            List<SaleReportRow> rows = _saleService.ReportSale(_view.SaleStartDate, _view.SaleEndDate);
+            _view.SetSaleReport(SaleDefinition, new ReportResult<SaleReportRow>(rows, SaleTotals(rows)));
         }
 
         public void OnConsultPurchase()
@@ -126,46 +74,8 @@ namespace PharmacySystem.Presentation
             string supplierId = _view.SelectedSupplierId;
 
             List<PurchaseReportRow> rows = _purchaseService.ReportPurchase(supplierId, startDate, endDate);
-            decimal sumTotalAmount = _purchaseService.GetTotalAmount(supplierId, startDate, endDate);
-            int sumQuantityProduct = _purchaseService.GetTotalQuantity(supplierId, startDate, endDate);
-            decimal sumPurchasePrice = _purchaseService.GetTotalPurchasePrice(supplierId, startDate, endDate);
-            decimal sumSalePrice = _purchaseService.GetTotalSalesPrice(supplierId, startDate, endDate);
-
-            DataTable dt = new DataTable();
-            dt.Columns.Add("Fecha Compra", typeof(string));
-            dt.Columns.Add("Documento Proveedor", typeof(string));
-            dt.Columns.Add("Razon Social", typeof(string));
-            dt.Columns.Add("Tipo Documento", typeof(string));
-            dt.Columns.Add("Numero Documento", typeof(string));
-            dt.Columns.Add("Monto Total", typeof(string));
-            dt.Columns.Add("Nombre,", typeof(string));
-            dt.Columns.Add("Cantidad", typeof(string));
-            dt.Columns.Add("Precio Compra", typeof(string));
-            dt.Columns.Add("Precio Venta", typeof(string));
-
-            foreach (PurchaseReportRow r in rows)
-            {
-                dt.Rows.Add(
-                    DateHelper.FormatDatePresentation(r.DateRegistered),
-                    r.SupplierDocument,
-                    r.CompanyName,
-                    r.DocumentType,
-                    r.DocumentNumber,
-                    CultureInfoHelper.FormatAsCurrency(r.TotalAmount),
-                    r.ProductName,
-                    r.Quantity.ToString(),
-                    CultureInfoHelper.FormatAsCurrency(r.PurchasePrice),
-                    CultureInfoHelper.FormatAsCurrency(r.SalePrice));
-            }
-
-            dt.Rows.Add(null, null);
-            dt.Rows.Add(null, null, null, null, "Total:",
-                CultureInfoHelper.FormatAsCurrency(sumTotalAmount), null,
-                sumQuantityProduct.ToString(),
-                CultureInfoHelper.FormatAsCurrency(sumPurchasePrice),
-                CultureInfoHelper.FormatAsCurrency(sumSalePrice));
-
-            _view.SetPurchaseReport(dt);
+            decimal headerTotal = _purchaseService.GetTotalAmount(supplierId, startDate, endDate);
+            _view.SetPurchaseReport(PurchaseDefinition, new ReportResult<PurchaseReportRow>(rows, PurchaseTotals(rows, headerTotal)));
         }
 
         public void OnConsultProduct()
@@ -173,35 +83,7 @@ namespace PharmacySystem.Presentation
             if (!Can("reportes.productos")) return;
 
             List<ProductReportRow> rows = _productService.Report(_view.SelectedCategoryId);
-
-            DataTable dt = new DataTable();
-            dt.Columns.Add("Fecha Registro", typeof(string));
-            dt.Columns.Add("Codigo", typeof(string));
-            dt.Columns.Add("Nombre", typeof(string));
-            dt.Columns.Add("Descripcion", typeof(string));
-            dt.Columns.Add("Categoria", typeof(string));
-            dt.Columns.Add("Stock", typeof(string));
-            dt.Columns.Add("Precio Compra", typeof(string));
-            dt.Columns.Add("Precio Venta", typeof(string));
-            dt.Columns.Add("Fecha Vencimiento", typeof(string));
-            dt.Columns.Add("Estado", typeof(string));
-
-            foreach (ProductReportRow r in rows)
-            {
-                dt.Rows.Add(
-                    DateHelper.FormatDatePresentation(r.DateCreated),
-                    r.Code,
-                    r.Name,
-                    r.Description,
-                    r.CategoryDescription,
-                    r.Stock.ToString(),
-                    CultureInfoHelper.FormatAsCurrency(r.PurchasePrice),
-                    CultureInfoHelper.FormatAsCurrency(r.SalePrice),
-                    DateHelper.FormatDatePresentation(r.DateExpired),
-                    r.StatusName);
-            }
-
-            _view.SetProductReport(dt);
+            _view.SetProductReport(ProductDefinition, new ReportResult<ProductReportRow>(rows));
         }
 
         // Fase 4 of the alerts rework (traceability): every stock/expiration alert transition
@@ -213,34 +95,90 @@ namespace PharmacySystem.Presentation
 
             List<ProductAlertHistoryEntry> rows = _notificationConfigService.GetAlertHistory(
                 _view.AlertHistoryStartDate, _view.AlertHistoryEndDate);
-
-            DataTable dt = new DataTable();
-            dt.Columns.Add("Fecha Detectada", typeof(string));
-            dt.Columns.Add("Producto", typeof(string));
-            dt.Columns.Add("Codigo", typeof(string));
-            dt.Columns.Add("Tipo", typeof(string));
-            dt.Columns.Add("Severidad", typeof(string));
-            dt.Columns.Add("Valor", typeof(string));
-            dt.Columns.Add("Fecha Resuelta", typeof(string));
-            dt.Columns.Add("Reconocido Por", typeof(string));
-            dt.Columns.Add("Fecha Reconocimiento", typeof(string));
-
-            foreach (ProductAlertHistoryEntry r in rows)
-            {
-                dt.Rows.Add(
-                    DateHelper.FormatDatePresentation(r.DetectedAt),
-                    r.ProductName,
-                    r.ProductCode,
-                    TypeLabel(r.AlertType),
-                    SeverityLabel(r.Severity),
-                    r.TriggerValue?.ToString() ?? "",
-                    r.ResolvedAt.HasValue ? DateHelper.FormatDatePresentation(r.ResolvedAt.Value) : "Abierta",
-                    r.AcknowledgedByName ?? "",
-                    r.AcknowledgedAt.HasValue ? DateHelper.FormatDatePresentation(r.AcknowledgedAt.Value) : "");
-            }
-
-            _view.SetAlertHistoryReport(dt);
+            _view.SetAlertHistoryReport(AlertHistoryDefinition, new ReportResult<ProductAlertHistoryEntry>(rows));
         }
+
+        // Rows are one per sale (ReportSale does not join sale_detail), so every column total is
+        // a straight sum of the rows - no separate aggregate query is needed.
+        private static SaleReportRow SaleTotals(List<SaleReportRow> rows) => new SaleReportRow
+        {
+            NetAmount = rows.Sum(r => r.NetAmount),
+            TaxAmount = rows.Sum(r => r.TaxAmount),
+            ExemptAmount = rows.Sum(r => r.ExemptAmount),
+            TotalAmount = rows.Sum(r => r.TotalAmount),
+            AmountReceived = rows.Sum(r => r.AmountReceived),
+            ChangeAmount = rows.Sum(r => r.ChangeAmount)
+        };
+
+        // Rows are one per purchase_detail line, so quantity / prices sum straight from them.
+        // "Monto Total" is a purchase-header value repeated across a purchase's lines, so it
+        // comes from GetTotalAmount (which sums it once per purchase, and has its own DB
+        // regression test).
+        private static PurchaseReportRow PurchaseTotals(List<PurchaseReportRow> rows, decimal headerTotal) => new PurchaseReportRow
+        {
+            TotalAmount = headerTotal,
+            Quantity = rows.Sum(r => r.Quantity),
+            PurchasePrice = rows.Sum(r => r.PurchasePrice),
+            SalePrice = rows.Sum(r => r.SalePrice)
+        };
+
+        private static readonly ReportDefinition<SaleReportRow> SaleDefinition = new ReportDefinition<SaleReportRow>(new[]
+        {
+            new ReportColumn<SaleReportRow>("Fecha Venta", ReportValueType.Date, r => r.DateRegistered),
+            new ReportColumn<SaleReportRow>("Tipo Documento", ReportValueType.Text, r => r.DocumentType),
+            new ReportColumn<SaleReportRow>("Numero Documento", ReportValueType.Text, r => r.DocumentNumber),
+            new ReportColumn<SaleReportRow>("Documento Vendedor", ReportValueType.Text, r => r.SellerDocument),
+            new ReportColumn<SaleReportRow>("Nombre Vendedor", ReportValueType.Text, r => r.SellerName),
+            new ReportColumn<SaleReportRow>("Documento Cliente", ReportValueType.Text, r => r.ClientDocument),
+            new ReportColumn<SaleReportRow>("Nombre Cliente", ReportValueType.Text, r => r.ClientName),
+            new ReportColumn<SaleReportRow>("Neto", ReportValueType.Currency, r => r.NetAmount),
+            new ReportColumn<SaleReportRow>("IVA", ReportValueType.Currency, r => r.TaxAmount),
+            new ReportColumn<SaleReportRow>("Exento", ReportValueType.Currency, r => r.ExemptAmount),
+            new ReportColumn<SaleReportRow>("Total Pagar", ReportValueType.Currency, r => r.TotalAmount),
+            new ReportColumn<SaleReportRow>("Pago Con", ReportValueType.Currency, r => r.AmountReceived),
+            new ReportColumn<SaleReportRow>("Cambio", ReportValueType.Currency, r => r.ChangeAmount)
+        });
+
+        private static readonly ReportDefinition<PurchaseReportRow> PurchaseDefinition = new ReportDefinition<PurchaseReportRow>(new[]
+        {
+            new ReportColumn<PurchaseReportRow>("Fecha Compra", ReportValueType.Date, r => r.DateRegistered),
+            new ReportColumn<PurchaseReportRow>("Documento Proveedor", ReportValueType.Text, r => r.SupplierDocument),
+            new ReportColumn<PurchaseReportRow>("Razon Social", ReportValueType.Text, r => r.CompanyName),
+            new ReportColumn<PurchaseReportRow>("Tipo Documento", ReportValueType.Text, r => r.DocumentType),
+            new ReportColumn<PurchaseReportRow>("Numero Documento", ReportValueType.Text, r => r.DocumentNumber),
+            new ReportColumn<PurchaseReportRow>("Monto Total", ReportValueType.Currency, r => r.TotalAmount),
+            new ReportColumn<PurchaseReportRow>("Nombre", ReportValueType.Text, r => r.ProductName),
+            new ReportColumn<PurchaseReportRow>("Cantidad", ReportValueType.Integer, r => r.Quantity),
+            new ReportColumn<PurchaseReportRow>("Precio Compra", ReportValueType.Currency, r => r.PurchasePrice),
+            new ReportColumn<PurchaseReportRow>("Precio Venta", ReportValueType.Currency, r => r.SalePrice)
+        });
+
+        private static readonly ReportDefinition<ProductReportRow> ProductDefinition = new ReportDefinition<ProductReportRow>(new[]
+        {
+            new ReportColumn<ProductReportRow>("Fecha Registro", ReportValueType.Date, r => r.DateCreated),
+            new ReportColumn<ProductReportRow>("Codigo", ReportValueType.Text, r => r.Code),
+            new ReportColumn<ProductReportRow>("Nombre", ReportValueType.Text, r => r.Name),
+            new ReportColumn<ProductReportRow>("Descripcion", ReportValueType.Text, r => r.Description),
+            new ReportColumn<ProductReportRow>("Categoria", ReportValueType.Text, r => r.CategoryDescription),
+            new ReportColumn<ProductReportRow>("Stock", ReportValueType.Integer, r => r.Stock),
+            new ReportColumn<ProductReportRow>("Precio Compra", ReportValueType.Currency, r => r.PurchasePrice),
+            new ReportColumn<ProductReportRow>("Precio Venta", ReportValueType.Currency, r => r.SalePrice),
+            new ReportColumn<ProductReportRow>("Fecha Vencimiento", ReportValueType.Date, r => r.DateExpired),
+            new ReportColumn<ProductReportRow>("Estado", ReportValueType.Text, r => r.StatusName)
+        });
+
+        private static readonly ReportDefinition<ProductAlertHistoryEntry> AlertHistoryDefinition = new ReportDefinition<ProductAlertHistoryEntry>(new[]
+        {
+            new ReportColumn<ProductAlertHistoryEntry>("Fecha Detectada", ReportValueType.Date, r => r.DetectedAt),
+            new ReportColumn<ProductAlertHistoryEntry>("Producto", ReportValueType.Text, r => r.ProductName),
+            new ReportColumn<ProductAlertHistoryEntry>("Codigo", ReportValueType.Text, r => r.ProductCode),
+            new ReportColumn<ProductAlertHistoryEntry>("Tipo", ReportValueType.Text, r => TypeLabel(r.AlertType)),
+            new ReportColumn<ProductAlertHistoryEntry>("Severidad", ReportValueType.Text, r => SeverityLabel(r.Severity)),
+            new ReportColumn<ProductAlertHistoryEntry>("Valor", ReportValueType.Text, r => r.TriggerValue?.ToString() ?? ""),
+            new ReportColumn<ProductAlertHistoryEntry>("Fecha Resuelta", ReportValueType.Date, r => r.ResolvedAt.HasValue ? (object)r.ResolvedAt.Value : "Abierta"),
+            new ReportColumn<ProductAlertHistoryEntry>("Reconocido Por", ReportValueType.Text, r => r.AcknowledgedByName ?? ""),
+            new ReportColumn<ProductAlertHistoryEntry>("Fecha Reconocimiento", ReportValueType.Date, r => r.AcknowledgedAt.HasValue ? (object)r.AcknowledgedAt.Value : "")
+        });
 
         private static string TypeLabel(AlertType type) => type == AlertType.Stock ? "Stock" : "Vencimiento";
 

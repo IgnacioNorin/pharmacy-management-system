@@ -13,7 +13,5 @@ namespace PharmacySystem.Business
         CreditNoteResult CreateCreditNote(int originalSaleId, int userId, string reason);
         List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate);
         decimal SumTotalPay(DateTime startDate, DateTime endDate);
-        decimal SumAmountReceived(DateTime startDate, DateTime endDate);
-        decimal SumChangeAmount(DateTime startDate, DateTime endDate);
     }
 }

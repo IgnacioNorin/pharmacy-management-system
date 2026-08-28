@@ -47,9 +47,5 @@ namespace PharmacySystem.Business
         public List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate) => _repository.ReportSale(startDate, endDate);
 
         public decimal SumTotalPay(DateTime startDate, DateTime endDate) => _repository.SumTotalPay(startDate, endDate);
-
-        public decimal SumAmountReceived(DateTime startDate, DateTime endDate) => _repository.SumAmountReceived(startDate, endDate);
-
-        public decimal SumChangeAmount(DateTime startDate, DateTime endDate) => _repository.SumChangeAmount(startDate, endDate);
     }
 }

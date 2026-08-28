@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
@@ -19,9 +18,9 @@ namespace PharmacySystem.Presentation
         void LoadSupplierOptions(IReadOnlyList<ComboBoxItem> options);
         void LoadCategoryOptions(IReadOnlyList<ComboBoxItem> options);
 
-        void SetSaleReport(DataTable table);
-        void SetPurchaseReport(DataTable table);
-        void SetProductReport(DataTable table);
-        void SetAlertHistoryReport(DataTable table);
+        void SetSaleReport(ReportDefinition<SaleReportRow> definition, ReportResult<SaleReportRow> result);
+        void SetPurchaseReport(ReportDefinition<PurchaseReportRow> definition, ReportResult<PurchaseReportRow> result);
+        void SetProductReport(ReportDefinition<ProductReportRow> definition, ReportResult<ProductReportRow> result);
+        void SetAlertHistoryReport(ReportDefinition<ProductAlertHistoryEntry> definition, ReportResult<ProductAlertHistoryEntry> result);
     }
 }

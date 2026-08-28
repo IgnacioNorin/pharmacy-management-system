@@ -12,8 +12,6 @@ namespace PharmacySystem.Tests.Presentation
         public int RegisterResult { get; set; } = 1;
         public List<SaleReportRow> ReportResult { get; set; } = new List<SaleReportRow>();
         public decimal SumTotalPayResult { get; set; }
-        public decimal SumAmountReceivedResult { get; set; }
-        public decimal SumChangeAmountResult { get; set; }
         public Sale RegisteredWith { get; private set; }
 
         public SaleLookup FindByDocumentResult { get; set; }
@@ -43,7 +41,5 @@ namespace PharmacySystem.Tests.Presentation
         }
         public List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate) => ReportResult;
         public decimal SumTotalPay(DateTime startDate, DateTime endDate) => SumTotalPayResult;
-        public decimal SumAmountReceived(DateTime startDate, DateTime endDate) => SumAmountReceivedResult;
-        public decimal SumChangeAmount(DateTime startDate, DateTime endDate) => SumChangeAmountResult;
     }
 }
