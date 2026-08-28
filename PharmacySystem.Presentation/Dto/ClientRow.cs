@@ -12,6 +12,11 @@ namespace PharmacySystem.Presentation
         public string Name { get; set; }
         public string Address { get; set; }
         public string Phone { get; set; }
+        public string BusinessName { get; set; }
+        public string Activity { get; set; }
+        public string Commune { get; set; }
+        public string Email { get; set; }
+        public bool IsCompany { get; set; }
 
         public static ClientRow From(Person person) => new ClientRow
         {
@@ -19,7 +24,12 @@ namespace PharmacySystem.Presentation
             Document = person.document,
             Name = person.name,
             Address = person.address,
-            Phone = person.phone
+            Phone = person.phone,
+            BusinessName = person.businessName,
+            Activity = person.activity,
+            Commune = person.commune,
+            Email = person.email,
+            IsCompany = person.isCompany
         };
     }
 }

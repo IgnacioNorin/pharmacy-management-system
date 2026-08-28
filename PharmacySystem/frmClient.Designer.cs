@@ -41,6 +41,15 @@
             this.txtaddress = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.txtphone = new System.Windows.Forms.TextBox();
+            this.label11 = new System.Windows.Forms.Label();
+            this.txtbusinessname = new System.Windows.Forms.TextBox();
+            this.label12 = new System.Windows.Forms.Label();
+            this.txtactivity = new System.Windows.Forms.TextBox();
+            this.label13 = new System.Windows.Forms.Label();
+            this.txtcommune = new System.Windows.Forms.TextBox();
+            this.label14 = new System.Windows.Forms.Label();
+            this.txtemail = new System.Windows.Forms.TextBox();
+            this.chkiscompany = new System.Windows.Forms.CheckBox();
             this.dgdata = new System.Windows.Forms.DataGridView();
             this.label8 = new System.Windows.Forms.Label();
             this.txtsearch = new System.Windows.Forms.TextBox();
@@ -98,7 +107,7 @@
             this.txtdocument.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtdocument.Location = new System.Drawing.Point(29, 84);
             this.txtdocument.Name = "txtdocument";
-            this.txtdocument.Size = new System.Drawing.Size(195, 21);
+            this.txtdocument.Size = new System.Drawing.Size(110, 21);
             this.txtdocument.TabIndex = 1;
             // 
             // label4
@@ -117,7 +126,7 @@
             this.txtname.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtname.Location = new System.Drawing.Point(29, 138);
             this.txtname.Name = "txtname";
-            this.txtname.Size = new System.Drawing.Size(195, 21);
+            this.txtname.Size = new System.Drawing.Size(110, 21);
             this.txtname.TabIndex = 2;
             // 
             // label5
@@ -136,7 +145,7 @@
             this.txtaddress.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtaddress.Location = new System.Drawing.Point(29, 195);
             this.txtaddress.Name = "txtaddress";
-            this.txtaddress.Size = new System.Drawing.Size(195, 21);
+            this.txtaddress.Size = new System.Drawing.Size(110, 21);
             this.txtaddress.TabIndex = 3;
             // 
             // label6
@@ -155,8 +164,82 @@
             this.txtphone.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtphone.Location = new System.Drawing.Point(29, 254);
             this.txtphone.Name = "txtphone";
-            this.txtphone.Size = new System.Drawing.Size(195, 21);
+            this.txtphone.Size = new System.Drawing.Size(110, 21);
             this.txtphone.TabIndex = 4;
+            //
+            // label11
+            //
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(150, 67);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(79, 15);
+            this.label11.TabIndex = 40;
+            this.label11.Text = "Razón social:";
+            //
+            // txtbusinessname
+            //
+            this.txtbusinessname.Location = new System.Drawing.Point(150, 84);
+            this.txtbusinessname.Name = "txtbusinessname";
+            this.txtbusinessname.Size = new System.Drawing.Size(100, 21);
+            this.txtbusinessname.TabIndex = 5;
+            //
+            // label12
+            //
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(150, 121);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(33, 15);
+            this.label12.TabIndex = 41;
+            this.label12.Text = "Giro:";
+            //
+            // txtactivity
+            //
+            this.txtactivity.Location = new System.Drawing.Point(150, 138);
+            this.txtactivity.Name = "txtactivity";
+            this.txtactivity.Size = new System.Drawing.Size(100, 21);
+            this.txtactivity.TabIndex = 6;
+            //
+            // label13
+            //
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(150, 178);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(55, 15);
+            this.label13.TabIndex = 42;
+            this.label13.Text = "Comuna:";
+            //
+            // txtcommune
+            //
+            this.txtcommune.Location = new System.Drawing.Point(150, 195);
+            this.txtcommune.Name = "txtcommune";
+            this.txtcommune.Size = new System.Drawing.Size(100, 21);
+            this.txtcommune.TabIndex = 7;
+            //
+            // label14
+            //
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(150, 237);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(39, 15);
+            this.label14.TabIndex = 43;
+            this.label14.Text = "Email:";
+            //
+            // txtemail
+            //
+            this.txtemail.Location = new System.Drawing.Point(150, 254);
+            this.txtemail.Name = "txtemail";
+            this.txtemail.Size = new System.Drawing.Size(100, 21);
+            this.txtemail.TabIndex = 8;
+            //
+            // chkiscompany
+            //
+            this.chkiscompany.AutoSize = true;
+            this.chkiscompany.Location = new System.Drawing.Point(29, 285);
+            this.chkiscompany.Name = "chkiscompany";
+            this.chkiscompany.Size = new System.Drawing.Size(86, 19);
+            this.chkiscompany.TabIndex = 9;
+            this.chkiscompany.Text = "Es empresa";
+            this.chkiscompany.UseVisualStyleBackColor = true;
             // 
             // dgdata
             // 
@@ -404,6 +487,15 @@
             this.Controls.Add(this.label5);
             this.Controls.Add(this.txtname);
             this.Controls.Add(this.label4);
+            this.Controls.Add(this.chkiscompany);
+            this.Controls.Add(this.txtemail);
+            this.Controls.Add(this.label14);
+            this.Controls.Add(this.txtcommune);
+            this.Controls.Add(this.label13);
+            this.Controls.Add(this.txtactivity);
+            this.Controls.Add(this.label12);
+            this.Controls.Add(this.txtbusinessname);
+            this.Controls.Add(this.label11);
             this.Controls.Add(this.txtdocument);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
@@ -431,6 +523,15 @@
         private System.Windows.Forms.TextBox txtaddress;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox txtphone;
+        private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.TextBox txtbusinessname;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.TextBox txtactivity;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.TextBox txtcommune;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.TextBox txtemail;
+        private System.Windows.Forms.CheckBox chkiscompany;
         private System.Windows.Forms.Button btnsearch;
         private System.Windows.Forms.Button btnClean;
         private System.Windows.Forms.Button btnDelete;

@@ -52,6 +52,12 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
+            if (_view.IsCompany && (string.IsNullOrWhiteSpace(_view.BusinessName) || string.IsNullOrWhiteSpace(_view.Activity)))
+            {
+                _view.ShowValidationErrors(new[] { "Para una empresa, la razón social y el giro son obligatorios." });
+                return;
+            }
+
             Person person = new Person
             {
                 idPerson = _view.PersonId,
@@ -59,6 +65,11 @@ namespace PharmacySystem.Presentation
                 name = _view.Name?.Trim(),
                 address = _view.Address?.Trim(),
                 phone = _view.Phone?.Trim(),
+                businessName = _view.BusinessName?.Trim(),
+                activity = _view.Activity?.Trim(),
+                commune = _view.Commune?.Trim(),
+                email = _view.Email?.Trim(),
+                isCompany = _view.IsCompany,
                 password = "",
                 oPersonType = new TypePerson { idPersonType = (int)PersonType.Cliente }
             };

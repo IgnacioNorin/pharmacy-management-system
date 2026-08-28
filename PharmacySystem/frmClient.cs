@@ -25,6 +25,11 @@ namespace PharmacySystem
         string IClientView.Name => txtname.Text;
         public string Address => txtaddress.Text;
         public string Phone => txtphone.Text;
+        public string BusinessName => txtbusinessname.Text;
+        public string Activity => txtactivity.Text;
+        public string Commune => txtcommune.Text;
+        public string Email => txtemail.Text;
+        public bool IsCompany => chkiscompany.Checked;
 
         List<string> IClientView.Validate()
         {
@@ -81,6 +86,11 @@ namespace PharmacySystem
             gridRow.Cells["NombreCompleto"].Value = row.Name;
             gridRow.Cells["Direccion"].Value = row.Address;
             gridRow.Cells["Telefono"].Value = row.Phone;
+            gridRow.Cells["RazonSocial"].Value = row.BusinessName;
+            gridRow.Cells["Giro"].Value = row.Activity;
+            gridRow.Cells["Comuna"].Value = row.Commune;
+            gridRow.Cells["Email"].Value = row.Email;
+            gridRow.Cells["EsEmpresa"].Value = row.IsCompany ? "Sí" : "No";
         }
 
         #endregion
@@ -121,6 +131,11 @@ namespace PharmacySystem
             dgdata.Columns.Add("NombreCompleto", "Nombre Completo");
             dgdata.Columns.Add("Direccion", "Dirección");
             dgdata.Columns.Add("Telefono", "Telefono");
+            dgdata.Columns.Add("RazonSocial", "Razón Social");
+            dgdata.Columns.Add("Giro", "Giro");
+            dgdata.Columns.Add("Comuna", "Comuna");
+            dgdata.Columns.Add("Email", "Email");
+            dgdata.Columns.Add("EsEmpresa", "Empresa");
 
             dgdata.Columns["Id"].Visible = false;
 
@@ -194,6 +209,19 @@ namespace PharmacySystem
             txtname.Text = "";
             txtaddress.Text = "";
             txtphone.Text = "";
+            txtbusinessname.Text = "";
+            txtactivity.Text = "";
+            txtcommune.Text = "";
+            txtemail.Text = "";
+            chkiscompany.Checked = false;
+        }
+
+        // Fiscal columns can be null (a boleta-only client), so unlike the base fields these
+        // are read null-safe.
+        private string CellText(int rowIndex, string column)
+        {
+            object value = dgdata.Rows[rowIndex].Cells[column].Value;
+            return value?.ToString() ?? "";
         }
 
         private void dgdata_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -209,6 +237,11 @@ namespace PharmacySystem
                     txtname.Text = dgdata.Rows[index].Cells["NombreCompleto"].Value.ToString();
                     txtaddress.Text = dgdata.Rows[index].Cells["Direccion"].Value.ToString();
                     txtphone.Text = dgdata.Rows[index].Cells["Telefono"].Value.ToString();
+                    txtbusinessname.Text = CellText(index, "RazonSocial");
+                    txtactivity.Text = CellText(index, "Giro");
+                    txtcommune.Text = CellText(index, "Comuna");
+                    txtemail.Text = CellText(index, "Email");
+                    chkiscompany.Checked = CellText(index, "EsEmpresa") == "Sí";
                 }
             }
         }
@@ -225,12 +258,8 @@ namespace PharmacySystem
             if (dgdata.Rows.Count > 0) {
                 foreach (DataGridViewRow row in dgdata.Rows)
                 {
-                    string valor = row.Cells[columnFilter].Value.ToString().Trim();
-
-                    if (row.Cells[columnFilter].Value.ToString().Trim().Contains(txtsearch.Text.Trim()))
-                        row.Visible = true;
-                    else
-                        row.Visible = false;
+                    string cellValue = (row.Cells[columnFilter].Value?.ToString() ?? "").Trim();
+                    row.Visible = cellValue.Contains(txtsearch.Text.Trim());
                 }
             }
         }
