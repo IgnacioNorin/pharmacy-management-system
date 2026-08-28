@@ -20,10 +20,9 @@ namespace PharmacySystem
 
         private void frmSale_Load(object sender, EventArgs e)
         {
-            cbodocumenttype.Items.Add(new ComboBoxItem() { Value = "Factura", Text = "Factura" });
             cbodocumenttype.DisplayMember = "Text";
             cbodocumenttype.ValueMember = "Value";
-            cbodocumenttype.SelectedIndex = 0;
+            _presenter.OnLoad();
             txtstock.Visible = false;
 
             DataGridViewButtonColumn Button = new DataGridViewButtonColumn();
@@ -203,6 +202,29 @@ namespace PharmacySystem
 
         public void ShowMessage(string message) =>
             MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+        public void SetDocumentTypeOptions(IReadOnlyList<string> options, string selected)
+        {
+            cbodocumenttype.Items.Clear();
+            foreach (string option in options)
+            {
+                cbodocumenttype.Items.Add(new ComboBoxItem { Value = option, Text = option });
+            }
+
+            int index = 0;
+            for (int i = 0; i < options.Count; i++)
+            {
+                if (string.Equals(options[i], selected, StringComparison.OrdinalIgnoreCase))
+                {
+                    index = i;
+                    break;
+                }
+            }
+            if (cbodocumenttype.Items.Count > 0)
+            {
+                cbodocumenttype.SelectedIndex = index;
+            }
+        }
 
         public void SetSelectedProduct(int id, string code, string name, int stock, string priceSaleFormatted)
         {

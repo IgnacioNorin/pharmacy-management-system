@@ -114,6 +114,29 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
+        public void OnLoad_LoadsDocumentTypeOptionsWithTheStoreDefaultSelected()
+        {
+            var view = new FakeStoreManagementView();
+            var service = new FakeStoreService { ListStoreResult = new Store { defaultDocumentType = "Factura" } };
+
+            CreatePresenter(view, service).OnLoad();
+
+            Assert.Equal(new[] { "Boleta", "Factura" }, view.LoadedDocumentTypeOptions);
+            Assert.Equal("Factura", view.LoadedDocumentTypeSelected);
+        }
+
+        [Fact]
+        public void OnSave_PersistsDefaultDocumentType()
+        {
+            var view = new FakeStoreManagementView { SelectedCurrency = "es-EC", DefaultDocumentType = "Factura" };
+            var service = new FakeStoreService { UpdateStoreResult = true };
+
+            CreatePresenter(view, service).OnSave();
+
+            Assert.Equal("Factura", service.UpdatedWith.defaultDocumentType);
+        }
+
+        [Fact]
         public void OnSave_ValidTaxRate_PersistsIt()
         {
             var view = new FakeStoreManagementView { SelectedCurrency = "es-EC", TaxRate = "16" };

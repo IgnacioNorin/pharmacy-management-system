@@ -83,7 +83,9 @@ namespace PharmacySystem.Data
                         // so it is concurrency-safe (the old RIGHT(..., COUNT(*) + 1) handed the
                         // same number to two simultaneous sales).
                         const string insertSaleQuery =
-                            "DECLARE @folio INT = NEXT VALUE FOR dbo.seq_sale_folio; " +
+                            "DECLARE @folio INT; " +
+                            "IF @document_type = 'Factura' SET @folio = NEXT VALUE FOR dbo.seq_folio_factura; " +
+                            "ELSE SET @folio = NEXT VALUE FOR dbo.seq_folio_boleta; " +
                             "INSERT INTO sale(document_type, document_number, user_id, document_client, name_client, total_amount, amount_received, change_amount, net_amount, tax_amount, exempt_amount) " +
                             "VALUES (@document_type, RIGHT('000000' + CAST(@folio AS VARCHAR(20)), 6), @user_id, @document_client, @name_client, @total_amount, @amount_received, @change_amount, @net_amount, @tax_amount, @exempt_amount); " +
                             "SELECT CAST(SCOPE_IDENTITY() AS INT);";

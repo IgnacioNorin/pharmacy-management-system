@@ -19,5 +19,7 @@ namespace PharmacySystem.Model
         // VAT rate applied to tax-affected items, as a percentage (e.g. 19.00). Country-neutral:
         // Chile is 19, but it is a setting, not a constant.
         public decimal defaultTaxRate { get; set; } = 19m;
+        // Document type pre-selected on the sale screen.
+        public string defaultDocumentType { get; set; } = DocumentTypes.Boleta;
     }
 }

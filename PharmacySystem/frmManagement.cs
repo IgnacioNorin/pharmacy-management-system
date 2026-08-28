@@ -531,8 +531,31 @@ namespace PharmacySystem
         public string Address => txtaddress.Text;
         public string SelectedCurrency => ((ComboBoxItem)cbocurrency.SelectedItem).Value.ToString();
         public string TaxRate => txttaxrate.Text;
+        public string DefaultDocumentType => cbodefaultdoctype.SelectedItem?.ToString() ?? "";
 
         public void SetTaxRate(string value) => txttaxrate.Text = value;
+
+        public void LoadDocumentTypeOptions(IReadOnlyList<string> options, string selected)
+        {
+            cbodefaultdoctype.Items.Clear();
+            foreach (string option in options)
+            {
+                cbodefaultdoctype.Items.Add(option);
+            }
+            int index = 0;
+            for (int i = 0; i < options.Count; i++)
+            {
+                if (string.Equals(options[i], selected, StringComparison.OrdinalIgnoreCase))
+                {
+                    index = i;
+                    break;
+                }
+            }
+            if (cbodefaultdoctype.Items.Count > 0)
+            {
+                cbodefaultdoctype.SelectedIndex = index;
+            }
+        }
 
         List<string> IStoreManagementView.Validate() => ValidateForm();
 

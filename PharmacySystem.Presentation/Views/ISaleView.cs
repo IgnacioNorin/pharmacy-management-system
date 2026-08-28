@@ -19,6 +19,7 @@ namespace PharmacySystem.Presentation
 
         void ShowMessage(string message);
 
+        void SetDocumentTypeOptions(IReadOnlyList<string> options, string selected);
         void SetSelectedProduct(int id, string code, string name, int stock, string priceSaleFormatted);
         void AddCartLine(SaleCartLine line);
         void RemoveCartLineAt(int index);

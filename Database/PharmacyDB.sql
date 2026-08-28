@@ -211,6 +211,7 @@ CREATE TABLE [dbo].[store](
     [address] [varchar](50) NULL,
     [currency_culture] [varchar](10) NULL,
     [default_tax_rate] [decimal](5, 2) NOT NULL CONSTRAINT [DF_store_default_tax_rate] DEFAULT ((19)),
+    [default_document_type] [varchar](20) NOT NULL CONSTRAINT [DF_store_default_document_type] DEFAULT ('Boleta'),
     PRIMARY KEY CLUSTERED ([id] ASC),
     -- Single-row store profile: the app always reads/writes id = 1.
     CONSTRAINT [CK_store_singleton] CHECK ([id] = 1)
@@ -419,10 +420,15 @@ GO
 CREATE UNIQUE INDEX [UX_category_description] ON [dbo].[category] ([description]) WHERE [description] IS NOT NULL
 GO
 -- Sale receipt number: monotonic and concurrency-safe (was RIGHT(..., COUNT(*) + 1), which
--- collided under concurrent sales and repeated after a delete). Gaps are acceptable.
-CREATE SEQUENCE [dbo].[seq_sale_folio] AS INT START WITH 1 INCREMENT BY 1
+-- collided under concurrent sales and repeated after a delete). Gaps are acceptable. One
+-- sequence per document type, so boleta and factura numbering run independently.
+CREATE SEQUENCE [dbo].[seq_folio_boleta] AS INT START WITH 1 INCREMENT BY 1
 GO
-CREATE UNIQUE INDEX [UX_sale_document_number] ON [dbo].[sale] ([document_number]) WHERE [document_number] IS NOT NULL
+CREATE SEQUENCE [dbo].[seq_folio_factura] AS INT START WITH 1 INCREMENT BY 1
+GO
+-- The receipt number is unique per document type, not globally (boleta 000001 and
+-- factura 000001 can both exist).
+CREATE UNIQUE INDEX [UX_sale_document_number] ON [dbo].[sale] ([document_type], [document_number]) WHERE [document_number] IS NOT NULL
 GO
 
 -- Foreign-key columns joined/filtered by reports and detail lookups (all unindexed before).
@@ -536,8 +542,8 @@ GO
 -- (sp_update_notificacion_settings only UPDATEs id = 1), and the alert queries read 0/0.
 IF NOT EXISTS (SELECT 1 FROM [dbo].[store] WHERE id = 1)
 BEGIN
-    INSERT INTO [dbo].[store] (id, document_store, company_name, email, phone, address, currency_culture, default_tax_rate)
-    VALUES (1, '', 'Mi Farmacia', '', '', '', 'es-EC', 19)
+    INSERT INTO [dbo].[store] (id, document_store, company_name, email, phone, address, currency_culture, default_tax_rate, default_document_type)
+    VALUES (1, '', 'Mi Farmacia', '', '', '', 'es-EC', 19, 'Boleta')
 END
 GO
 IF NOT EXISTS (SELECT 1 FROM [dbo].[notification_settings] WHERE id = 1)

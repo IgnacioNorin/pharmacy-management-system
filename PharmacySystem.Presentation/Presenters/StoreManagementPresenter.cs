@@ -33,6 +33,7 @@ namespace PharmacySystem.Presentation
             Store store = _service.ListStore();
             _view.LoadStoreFields(store.document, store.companyName, store.email, store.phone, store.address);
             _view.SetTaxRate(store.defaultTaxRate.ToString("0.##", CultureInfo.InvariantCulture));
+            _view.LoadDocumentTypeOptions(DocumentTypes.Selectable, store.defaultDocumentType);
 
             var options = CultureInfoHelper.SupportedCurrencies;
             int currencyIndex = options.ToList()
@@ -74,7 +75,8 @@ namespace PharmacySystem.Presentation
                 phone = _view.Phone,
                 address = _view.Address,
                 currencyCulture = selectedCurrency,
-                defaultTaxRate = taxRate
+                defaultTaxRate = taxRate,
+                defaultDocumentType = _view.DefaultDocumentType
             });
 
             if (isSuccess)

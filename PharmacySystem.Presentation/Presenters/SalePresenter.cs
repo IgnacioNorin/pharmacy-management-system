@@ -44,6 +44,12 @@ namespace PharmacySystem.Presentation
             _idPerson = idPerson;
         }
 
+        public void OnLoad()
+        {
+            Store store = _storeService.ListStore();
+            _view.SetDocumentTypeOptions(DocumentTypes.Selectable, store?.defaultDocumentType ?? DocumentTypes.Boleta);
+        }
+
         public void OnProductCodeEntered(string code)
         {
             Product product = _productService.List().FirstOrDefault(p => p.code == code);

@@ -92,6 +92,8 @@
             this.txttaxrate = new System.Windows.Forms.TextBox();
             this.lbltaxrate = new System.Windows.Forms.Label();
             this.chkTaxAffected = new System.Windows.Forms.CheckBox();
+            this.cbodefaultdoctype = new System.Windows.Forms.ComboBox();
+            this.lbldefaultdoctype = new System.Windows.Forms.Label();
             this.label15 = new System.Windows.Forms.Label();
             this.tabManagement.SuspendLayout();
             this.tabProduct.SuspendLayout();
@@ -727,6 +729,8 @@
             this.tabStore.Controls.Add(this.label24);
             this.tabStore.Controls.Add(this.txttaxrate);
             this.tabStore.Controls.Add(this.lbltaxrate);
+            this.tabStore.Controls.Add(this.cbodefaultdoctype);
+            this.tabStore.Controls.Add(this.lbldefaultdoctype);
             this.tabStore.Controls.Add(this.label15);
             this.tabStore.Location = new System.Drawing.Point(4, 25);
             this.tabStore.Name = "tabStore";
@@ -800,6 +804,28 @@
             this.txttaxrate.Name = "txttaxrate";
             this.txttaxrate.Size = new System.Drawing.Size(80, 21);
             this.txttaxrate.TabIndex = 64;
+            //
+            // lbldefaultdoctype
+            //
+            this.lbldefaultdoctype.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.lbldefaultdoctype.AutoSize = true;
+            this.lbldefaultdoctype.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.lbldefaultdoctype.Location = new System.Drawing.Point(620, 448);
+            this.lbldefaultdoctype.Name = "lbldefaultdoctype";
+            this.lbldefaultdoctype.Size = new System.Drawing.Size(120, 15);
+            this.lbldefaultdoctype.TabIndex = 65;
+            this.lbldefaultdoctype.Text = "Documento por defecto";
+            //
+            // cbodefaultdoctype
+            //
+            this.cbodefaultdoctype.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.cbodefaultdoctype.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbodefaultdoctype.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.cbodefaultdoctype.FormattingEnabled = true;
+            this.cbodefaultdoctype.Location = new System.Drawing.Point(623, 466);
+            this.cbodefaultdoctype.Name = "cbodefaultdoctype";
+            this.cbodefaultdoctype.Size = new System.Drawing.Size(137, 23);
+            this.cbodefaultdoctype.TabIndex = 66;
             //
             // btnSaveStore
             //
@@ -1002,6 +1028,8 @@
         private System.Windows.Forms.TextBox txttaxrate;
         private System.Windows.Forms.Label lbltaxrate;
         private System.Windows.Forms.CheckBox chkTaxAffected;
+        private System.Windows.Forms.ComboBox cbodefaultdoctype;
+        private System.Windows.Forms.Label lbldefaultdoctype;
         private System.Windows.Forms.Button btnSaveStore;
         private System.Windows.Forms.DataGridView dgdatacategory;
         private System.Windows.Forms.TextBox txtindexcategory;

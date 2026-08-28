@@ -47,10 +47,18 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   en `store.default_tax_rate` (19 por defecto, pero es configurable, no una
   constante), y cada producto tiene `tax_affected` (afecto / exento). El ticket
   muestra NETO / IVA (tasa%) / EXENTO, y el reporte de ventas suma esas tres
-  columnas. Migración `Database/Migrations/007_tax_model.sql` (rellena las
-  ventas existentes asumiendo 100% afecto al 19%). Falta: el campo para marcar
-  un producto como exento en la pantalla de Gestión, y el campo de tasa en la
-  pantalla de Tienda (por ahora la tasa queda en 19).
+  columnas. En Gestión de productos hay un checkbox "Afecto a IVA" y en Tienda
+  un campo "Tasa IVA (%)". Migración `007_tax_model.sql` (rellena las ventas
+  existentes asumiendo 100% afecto al 19%).
+- **Tipo de documento boleta / factura (nivel 2, fase B).** La pantalla de venta
+  ofrece Boleta y Factura (antes solo "Factura", fijo). El correlativo es
+  independiente por tipo (`seq_folio_boleta` / `seq_folio_factura`, reemplazan a
+  `seq_sale_folio`), y el número es único por `(tipo, número)` — boleta 000001 y
+  factura 000001 pueden coexistir. El tipo por defecto se configura en Tienda
+  (`store.default_document_type`). Migración `008_document_types.sql` (reinicia
+  el correlativo de factura pasado el número más alto ya emitido). Todavía sin
+  formulario de datos fiscales para factura ni desglose distinto en el
+  documento (fase C).
 
 ### Interno
 

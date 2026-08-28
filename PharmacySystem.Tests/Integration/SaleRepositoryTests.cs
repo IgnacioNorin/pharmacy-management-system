@@ -98,6 +98,55 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
+        public void RegisterSale_BoletaAndFactura_NumberedByIndependentSequences()
+        {
+            Person person = CreatePerson(out string document);
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = CreateProductWithStock(categoryId, 100);
+
+            var saleIds = new List<int>();
+            try
+            {
+                Sale Make(string type) => new Sale
+                {
+                    typeDocument = type,
+                    oPerson = person,
+                    documentClient = "9999999999",
+                    nameClient = "Walk-in client",
+                    totalPay = 5m, payWith = 5m, change = 0m,
+                    oSaleDetail = new List<SaleDetail>
+                    {
+                        new SaleDetail { oProduct = new Product { idProduct = productId }, amount = 1, salePrice = 5m, subtotal = 5m }
+                    }
+                };
+
+                int boleta1 = Repository.Register(Make("Boleta"));
+                int factura1 = Repository.Register(Make("Factura"));
+                int boleta2 = Repository.Register(Make("Boleta"));
+                saleIds.AddRange(new[] { boleta1, factura1, boleta2 });
+
+                string Number(int id) => (string)SqlTestHelper.ExecuteScalar(
+                    "SELECT document_number FROM sale WHERE id = @id", new SqlParameter("@id", id));
+
+                // The two boletas are consecutive; the factura in between does not consume a boleta number.
+                Assert.Equal(int.Parse(Number(boleta1)) + 1, int.Parse(Number(boleta2)));
+                // A factura and a boleta can share a number - the unique index is per type.
+                Assert.NotEqual(0, factura1);
+            }
+            finally
+            {
+                foreach (int id in saleIds)
+                {
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", id));
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", id));
+                }
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
+
+        [Fact]
         public void RegisterSale_PersistsVatBreakdownAndPerLineTaxAffectedFlag()
         {
             Person person = CreatePerson(out string document);

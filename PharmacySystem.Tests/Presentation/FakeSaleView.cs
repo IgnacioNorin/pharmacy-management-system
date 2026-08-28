@@ -18,6 +18,14 @@ namespace PharmacySystem.Tests.Presentation
         public string ChangeText { get; set; } = "0";
         public string DocumentType { get; set; } = "Factura";
 
+        public IReadOnlyList<string> DocumentTypeOptions { get; private set; }
+        public string SelectedDocumentTypeOption { get; private set; }
+        public void SetDocumentTypeOptions(IReadOnlyList<string> options, string selected)
+        {
+            DocumentTypeOptions = options;
+            SelectedDocumentTypeOption = selected;
+        }
+
         // What the presenter rendered via AddCartLine/RemoveCartLineAt - the presenter owns cart
         // state now, this list is just what the View was told to display, for assertions.
         public List<SaleCartLine> RenderedCartLines { get; } = new List<SaleCartLine>();

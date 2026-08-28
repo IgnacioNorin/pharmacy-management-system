@@ -24,6 +24,19 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
+        public void OnLoad_SetsDocumentTypeOptionsAndDefaultFromStore()
+        {
+            var view = new FakeSaleView();
+            var presenter = new SalePresenter(view, new FakeSaleService(), new FakeProductService(),
+                new FakeStoreService { ListStoreResult = new Store { defaultDocumentType = "Factura" } }, 1);
+
+            presenter.OnLoad();
+
+            Assert.Equal(new[] { "Boleta", "Factura" }, view.DocumentTypeOptions);
+            Assert.Equal("Factura", view.SelectedDocumentTypeOption);
+        }
+
+        [Fact]
         public void OnProductCodeEntered_KnownCode_SelectsProduct()
         {
             var view = new FakeSaleView();

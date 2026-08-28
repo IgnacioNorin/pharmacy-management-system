@@ -54,7 +54,8 @@ namespace PharmacySystem.Tests.Integration
                     phone = "1111111111",
                     address = "Updated address",
                     currencyCulture = "es-CL",
-                    defaultTaxRate = 21m
+                    defaultTaxRate = 21m,
+                    defaultDocumentType = "Factura"
                 });
 
                 Assert.True(result);
@@ -64,6 +65,7 @@ namespace PharmacySystem.Tests.Integration
                 Assert.Equal("1111111111", stored.document);
                 Assert.Equal("es-CL", stored.currencyCulture);
                 Assert.Equal(21m, stored.defaultTaxRate);
+                Assert.Equal("Factura", stored.defaultDocumentType);
             }
             finally
             {
