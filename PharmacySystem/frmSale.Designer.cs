@@ -368,13 +368,12 @@
             //
             // btnCreditNote
             //
-            this.btnCreditNote.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCreditNote.BackColor = System.Drawing.Color.WhiteSmoke;
             this.btnCreditNote.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnCreditNote.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCreditNote.Location = new System.Drawing.Point(893, 24);
+            this.btnCreditNote.Location = new System.Drawing.Point(18, 10);
             this.btnCreditNote.Name = "btnCreditNote";
-            this.btnCreditNote.Size = new System.Drawing.Size(150, 26);
+            this.btnCreditNote.Size = new System.Drawing.Size(160, 28);
             this.btnCreditNote.TabIndex = 20;
             this.btnCreditNote.Text = "Nota de crédito";
             this.btnCreditNote.UseVisualStyleBackColor = false;
@@ -382,7 +381,6 @@
             //
             // pnlFactura
             //
-            this.pnlFactura.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlFactura.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
             this.pnlFactura.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pnlFactura.Controls.Add(this.txtrectaxid);
@@ -395,85 +393,85 @@
             this.pnlFactura.Controls.Add(this.lblrecactivity);
             this.pnlFactura.Controls.Add(this.lblrecaddress);
             this.pnlFactura.Controls.Add(this.lblreccommune);
-            this.pnlFactura.Location = new System.Drawing.Point(895, 58);
+            this.pnlFactura.Location = new System.Drawing.Point(14, 40);
             this.pnlFactura.Name = "pnlFactura";
-            this.pnlFactura.Size = new System.Drawing.Size(350, 178);
+            this.pnlFactura.Size = new System.Drawing.Size(292, 162);
             this.pnlFactura.TabIndex = 9;
             this.pnlFactura.Visible = false;
             //
             // lblrectaxid
             //
             this.lblrectaxid.AutoSize = true;
-            this.lblrectaxid.Location = new System.Drawing.Point(6, 12);
+            this.lblrectaxid.Location = new System.Drawing.Point(8, 10);
             this.lblrectaxid.Name = "lblrectaxid";
             this.lblrectaxid.Size = new System.Drawing.Size(29, 15);
             this.lblrectaxid.Text = "RUT";
             //
             // txtrectaxid
             //
-            this.txtrectaxid.Location = new System.Drawing.Point(95, 8);
+            this.txtrectaxid.Location = new System.Drawing.Point(92, 7);
             this.txtrectaxid.Name = "txtrectaxid";
-            this.txtrectaxid.Size = new System.Drawing.Size(245, 21);
+            this.txtrectaxid.Size = new System.Drawing.Size(186, 21);
             this.txtrectaxid.TabIndex = 0;
             //
             // lblrecname
             //
             this.lblrecname.AutoSize = true;
-            this.lblrecname.Location = new System.Drawing.Point(6, 44);
+            this.lblrecname.Location = new System.Drawing.Point(8, 40);
             this.lblrecname.Name = "lblrecname";
             this.lblrecname.Size = new System.Drawing.Size(78, 15);
             this.lblrecname.Text = "Razón Social";
             //
             // txtrecname
             //
-            this.txtrecname.Location = new System.Drawing.Point(95, 40);
+            this.txtrecname.Location = new System.Drawing.Point(92, 37);
             this.txtrecname.Name = "txtrecname";
-            this.txtrecname.Size = new System.Drawing.Size(245, 21);
+            this.txtrecname.Size = new System.Drawing.Size(186, 21);
             this.txtrecname.TabIndex = 1;
             //
             // lblrecactivity
             //
             this.lblrecactivity.AutoSize = true;
-            this.lblrecactivity.Location = new System.Drawing.Point(6, 76);
+            this.lblrecactivity.Location = new System.Drawing.Point(8, 70);
             this.lblrecactivity.Name = "lblrecactivity";
             this.lblrecactivity.Size = new System.Drawing.Size(30, 15);
             this.lblrecactivity.Text = "Giro";
             //
             // txtrecactivity
             //
-            this.txtrecactivity.Location = new System.Drawing.Point(95, 72);
+            this.txtrecactivity.Location = new System.Drawing.Point(92, 67);
             this.txtrecactivity.Name = "txtrecactivity";
-            this.txtrecactivity.Size = new System.Drawing.Size(245, 21);
+            this.txtrecactivity.Size = new System.Drawing.Size(186, 21);
             this.txtrecactivity.TabIndex = 2;
             //
             // lblrecaddress
             //
             this.lblrecaddress.AutoSize = true;
-            this.lblrecaddress.Location = new System.Drawing.Point(6, 108);
+            this.lblrecaddress.Location = new System.Drawing.Point(8, 100);
             this.lblrecaddress.Name = "lblrecaddress";
             this.lblrecaddress.Size = new System.Drawing.Size(58, 15);
             this.lblrecaddress.Text = "Dirección";
             //
             // txtrecaddress
             //
-            this.txtrecaddress.Location = new System.Drawing.Point(95, 104);
+            this.txtrecaddress.Location = new System.Drawing.Point(92, 97);
             this.txtrecaddress.Name = "txtrecaddress";
-            this.txtrecaddress.Size = new System.Drawing.Size(245, 21);
+            this.txtrecaddress.Size = new System.Drawing.Size(186, 21);
             this.txtrecaddress.TabIndex = 3;
             //
             // lblreccommune
             //
             this.lblreccommune.AutoSize = true;
-            this.lblreccommune.Location = new System.Drawing.Point(6, 140);
+            this.lblreccommune.Location = new System.Drawing.Point(8, 130);
             this.lblreccommune.Name = "lblreccommune";
             this.lblreccommune.Size = new System.Drawing.Size(53, 15);
             this.lblreccommune.Text = "Comuna";
             //
             // txtreccommune
             //
-            this.txtreccommune.Location = new System.Drawing.Point(95, 136);
+            this.txtreccommune.Location = new System.Drawing.Point(92, 127);
             this.txtreccommune.Name = "txtreccommune";
-            this.txtreccommune.Size = new System.Drawing.Size(245, 21);
+            this.txtreccommune.Size = new System.Drawing.Size(186, 21);
             this.txtreccommune.TabIndex = 4;
             //
             // label17
@@ -666,6 +664,8 @@
             this.BackColor = System.Drawing.Color.WhiteSmoke;
             this.ClientSize = new System.Drawing.Size(1269, 568);
             this.ControlBox = false;
+            this.Controls.Add(this.pnlFactura);
+            this.Controls.Add(this.btnCreditNote);
             this.Controls.Add(this.pblist);
             this.Controls.Add(this.btnCalculate);
             this.Controls.Add(this.dgdata);
@@ -676,8 +676,6 @@
             this.Controls.Add(this.btnSearchClient);
             this.Controls.Add(this.label17);
             this.Controls.Add(this.cbodocumenttype);
-            this.Controls.Add(this.btnCreditNote);
-            this.Controls.Add(this.pnlFactura);
             this.Controls.Add(this.txtamount);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label8);

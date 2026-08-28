@@ -94,6 +94,7 @@
             this.chkTaxAffected = new System.Windows.Forms.CheckBox();
             this.cbodefaultdoctype = new System.Windows.Forms.ComboBox();
             this.lbldefaultdoctype = new System.Windows.Forms.Label();
+            this.lblfiscal = new System.Windows.Forms.Label();
             this.label15 = new System.Windows.Forms.Label();
             this.tabManagement.SuspendLayout();
             this.tabProduct.SuspendLayout();
@@ -300,9 +301,9 @@
             this.chkTaxAffected.Checked = true;
             this.chkTaxAffected.CheckState = System.Windows.Forms.CheckState.Checked;
             this.chkTaxAffected.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.chkTaxAffected.Location = new System.Drawing.Point(35, 298);
+            this.chkTaxAffected.Location = new System.Drawing.Point(35, 297);
             this.chkTaxAffected.Name = "chkTaxAffected";
-            this.chkTaxAffected.Size = new System.Drawing.Size(100, 19);
+            this.chkTaxAffected.Size = new System.Drawing.Size(110, 19);
             this.chkTaxAffected.TabIndex = 42;
             this.chkTaxAffected.Text = "Afecto a IVA";
             this.chkTaxAffected.UseVisualStyleBackColor = true;
@@ -337,7 +338,7 @@
             this.btnDeleteProduct.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnDeleteProduct.Image = global::PharmacySystem.Properties.Resources.delete32;
             this.btnDeleteProduct.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnDeleteProduct.Location = new System.Drawing.Point(34, 411);
+            this.btnDeleteProduct.Location = new System.Drawing.Point(34, 421);
             this.btnDeleteProduct.Name = "btnDeleteProduct";
             this.btnDeleteProduct.Size = new System.Drawing.Size(244, 38);
             this.btnDeleteProduct.TabIndex = 35;
@@ -353,7 +354,7 @@
             this.btnCleanProduct.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCleanProduct.Image = global::PharmacySystem.Properties.Resources.clear32;
             this.btnCleanProduct.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnCleanProduct.Location = new System.Drawing.Point(34, 367);
+            this.btnCleanProduct.Location = new System.Drawing.Point(34, 377);
             this.btnCleanProduct.Name = "btnCleanProduct";
             this.btnCleanProduct.Size = new System.Drawing.Size(244, 38);
             this.btnCleanProduct.TabIndex = 34;
@@ -369,7 +370,7 @@
             this.btnSaveProduct.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnSaveProduct.Image = global::PharmacySystem.Properties.Resources.save32;
             this.btnSaveProduct.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnSaveProduct.Location = new System.Drawing.Point(34, 323);
+            this.btnSaveProduct.Location = new System.Drawing.Point(34, 333);
             this.btnSaveProduct.Name = "btnSaveProduct";
             this.btnSaveProduct.Size = new System.Drawing.Size(244, 38);
             this.btnSaveProduct.TabIndex = 36;
@@ -728,6 +729,7 @@
             this.tabStore.Controls.Add(this.cbocurrency);
             this.tabStore.Controls.Add(this.label24);
             this.tabStore.Controls.Add(this.txttaxrate);
+            this.tabStore.Controls.Add(this.lblfiscal);
             this.tabStore.Controls.Add(this.lbltaxrate);
             this.tabStore.Controls.Add(this.cbodefaultdoctype);
             this.tabStore.Controls.Add(this.lbldefaultdoctype);
@@ -785,24 +787,35 @@
             this.cbocurrency.Size = new System.Drawing.Size(247, 23);
             this.cbocurrency.TabIndex = 62;
             //
+            // lblfiscal
+            //
+            this.lblfiscal.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.lblfiscal.AutoSize = true;
+            this.lblfiscal.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblfiscal.Location = new System.Drawing.Point(800, 61);
+            this.lblfiscal.Name = "lblfiscal";
+            this.lblfiscal.Size = new System.Drawing.Size(103, 20);
+            this.lblfiscal.TabIndex = 67;
+            this.lblfiscal.Text = "Facturación";
+            //
             // lbltaxrate
             //
             this.lbltaxrate.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.lbltaxrate.AutoSize = true;
             this.lbltaxrate.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.lbltaxrate.Location = new System.Drawing.Point(510, 448);
+            this.lbltaxrate.Location = new System.Drawing.Point(800, 91);
             this.lbltaxrate.Name = "lbltaxrate";
             this.lbltaxrate.Size = new System.Drawing.Size(80, 15);
             this.lbltaxrate.TabIndex = 63;
-            this.lbltaxrate.Text = "Tasa IVA (%)";
+            this.lbltaxrate.Text = "Tasa IVA (%):";
             //
             // txttaxrate
             //
             this.txttaxrate.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.txttaxrate.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.txttaxrate.Location = new System.Drawing.Point(513, 466);
+            this.txttaxrate.Location = new System.Drawing.Point(803, 121);
             this.txttaxrate.Name = "txttaxrate";
-            this.txttaxrate.Size = new System.Drawing.Size(80, 21);
+            this.txttaxrate.Size = new System.Drawing.Size(120, 21);
             this.txttaxrate.TabIndex = 64;
             //
             // lbldefaultdoctype
@@ -810,11 +823,11 @@
             this.lbldefaultdoctype.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.lbldefaultdoctype.AutoSize = true;
             this.lbldefaultdoctype.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.lbldefaultdoctype.Location = new System.Drawing.Point(620, 448);
+            this.lbldefaultdoctype.Location = new System.Drawing.Point(800, 155);
             this.lbldefaultdoctype.Name = "lbldefaultdoctype";
-            this.lbldefaultdoctype.Size = new System.Drawing.Size(120, 15);
+            this.lbldefaultdoctype.Size = new System.Drawing.Size(140, 15);
             this.lbldefaultdoctype.TabIndex = 65;
-            this.lbldefaultdoctype.Text = "Documento por defecto";
+            this.lbldefaultdoctype.Text = "Documento por defecto:";
             //
             // cbodefaultdoctype
             //
@@ -822,9 +835,9 @@
             this.cbodefaultdoctype.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbodefaultdoctype.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
             this.cbodefaultdoctype.FormattingEnabled = true;
-            this.cbodefaultdoctype.Location = new System.Drawing.Point(623, 466);
+            this.cbodefaultdoctype.Location = new System.Drawing.Point(803, 185);
             this.cbodefaultdoctype.Name = "cbodefaultdoctype";
-            this.cbodefaultdoctype.Size = new System.Drawing.Size(137, 23);
+            this.cbodefaultdoctype.Size = new System.Drawing.Size(200, 23);
             this.cbodefaultdoctype.TabIndex = 66;
             //
             // btnSaveStore
@@ -951,7 +964,7 @@
             this.label15.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.label15.Location = new System.Drawing.Point(333, 15);
             this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(578, 479);
+            this.label15.Size = new System.Drawing.Size(772, 479);
             this.label15.TabIndex = 0;
             // 
             // frmManagement
@@ -1030,6 +1043,7 @@
         private System.Windows.Forms.CheckBox chkTaxAffected;
         private System.Windows.Forms.ComboBox cbodefaultdoctype;
         private System.Windows.Forms.Label lbldefaultdoctype;
+        private System.Windows.Forms.Label lblfiscal;
         private System.Windows.Forms.Button btnSaveStore;
         private System.Windows.Forms.DataGridView dgdatacategory;
         private System.Windows.Forms.TextBox txtindexcategory;
