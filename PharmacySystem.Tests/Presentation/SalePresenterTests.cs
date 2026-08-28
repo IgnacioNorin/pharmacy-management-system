@@ -169,6 +169,78 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Equal(new[] { "Error al convertir el tipo de moneda - Paga con\nEjemplo Formato ##.##" }, view.ShownMessages);
         }
 
+        private static FakeSaleView FacturaView() => new FakeSaleView
+        {
+            DocumentType = "Factura",
+            RecipientTaxId = "12.345.678-5",
+            RecipientBusinessName = "Acme SpA",
+            RecipientActivity = "Comercio",
+            RecipientAddress = "Calle 1",
+            RecipientCommune = "Santiago",
+            PayWithText = "10.00",
+            TotalPayText = "10.00"
+        };
+
+        [Fact]
+        public void OnDocumentTypeChanged_TogglesTheFacturaPanel()
+        {
+            var view = new FakeSaleView { DocumentType = "Factura" };
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+
+            presenter.OnDocumentTypeChanged();
+            Assert.True(view.FacturaFieldsVisible);
+
+            view.DocumentType = "Boleta";
+            presenter.OnDocumentTypeChanged();
+            Assert.False(view.FacturaFieldsVisible);
+        }
+
+        [Fact]
+        public void OnFinishSale_Factura_MissingRecipientData_ShowsMessage()
+        {
+            var view = FacturaView();
+            view.RecipientActivity = "";
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService { VerifyResult = true });
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnFinishSale();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("receptor de la factura"));
+        }
+
+        [Fact]
+        public void OnFinishSale_Factura_InvalidRut_ShowsMessage()
+        {
+            var view = FacturaView();
+            view.RecipientTaxId = "12.345.678-9"; // wrong check digit
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService { VerifyResult = true });
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnFinishSale();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("RUT del receptor no es válido"));
+        }
+
+        [Fact]
+        public void OnFinishSale_Factura_ValidRecipient_RegistersWithRecipientData()
+        {
+            var view = FacturaView();
+            var saleService = new FakeSaleService { RegisterResult = 1 };
+            var presenter = CreatePresenter(view, saleService, new FakeProductService { VerifyResult = true });
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnFinishSale();
+
+            var sale = saleService.RegisteredWith;
+            Assert.NotNull(sale);
+            Assert.Equal("12.345.678-5", sale.recipientTaxId);
+            Assert.Equal("Acme SpA", sale.recipientBusinessName);
+            Assert.Equal("Santiago", sale.recipientCommune);
+            // The client columns fall back to the recipient identity for a factura.
+            Assert.Equal("12.345.678-5", sale.documentClient);
+            Assert.Equal("Acme SpA", sale.nameClient);
+        }
+
         [Fact]
         public void OnFinishSale_MissingClientData_ShowsMessage()
         {
@@ -321,7 +393,7 @@ namespace PharmacySystem.Tests.Presentation
         [Fact]
         public void OnFinishSale_Succeeds_RegistersSaleClearsAndNotifiesView()
         {
-            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan", DocumentType = "Factura" };
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
             var saleService = new FakeSaleService { RegisterResult = 99 };
             var productService = new FakeProductService { VerifyResult = true };
             var presenter = CreatePresenter(view, saleService, productService, idPerson: 7);

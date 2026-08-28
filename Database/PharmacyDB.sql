@@ -256,6 +256,11 @@ CREATE TABLE [dbo].[sale](
     [net_amount] [decimal](18, 2) NOT NULL CONSTRAINT [DF_sale_net_amount] DEFAULT ((0)),
     [tax_amount] [decimal](18, 2) NOT NULL CONSTRAINT [DF_sale_tax_amount] DEFAULT ((0)),
     [exempt_amount] [decimal](18, 2) NOT NULL CONSTRAINT [DF_sale_exempt_amount] DEFAULT ((0)),
+    [recipient_tax_id] [varchar](20) NULL,
+    [recipient_business_name] [varchar](120) NULL,
+    [recipient_activity] [varchar](80) NULL,
+    [recipient_address] [varchar](120) NULL,
+    [recipient_commune] [varchar](60) NULL,
     [date_registered] [datetime] NULL,
     CONSTRAINT [PK__VENTA__BC1240BD8994C395] PRIMARY KEY CLUSTERED ([id] ASC)
 )

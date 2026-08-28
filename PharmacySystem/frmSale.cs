@@ -141,6 +141,11 @@ namespace PharmacySystem
         {
             txtdocumentclient.Text = "";
             txtnameclient.Text = "";
+            txtrectaxid.Text = "";
+            txtrecname.Text = "";
+            txtrecactivity.Text = "";
+            txtrecaddress.Text = "";
+            txtreccommune.Text = "";
             txttotalpay.Text = "0";
             txtpaywith.Text = "0";
             txtchange.Text = "0";
@@ -198,7 +203,17 @@ namespace PharmacySystem
         string ISaleView.PayWithText => txtpaywith.Text;
         string ISaleView.TotalPayText => txttotalpay.Text;
         string ISaleView.ChangeText => txtchange.Text;
-        string ISaleView.DocumentType => ((ComboBoxItem)cbodocumenttype.SelectedItem).Value.ToString();
+        string ISaleView.DocumentType => ((ComboBoxItem)cbodocumenttype.SelectedItem)?.Value.ToString() ?? "";
+
+        public string RecipientTaxId => txtrectaxid.Text;
+        public string RecipientBusinessName => txtrecname.Text;
+        public string RecipientActivity => txtrecactivity.Text;
+        public string RecipientAddress => txtrecaddress.Text;
+        public string RecipientCommune => txtreccommune.Text;
+
+        public void SetFacturaFieldsVisible(bool visible) => pnlFactura.Visible = visible;
+
+        private void cbodocumenttype_SelectedIndexChanged(object sender, EventArgs e) => _presenter.OnDocumentTypeChanged();
 
         public void ShowMessage(string message) =>
             MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);

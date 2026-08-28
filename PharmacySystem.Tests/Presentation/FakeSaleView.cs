@@ -16,7 +16,13 @@ namespace PharmacySystem.Tests.Presentation
         public string PayWithText { get; set; } = "0";
         public string TotalPayText { get; set; } = "0";
         public string ChangeText { get; set; } = "0";
-        public string DocumentType { get; set; } = "Factura";
+        public string DocumentType { get; set; } = "Boleta";
+
+        public string RecipientTaxId { get; set; } = "";
+        public string RecipientBusinessName { get; set; } = "";
+        public string RecipientActivity { get; set; } = "";
+        public string RecipientAddress { get; set; } = "";
+        public string RecipientCommune { get; set; } = "";
 
         public IReadOnlyList<string> DocumentTypeOptions { get; private set; }
         public string SelectedDocumentTypeOption { get; private set; }
@@ -24,7 +30,11 @@ namespace PharmacySystem.Tests.Presentation
         {
             DocumentTypeOptions = options;
             SelectedDocumentTypeOption = selected;
+            DocumentType = selected; // mirrors the real combo landing on the selected item
         }
+
+        public bool? FacturaFieldsVisible { get; private set; }
+        public void SetFacturaFieldsVisible(bool visible) => FacturaFieldsVisible = visible;
 
         // What the presenter rendered via AddCartLine/RemoveCartLineAt - the presenter owns cart
         // state now, this list is just what the View was told to display, for assertions.

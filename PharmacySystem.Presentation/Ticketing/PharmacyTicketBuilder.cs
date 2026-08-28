@@ -37,7 +37,21 @@ namespace PharmacySystem.Presentation
             formatter.AddTwoColumns("Número:", sale.numberDocument);
             formatter.AddTwoColumns("Fecha:", date);
             formatter.AddTwoColumns("Hora:", time);
-            formatter.AddCenteredText("Cliente: Público General");
+
+            if (!string.IsNullOrWhiteSpace(sale.recipientTaxId))
+            {
+                formatter.AddCharacter("-");
+                formatter.AddCenteredText("RECEPTOR");
+                formatter.AddTwoColumns("RUT:", sale.recipientTaxId);
+                formatter.AddTwoColumns("Razón Social:", sale.recipientBusinessName ?? "");
+                formatter.AddTwoColumns("Giro:", sale.recipientActivity ?? "");
+                formatter.AddTwoColumns("Dirección:", sale.recipientAddress ?? "");
+                formatter.AddTwoColumns("Comuna:", sale.recipientCommune ?? "");
+            }
+            else
+            {
+                formatter.AddCenteredText("Cliente: Público General");
+            }
 
             formatter.AddCharacter("-");
 

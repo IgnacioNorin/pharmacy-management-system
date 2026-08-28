@@ -56,9 +56,13 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   `seq_sale_folio`), y el número es único por `(tipo, número)` — boleta 000001 y
   factura 000001 pueden coexistir. El tipo por defecto se configura en Tienda
   (`store.default_document_type`). Migración `008_document_types.sql` (reinicia
-  el correlativo de factura pasado el número más alto ya emitido). Todavía sin
-  formulario de datos fiscales para factura ni desglose distinto en el
-  documento (fase C).
+  el correlativo de factura pasado el número más alto ya emitido).
+- **Datos del receptor en la factura (nivel 2, fase C).** Al elegir "Factura" en
+  la pantalla de venta se despliega un panel que pide RUT, razón social, giro,
+  dirección y comuna del receptor. El RUT se valida con dígito verificador
+  chileno (módulo 11, aislado en `ChileanRutValidator` — el resto de los
+  documentos sigue con el validador neutro). Se guardan en `sale.recipient_*` y
+  aparecen en el ticket bajo "RECEPTOR". Migración `009_factura_recipient.sql`.
 
 ### Interno
 

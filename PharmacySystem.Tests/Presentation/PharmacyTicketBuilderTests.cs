@@ -82,6 +82,27 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Contains("17/03/2026", ticket);
             Assert.Contains("NETO:", ticket);
             Assert.Contains("IVA (19%):", ticket);
+            Assert.Contains("Cliente: Público General", ticket); // no recipient block for a plain sale
+        }
+
+        [Fact]
+        public void Build_Factura_IncludesRecipientBlock()
+        {
+            Sale sale = MakeSale();
+            sale.typeDocument = "Factura";
+            sale.recipientTaxId = "76.111.111-1";
+            sale.recipientBusinessName = "Acme SpA";
+            sale.recipientActivity = "Comercio";
+            sale.recipientAddress = "Av. Principal 123";
+            sale.recipientCommune = "Santiago";
+
+            string ticket = PharmacyTicketBuilder.Build(MakeStore(), sale, MakeDetails());
+
+            Assert.Contains("RECEPTOR", ticket);
+            Assert.Contains("76.111.111-1", ticket);
+            Assert.Contains("Acme SpA", ticket);
+            Assert.Contains("Santiago", ticket);
+            Assert.DoesNotContain("Público General", ticket);
         }
 
         [Fact]

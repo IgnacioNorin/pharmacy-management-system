@@ -26,6 +26,7 @@
 | `006_drop_redundant_sps.sql` | 1.2.0 | 1.2.0 (elimina 6 SPs de alta/edición redundantes con los índices únicos) |
 | `007_tax_model.sql` | 1.2.0 | 1.2.0 (modelo de IVA: neto/iva/exento en venta, `product.tax_affected`, `store.default_tax_rate`) |
 | `008_document_types.sql` | 1.2.0 | 1.2.0 (tipo de documento boleta/factura: correlativo por tipo, `store.default_document_type`) |
+| `009_factura_recipient.sql` | 1.2.0 | 1.2.0 (datos fiscales del receptor en la factura: `sale.recipient_*`) |
 
 ## Si un paso falla por datos preexistentes
 

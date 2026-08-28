@@ -3,6 +3,7 @@ using System.Linq;
 using PharmacySystem.Business;
 using PharmacySystem.Helpers;
 using PharmacySystem.Model;
+using PharmacySystem.Validators;
 
 namespace PharmacySystem.Presentation
 {
@@ -48,6 +49,7 @@ namespace PharmacySystem.Presentation
         {
             Store store = _storeService.ListStore();
             _view.SetDocumentTypeOptions(DocumentTypes.Selectable, store?.defaultDocumentType ?? DocumentTypes.Boleta);
+            _view.SetFacturaFieldsVisible(IsFactura());
         }
 
         public void OnProductCodeEntered(string code)
@@ -158,12 +160,35 @@ namespace PharmacySystem.Presentation
             return true;
         }
 
+        private bool IsFactura() =>
+            string.Equals(_view.DocumentType, DocumentTypes.Factura, System.StringComparison.OrdinalIgnoreCase);
+
+        public void OnDocumentTypeChanged() => _view.SetFacturaFieldsVisible(IsFactura());
+
         public void OnFinishSale()
         {
-            if (_view.DocumentClient.Trim() == "" || _view.NameClient.Trim() == "")
+            bool isFactura = IsFactura();
+
+            if (!isFactura && (_view.DocumentClient.Trim() == "" || _view.NameClient.Trim() == ""))
             {
                 _view.ShowMessage("Debe ingresar todos los datos del cliente");
                 return;
+            }
+
+            if (isFactura)
+            {
+                string rut = (_view.RecipientTaxId ?? "").Trim();
+                if (rut == "" || (_view.RecipientBusinessName ?? "").Trim() == "" || (_view.RecipientActivity ?? "").Trim() == ""
+                    || (_view.RecipientAddress ?? "").Trim() == "" || (_view.RecipientCommune ?? "").Trim() == "")
+                {
+                    _view.ShowMessage("Complete los datos del receptor de la factura");
+                    return;
+                }
+                if (!ChileanRutValidator.IsValid(rut))
+                {
+                    _view.ShowMessage("El RUT del receptor no es válido");
+                    return;
+                }
             }
 
             if (_cart.Count < 1)
@@ -222,8 +247,13 @@ namespace PharmacySystem.Presentation
             {
                 typeDocument = _view.DocumentType,
                 oPerson = new Person { idPerson = _idPerson },
-                documentClient = _view.DocumentClient.Trim(),
-                nameClient = _view.NameClient.Trim(),
+                documentClient = isFactura ? (_view.RecipientTaxId ?? "").Trim() : _view.DocumentClient.Trim(),
+                nameClient = isFactura ? (_view.RecipientBusinessName ?? "").Trim() : _view.NameClient.Trim(),
+                recipientTaxId = isFactura ? (_view.RecipientTaxId ?? "").Trim() : null,
+                recipientBusinessName = isFactura ? (_view.RecipientBusinessName ?? "").Trim() : null,
+                recipientActivity = isFactura ? (_view.RecipientActivity ?? "").Trim() : null,
+                recipientAddress = isFactura ? (_view.RecipientAddress ?? "").Trim() : null,
+                recipientCommune = isFactura ? (_view.RecipientCommune ?? "").Trim() : null,
                 totalPay = totalToPay,
                 payWith = moneyToPay,
                 change = changeMoney,

@@ -21,6 +21,12 @@ namespace PharmacySystem.Model
         public decimal netAmount { get; set; }
         public decimal taxAmount { get; set; }
         public decimal exemptAmount { get; set; }
+        // Recipient fiscal data - only filled when typeDocument is a Factura.
+        public string recipientTaxId { get; set; }
+        public string recipientBusinessName { get; set; }
+        public string recipientActivity { get; set; }
+        public string recipientAddress { get; set; }
+        public string recipientCommune { get; set; }
         public DateTime registrationDate { get; set; }
         public List<SaleDetail> oSaleDetail { get; set; }
     }

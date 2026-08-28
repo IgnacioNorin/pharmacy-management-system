@@ -55,6 +55,17 @@
             this.txtchange = new System.Windows.Forms.TextBox();
             this.label16 = new System.Windows.Forms.Label();
             this.cbodocumenttype = new System.Windows.Forms.ComboBox();
+            this.pnlFactura = new System.Windows.Forms.Panel();
+            this.txtrectaxid = new System.Windows.Forms.TextBox();
+            this.txtrecname = new System.Windows.Forms.TextBox();
+            this.txtrecactivity = new System.Windows.Forms.TextBox();
+            this.txtrecaddress = new System.Windows.Forms.TextBox();
+            this.txtreccommune = new System.Windows.Forms.TextBox();
+            this.lblrectaxid = new System.Windows.Forms.Label();
+            this.lblrecname = new System.Windows.Forms.Label();
+            this.lblrecactivity = new System.Windows.Forms.Label();
+            this.lblrecaddress = new System.Windows.Forms.Label();
+            this.lblreccommune = new System.Windows.Forms.Label();
             this.label17 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.txtidclient = new System.Windows.Forms.TextBox();
@@ -352,7 +363,104 @@
             this.cbodocumenttype.Name = "cbodocumenttype";
             this.cbodocumenttype.Size = new System.Drawing.Size(188, 23);
             this.cbodocumenttype.TabIndex = 8;
-            // 
+            this.cbodocumenttype.SelectedIndexChanged += new System.EventHandler(this.cbodocumenttype_SelectedIndexChanged);
+            //
+            // pnlFactura
+            //
+            this.pnlFactura.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlFactura.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
+            this.pnlFactura.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pnlFactura.Controls.Add(this.txtrectaxid);
+            this.pnlFactura.Controls.Add(this.txtrecname);
+            this.pnlFactura.Controls.Add(this.txtrecactivity);
+            this.pnlFactura.Controls.Add(this.txtrecaddress);
+            this.pnlFactura.Controls.Add(this.txtreccommune);
+            this.pnlFactura.Controls.Add(this.lblrectaxid);
+            this.pnlFactura.Controls.Add(this.lblrecname);
+            this.pnlFactura.Controls.Add(this.lblrecactivity);
+            this.pnlFactura.Controls.Add(this.lblrecaddress);
+            this.pnlFactura.Controls.Add(this.lblreccommune);
+            this.pnlFactura.Location = new System.Drawing.Point(895, 58);
+            this.pnlFactura.Name = "pnlFactura";
+            this.pnlFactura.Size = new System.Drawing.Size(350, 178);
+            this.pnlFactura.TabIndex = 9;
+            this.pnlFactura.Visible = false;
+            //
+            // lblrectaxid
+            //
+            this.lblrectaxid.AutoSize = true;
+            this.lblrectaxid.Location = new System.Drawing.Point(6, 12);
+            this.lblrectaxid.Name = "lblrectaxid";
+            this.lblrectaxid.Size = new System.Drawing.Size(29, 15);
+            this.lblrectaxid.Text = "RUT";
+            //
+            // txtrectaxid
+            //
+            this.txtrectaxid.Location = new System.Drawing.Point(95, 8);
+            this.txtrectaxid.Name = "txtrectaxid";
+            this.txtrectaxid.Size = new System.Drawing.Size(245, 21);
+            this.txtrectaxid.TabIndex = 0;
+            //
+            // lblrecname
+            //
+            this.lblrecname.AutoSize = true;
+            this.lblrecname.Location = new System.Drawing.Point(6, 44);
+            this.lblrecname.Name = "lblrecname";
+            this.lblrecname.Size = new System.Drawing.Size(78, 15);
+            this.lblrecname.Text = "Razón Social";
+            //
+            // txtrecname
+            //
+            this.txtrecname.Location = new System.Drawing.Point(95, 40);
+            this.txtrecname.Name = "txtrecname";
+            this.txtrecname.Size = new System.Drawing.Size(245, 21);
+            this.txtrecname.TabIndex = 1;
+            //
+            // lblrecactivity
+            //
+            this.lblrecactivity.AutoSize = true;
+            this.lblrecactivity.Location = new System.Drawing.Point(6, 76);
+            this.lblrecactivity.Name = "lblrecactivity";
+            this.lblrecactivity.Size = new System.Drawing.Size(30, 15);
+            this.lblrecactivity.Text = "Giro";
+            //
+            // txtrecactivity
+            //
+            this.txtrecactivity.Location = new System.Drawing.Point(95, 72);
+            this.txtrecactivity.Name = "txtrecactivity";
+            this.txtrecactivity.Size = new System.Drawing.Size(245, 21);
+            this.txtrecactivity.TabIndex = 2;
+            //
+            // lblrecaddress
+            //
+            this.lblrecaddress.AutoSize = true;
+            this.lblrecaddress.Location = new System.Drawing.Point(6, 108);
+            this.lblrecaddress.Name = "lblrecaddress";
+            this.lblrecaddress.Size = new System.Drawing.Size(58, 15);
+            this.lblrecaddress.Text = "Dirección";
+            //
+            // txtrecaddress
+            //
+            this.txtrecaddress.Location = new System.Drawing.Point(95, 104);
+            this.txtrecaddress.Name = "txtrecaddress";
+            this.txtrecaddress.Size = new System.Drawing.Size(245, 21);
+            this.txtrecaddress.TabIndex = 3;
+            //
+            // lblreccommune
+            //
+            this.lblreccommune.AutoSize = true;
+            this.lblreccommune.Location = new System.Drawing.Point(6, 140);
+            this.lblreccommune.Name = "lblreccommune";
+            this.lblreccommune.Size = new System.Drawing.Size(53, 15);
+            this.lblreccommune.Text = "Comuna";
+            //
+            // txtreccommune
+            //
+            this.txtreccommune.Location = new System.Drawing.Point(95, 136);
+            this.txtreccommune.Name = "txtreccommune";
+            this.txtreccommune.Size = new System.Drawing.Size(245, 21);
+            this.txtreccommune.TabIndex = 4;
+            //
             // label17
             // 
             this.label17.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -553,6 +661,7 @@
             this.Controls.Add(this.btnSearchClient);
             this.Controls.Add(this.label17);
             this.Controls.Add(this.cbodocumenttype);
+            this.Controls.Add(this.pnlFactura);
             this.Controls.Add(this.txtamount);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label8);
@@ -620,6 +729,17 @@
         private System.Windows.Forms.TextBox txtchange;
         private System.Windows.Forms.Label label16;
         private System.Windows.Forms.ComboBox cbodocumenttype;
+        private System.Windows.Forms.Panel pnlFactura;
+        private System.Windows.Forms.TextBox txtrectaxid;
+        private System.Windows.Forms.TextBox txtrecname;
+        private System.Windows.Forms.TextBox txtrecactivity;
+        private System.Windows.Forms.TextBox txtrecaddress;
+        private System.Windows.Forms.TextBox txtreccommune;
+        private System.Windows.Forms.Label lblrectaxid;
+        private System.Windows.Forms.Label lblrecname;
+        private System.Windows.Forms.Label lblrecactivity;
+        private System.Windows.Forms.Label lblrecaddress;
+        private System.Windows.Forms.Label lblreccommune;
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button btnSearchClient;
