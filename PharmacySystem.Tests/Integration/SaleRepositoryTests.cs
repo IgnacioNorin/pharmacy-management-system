@@ -690,5 +690,48 @@ namespace PharmacySystem.Tests.Integration
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
             }
         }
+
+        // Migration 014: a client that appears on a sale via client_id must be soft-deleted
+        // (status = 0), not fail with an FK error the way it did before the SP knew about the link.
+        [Fact]
+        public void DeleteClient_ReferencedByASaleClientId_SoftDeletesInsteadOfFailing()
+        {
+            Person client = CreatePerson(out string document);
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = CreateProductWithStock(categoryId, 10);
+
+            int saleId = 0;
+            try
+            {
+                saleId = Repository.Register(new Sale
+                {
+                    typeDocument = "Boleta",
+                    oPerson = client,
+                    clientId = client.idPerson,
+                    documentClient = client.document,
+                    nameClient = client.name,
+                    totalPay = 5m, payWith = 5m, change = 0m,
+                    oSaleDetail = new List<SaleDetail>
+                    {
+                        new SaleDetail { oProduct = new Product { idProduct = productId }, amount = 1, salePrice = 5m, subtotal = 5m }
+                    }
+                });
+                Assert.True(saleId > 0);
+
+                bool deleted = PersonRepo.Delete(client.idPerson);
+
+                Assert.True(deleted);
+                Assert.Equal(0, SqlTestHelper.ExecuteScalarInt(
+                    "SELECT CAST(status AS INT) FROM person WHERE id = @id", new SqlParameter("@id", client.idPerson)));
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
     }
 }

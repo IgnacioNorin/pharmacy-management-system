@@ -31,6 +31,7 @@
 | `011_fiscal_document_hook.sql` | 1.2.0 | 1.2.0 (enganche de emisión fiscal: `sale.fiscal_status` / `fiscal_track_id` / `fiscal_barcode`) |
 | `012_client_fiscal_profile.sql` | 1.2.0 | 1.2.0 (ficha fiscal del cliente: `person.business_name` / `activity` / `commune` / `email` / `is_company`; vínculo `sale.client_id`) |
 | `013_person_update_fiscal_profile.sql` | 1.2.0 | 1.2.0 (`sp_update_person` escribe también los campos fiscales del cliente) |
+| `014_sp_delete_person_client_ref.sql` | 1.2.0 | 1.2.0 (`sp_delete_person` cuenta `sale.client_id` como referencia: da de baja lógica en vez de fallar) |
 
 ## Si un paso falla por datos preexistentes
 

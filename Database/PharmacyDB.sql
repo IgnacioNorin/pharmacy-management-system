@@ -675,10 +675,12 @@ BEGIN
         RETURN;   -- @result stays 0
     END
 
-    -- Same soft-delete pattern as products/categories: a person referenced by a sale, a
-    -- purchase or an acknowledged alert cannot be physically removed (FK), so deactivate them
-    -- instead. LoginPresenter must reject status = 0 so a former employee cannot sign in.
+    -- Same soft-delete pattern as products/categories: a person referenced by a sale (as the
+    -- seller or the client), a purchase or an acknowledged alert cannot be physically removed
+    -- (FK), so deactivate them instead. LoginPresenter must reject status = 0 so a former
+    -- employee cannot sign in.
     IF NOT EXISTS (SELECT 1 FROM sale WHERE user_id = @id_person)
+       AND NOT EXISTS (SELECT 1 FROM sale WHERE client_id = @id_person)
        AND NOT EXISTS (SELECT 1 FROM purchase WHERE person_id = @id_person)
        AND NOT EXISTS (SELECT 1 FROM product_alert_history WHERE acknowledged_by = @id_person)
     BEGIN
