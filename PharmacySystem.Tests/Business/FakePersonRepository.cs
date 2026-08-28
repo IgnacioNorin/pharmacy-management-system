@@ -6,12 +6,12 @@ namespace PharmacySystem.Tests.Business
 {
     internal class FakePersonRepository : IPersonRepository
     {
-        public bool RegisterResult { get; set; } = true;
+        public int RegisterResult { get; set; } = 1;
         public bool UpdateResult { get; set; } = true;
         public Person RegisteredWith { get; private set; }
         public Person UpdatedWith { get; private set; }
 
-        public bool Register(Person person)
+        public int Register(Person person)
         {
             RegisteredWith = person;
             return RegisterResult;

@@ -5,7 +5,8 @@ namespace PharmacySystem.Business
 {
     public interface IPersonService
     {
-        bool Register(Person person);
+        // The new person's id, or 0 if the insert failed (duplicate document or error).
+        int Register(Person person);
         bool Update(Person person);
         List<Person> List();
         Person GetByDocument(string document);

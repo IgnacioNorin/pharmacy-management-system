@@ -121,12 +121,14 @@ namespace PharmacySystem.Presentation
 
             if (person.idPerson == 0)
             {
-                if (!_service.Register(person))
+                int newId = _service.Register(person);
+                if (newId == 0)
                 {
                     _view.ShowMessage("Ya existe un usuario con ese documento");
                     return;
                 }
 
+                person.idPerson = newId;
                 _view.AddRow(new UserRow
                 {
                     Id = person.idPerson,

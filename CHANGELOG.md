@@ -167,6 +167,10 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 
 ### Corregido
 
+- **Alta de cliente / usuario:** `Register` devuelve el id de la fila nueva en
+  vez de un booleano. Antes, un cliente o usuario recién creado quedaba con
+  `Id = 0` en la grilla y volver a guardarlo desde esa fila lo registraba de
+  nuevo (duplicado). Ahora la fila lleva el id real y se puede editar.
 - **Venta e inventario:** el descuento de stock se ejecuta dentro de la misma
   transacción que registra la venta y su detalle, con guardia
   `stock >= cantidad` por línea. Si una línea no tiene stock suficiente se

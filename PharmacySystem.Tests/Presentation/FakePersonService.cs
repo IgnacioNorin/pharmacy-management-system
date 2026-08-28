@@ -6,7 +6,7 @@ namespace PharmacySystem.Tests.Presentation
 {
     internal class FakePersonService : IPersonService
     {
-        public bool RegisterResult { get; set; } = true;
+        public int RegisterResult { get; set; } = 1;
         public bool UpdateResult { get; set; } = true;
         public bool DeleteResult { get; set; } = true;
         public bool UpdatePasswordResult { get; set; } = true;
@@ -19,7 +19,7 @@ namespace PharmacySystem.Tests.Presentation
         public int? UpdatedPasswordForId { get; private set; }
         public string UpdatedPasswordHash { get; private set; }
 
-        public bool Register(Person person)
+        public int Register(Person person)
         {
             RegisteredWith = person;
             return RegisterResult;

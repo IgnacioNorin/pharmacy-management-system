@@ -9,9 +9,6 @@ namespace PharmacySystem.Presentation
     //  - OnSave shows "No se pudo guardar los cambios" on failure for BOTH register and update
     //    (unlike SupplierPresenter, where a failed Update returns silently - frmClient's
     //    btnSave_Click never returns early, it always falls through to the shared result check).
-    //  - A newly registered client's row gets Id = 0 in the grid, because
-    //    IPersonService.Register returns only a bool, never the new row's id - same as the
-    //    original, which reused the still-"0" txtid.Text for the new row.
     //  - OnDelete does nothing at all (no message) when nothing is selected, unlike
     //    SupplierPresenter's explicit "seleccione un proveedor".
     public class ClientPresenter
@@ -77,9 +74,11 @@ namespace PharmacySystem.Presentation
             bool result;
             if (person.idPerson == 0)
             {
-                result = _service.Register(person);
+                int newId = _service.Register(person);
+                result = newId != 0;
                 if (result)
                 {
+                    person.idPerson = newId;
                     _view.AddRow(ClientRow.From(person));
                 }
             }

@@ -37,7 +37,7 @@ namespace PharmacySystem.Tests.Integration
                 phone = "-",
                 password = Password,
                 oPersonType = new TypePerson { idPersonType = roleId }
-            }));
+            }) > 0);
 
             var loginView = new FakeLoginView { Document = document, Password = Password };
             new LoginPresenter(loginView, People).OnLogin();

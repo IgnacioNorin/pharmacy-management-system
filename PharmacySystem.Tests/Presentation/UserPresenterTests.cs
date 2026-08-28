@@ -121,7 +121,7 @@ namespace PharmacySystem.Tests.Presentation
             var view = ValidView();
             view.RoleId = 2;
             view.RoleText = "Empleado";
-            var service = new FakePersonService { RegisterResult = true };
+            var service = new FakePersonService { RegisterResult = 55 };
 
             CreatePresenter(view, service).OnSave();
 
@@ -135,7 +135,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnSave_RegisterFails_ShowsDuplicateMessage()
         {
             var view = ValidView();
-            var service = new FakePersonService { RegisterResult = false };
+            var service = new FakePersonService { RegisterResult = 0 };
 
             CreatePresenter(view, service).OnSave();
 
@@ -263,7 +263,7 @@ namespace PharmacySystem.Tests.Presentation
         {
             var view = ValidView();
             view.RoleId = 1;
-            var service = new FakePersonService { RegisterResult = true };
+            var service = new FakePersonService { RegisterResult = 55 };
             var presenter = CreatePresenter(view, service, TestUser.WithRole(2, "usuarios.gestionar"));
 
             presenter.OnSave();

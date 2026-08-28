@@ -17,7 +17,7 @@ namespace PharmacySystem.Business
             _repository = repository;
         }
 
-        public bool Register(Person person)
+        public int Register(Person person)
         {
             person.password = HashIfNeeded(person.password);
             return _repository.Register(person);

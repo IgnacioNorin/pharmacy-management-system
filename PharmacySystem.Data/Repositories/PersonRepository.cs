@@ -27,7 +27,7 @@ namespace PharmacySystem.Data
             _connectionFactory = connectionFactory;
         }
 
-        public bool Register(Person person)
+        public int Register(Person person)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
@@ -35,9 +35,10 @@ namespace PharmacySystem.Data
                 {
                     const string sql =
                         "INSERT INTO person(document_number, name, address, phone, business_name, activity, commune, email, is_company, password, person_type_id) " +
-                        "VALUES (@document, @name, @address, @phone, @business_name, @activity, @commune, @email, @is_company, @password, @person_type_id);";
+                        "VALUES (@document, @name, @address, @phone, @business_name, @activity, @commune, @email, @is_company, @password, @person_type_id); " +
+                        "SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
-                    oConnection.Execute(sql, new
+                    return oConnection.ExecuteScalar<int>(sql, new
                     {
                         document = person.document,
                         name = person.name,
@@ -51,17 +52,15 @@ namespace PharmacySystem.Data
                         password = person.password,
                         person_type_id = person.oPersonType.idPersonType
                     });
-
-                    return true;
                 }
                 catch (Exception ex) when (SqlErrorCodes.IsUniqueViolation(ex))
                 {
-                    return false; // a person with that document already exists
+                    return 0; // a person with that document already exists
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    return false;
+                    return 0;
                 }
             }
         }

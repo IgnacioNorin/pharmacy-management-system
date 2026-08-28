@@ -36,11 +36,11 @@ namespace PharmacySystem.Tests.Integration
         public void Register_New_PersistsPasswordVerbatim()
         {
             string document = SqlTestHelper.NewTag();
-            bool result = Repository.Register(NewPerson(document, "some-already-hashed-string"));
+            int newId = Repository.Register(NewPerson(document, "some-already-hashed-string"));
 
             try
             {
-                Assert.True(result);
+                Assert.True(newId > 0);
 
                 Person stored = Repository.GetByDocument(document);
 
@@ -54,16 +54,16 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void Register_DuplicateDocument_ReturnsFalse()
+        public void Register_DuplicateDocument_ReturnsZero()
         {
             string document = SqlTestHelper.NewTag();
             Repository.Register(NewPerson(document));
 
             try
             {
-                bool result = Repository.Register(NewPerson(document));
+                int result = Repository.Register(NewPerson(document));
 
-                Assert.False(result);
+                Assert.Equal(0, result);
             }
             finally
             {
