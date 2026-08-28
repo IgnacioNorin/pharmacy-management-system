@@ -15,6 +15,9 @@ namespace PharmacySystem
         private readonly CategoryManagementPresenter _categoryPresenter;
         private readonly ProductManagementPresenter _productPresenter;
         private readonly StoreManagementPresenter _storePresenter;
+        // True only while _storePresenter.OnLoad() runs, so populating the preset combo does not
+        // fire OnCountryPresetChanged and overwrite the just-loaded saved values.
+        private bool _loadingStore;
 
         public frmManagement()
         {
@@ -192,7 +195,9 @@ namespace PharmacySystem
 
             if (CanSee("tienda.acceso"))
             {
-                _storePresenter.OnLoad();
+                _loadingStore = true;
+                try { _storePresenter.OnLoad(); }
+                finally { _loadingStore = false; }
             }
             else
             {
@@ -532,8 +537,39 @@ namespace PharmacySystem
         public string SelectedCurrency => ((ComboBoxItem)cbocurrency.SelectedItem).Value.ToString();
         public string TaxRate => txttaxrate.Text;
         public string DefaultDocumentType => cbodefaultdoctype.SelectedItem?.ToString() ?? "";
+        public string SelectedCountryCode => (cbocountrypreset.SelectedItem as ComboBoxItem)?.Value?.ToString() ?? "";
 
         public void SetTaxRate(string value) => txttaxrate.Text = value;
+
+        public void LoadCountryPresetOptions(IReadOnlyList<ComboBoxItem> options, int selectedIndex)
+        {
+            cbocountrypreset.DataSource = options.ToList();
+            cbocountrypreset.DisplayMember = "Text";
+            cbocountrypreset.ValueMember = "Value";
+            if (cbocountrypreset.Items.Count > 0)
+            {
+                cbocountrypreset.SelectedIndex = selectedIndex;
+            }
+        }
+
+        public void SelectCurrency(string currencyCulture)
+        {
+            for (int i = 0; i < cbocurrency.Items.Count; i++)
+            {
+                if (cbocurrency.Items[i] is ComboBoxItem item &&
+                    string.Equals((string)item.Value, currencyCulture, StringComparison.OrdinalIgnoreCase))
+                {
+                    cbocurrency.SelectedIndex = i;
+                    return;
+                }
+            }
+        }
+
+        private void cbocountrypreset_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_loadingStore) return;
+            _storePresenter.OnCountryPresetChanged();
+        }
 
         public void LoadDocumentTypeOptions(IReadOnlyList<string> options, string selected)
         {

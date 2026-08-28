@@ -88,8 +88,10 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   del receptor solo por formato (`DocumentValidator`), no con módulo 11. La
   validación al emitir una factura deja de asumir RUT chileno y usa el esquema
   del preset. La moneda por defecto (cuando no hay ninguna configurada) pasa de
-  `es-EC` (Ecuador, ya fuera del proyecto) a `en-US`. Migraciones
-  `015_store_country_preset.sql` y `016_neutral_default_currency.sql`.
+  `es-EC` (Ecuador, ya fuera del proyecto) a `en-US`. En Gestión de tienda hay
+  un combo "País / preset": elegir uno concreto pre-llena la tasa de IVA y la
+  moneda (siguen editándose a mano). Migraciones `015_store_country_preset.sql`
+  y `016_neutral_default_currency.sql`.
 - **Ficha fiscal del cliente y vínculo venta - cliente.** La ficha de cliente
   suma razón social, giro / actividad, comuna / localidad, email y una marca
   "es empresa" (razón social y giro obligatorios si está marcada). La venta

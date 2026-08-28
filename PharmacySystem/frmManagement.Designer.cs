@@ -94,6 +94,8 @@
             this.chkTaxAffected = new System.Windows.Forms.CheckBox();
             this.cbodefaultdoctype = new System.Windows.Forms.ComboBox();
             this.lbldefaultdoctype = new System.Windows.Forms.Label();
+            this.cbocountrypreset = new System.Windows.Forms.ComboBox();
+            this.lblcountrypreset = new System.Windows.Forms.Label();
             this.lblfiscal = new System.Windows.Forms.Label();
             this.label15 = new System.Windows.Forms.Label();
             this.tabManagement.SuspendLayout();
@@ -727,6 +729,8 @@
             this.tabStore.Controls.Add(this.txttaxid);
             this.tabStore.Controls.Add(this.label20);
             this.tabStore.Controls.Add(this.cbocurrency);
+            this.tabStore.Controls.Add(this.cbocountrypreset);
+            this.tabStore.Controls.Add(this.lblcountrypreset);
             this.tabStore.Controls.Add(this.label24);
             this.tabStore.Controls.Add(this.txttaxrate);
             this.tabStore.Controls.Add(this.lblfiscal);
@@ -798,12 +802,35 @@
             this.lblfiscal.TabIndex = 67;
             this.lblfiscal.Text = "Facturación";
             //
+            // lblcountrypreset
+            //
+            this.lblcountrypreset.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.lblcountrypreset.AutoSize = true;
+            this.lblcountrypreset.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.lblcountrypreset.Location = new System.Drawing.Point(800, 91);
+            this.lblcountrypreset.Name = "lblcountrypreset";
+            this.lblcountrypreset.Size = new System.Drawing.Size(80, 15);
+            this.lblcountrypreset.TabIndex = 68;
+            this.lblcountrypreset.Text = "País / preset:";
+            //
+            // cbocountrypreset
+            //
+            this.cbocountrypreset.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.cbocountrypreset.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbocountrypreset.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.cbocountrypreset.FormattingEnabled = true;
+            this.cbocountrypreset.Location = new System.Drawing.Point(803, 121);
+            this.cbocountrypreset.Name = "cbocountrypreset";
+            this.cbocountrypreset.Size = new System.Drawing.Size(200, 23);
+            this.cbocountrypreset.TabIndex = 69;
+            this.cbocountrypreset.SelectedIndexChanged += new System.EventHandler(this.cbocountrypreset_SelectedIndexChanged);
+            //
             // lbltaxrate
             //
             this.lbltaxrate.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.lbltaxrate.AutoSize = true;
             this.lbltaxrate.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.lbltaxrate.Location = new System.Drawing.Point(800, 91);
+            this.lbltaxrate.Location = new System.Drawing.Point(800, 157);
             this.lbltaxrate.Name = "lbltaxrate";
             this.lbltaxrate.Size = new System.Drawing.Size(80, 15);
             this.lbltaxrate.TabIndex = 63;
@@ -813,7 +840,7 @@
             //
             this.txttaxrate.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.txttaxrate.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.txttaxrate.Location = new System.Drawing.Point(803, 121);
+            this.txttaxrate.Location = new System.Drawing.Point(803, 187);
             this.txttaxrate.Name = "txttaxrate";
             this.txttaxrate.Size = new System.Drawing.Size(120, 21);
             this.txttaxrate.TabIndex = 64;
@@ -823,7 +850,7 @@
             this.lbldefaultdoctype.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.lbldefaultdoctype.AutoSize = true;
             this.lbldefaultdoctype.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.lbldefaultdoctype.Location = new System.Drawing.Point(800, 155);
+            this.lbldefaultdoctype.Location = new System.Drawing.Point(800, 221);
             this.lbldefaultdoctype.Name = "lbldefaultdoctype";
             this.lbldefaultdoctype.Size = new System.Drawing.Size(140, 15);
             this.lbldefaultdoctype.TabIndex = 65;
@@ -835,7 +862,7 @@
             this.cbodefaultdoctype.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbodefaultdoctype.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
             this.cbodefaultdoctype.FormattingEnabled = true;
-            this.cbodefaultdoctype.Location = new System.Drawing.Point(803, 185);
+            this.cbodefaultdoctype.Location = new System.Drawing.Point(803, 251);
             this.cbodefaultdoctype.Name = "cbodefaultdoctype";
             this.cbodefaultdoctype.Size = new System.Drawing.Size(200, 23);
             this.cbodefaultdoctype.TabIndex = 66;
@@ -1043,6 +1070,8 @@
         private System.Windows.Forms.CheckBox chkTaxAffected;
         private System.Windows.Forms.ComboBox cbodefaultdoctype;
         private System.Windows.Forms.Label lbldefaultdoctype;
+        private System.Windows.Forms.ComboBox cbocountrypreset;
+        private System.Windows.Forms.Label lblcountrypreset;
         private System.Windows.Forms.Label lblfiscal;
         private System.Windows.Forms.Button btnSaveStore;
         private System.Windows.Forms.DataGridView dgdatacategory;

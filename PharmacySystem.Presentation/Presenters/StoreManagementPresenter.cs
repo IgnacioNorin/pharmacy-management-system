@@ -40,7 +40,27 @@ namespace PharmacySystem.Presentation
                 .FindIndex(c => string.Equals((string)c.Value, store.currencyCulture, StringComparison.OrdinalIgnoreCase));
             _view.LoadCurrencyOptions(options, currencyIndex >= 0 ? currencyIndex : 0);
 
+            var presetOptions = CountryPresets.All
+                .Select(p => new ComboBoxItem { Value = p.Code, Text = p.DisplayName })
+                .ToList();
+            int presetIndex = presetOptions.FindIndex(o =>
+                string.Equals((string)o.Value, store.countryCode ?? "", StringComparison.OrdinalIgnoreCase));
+            _view.LoadCountryPresetOptions(presetOptions, presetIndex >= 0 ? presetIndex : 0);
+
             _view.SetCurrencyEditable(!_service.HasOperationalData());
+        }
+
+        // A concrete preset (not "Genérico") pre-fills the VAT rate and currency; the admin can
+        // still change them before saving. Picking "Genérico" leaves the fields as they are.
+        public void OnCountryPresetChanged()
+        {
+            CountryPreset preset = CountryPresets.ForCode(_view.SelectedCountryCode);
+            if (preset.IsGeneric)
+            {
+                return;
+            }
+            _view.SetTaxRate(preset.DefaultTaxRate.ToString("0.##", CultureInfo.InvariantCulture));
+            _view.SelectCurrency(preset.CurrencyCulture);
         }
 
         public void OnSave()
@@ -75,6 +95,7 @@ namespace PharmacySystem.Presentation
                 phone = _view.Phone,
                 address = _view.Address,
                 currencyCulture = selectedCurrency,
+                countryCode = string.IsNullOrWhiteSpace(_view.SelectedCountryCode) ? null : _view.SelectedCountryCode.Trim(),
                 defaultTaxRate = taxRate,
                 defaultDocumentType = _view.DefaultDocumentType
             });

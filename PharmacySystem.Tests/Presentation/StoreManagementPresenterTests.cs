@@ -1,3 +1,4 @@
+using System.Linq;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using Xunit;
@@ -100,6 +101,73 @@ namespace PharmacySystem.Tests.Presentation
 
             Assert.Equal(new[] { "No se pudo guardar los datos ingresados\nRevise los datos" }, view.ErrorMessages);
             Assert.Empty(view.InfoMessages);
+        }
+
+        [Fact]
+        public void OnLoad_LoadsCountryPresetOptionsAndSelectsTheStoredCode()
+        {
+            var view = new FakeStoreManagementView();
+            var service = new FakeStoreService { ListStoreResult = new Store { countryCode = "CL" } };
+
+            CreatePresenter(view, service).OnLoad();
+
+            Assert.Equal(new[] { "", "CL" }, view.LoadedCountryPresetOptions.Select(o => (string)o.Value).ToArray());
+            Assert.Equal(1, view.LoadedCountryPresetSelectedIndex); // "CL"
+        }
+
+        [Fact]
+        public void OnLoad_NoCountryCode_SelectsTheGenericPreset()
+        {
+            var view = new FakeStoreManagementView();
+            var service = new FakeStoreService { ListStoreResult = new Store { countryCode = null } };
+
+            CreatePresenter(view, service).OnLoad();
+
+            Assert.Equal(0, view.LoadedCountryPresetSelectedIndex); // "" (Genérico)
+        }
+
+        [Fact]
+        public void OnCountryPresetChanged_ConcretePreset_PreFillsTaxRateAndCurrency()
+        {
+            var view = new FakeStoreManagementView { SelectedCountryCode = "CL" };
+
+            CreatePresenter(view, new FakeStoreService()).OnCountryPresetChanged();
+
+            Assert.Equal("19", view.SetTaxRateValue);
+            Assert.Equal("es-CL", view.SelectedCurrencyValue);
+        }
+
+        [Fact]
+        public void OnCountryPresetChanged_GenericPreset_LeavesTheFieldsAlone()
+        {
+            var view = new FakeStoreManagementView { SelectedCountryCode = "" };
+
+            CreatePresenter(view, new FakeStoreService()).OnCountryPresetChanged();
+
+            Assert.Null(view.SetTaxRateValue);
+            Assert.Null(view.SelectedCurrencyValue);
+        }
+
+        [Fact]
+        public void OnSave_PersistsTheSelectedCountryCode_NullForGeneric()
+        {
+            var chileView = new FakeStoreManagementView
+            {
+                Document = "1", CompanyName = "C", Email = "e@e.co", Phone = "9", Address = "A",
+                SelectedCurrency = "es-CL", SelectedCountryCode = "CL"
+            };
+            var service = new FakeStoreService { UpdateStoreResult = true };
+            CreatePresenter(chileView, service).OnSave();
+            Assert.Equal("CL", service.UpdatedWith.countryCode);
+
+            var genericView = new FakeStoreManagementView
+            {
+                Document = "1", CompanyName = "C", Email = "e@e.co", Phone = "9", Address = "A",
+                SelectedCurrency = "en-US", SelectedCountryCode = ""
+            };
+            var service2 = new FakeStoreService { UpdateStoreResult = true };
+            CreatePresenter(genericView, service2).OnSave();
+            Assert.Null(service2.UpdatedWith.countryCode);
         }
 
         [Fact]
