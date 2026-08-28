@@ -148,8 +148,10 @@ namespace PharmacySystem
             dgdataproduct.Columns.Add("Categoria", "Categoria");
             dgdataproduct.Columns.Add("Stock", "Stock");
             dgdataproduct.Columns.Add("FechaVencimiento", "FechaVencimiento");
+            dgdataproduct.Columns.Add("TaxAffected", "TaxAffected");
 
             dgdataproduct.Columns["Id"].Visible = false;
+            dgdataproduct.Columns["TaxAffected"].Visible = false;
 
             foreach (DataGridViewColumn cl in dgdataproduct.Columns)
             {
@@ -314,6 +316,7 @@ namespace PharmacySystem
         string IProductManagementView.Description => txtdescriptionproduct.Text;
         public int SelectedCategoryId => (int)((ComboBoxItem)cbocategory.SelectedItem).Value;
         public string SelectedCategoryText => ((ComboBoxItem)cbocategory.SelectedItem).Text;
+        public bool TaxAffected => chkTaxAffected.Checked;
 
         List<string> IProductManagementView.Validate() => ValidateForm();
 
@@ -371,6 +374,7 @@ namespace PharmacySystem
             gridRow.Cells["Nombre"].Value = row.Name;
             gridRow.Cells["Descripcion"].Value = row.Description;
             gridRow.Cells["Categoria"].Value = row.CategoryText;
+            gridRow.Cells["TaxAffected"].Value = row.TaxAffected.ToString();
 
             // On a new row the original always sets Stock ("0") and leaves FechaVencimiento
             // untouched (defaults to blank). On an update it rewrites neither cell.
@@ -392,6 +396,7 @@ namespace PharmacySystem
             txtcodeproduct.Text = "";
             txtnameproduct.Text = "";
             txtdescriptionproduct.Text = "";
+            chkTaxAffected.Checked = true;
             if (cbocategory.SelectedValue != null)
             {
                 cbocategory.SelectedIndex = 0;
@@ -441,6 +446,8 @@ namespace PharmacySystem
                     txtcodeproduct.Text = dgdataproduct.Rows[index].Cells["Codigo"].Value.ToString();
                     txtnameproduct.Text = dgdataproduct.Rows[index].Cells["Nombre"].Value.ToString();
                     txtdescriptionproduct.Text = dgdataproduct.Rows[index].Cells["Descripcion"].Value.ToString();
+                    chkTaxAffected.Checked =
+                        !string.Equals(dgdataproduct.Rows[index].Cells["TaxAffected"].Value?.ToString(), "False", StringComparison.OrdinalIgnoreCase);
                     foreach (ComboBoxItem item in cbocategory.Items)
                     {
                         if (item.Text == dgdataproduct.Rows[index].Cells["Categoria"].Value.ToString())
@@ -523,6 +530,9 @@ namespace PharmacySystem
         public string Phone => txtphone.Text;
         public string Address => txtaddress.Text;
         public string SelectedCurrency => ((ComboBoxItem)cbocurrency.SelectedItem).Value.ToString();
+        public string TaxRate => txttaxrate.Text;
+
+        public void SetTaxRate(string value) => txttaxrate.Text = value;
 
         List<string> IStoreManagementView.Validate() => ValidateForm();
 

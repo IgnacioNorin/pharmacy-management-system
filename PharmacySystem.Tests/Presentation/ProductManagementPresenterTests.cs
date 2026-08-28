@@ -137,7 +137,24 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Single(view.AddedRows);
             Assert.Equal(7, view.AddedRows[0].Id);
             Assert.Equal("0", view.AddedRows[0].Stock);
+            Assert.True(view.AddedRows[0].TaxAffected); // default from the view
             Assert.True(view.ClearFormCalled);
+        }
+
+        [Fact]
+        public void OnSave_NewExemptProduct_CarriesTheFlagToTheRow()
+        {
+            var view = new FakeProductManagementView
+            {
+                ProductId = 0, Code = "EX1", Name = "Libro", Description = "Exento",
+                SelectedCategoryId = 1, SelectedCategoryText = "Varios",
+                TaxAffected = false
+            };
+            var productService = new FakeProductService { RegisterResult = 8 };
+
+            CreatePresenter(view, productService, new FakeCategoryService()).OnSave();
+
+            Assert.False(view.AddedRows[0].TaxAffected);
         }
 
         [Fact]

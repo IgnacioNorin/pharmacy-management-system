@@ -13,9 +13,13 @@ namespace PharmacySystem.Tests.Presentation
         public string Phone { get; set; }
         public string Address { get; set; }
         public string SelectedCurrency { get; set; }
+        public string TaxRate { get; set; } = "19";
         public List<string> ValidationErrors { get; set; } = new List<string>();
 
         List<string> IStoreManagementView.Validate() => ValidationErrors;
+
+        public string SetTaxRateValue { get; private set; }
+        public void SetTaxRate(string value) => SetTaxRateValue = value;
 
         public string LoadedDocument { get; private set; }
         public string LoadedCompanyName { get; private set; }

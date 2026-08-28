@@ -101,5 +101,43 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Equal(new[] { "No se pudo guardar los datos ingresados\nRevise los datos" }, view.ErrorMessages);
             Assert.Empty(view.InfoMessages);
         }
+
+        [Fact]
+        public void OnLoad_SetsTaxRateFromStore()
+        {
+            var view = new FakeStoreManagementView();
+            var service = new FakeStoreService { ListStoreResult = new Store { defaultTaxRate = 21m } };
+
+            CreatePresenter(view, service).OnLoad();
+
+            Assert.Equal("21", view.SetTaxRateValue);
+        }
+
+        [Fact]
+        public void OnSave_ValidTaxRate_PersistsIt()
+        {
+            var view = new FakeStoreManagementView { SelectedCurrency = "es-EC", TaxRate = "16" };
+            var service = new FakeStoreService { UpdateStoreResult = true };
+
+            CreatePresenter(view, service).OnSave();
+
+            Assert.Equal(16m, service.UpdatedWith.defaultTaxRate);
+            Assert.Contains(view.InfoMessages, m => m.Contains("actualizaron"));
+        }
+
+        [Fact]
+        public void OnSave_InvalidOrOutOfRangeTaxRate_ShowsErrorAndDoesNotSave()
+        {
+            foreach (string bad in new[] { "abc", "-1", "150" })
+            {
+                var view = new FakeStoreManagementView { SelectedCurrency = "es-EC", TaxRate = bad };
+                var service = new FakeStoreService();
+
+                CreatePresenter(view, service).OnSave();
+
+                Assert.Contains(view.ErrorMessages, m => m.Contains("tasa de IVA"));
+                Assert.Null(service.UpdatedWith);
+            }
+        }
     }
 }

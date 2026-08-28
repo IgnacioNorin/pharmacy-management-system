@@ -15,6 +15,7 @@ namespace PharmacySystem.Tests.Presentation
         public string Description { get; set; }
         public int SelectedCategoryId { get; set; }
         public string SelectedCategoryText { get; set; }
+        public bool TaxAffected { get; set; } = true;
         public List<string> ValidationErrors { get; set; } = new List<string>();
         public bool ConfirmDeleteResult { get; set; } = true;
 

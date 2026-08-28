@@ -89,6 +89,9 @@
             this.label20 = new System.Windows.Forms.Label();
             this.cbocurrency = new System.Windows.Forms.ComboBox();
             this.label24 = new System.Windows.Forms.Label();
+            this.txttaxrate = new System.Windows.Forms.TextBox();
+            this.lbltaxrate = new System.Windows.Forms.Label();
+            this.chkTaxAffected = new System.Windows.Forms.CheckBox();
             this.label15 = new System.Windows.Forms.Label();
             this.tabManagement.SuspendLayout();
             this.tabProduct.SuspendLayout();
@@ -130,6 +133,7 @@
             this.tabProduct.Controls.Add(this.btnclear);
             this.tabProduct.Controls.Add(this.btnsearch);
             this.tabProduct.Controls.Add(this.cbocategory);
+            this.tabProduct.Controls.Add(this.chkTaxAffected);
             this.tabProduct.Controls.Add(this.label9);
             this.tabProduct.Controls.Add(this.label10);
             this.tabProduct.Controls.Add(this.btnDeleteProduct);
@@ -287,6 +291,19 @@
             this.cbocategory.Name = "cbocategory";
             this.cbocategory.Size = new System.Drawing.Size(243, 23);
             this.cbocategory.TabIndex = 41;
+            //
+            // chkTaxAffected
+            //
+            this.chkTaxAffected.AutoSize = true;
+            this.chkTaxAffected.Checked = true;
+            this.chkTaxAffected.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkTaxAffected.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.chkTaxAffected.Location = new System.Drawing.Point(35, 298);
+            this.chkTaxAffected.Name = "chkTaxAffected";
+            this.chkTaxAffected.Size = new System.Drawing.Size(100, 19);
+            this.chkTaxAffected.TabIndex = 42;
+            this.chkTaxAffected.Text = "Afecto a IVA";
+            this.chkTaxAffected.UseVisualStyleBackColor = true;
             // 
             // label9
             // 
@@ -708,6 +725,8 @@
             this.tabStore.Controls.Add(this.label20);
             this.tabStore.Controls.Add(this.cbocurrency);
             this.tabStore.Controls.Add(this.label24);
+            this.tabStore.Controls.Add(this.txttaxrate);
+            this.tabStore.Controls.Add(this.lbltaxrate);
             this.tabStore.Controls.Add(this.label15);
             this.tabStore.Location = new System.Drawing.Point(4, 25);
             this.tabStore.Name = "tabStore";
@@ -761,6 +780,26 @@
             this.cbocurrency.Name = "cbocurrency";
             this.cbocurrency.Size = new System.Drawing.Size(247, 23);
             this.cbocurrency.TabIndex = 62;
+            //
+            // lbltaxrate
+            //
+            this.lbltaxrate.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.lbltaxrate.AutoSize = true;
+            this.lbltaxrate.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.lbltaxrate.Location = new System.Drawing.Point(510, 448);
+            this.lbltaxrate.Name = "lbltaxrate";
+            this.lbltaxrate.Size = new System.Drawing.Size(80, 15);
+            this.lbltaxrate.TabIndex = 63;
+            this.lbltaxrate.Text = "Tasa IVA (%)";
+            //
+            // txttaxrate
+            //
+            this.txttaxrate.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.txttaxrate.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.txttaxrate.Location = new System.Drawing.Point(513, 466);
+            this.txttaxrate.Name = "txttaxrate";
+            this.txttaxrate.Size = new System.Drawing.Size(80, 21);
+            this.txttaxrate.TabIndex = 64;
             //
             // btnSaveStore
             //
@@ -960,6 +999,9 @@
         private System.Windows.Forms.Label label22;
         private System.Windows.Forms.Label label24;
         private System.Windows.Forms.ComboBox cbocurrency;
+        private System.Windows.Forms.TextBox txttaxrate;
+        private System.Windows.Forms.Label lbltaxrate;
+        private System.Windows.Forms.CheckBox chkTaxAffected;
         private System.Windows.Forms.Button btnSaveStore;
         private System.Windows.Forms.DataGridView dgdatacategory;
         private System.Windows.Forms.TextBox txtindexcategory;

@@ -53,7 +53,8 @@ namespace PharmacySystem.Tests.Integration
                     email = "updated@test.local",
                     phone = "1111111111",
                     address = "Updated address",
-                    currencyCulture = "es-CL"
+                    currencyCulture = "es-CL",
+                    defaultTaxRate = 21m
                 });
 
                 Assert.True(result);
@@ -62,6 +63,7 @@ namespace PharmacySystem.Tests.Integration
                 Assert.Equal("Updated store", stored.companyName);
                 Assert.Equal("1111111111", stored.document);
                 Assert.Equal("es-CL", stored.currencyCulture);
+                Assert.Equal(21m, stored.defaultTaxRate);
             }
             finally
             {

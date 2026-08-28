@@ -84,12 +84,14 @@ namespace PharmacySystem.Data
                         email = obj.email,
                         phone = obj.phone,
                         address = obj.address,
-                        currencyCulture = obj.currencyCulture
+                        currencyCulture = obj.currencyCulture,
+                        defaultTaxRate = obj.defaultTaxRate
                     };
 
                     int affected = oConnection.Execute(
                         "UPDATE store SET document_store = @document, company_name = @companyName, email = @email, " +
-                        "phone = @phone, address = @address, currency_culture = @currencyCulture WHERE id = 1",
+                        "phone = @phone, address = @address, currency_culture = @currencyCulture, " +
+                        "default_tax_rate = @defaultTaxRate WHERE id = 1",
                         parameters);
 
                     // Fresh database: the singleton row may not have been seeded yet. Insert it so
@@ -97,8 +99,8 @@ namespace PharmacySystem.Data
                     if (affected == 0)
                     {
                         oConnection.Execute(
-                            "INSERT INTO store(id, document_store, company_name, email, phone, address, currency_culture) " +
-                            "VALUES (1, @document, @companyName, @email, @phone, @address, @currencyCulture)",
+                            "INSERT INTO store(id, document_store, company_name, email, phone, address, currency_culture, default_tax_rate) " +
+                            "VALUES (1, @document, @companyName, @email, @phone, @address, @currencyCulture, @defaultTaxRate)",
                             parameters);
                     }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using PharmacySystem.Business;
 using PharmacySystem.Helpers;
@@ -31,6 +32,7 @@ namespace PharmacySystem.Presentation
         {
             Store store = _service.ListStore();
             _view.LoadStoreFields(store.document, store.companyName, store.email, store.phone, store.address);
+            _view.SetTaxRate(store.defaultTaxRate.ToString("0.##", CultureInfo.InvariantCulture));
 
             var options = CultureInfoHelper.SupportedCurrencies;
             int currencyIndex = options.ToList()
@@ -55,6 +57,13 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
+            if (!decimal.TryParse((_view.TaxRate ?? "").Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out decimal taxRate)
+                || taxRate < 0m || taxRate > 100m)
+            {
+                _view.ShowError("La tasa de IVA debe ser un número entre 0 y 100.");
+                return;
+            }
+
             string selectedCurrency = _view.SelectedCurrency;
 
             bool isSuccess = _service.UpdateStore(new Store
@@ -64,7 +73,8 @@ namespace PharmacySystem.Presentation
                 email = _view.Email,
                 phone = _view.Phone,
                 address = _view.Address,
-                currencyCulture = selectedCurrency
+                currencyCulture = selectedCurrency,
+                defaultTaxRate = taxRate
             });
 
             if (isSuccess)

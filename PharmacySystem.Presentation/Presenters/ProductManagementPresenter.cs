@@ -53,6 +53,7 @@ namespace PharmacySystem.Presentation
                 code = _view.Code?.Trim(),
                 name = _view.Name?.Trim(),
                 description = _view.Description?.Trim(),
+                taxAffected = _view.TaxAffected,
                 oCategory = new Categories { IdCategory = _view.SelectedCategoryId }
             };
 
@@ -71,6 +72,7 @@ namespace PharmacySystem.Presentation
                     Name = product.name,
                     Description = product.description,
                     CategoryText = _view.SelectedCategoryText,
+                    TaxAffected = product.taxAffected,
                     Stock = "0"
                 });
             }
@@ -88,6 +90,7 @@ namespace PharmacySystem.Presentation
                     Name = product.name,
                     Description = product.description,
                     CategoryText = _view.SelectedCategoryText,
+                    TaxAffected = product.taxAffected,
                     // Stock/expiration aren't touched on update, same as the original, which
                     // never rewrote those two grid cells in the else branch.
                     Stock = null,
@@ -140,6 +143,7 @@ namespace PharmacySystem.Presentation
                 Name = p.name,
                 Description = p.description,
                 CategoryText = p.oCategory.description,
+                TaxAffected = p.taxAffected,
                 Stock = p.stock.ToString(),
                 ExpirationDateText = shortDate == epoch ? "" : shortDate
             };

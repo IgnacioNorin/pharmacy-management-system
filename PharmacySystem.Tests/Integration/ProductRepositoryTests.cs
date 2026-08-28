@@ -112,11 +112,15 @@ namespace PharmacySystem.Tests.Integration
                     code = newCode,
                     name = "Updated name",
                     description = "Updated description",
+                    taxAffected = false,
                     oCategory = new Categories { IdCategory = categoryId }
                 });
 
                 Assert.True(result);
-                Assert.Contains(Repository.List(), p => p.idProduct == productId && p.code == newCode && p.name == "Updated name");
+                Product updated = Repository.List().Single(p => p.idProduct == productId);
+                Assert.Equal(newCode, updated.code);
+                Assert.Equal("Updated name", updated.name);
+                Assert.False(updated.taxAffected); // exempt flag round-trips
             }
             finally
             {
