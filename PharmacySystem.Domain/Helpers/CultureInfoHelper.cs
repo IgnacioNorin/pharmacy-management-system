@@ -12,13 +12,14 @@ namespace PharmacySystem.Helpers
 {
     public  static class CultureInfoHelper
     {
-        private const string DefaultCurrencyCulture = "es-EC";
+        // Neutral fallback used only when no store currency is configured. A country preset
+        // (CountryPresets) is what normally sets the store's currency_culture.
+        private const string DefaultCurrencyCulture = "en-US";
 
         // Curated on purpose: an admin can only pick a culture .NET actually formats currency
         // with correctly, instead of typing an arbitrary/invalid culture name into a setting.
         public static readonly IReadOnlyList<ComboBoxItem> SupportedCurrencies = new List<ComboBoxItem>
         {
-            new ComboBoxItem { Value = "es-EC", Text = "Dólar estadounidense - Ecuador (USD)" },
             new ComboBoxItem { Value = "en-US", Text = "Dólar estadounidense (USD)" },
             new ComboBoxItem { Value = "es-CL", Text = "Peso chileno (CLP)" },
             new ComboBoxItem { Value = "es-MX", Text = "Peso mexicano (MXN)" },

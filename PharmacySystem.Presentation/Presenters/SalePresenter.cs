@@ -205,6 +205,8 @@ namespace PharmacySystem.Presentation
         public void OnFinishSale()
         {
             bool isFactura = IsFactura();
+            Store store = _storeService.ListStore();
+            CountryPreset preset = CountryPresets.ForCode(store?.countryCode);
 
             if (!isFactura && (_view.DocumentClient.Trim() == "" || _view.NameClient.Trim() == ""))
             {
@@ -214,16 +216,18 @@ namespace PharmacySystem.Presentation
 
             if (isFactura)
             {
-                string rut = (_view.RecipientTaxId ?? "").Trim();
-                if (rut == "" || (_view.RecipientBusinessName ?? "").Trim() == "" || (_view.RecipientActivity ?? "").Trim() == ""
+                string recipientDocument = (_view.RecipientTaxId ?? "").Trim();
+                if (recipientDocument == "" || (_view.RecipientBusinessName ?? "").Trim() == "" || (_view.RecipientActivity ?? "").Trim() == ""
                     || (_view.RecipientAddress ?? "").Trim() == "" || (_view.RecipientCommune ?? "").Trim() == "")
                 {
                     _view.ShowMessage("Complete los datos del receptor de la factura");
                     return;
                 }
-                if (!ChileanRutValidator.IsValid(rut))
+                if (!RecipientDocumentValidator.IsValid(recipientDocument, preset.RecipientDocumentScheme))
                 {
-                    _view.ShowMessage("El RUT del receptor no es válido");
+                    _view.ShowMessage(preset.RecipientDocumentScheme == CountryPresets.ChileanRutScheme
+                        ? "El RUT del receptor no es válido"
+                        : "El documento del receptor no es válido");
                     return;
                 }
             }
@@ -276,7 +280,7 @@ namespace PharmacySystem.Presentation
                 });
             }
 
-            decimal taxRate = _storeService.ListStore()?.defaultTaxRate ?? 19m;
+            decimal taxRate = store?.defaultTaxRate ?? 19m;
             TaxCalculator.Breakdown vat = TaxCalculator.Compute(
                 _cart.Select(l => (l.SubTotal, l.TaxAffected)), taxRate);
 

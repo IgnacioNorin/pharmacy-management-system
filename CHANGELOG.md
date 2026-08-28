@@ -84,10 +84,12 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   blanco = genérico) que agrupa los valores por defecto de un país: tasa de IVA,
   cultura de moneda y el esquema con que se valida el documento del receptor de
   una factura. Chile es el único preset concreto por ahora (IVA 19, `es-CL`,
-  RUT módulo 11); el genérico no hace supuestos nacionales (valida el documento
-  solo por formato). El catálogo vive en código (`CountryPresets`); el preset
-  pre-llena los campos en Gestión de tienda, no los bloquea. Migración
-  `015_store_country_preset.sql`.
+  RUT módulo 11); el genérico no hace supuestos nacionales: valida el documento
+  del receptor solo por formato (`DocumentValidator`), no con módulo 11. La
+  validación al emitir una factura deja de asumir RUT chileno y usa el esquema
+  del preset. La moneda por defecto (cuando no hay ninguna configurada) pasa de
+  `es-EC` (Ecuador, ya fuera del proyecto) a `en-US`. Migraciones
+  `015_store_country_preset.sql` y `016_neutral_default_currency.sql`.
 - **Ficha fiscal del cliente y vínculo venta - cliente.** La ficha de cliente
   suma razón social, giro / actividad, comuna / localidad, email y una marca
   "es empresa" (razón social y giro obligatorios si está marcada). La venta

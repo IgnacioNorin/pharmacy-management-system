@@ -24,7 +24,7 @@ namespace PharmacySystem.Data
                 {
                     Store row = oConnection.Query<Store>(
                         "SELECT document_store AS document, company_name AS companyName, email, phone, address, " +
-                        "currency_culture AS currencyCulture, default_tax_rate AS defaultTaxRate, " +
+                        "currency_culture AS currencyCulture, country_code AS countryCode, default_tax_rate AS defaultTaxRate, " +
                         "default_document_type AS defaultDocumentType " +
                         "FROM store WHERE id = 1")
                         .FirstOrDefault();
@@ -86,13 +86,14 @@ namespace PharmacySystem.Data
                         phone = obj.phone,
                         address = obj.address,
                         currencyCulture = obj.currencyCulture,
+                        countryCode = string.IsNullOrWhiteSpace(obj.countryCode) ? null : obj.countryCode.Trim(),
                         defaultTaxRate = obj.defaultTaxRate,
                         defaultDocumentType = obj.defaultDocumentType
                     };
 
                     int affected = oConnection.Execute(
                         "UPDATE store SET document_store = @document, company_name = @companyName, email = @email, " +
-                        "phone = @phone, address = @address, currency_culture = @currencyCulture, " +
+                        "phone = @phone, address = @address, currency_culture = @currencyCulture, country_code = @countryCode, " +
                         "default_tax_rate = @defaultTaxRate, default_document_type = @defaultDocumentType WHERE id = 1",
                         parameters);
 
@@ -101,8 +102,8 @@ namespace PharmacySystem.Data
                     if (affected == 0)
                     {
                         oConnection.Execute(
-                            "INSERT INTO store(id, document_store, company_name, email, phone, address, currency_culture, default_tax_rate, default_document_type) " +
-                            "VALUES (1, @document, @companyName, @email, @phone, @address, @currencyCulture, @defaultTaxRate, @defaultDocumentType)",
+                            "INSERT INTO store(id, document_store, company_name, email, phone, address, currency_culture, country_code, default_tax_rate, default_document_type) " +
+                            "VALUES (1, @document, @companyName, @email, @phone, @address, @currencyCulture, @countryCode, @defaultTaxRate, @defaultDocumentType)",
                             parameters);
                     }
 

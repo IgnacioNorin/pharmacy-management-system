@@ -36,7 +36,7 @@ namespace PharmacySystem.Tests.Integration
             SqlTestHelper.ExecuteNonQuery("DELETE FROM store WHERE id = 1");
             SqlTestHelper.ExecuteNonQuery(
                 "INSERT INTO store(id, document_store, company_name, email, phone, address, currency_culture) " +
-                "VALUES (1, '', 'Mi Farmacia', '', '', '', 'es-EC')");
+                "VALUES (1, '', 'Mi Farmacia', '', '', '', 'en-US')");
         }
 
         [Fact]
@@ -99,7 +99,7 @@ namespace PharmacySystem.Tests.Integration
             {
                 Store stored = Repository.ListStore();
 
-                Assert.Equal("es-EC", stored.currencyCulture);
+                Assert.Equal("en-US", stored.currencyCulture);
             }
             finally
             {

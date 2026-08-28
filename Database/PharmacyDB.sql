@@ -366,7 +366,7 @@ ALTER TABLE [dbo].[supplier] ADD CONSTRAINT [DF__PROVEEDOR__Estad__4F7CD00D] DEF
 GO
 ALTER TABLE [dbo].[supplier] ADD CONSTRAINT [DF__PROVEEDOR__Fecha__5070F446] DEFAULT (getdate()) FOR [date_created]
 GO
-ALTER TABLE [dbo].[store] ADD CONSTRAINT [DF__STORE__CurrencyC] DEFAULT ('es-EC') FOR [currency_culture]
+ALTER TABLE [dbo].[store] ADD CONSTRAINT [DF_store_currency_culture] DEFAULT ('en-US') FOR [currency_culture]
 GO
 
 -- FOREIGN KEYS
@@ -571,7 +571,7 @@ GO
 IF NOT EXISTS (SELECT 1 FROM [dbo].[store] WHERE id = 1)
 BEGIN
     INSERT INTO [dbo].[store] (id, document_store, company_name, email, phone, address, currency_culture, default_tax_rate, default_document_type)
-    VALUES (1, '', 'Mi Farmacia', '', '', '', 'es-EC', 19, 'Boleta')
+    VALUES (1, '', 'Mi Farmacia', '', '', '', 'en-US', 19, 'Boleta')
 END
 GO
 IF NOT EXISTS (SELECT 1 FROM [dbo].[notification_settings] WHERE id = 1)

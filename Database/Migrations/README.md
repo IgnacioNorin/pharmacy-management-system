@@ -33,6 +33,7 @@
 | `013_person_update_fiscal_profile.sql` | 1.2.0 | 1.2.0 (`sp_update_person` escribe también los campos fiscales del cliente) |
 | `014_sp_delete_person_client_ref.sql` | 1.2.0 | 1.2.0 (`sp_delete_person` cuenta `sale.client_id` como referencia: da de baja lógica en vez de fallar) |
 | `015_store_country_preset.sql` | 1.2.0 | 1.2.0 (`store.country_code`: preset de país; backfill a `CL` si la fila tiene la huella chilena) |
+| `016_neutral_default_currency.sql` | 1.2.0 | 1.2.0 (default de `store.currency_culture`: `es-EC` → `en-US`) |
 
 ## Si un paso falla por datos preexistentes
 

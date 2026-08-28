@@ -7,9 +7,12 @@ namespace PharmacySystem.Tests.Presentation
 {
     public class SalePresenterTests
     {
-        private static SalePresenter CreatePresenter(FakeSaleView view, FakeSaleService saleService, FakeProductService productService, int idPerson = 1, decimal taxRate = 19m)
+        // countryCode defaults to "CL" so the existing Factura tests (which use Chilean RUT
+        // vectors) keep the modulo-11 validation; pass "" for the generic preset.
+        private static SalePresenter CreatePresenter(FakeSaleView view, FakeSaleService saleService, FakeProductService productService,
+            int idPerson = 1, decimal taxRate = 19m, string countryCode = "CL")
             => new SalePresenter(view, saleService, productService,
-                new FakeStoreService { ListStoreResult = new Store { defaultTaxRate = taxRate } }, idPerson);
+                new FakeStoreService { ListStoreResult = new Store { defaultTaxRate = taxRate, countryCode = countryCode } }, idPerson);
 
         // The cart lives inside the Presenter now, not the View, so tests that need an existing
         // cart line build it through the real OnAddProduct() path instead of pre-seeding view state.
@@ -283,6 +286,34 @@ namespace PharmacySystem.Tests.Presentation
             presenter.OnFinishSale();
 
             Assert.Null(saleService.RegisteredWith.clientId);
+        }
+
+        [Fact]
+        public void OnFinishSale_Factura_GenericPreset_AcceptsANonRutRecipientDocument()
+        {
+            var view = FacturaView();
+            view.RecipientTaxId = "AB-1234.5"; // not a Chilean RUT, but a valid generic document
+            var saleService = new FakeSaleService { RegisterResult = 1 };
+            var presenter = CreatePresenter(view, saleService, new FakeProductService { VerifyResult = true }, countryCode: "");
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnFinishSale();
+
+            Assert.NotNull(saleService.RegisteredWith);
+            Assert.DoesNotContain(view.ShownMessages, m => m.Contains("no es válido"));
+        }
+
+        [Fact]
+        public void OnFinishSale_Factura_GenericPreset_RejectsAMalformedRecipientDocument()
+        {
+            var view = FacturaView();
+            view.RecipientTaxId = "@@"; // too short and invalid characters for the generic check
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService { VerifyResult = true }, countryCode: "");
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnFinishSale();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("documento del receptor no es válido"));
         }
 
         [Fact]

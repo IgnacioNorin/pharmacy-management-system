@@ -20,11 +20,11 @@ namespace PharmacySystem.Tests.Unit
         }
 
         [Fact]
-        public void CultureInfoConverterStringToDecimal_DollarPrefixedValue_ParsesEcuadorCommaDecimal()
+        public void CultureInfoConverterStringToDecimal_DollarPrefixedValue_ParsesUsingTheActiveCurrencyCulture()
         {
-            // "$1234,50" is what FormatAsCurrency actually produces for small amounts:
-            // "$" prefix, "," as the decimal separator (es-EC).
-            Assert.Equal(1234.50m, CultureInfoHelper.CultureInfoConverterStringToDecimal("$1234,50"));
+            // "$1,234.50" is what FormatAsCurrency produces under the default (en-US) culture:
+            // "$" prefix, "," grouping, "." decimal - and it must parse straight back.
+            Assert.Equal(1234.50m, CultureInfoHelper.CultureInfoConverterStringToDecimal("$1,234.50"));
         }
 
         [Fact]
@@ -66,7 +66,7 @@ namespace PharmacySystem.Tests.Unit
             CultureInfo original = Thread.CurrentThread.CurrentCulture;
             try
             {
-                foreach (string cultureName in new[] { "en-US", "es-EC", "fr-FR" })
+                foreach (string cultureName in new[] { "en-US", "es-CL", "fr-FR" })
                 {
                     Thread.CurrentThread.CurrentCulture = new CultureInfo(cultureName);
 
@@ -91,9 +91,9 @@ namespace PharmacySystem.Tests.Unit
         }
 
         [Fact]
-        public void CustomCultureInfo_ReturnsEcuadorCulture()
+        public void CustomCultureInfo_ReturnsTheDefaultCultureWhenNothingWasSet()
         {
-            Assert.Equal("es-EC", CultureInfoHelper.CustomCultureInfo().Name);
+            Assert.Equal("en-US", CultureInfoHelper.CustomCultureInfo().Name);
         }
 
         [Fact]
@@ -119,7 +119,7 @@ namespace PharmacySystem.Tests.Unit
             }
             finally
             {
-                CultureInfoHelper.SetCurrency("es-EC");
+                CultureInfoHelper.SetCurrency("en-US");
             }
         }
 
@@ -135,11 +135,11 @@ namespace PharmacySystem.Tests.Unit
                 CultureInfoHelper.SetCurrency("es-CL");
                 CultureInfoHelper.SetCurrency(cultureName);
 
-                Assert.Equal("es-EC", CultureInfoHelper.CustomCultureInfo().Name);
+                Assert.Equal("en-US", CultureInfoHelper.CustomCultureInfo().Name);
             }
             finally
             {
-                CultureInfoHelper.SetCurrency("es-EC");
+                CultureInfoHelper.SetCurrency("en-US");
             }
         }
 
@@ -160,7 +160,7 @@ namespace PharmacySystem.Tests.Unit
             }
             finally
             {
-                CultureInfoHelper.SetCurrency("es-EC");
+                CultureInfoHelper.SetCurrency("en-US");
             }
         }
     }
