@@ -80,6 +80,14 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   venta, `SaleService` le pasa el comprobante al emisor y guarda lo que resuelva.
   Conectar un proveedor DTE es escribir una implementación nueva de la interfaz y
   cambiar el registro en `CompositionRoot`. Migración `011_fiscal_document_hook.sql`.
+- **Ficha fiscal del cliente y vínculo venta - cliente.** La ficha de cliente
+  suma razón social, giro / actividad, comuna / localidad, email y una marca
+  "es empresa" (razón social y giro obligatorios si está marcada). La venta
+  queda vinculada al cliente elegido (`sale.client_id`, en blanco para
+  consumidor final), y al emitir una factura los datos del receptor se
+  precargan desde ese cliente. Migración `012_client_fiscal_profile.sql`
+  (`person.business_name` / `activity` / `commune` / `email` / `is_company`,
+  `sale.client_id`).
 
 ### Cambiado
 

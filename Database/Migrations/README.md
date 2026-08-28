@@ -29,6 +29,7 @@
 | `009_factura_recipient.sql` | 1.2.0 | 1.2.0 (datos fiscales del receptor en la factura: `sale.recipient_*`) |
 | `010_credit_note.sql` | 1.2.0 | 1.2.0 (nota de crédito: `sale.reference_id`, `seq_folio_nota_credito`, permiso `ventas.nota_credito`) |
 | `011_fiscal_document_hook.sql` | 1.2.0 | 1.2.0 (enganche de emisión fiscal: `sale.fiscal_status` / `fiscal_track_id` / `fiscal_barcode`) |
+| `012_client_fiscal_profile.sql` | 1.2.0 | 1.2.0 (ficha fiscal del cliente: `person.business_name` / `activity` / `commune` / `email` / `is_company`; vínculo `sale.client_id`) |
 
 ## Si un paso falla por datos preexistentes
 

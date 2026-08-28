@@ -145,6 +145,11 @@ CREATE TABLE [dbo].[person](
     [name] [varchar](50) NULL,
     [address] [varchar](50) NULL,
     [phone] [varchar](50) NULL,
+    [business_name] [varchar](120) NULL,
+    [activity] [varchar](80) NULL,
+    [commune] [varchar](60) NULL,
+    [email] [varchar](120) NULL,
+    [is_company] [bit] NOT NULL CONSTRAINT [DF_person_is_company] DEFAULT ((0)),
     [password] [varchar](255) NULL,
     [person_type_id] [int] NULL,
     [status] [bit] NULL,
@@ -261,6 +266,7 @@ CREATE TABLE [dbo].[sale](
     [recipient_activity] [varchar](80) NULL,
     [recipient_address] [varchar](120) NULL,
     [recipient_commune] [varchar](60) NULL,
+    [client_id] [int] NULL,
     [reference_id] [int] NULL,
     [reference_reason] [varchar](255) NULL,
     [fiscal_status] [varchar](20) NOT NULL CONSTRAINT [DF_sale_fiscal_status] DEFAULT ('interno'),
@@ -404,6 +410,10 @@ GO
 -- A Nota de Credito points at the sale it reverses.
 ALTER TABLE [dbo].[sale] WITH CHECK ADD CONSTRAINT [FK_sale_reference]
     FOREIGN KEY([reference_id]) REFERENCES [dbo].[sale] ([id])
+GO
+-- The client the sale was made to (NULL for a walk-in / consumidor final).
+ALTER TABLE [dbo].[sale] WITH CHECK ADD CONSTRAINT [FK_sale_client]
+    FOREIGN KEY([client_id]) REFERENCES [dbo].[person] ([id])
 GO
 ALTER TABLE [dbo].[sale_detail] WITH CHECK ADD CONSTRAINT [FK__DETALLE_V__IdPro__3A81B327]
     FOREIGN KEY([product_id]) REFERENCES [dbo].[product] ([id])

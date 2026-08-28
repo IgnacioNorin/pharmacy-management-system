@@ -27,6 +27,9 @@ namespace PharmacySystem.Model
         public string recipientActivity { get; set; }
         public string recipientAddress { get; set; }
         public string recipientCommune { get; set; }
+        // The client this sale was made to (a person of type Cliente). Null for a walk-in /
+        // consumidor final, and for every sale registered before the link existed.
+        public int? clientId { get; set; }
         // Set on a Nota de Credito: the id of the sale it reverses, plus the reason.
         public int? referenceId { get; set; }
         public string referenceReason { get; set; }
