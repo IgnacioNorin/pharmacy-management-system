@@ -33,6 +33,8 @@ namespace PharmacySystem
                 gridRow.Cells["Id"].Value = row.Id.ToString();
                 gridRow.Cells["NumeroDocumento"].Value = row.Document;
                 gridRow.Cells["NombreCompleto"].Value = row.Name;
+                gridRow.Cells["RazonSocial"].Value = row.BusinessName;
+                gridRow.Cells["EsEmpresa"].Value = row.IsCompany ? "Sí" : "No";
                 gridRow.Cells["Direccion"].Value = row.Address;
                 gridRow.Cells["Telefono"].Value = row.Phone;
             }
@@ -52,13 +54,17 @@ namespace PharmacySystem
             dgdata.Columns.Add("Id", "Id");
             dgdata.Columns.Add("NumeroDocumento", "Numero Documento");
             dgdata.Columns.Add("NombreCompleto", "Nombre Completo");
+            dgdata.Columns.Add("RazonSocial", "Razón Social");
+            dgdata.Columns.Add("EsEmpresa", "Empresa");
             dgdata.Columns.Add("Direccion", "Dirección");
             dgdata.Columns.Add("Telefono", "Telefono");
 
             dgdata.Columns["btnSeleccionar"].Width = 100;
             dgdata.Columns["NumeroDocumento"].Width = 150;
-            dgdata.Columns["NombreCompleto"].Width = 260;
-            dgdata.Columns["Direccion"].Width = 300;
+            dgdata.Columns["NombreCompleto"].Width = 220;
+            dgdata.Columns["RazonSocial"].Width = 200;
+            dgdata.Columns["EsEmpresa"].Width = 70;
+            dgdata.Columns["Direccion"].Width = 240;
             dgdata.Columns["Id"].Visible = false;
 
             foreach (DataGridViewColumn cl in dgdata.Columns)
@@ -136,12 +142,8 @@ namespace PharmacySystem
             {
                 foreach (DataGridViewRow row in dgdata.Rows)
                 {
-                    string valor = row.Cells[columnFilter].Value.ToString().Trim();
-
-                    if (row.Cells[columnFilter].Value.ToString().Trim().Contains(txtSearch.Text.Trim()))
-                        row.Visible = true;
-                    else
-                        row.Visible = false;
+                    string cellValue = (row.Cells[columnFilter].Value?.ToString() ?? "").Trim();
+                    row.Visible = cellValue.Contains(txtSearch.Text.Trim());
                 }
             }
         }
