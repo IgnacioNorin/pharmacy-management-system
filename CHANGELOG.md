@@ -91,13 +91,33 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 - **Reportes: los totales salen del área ordenable.** En Ventas y Compras, los
   totales dejan de ser una fila del grid (ordenar una columna ya no los
   desacomoda) y pasan a una franja de solo lectura debajo de la grilla. La
-  exportación a Excel los sigue incluyendo como fila "Total:".
+  exportación los sigue incluyendo como fila "Total:".
+- **Reportes: exportar ahora ofrece Excel, CSV y PDF.** Un solo botón
+  "Exportar" por pestaña; el formato se elige en el diálogo de guardado. El
+  Excel pasa a tener celdas tipadas de verdad (montos y cantidades como número
+  con formato, fechas como fecha), fila de totales en negrita, filtro
+  automático y encabezado fijo. El CSV usa el separador de la configuración
+  regional, UTF-8 con BOM y números planos (re-importables). El PDF sale en A4
+  horizontal con título, tabla y número de página. Si el archivo de destino
+  está abierto en otra aplicación, el mensaje lo dice.
+- **Reportes: el rango de fechas arranca en el mes actual.** Los selectores
+  "Desde" de Ventas, Compras e Historial de alertas empiezan en el primer día
+  del mes (antes arrancaban en hoy y una consulta recién abierta salía vacía).
+- **Reportes: nombre de archivo exportado** con formato `Reporte_yyyyMMdd_HHmmss`
+  (ordena cronológicamente en el explorador).
 - **Reportes: nombres de columna neutros.** En el informe de ventas, "CI
   Vendedor" / "CI Cliente" pasan a llamarse "Documento Vendedor" / "Documento
   Cliente".
 
 ### Interno
 
+- Reportes: exportadores `IReportExporter` (CSV / XLSX / PDF) en
+  `PharmacySystem.Presentation`, cada uno recorriendo la misma
+  `ReportDefinition`. Los 4 handlers de exportación de `frmReport` quedan en un
+  único método que elige el exportador por la extensión del archivo.
+  `PharmacySystem.Presentation` suma dos paquetes: `ClosedXML` (ya usado por el
+  proyecto WinForms) y `PDFsharp-MigraDoc-GDI` (100% administrado, sin binarios
+  nativos).
 - Reportes: los totales de ventas y las columnas de línea de compras se calculan
   a partir de las filas ya consultadas. Se eliminaron `SumAmountReceived` /
   `SumChangeAmount` (ventas) y `GetTotalPurchasePrice` / `GetTotalQuantity` /
