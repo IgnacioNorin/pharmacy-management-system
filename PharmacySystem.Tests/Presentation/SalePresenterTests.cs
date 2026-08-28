@@ -195,6 +195,96 @@ namespace PharmacySystem.Tests.Presentation
             Assert.False(view.FacturaFieldsVisible);
         }
 
+        private static ClientRow ClientRowSample() => new ClientRow
+        {
+            Id = 42,
+            Document = "12.345.678-5",
+            Name = "Contacto Ejemplo",
+            Address = "Calle 1",
+            BusinessName = "Ejemplo SpA",
+            Activity = "Comercio",
+            Commune = "Santiago",
+            IsCompany = true
+        };
+
+        [Fact]
+        public void OnClientSelected_SetsTheClientFieldsFromThePickedRow()
+        {
+            var view = new FakeSaleView { DocumentType = "Boleta" };
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+
+            presenter.OnClientSelected(ClientRowSample());
+
+            Assert.Equal(("12.345.678-5", "Contacto Ejemplo"), view.ClientSetTo);
+            Assert.Null(view.RecipientSetTo); // Boleta: recipient block untouched
+        }
+
+        [Fact]
+        public void OnClientSelected_Factura_PrefillsTheRecipientFromTheClientFiscalProfile()
+        {
+            var view = new FakeSaleView { DocumentType = "Factura" };
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+
+            presenter.OnClientSelected(ClientRowSample());
+
+            Assert.Equal(("12.345.678-5", "Ejemplo SpA", "Comercio", "Calle 1", "Santiago"), view.RecipientSetTo);
+        }
+
+        [Fact]
+        public void OnClientSelected_Factura_ClientWithoutBusinessName_UsesTheName()
+        {
+            var view = new FakeSaleView { DocumentType = "Factura" };
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+
+            var client = ClientRowSample();
+            client.BusinessName = "   ";
+            presenter.OnClientSelected(client);
+
+            Assert.Equal("Contacto Ejemplo", view.RecipientSetTo.Value.BusinessName);
+        }
+
+        [Fact]
+        public void OnDocumentTypeChanged_ToFactura_PrefillsFromTheAlreadySelectedClient()
+        {
+            var view = new FakeSaleView { DocumentType = "Boleta" };
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+
+            presenter.OnClientSelected(ClientRowSample());
+            Assert.Null(view.RecipientSetTo);
+
+            view.DocumentType = "Factura";
+            presenter.OnDocumentTypeChanged();
+
+            Assert.Equal("Ejemplo SpA", view.RecipientSetTo.Value.BusinessName);
+        }
+
+        [Fact]
+        public void OnFinishSale_WithASelectedClient_LinksTheSaleToThatClient()
+        {
+            var view = FacturaView();
+            var saleService = new FakeSaleService { RegisterResult = 1 };
+            var presenter = CreatePresenter(view, saleService, new FakeProductService { VerifyResult = true });
+            presenter.OnClientSelected(ClientRowSample());
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnFinishSale();
+
+            Assert.Equal(42, saleService.RegisteredWith.clientId);
+        }
+
+        [Fact]
+        public void OnFinishSale_WalkInWithNoSelectedClient_LeavesClientIdNull()
+        {
+            var view = FacturaView();
+            var saleService = new FakeSaleService { RegisterResult = 1 };
+            var presenter = CreatePresenter(view, saleService, new FakeProductService { VerifyResult = true });
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnFinishSale();
+
+            Assert.Null(saleService.RegisteredWith.clientId);
+        }
+
         [Fact]
         public void OnFinishSale_Factura_MissingRecipientData_ShowsMessage()
         {

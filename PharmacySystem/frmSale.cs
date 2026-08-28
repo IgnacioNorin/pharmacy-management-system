@@ -50,12 +50,9 @@ namespace PharmacySystem
         {
             using (var form = new ModalPerson())
             {
-                var result = form.ShowDialog();
-                if (result == DialogResult.OK)
+                if (form.ShowDialog() == DialogResult.OK)
                 {
-                    txtdocumentclient.Text = form.document;
-                    txtnameclient.Text = form.name;
-                    txtidclient.Text = form.idClient;
+                    _presenter.OnClientSelected(form.SelectedClient);
                 }
             }
         }
@@ -221,6 +218,21 @@ namespace PharmacySystem
         public string RecipientCommune => txtreccommune.Text;
 
         public void SetFacturaFieldsVisible(bool visible) => pnlFactura.Visible = visible;
+
+        public void SetClient(string document, string name)
+        {
+            txtdocumentclient.Text = document ?? "";
+            txtnameclient.Text = name ?? "";
+        }
+
+        public void SetRecipient(string taxId, string businessName, string activity, string address, string commune)
+        {
+            txtrectaxid.Text = taxId ?? "";
+            txtrecname.Text = businessName ?? "";
+            txtrecactivity.Text = activity ?? "";
+            txtrecaddress.Text = address ?? "";
+            txtreccommune.Text = commune ?? "";
+        }
 
         private void cbodocumenttype_SelectedIndexChanged(object sender, EventArgs e) => _presenter.OnDocumentTypeChanged();
 

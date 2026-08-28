@@ -36,6 +36,25 @@ namespace PharmacySystem.Tests.Presentation
         public bool? FacturaFieldsVisible { get; private set; }
         public void SetFacturaFieldsVisible(bool visible) => FacturaFieldsVisible = visible;
 
+        public (string Document, string Name)? ClientSetTo { get; private set; }
+        public void SetClient(string document, string name)
+        {
+            ClientSetTo = (document, name);
+            DocumentClient = document ?? "";
+            NameClient = name ?? "";
+        }
+
+        public (string TaxId, string BusinessName, string Activity, string Address, string Commune)? RecipientSetTo { get; private set; }
+        public void SetRecipient(string taxId, string businessName, string activity, string address, string commune)
+        {
+            RecipientSetTo = (taxId, businessName, activity, address, commune);
+            RecipientTaxId = taxId ?? "";
+            RecipientBusinessName = businessName ?? "";
+            RecipientActivity = activity ?? "";
+            RecipientAddress = address ?? "";
+            RecipientCommune = commune ?? "";
+        }
+
         // What the presenter rendered via AddCartLine/RemoveCartLineAt - the presenter owns cart
         // state now, this list is just what the View was told to display, for assertions.
         public List<SaleCartLine> RenderedCartLines { get; } = new List<SaleCartLine>();

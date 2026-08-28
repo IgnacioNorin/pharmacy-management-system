@@ -35,6 +35,8 @@ namespace PharmacySystem.Presentation
         private readonly IStoreService _storeService;
         private readonly int _idPerson;
         private readonly List<SaleCartLine> _cart = new List<SaleCartLine>();
+        // The client picked from ModalPerson, or null for a walk-in / consumidor final.
+        private ClientRow _selectedClient;
 
         public SalePresenter(ISaleView view, ISaleService saleService, IProductService productService, IStoreService storeService, int idPerson)
         {
@@ -163,7 +165,42 @@ namespace PharmacySystem.Presentation
         private bool IsFactura() =>
             string.Equals(_view.DocumentType, DocumentTypes.Factura, System.StringComparison.OrdinalIgnoreCase);
 
-        public void OnDocumentTypeChanged() => _view.SetFacturaFieldsVisible(IsFactura());
+        public void OnDocumentTypeChanged()
+        {
+            _view.SetFacturaFieldsVisible(IsFactura());
+            PrefillRecipientFromClient();
+        }
+
+        // Called when a client is chosen from the picker. Fills the client fields, and - if the
+        // document is a Factura - the recipient block from that client's fiscal profile.
+        public void OnClientSelected(ClientRow client)
+        {
+            _selectedClient = client;
+            if (client != null)
+            {
+                _view.SetClient(client.Document, client.Name);
+            }
+            PrefillRecipientFromClient();
+        }
+
+        private void PrefillRecipientFromClient()
+        {
+            if (!IsFactura() || _selectedClient == null)
+            {
+                return;
+            }
+
+            string businessName = string.IsNullOrWhiteSpace(_selectedClient.BusinessName)
+                ? _selectedClient.Name
+                : _selectedClient.BusinessName;
+
+            _view.SetRecipient(
+                _selectedClient.Document,
+                businessName,
+                _selectedClient.Activity,
+                _selectedClient.Address,
+                _selectedClient.Commune);
+        }
 
         public void OnFinishSale()
         {
@@ -260,6 +297,7 @@ namespace PharmacySystem.Presentation
                 netAmount = vat.Net,
                 taxAmount = vat.Tax,
                 exemptAmount = vat.Exempt,
+                clientId = (_selectedClient != null && _selectedClient.Id > 0) ? _selectedClient.Id : (int?)null,
                 oSaleDetail = details
             };
 
@@ -268,6 +306,7 @@ namespace PharmacySystem.Presentation
             if (idSale != 0)
             {
                 _cart.Clear();
+                _selectedClient = null;
                 _view.ClearSale();
                 _view.SaleRegistered(idSale);
                 InventoryChangeNotifier.NotifyStockChanged();

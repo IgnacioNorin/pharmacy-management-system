@@ -11,7 +11,10 @@ namespace PharmacySystem
         public string idClient { get; set; }
         public string document { get; set; }
         public string name { get; set; }
+        // The full row of the picked client, for the caller that needs the fiscal profile too.
+        public ClientRow SelectedClient { get; private set; }
 
+        private readonly List<ClientRow> _rows = new List<ClientRow>();
         private readonly ClientPickerPresenter _presenter;
 
         public ModalPerson()
@@ -24,6 +27,7 @@ namespace PharmacySystem
         {
             foreach (ClientRow row in clients)
             {
+                _rows.Add(row);
                 int rowId = dgdata.Rows.Add();
                 DataGridViewRow gridRow = dgdata.Rows[rowId];
                 gridRow.Cells["Id"].Value = row.Id.ToString();
@@ -114,6 +118,7 @@ namespace PharmacySystem
                 int index = e.RowIndex;
                 if (index >= 0)
                 {
+                    SelectedClient = index < _rows.Count ? _rows[index] : null;
                     idClient = dgdata.Rows[index].Cells["Id"].Value.ToString();
                     document = dgdata.Rows[index].Cells["NumeroDocumento"].Value.ToString();
                     name = dgdata.Rows[index].Cells["NombreCompleto"].Value.ToString();

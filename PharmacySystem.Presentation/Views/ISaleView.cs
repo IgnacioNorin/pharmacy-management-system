@@ -28,6 +28,8 @@ namespace PharmacySystem.Presentation
 
         void SetDocumentTypeOptions(IReadOnlyList<string> options, string selected);
         void SetFacturaFieldsVisible(bool visible);
+        void SetClient(string document, string name);
+        void SetRecipient(string taxId, string businessName, string activity, string address, string commune);
         void SetSelectedProduct(int id, string code, string name, int stock, string priceSaleFormatted);
         void AddCartLine(SaleCartLine line);
         void RemoveCartLineAt(int index);
