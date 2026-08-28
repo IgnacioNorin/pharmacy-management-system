@@ -215,6 +215,7 @@ CREATE TABLE [dbo].[store](
     [phone] [varchar](50) NULL,
     [address] [varchar](50) NULL,
     [currency_culture] [varchar](10) NULL,
+    [country_code] [varchar](8) NULL,
     [default_tax_rate] [decimal](5, 2) NOT NULL CONSTRAINT [DF_store_default_tax_rate] DEFAULT ((19)),
     [default_document_type] [varchar](20) NOT NULL CONSTRAINT [DF_store_default_document_type] DEFAULT ('Boleta'),
     PRIMARY KEY CLUSTERED ([id] ASC),

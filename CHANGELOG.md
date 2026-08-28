@@ -80,6 +80,14 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   venta, `SaleService` le pasa el comprobante al emisor y guarda lo que resuelva.
   Conectar un proveedor DTE es escribir una implementación nueva de la interfaz y
   cambiar el registro en `CompositionRoot`. Migración `011_fiscal_document_hook.sql`.
+- **Preset de país.** La tienda recuerda un preset (`store.country_code`, en
+  blanco = genérico) que agrupa los valores por defecto de un país: tasa de IVA,
+  cultura de moneda y el esquema con que se valida el documento del receptor de
+  una factura. Chile es el único preset concreto por ahora (IVA 19, `es-CL`,
+  RUT módulo 11); el genérico no hace supuestos nacionales (valida el documento
+  solo por formato). El catálogo vive en código (`CountryPresets`); el preset
+  pre-llena los campos en Gestión de tienda, no los bloquea. Migración
+  `015_store_country_preset.sql`.
 - **Ficha fiscal del cliente y vínculo venta - cliente.** La ficha de cliente
   suma razón social, giro / actividad, comuna / localidad, email y una marca
   "es empresa" (razón social y giro obligatorios si está marcada). La venta

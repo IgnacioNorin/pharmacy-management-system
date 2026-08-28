@@ -16,6 +16,9 @@ namespace PharmacySystem.Model
 
         public string address { get; set; }
         public string currencyCulture { get; set; }
+        // ISO 3166-1 alpha-2 country preset code, or null/empty for the generic preset
+        // (no national assumptions). See CountryPresets.
+        public string countryCode { get; set; }
         // VAT rate applied to tax-affected items, as a percentage (e.g. 19.00). Country-neutral:
         // Chile is 19, but it is a setting, not a constant.
         public decimal defaultTaxRate { get; set; } = 19m;
