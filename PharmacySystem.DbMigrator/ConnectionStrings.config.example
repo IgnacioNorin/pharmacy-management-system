@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copy to ConnectionStrings.config (gitignored) next to the executable, or pass the
+     connection string as the first CLI argument / the PHARMACY_DB_CONNECTION env var. -->
+<connectionStrings>
+  <add name="connection"
+       connectionString="Server=localhost;database=PharmacyDB;User Id=sa;Password=CHANGE_ME;"
+       providerName="System.Data.SqlClient" />
+</connectionStrings>

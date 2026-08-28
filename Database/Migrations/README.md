@@ -6,15 +6,41 @@
 
 ## Cómo aplicar
 
+Usar **`PharmacySystem.DbMigrator`** (proyecto de consola en la solución). Corre
+las migraciones pendientes en orden, una transacción por script, y anota lo que
+aplicó en `dbo.SchemaVersions`. Los scripts van embebidos en el ejecutable.
+
 1. **Backup completo** de `PharmacyDB` antes de empezar.
-2. Correr los scripts en orden numérico, una sola vez cada uno, con SSMS,
-   Azure Data Studio o `sqlcmd`:
+2. Ejecutar el migrador pasándole la cadena de conexión:
 
    ```
-   sqlcmd -S <servidor> -U <usuario> -P <clave> -b -i 001_upgrade_to_1_1_0.sql
+   PharmacySystem.DbMigrator.exe "Server=<servidor>;Database=PharmacyDB;User Id=<u>;Password=<c>;"
    ```
 
-3. Cada script es idempotente: volver a correrlo no hace nada y no da error.
+   La cadena también se puede tomar de la variable de entorno
+   `PHARMACY_DB_CONNECTION` o de un `ConnectionStrings.config` junto al `.exe`
+   (entrada `connection`). Código de salida `0` = OK, `1` = falló, `2` = sin
+   cadena de conexión.
+
+**Bootstrap:** si la base ya existe (tiene `dbo.person`) pero no tiene
+`dbo.SchemaVersions` —una instalación previa a esta herramienta, o una base
+recién creada con `PharmacyDB.sql`, que ya trae el efecto de todas las
+migraciones— el migrador registra los scripts actuales como "ya aplicados" sin
+re-ejecutarlos, y de ahí en adelante solo corre los nuevos.
+
+Cada script se sigue escribiendo idempotente (guardas `IF ... IS NULL`,
+`CREATE OR ALTER`) por prudencia, pero el migrador ya garantiza que cada uno
+corre una sola vez.
+
+### A mano (alternativa)
+
+```
+sqlcmd -S <servidor> -U <usuario> -P <clave> -b -i 001_upgrade_to_1_1_0.sql
+```
+
+Si se aplican a mano, respetar el orden numérico y correr cada script con
+`QUOTED_IDENTIFIER` / `ANSI_NULLS` en `ON` (los que crean procedimientos ya lo
+fijan al inicio; `sqlcmd` por defecto los deja en `OFF`).
 
 | Script | Lleva de | a |
 |---|---|---|

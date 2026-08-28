@@ -144,6 +144,13 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 
 ### Interno
 
+- **Runner de migraciones (`PharmacySystem.DbMigrator`).** Proyecto de consola
+  con DbUp que aplica las migraciones pendientes en orden, una transacción por
+  script, anotando lo aplicado en `dbo.SchemaVersions`. Reemplaza correrlas a
+  mano con `sqlcmd` / SSMS (así se coló el `QUOTED_IDENTIFIER OFF` en la 013).
+  Sobre una base ya existente sin journal, registra las migraciones actuales
+  como aplicadas sin re-ejecutarlas. Cadena de conexión por argumento, variable
+  `PHARMACY_DB_CONNECTION` o `ConnectionStrings.config`.
 - Reportes: exportadores `IReportExporter` (CSV / XLSX / PDF) en
   `PharmacySystem.Presentation`, cada uno recorriendo la misma
   `ReportDefinition`. Los 4 handlers de exportación de `frmReport` quedan en un
