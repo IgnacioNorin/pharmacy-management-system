@@ -63,6 +63,14 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   chileno (módulo 11, aislado en `ChileanRutValidator` — el resto de los
   documentos sigue con el validador neutro). Se guardan en `sale.recipient_*` y
   aparecen en el ticket bajo "RECEPTOR". Migración `009_factura_recipient.sql`.
+- **Nota de crédito / anular venta (nivel 2, fase D).** Botón "Nota de crédito"
+  en la pantalla de venta (permiso `ventas.nota_credito`, de fábrica solo los
+  dos roles de administrador): se busca un comprobante por tipo y número, y se
+  emite una nota de crédito que lo reversa — un `sale` nuevo con montos en
+  negativo y `reference_id` al original, el stock de cada línea devuelto, todo
+  en una transacción. Los reportes suman todo, así que la NC netea sola; no se
+  puede anular dos veces ni anular una nota de crédito. Migración
+  `010_credit_note.sql` (`sale.reference_id`, `seq_folio_nota_credito`, permiso).
 
 ### Interno
 

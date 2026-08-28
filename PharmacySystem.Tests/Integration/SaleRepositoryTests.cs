@@ -147,6 +147,109 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
+        public void CreateCreditNote_RestoresStockInsertsNegativeHeaderAndBlocksASecondOne()
+        {
+            Person person = CreatePerson(out string document);
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = CreateProductWithStock(categoryId, 10);
+
+            int originalId = 0, ncId = 0;
+            try
+            {
+                originalId = Repository.Register(new Sale
+                {
+                    typeDocument = "Boleta", oPerson = person,
+                    documentClient = "9999999999", nameClient = "Walk-in",
+                    totalPay = 1190m, payWith = 1190m, change = 0m,
+                    netAmount = 1000m, taxAmount = 190m, exemptAmount = 0m,
+                    oSaleDetail = new List<SaleDetail>
+                    {
+                        new SaleDetail { oProduct = new Product { idProduct = productId }, amount = 3, salePrice = 5m, subtotal = 15m }
+                    }
+                });
+                Assert.True(originalId > 0);
+                Assert.Equal(7, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId)));
+
+                CreditNoteResult result = Repository.CreateCreditNote(originalId, person.idPerson, "Devolución del cliente");
+                Assert.Equal(CreditNoteResult.Ok, result);
+
+                // stock restored
+                Assert.Equal(10, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId)));
+
+                // a negative-amount NC row referencing the original
+                ncId = SqlTestHelper.ExecuteScalarInt("SELECT id FROM sale WHERE reference_id = @id", new SqlParameter("@id", originalId));
+                Assert.Equal("Nota de Credito", (string)SqlTestHelper.ExecuteScalar("SELECT document_type FROM sale WHERE id = @id", new SqlParameter("@id", ncId)));
+                Assert.Equal(-1190, SqlTestHelper.ExecuteScalarInt("SELECT total_amount FROM sale WHERE id = @id", new SqlParameter("@id", ncId)));
+                Assert.Equal(-1000, SqlTestHelper.ExecuteScalarInt("SELECT net_amount FROM sale WHERE id = @id", new SqlParameter("@id", ncId)));
+
+                // second attempt is rejected
+                Assert.Equal(CreditNoteResult.AlreadyCreditNoted, Repository.CreateCreditNote(originalId, person.idPerson, "otra vez"));
+
+                // and a NC cannot itself be credit-noted
+                Assert.Equal(CreditNoteResult.NotAllowedOnCreditNote, Repository.CreateCreditNote(ncId, person.idPerson, "no"));
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id IN (@a, @b)", new SqlParameter("@a", originalId), new SqlParameter("@b", ncId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", ncId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", originalId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
+
+        [Fact]
+        public void CreateCreditNote_UnknownSale_ReturnsNotFound()
+        {
+            Assert.Equal(CreditNoteResult.NotFound, Repository.CreateCreditNote(-999, 1, "x"));
+        }
+
+        [Fact]
+        public void FindByDocument_ReturnsTheSaleWithItsFlags()
+        {
+            Person person = CreatePerson(out string document);
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = CreateProductWithStock(categoryId, 10);
+
+            int originalId = 0, ncId = 0;
+            try
+            {
+                originalId = Repository.Register(new Sale
+                {
+                    typeDocument = "Boleta", oPerson = person,
+                    documentClient = "1", nameClient = "N",
+                    totalPay = 5m, payWith = 5m, change = 0m,
+                    oSaleDetail = new List<SaleDetail>
+                    {
+                        new SaleDetail { oProduct = new Product { idProduct = productId }, amount = 1, salePrice = 5m, subtotal = 5m }
+                    }
+                });
+                string number = (string)SqlTestHelper.ExecuteScalar("SELECT document_number FROM sale WHERE id = @id", new SqlParameter("@id", originalId));
+
+                SaleLookup before = Repository.FindByDocument("Boleta", number);
+                Assert.NotNull(before);
+                Assert.Equal(originalId, before.Id);
+                Assert.False(before.IsCreditNote);
+                Assert.False(before.AlreadyCreditNoted);
+
+                Repository.CreateCreditNote(originalId, person.idPerson, "test");
+                ncId = SqlTestHelper.ExecuteScalarInt("SELECT id FROM sale WHERE reference_id = @id", new SqlParameter("@id", originalId));
+
+                Assert.True(Repository.FindByDocument("Boleta", number).AlreadyCreditNoted);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id IN (@a, @b)", new SqlParameter("@a", originalId), new SqlParameter("@b", ncId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", ncId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", originalId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
+
+        [Fact]
         public void RegisterSale_Factura_PersistsRecipientFiscalData()
         {
             Person person = CreatePerson(out string document);

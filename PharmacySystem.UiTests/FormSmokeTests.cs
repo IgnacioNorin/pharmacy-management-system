@@ -120,6 +120,18 @@ namespace PharmacySystem.UiTests
         }
 
         [Fact]
+        public void FrmCreditNote_ConstructsAndImplementsView()
+        {
+            StaThread.Run(() =>
+            {
+                using (var form = new frmCreditNote())
+                {
+                    Assert.IsAssignableFrom<ICreditNoteView>(form);
+                }
+            });
+        }
+
+        [Fact]
         public void FrmManagement_ConstructsAndImplementsAllThreeTabViews()
         {
             StaThread.Run(() =>

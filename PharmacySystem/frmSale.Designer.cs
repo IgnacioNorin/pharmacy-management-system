@@ -55,6 +55,7 @@
             this.txtchange = new System.Windows.Forms.TextBox();
             this.label16 = new System.Windows.Forms.Label();
             this.cbodocumenttype = new System.Windows.Forms.ComboBox();
+            this.btnCreditNote = new System.Windows.Forms.Button();
             this.pnlFactura = new System.Windows.Forms.Panel();
             this.txtrectaxid = new System.Windows.Forms.TextBox();
             this.txtrecname = new System.Windows.Forms.TextBox();
@@ -365,6 +366,20 @@
             this.cbodocumenttype.TabIndex = 8;
             this.cbodocumenttype.SelectedIndexChanged += new System.EventHandler(this.cbodocumenttype_SelectedIndexChanged);
             //
+            // btnCreditNote
+            //
+            this.btnCreditNote.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCreditNote.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.btnCreditNote.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnCreditNote.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCreditNote.Location = new System.Drawing.Point(893, 24);
+            this.btnCreditNote.Name = "btnCreditNote";
+            this.btnCreditNote.Size = new System.Drawing.Size(150, 26);
+            this.btnCreditNote.TabIndex = 20;
+            this.btnCreditNote.Text = "Nota de crédito";
+            this.btnCreditNote.UseVisualStyleBackColor = false;
+            this.btnCreditNote.Click += new System.EventHandler(this.btnCreditNote_Click);
+            //
             // pnlFactura
             //
             this.pnlFactura.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -661,6 +676,7 @@
             this.Controls.Add(this.btnSearchClient);
             this.Controls.Add(this.label17);
             this.Controls.Add(this.cbodocumenttype);
+            this.Controls.Add(this.btnCreditNote);
             this.Controls.Add(this.pnlFactura);
             this.Controls.Add(this.txtamount);
             this.Controls.Add(this.label3);
@@ -729,6 +745,7 @@
         private System.Windows.Forms.TextBox txtchange;
         private System.Windows.Forms.Label label16;
         private System.Windows.Forms.ComboBox cbodocumenttype;
+        private System.Windows.Forms.Button btnCreditNote;
         private System.Windows.Forms.Panel pnlFactura;
         private System.Windows.Forms.TextBox txtrectaxid;
         private System.Windows.Forms.TextBox txtrecname;

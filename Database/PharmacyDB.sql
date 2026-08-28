@@ -261,6 +261,8 @@ CREATE TABLE [dbo].[sale](
     [recipient_activity] [varchar](80) NULL,
     [recipient_address] [varchar](120) NULL,
     [recipient_commune] [varchar](60) NULL,
+    [reference_id] [int] NULL,
+    [reference_reason] [varchar](255) NULL,
     [date_registered] [datetime] NULL,
     CONSTRAINT [PK__VENTA__BC1240BD8994C395] PRIMARY KEY CLUSTERED ([id] ASC)
 )
@@ -396,6 +398,10 @@ ALTER TABLE [dbo].[sale] WITH CHECK ADD CONSTRAINT [FK__VENTA__IdUsuario__59FA5E
 GO
 ALTER TABLE [dbo].[sale] CHECK CONSTRAINT [FK__VENTA__IdUsuario__59FA5E80]
 GO
+-- A Nota de Credito points at the sale it reverses.
+ALTER TABLE [dbo].[sale] WITH CHECK ADD CONSTRAINT [FK_sale_reference]
+    FOREIGN KEY([reference_id]) REFERENCES [dbo].[sale] ([id])
+GO
 ALTER TABLE [dbo].[sale_detail] WITH CHECK ADD CONSTRAINT [FK__DETALLE_V__IdPro__3A81B327]
     FOREIGN KEY([product_id]) REFERENCES [dbo].[product] ([id])
 GO
@@ -430,6 +436,8 @@ GO
 CREATE SEQUENCE [dbo].[seq_folio_boleta] AS INT START WITH 1 INCREMENT BY 1
 GO
 CREATE SEQUENCE [dbo].[seq_folio_factura] AS INT START WITH 1 INCREMENT BY 1
+GO
+CREATE SEQUENCE [dbo].[seq_folio_nota_credito] AS INT START WITH 1 INCREMENT BY 1
 GO
 -- The receipt number is unique per document type, not globally (boleta 000001 and
 -- factura 000001 can both exist).
@@ -480,6 +488,7 @@ GO
 -- (parent_code IS NULL); the rest hang off it, and each report "exportar" hangs off its "ver".
 INSERT INTO [dbo].[permission] (code, section, description, parent_code) VALUES
     ('ventas.acceso',           'ventas',      'Usar el punto de venta',                   NULL),
+    ('ventas.nota_credito',     'ventas',      'Emitir notas de credito (anular ventas)',  'ventas.acceso'),
     ('compras.acceso',          'compras',     'Registrar compras a proveedores',          NULL),
     ('clientes.acceso',         'clientes',    'Ver la seccion de clientes',               NULL),
     ('clientes.gestionar',      'clientes',    'Crear, editar y eliminar clientes',        'clientes.acceso'),

@@ -23,6 +23,7 @@ namespace PharmacySystem
             cbodocumenttype.DisplayMember = "Text";
             cbodocumenttype.ValueMember = "Value";
             _presenter.OnLoad();
+            btnCreditNote.Enabled = MainForm.Session?.Can("ventas.nota_credito") ?? false;
             txtstock.Visible = false;
 
             DataGridViewButtonColumn Button = new DataGridViewButtonColumn();
@@ -136,6 +137,14 @@ namespace PharmacySystem
         }
 
         private void btnFinishSale_Click(object sender, EventArgs e) => _presenter.OnFinishSale();
+
+        private void btnCreditNote_Click(object sender, EventArgs e)
+        {
+            using (var form = new frmCreditNote())
+            {
+                form.ShowDialog(this);
+            }
+        }
 
         private void Clean()
         {

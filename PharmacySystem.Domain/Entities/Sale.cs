@@ -27,6 +27,9 @@ namespace PharmacySystem.Model
         public string recipientActivity { get; set; }
         public string recipientAddress { get; set; }
         public string recipientCommune { get; set; }
+        // Set on a Nota de Credito: the id of the sale it reverses, plus the reason.
+        public int? referenceId { get; set; }
+        public string referenceReason { get; set; }
         public DateTime registrationDate { get; set; }
         public List<SaleDetail> oSaleDetail { get; set; }
     }

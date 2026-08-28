@@ -22,8 +22,9 @@ namespace PharmacySystem.Tests.Integration
         {
             var all = Repository.GetAll();
 
-            Assert.Equal(30, all.Count);
+            Assert.Equal(31, all.Count);
             Assert.Contains(all, p => p.Code == "ventas.acceso");
+            Assert.Contains(all, p => p.Code == "ventas.nota_credito");
             Assert.Contains(all, p => p.Code == "roles.gestionar");
             Assert.Contains(all, p => p.Code == "reportes.acceso");
             Assert.Contains(all, p => p.Code == "reportes.ventas");

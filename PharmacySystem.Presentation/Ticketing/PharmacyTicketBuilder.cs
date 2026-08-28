@@ -37,6 +37,14 @@ namespace PharmacySystem.Presentation
             formatter.AddTwoColumns("Número:", sale.numberDocument);
             formatter.AddTwoColumns("Fecha:", date);
             formatter.AddTwoColumns("Hora:", time);
+            if (sale.referenceId.HasValue)
+            {
+                formatter.AddTwoColumns("Anula venta id:", sale.referenceId.Value.ToString());
+                if (!string.IsNullOrWhiteSpace(sale.referenceReason))
+                {
+                    formatter.AddTwoColumns("Motivo:", sale.referenceReason);
+                }
+            }
 
             if (!string.IsNullOrWhiteSpace(sale.recipientTaxId))
             {

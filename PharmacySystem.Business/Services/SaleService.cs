@@ -23,6 +23,12 @@ namespace PharmacySystem.Business
 
         public int Register(Sale sale) => _repository.Register(sale);
 
+        public SaleLookup FindByDocument(string documentType, string documentNumber) =>
+            _repository.FindByDocument(documentType, documentNumber);
+
+        public CreditNoteResult CreateCreditNote(int originalSaleId, int userId, string reason) =>
+            _repository.CreateCreditNote(originalSaleId, userId, reason);
+
         public List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate) => _repository.ReportSale(startDate, endDate);
 
         public decimal SumTotalPay(DateTime startDate, DateTime endDate) => _repository.SumTotalPay(startDate, endDate);
