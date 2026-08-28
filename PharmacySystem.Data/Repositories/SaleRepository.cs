@@ -31,7 +31,7 @@ namespace PharmacySystem.Data
                         "net_amount AS netAmount, tax_amount AS taxAmount, exempt_amount AS exemptAmount, " +
                         "recipient_tax_id AS recipientTaxId, recipient_business_name AS recipientBusinessName, " +
                         "recipient_activity AS recipientActivity, recipient_address AS recipientAddress, " +
-                        "recipient_commune AS recipientCommune, reference_id AS referenceId, reference_reason AS referenceReason, " +
+                        "recipient_commune AS recipientCommune, client_id AS clientId, reference_id AS referenceId, reference_reason AS referenceReason, " +
                         "fiscal_status AS fiscalStatus, fiscal_track_id AS fiscalTrackId, fiscal_barcode AS fiscalBarcode, " +
                         "date_registered AS registrationDate FROM sale";
 
@@ -91,8 +91,8 @@ namespace PharmacySystem.Data
                             "DECLARE @folio INT; " +
                             "IF @document_type = 'Factura' SET @folio = NEXT VALUE FOR dbo.seq_folio_factura; " +
                             "ELSE SET @folio = NEXT VALUE FOR dbo.seq_folio_boleta; " +
-                            "INSERT INTO sale(document_type, document_number, user_id, document_client, name_client, total_amount, amount_received, change_amount, net_amount, tax_amount, exempt_amount, recipient_tax_id, recipient_business_name, recipient_activity, recipient_address, recipient_commune) " +
-                            "VALUES (@document_type, RIGHT('000000' + CAST(@folio AS VARCHAR(20)), 6), @user_id, @document_client, @name_client, @total_amount, @amount_received, @change_amount, @net_amount, @tax_amount, @exempt_amount, @recipient_tax_id, @recipient_business_name, @recipient_activity, @recipient_address, @recipient_commune); " +
+                            "INSERT INTO sale(document_type, document_number, user_id, document_client, name_client, total_amount, amount_received, change_amount, net_amount, tax_amount, exempt_amount, recipient_tax_id, recipient_business_name, recipient_activity, recipient_address, recipient_commune, client_id) " +
+                            "VALUES (@document_type, RIGHT('000000' + CAST(@folio AS VARCHAR(20)), 6), @user_id, @document_client, @name_client, @total_amount, @amount_received, @change_amount, @net_amount, @tax_amount, @exempt_amount, @recipient_tax_id, @recipient_business_name, @recipient_activity, @recipient_address, @recipient_commune, @client_id); " +
                             "SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
                         int idSale = oConnection.ExecuteScalar<int>(insertSaleQuery, new
@@ -111,7 +111,8 @@ namespace PharmacySystem.Data
                             recipient_business_name = obj.recipientBusinessName,
                             recipient_activity = obj.recipientActivity,
                             recipient_address = obj.recipientAddress,
-                            recipient_commune = obj.recipientCommune
+                            recipient_commune = obj.recipientCommune,
+                            client_id = obj.clientId
                         }, objTransacion);
 
                         if (idSale != 0)
@@ -245,6 +246,7 @@ namespace PharmacySystem.Data
             public string RecipientActivity { get; set; }
             public string RecipientAddress { get; set; }
             public string RecipientCommune { get; set; }
+            public int? ClientId { get; set; }
         }
 
         private class OriginalDetailRow
@@ -270,7 +272,8 @@ namespace PharmacySystem.Data
                         "SELECT document_type AS DocumentType, document_client AS DocumentClient, name_client AS NameClient, " +
                         "total_amount AS TotalAmount, net_amount AS NetAmount, tax_amount AS TaxAmount, exempt_amount AS ExemptAmount, " +
                         "recipient_tax_id AS RecipientTaxId, recipient_business_name AS RecipientBusinessName, " +
-                        "recipient_activity AS RecipientActivity, recipient_address AS RecipientAddress, recipient_commune AS RecipientCommune " +
+                        "recipient_activity AS RecipientActivity, recipient_address AS RecipientAddress, recipient_commune AS RecipientCommune, " +
+                        "client_id AS ClientId " +
                         "FROM sale WITH (UPDLOCK) WHERE id = @id", new { id = originalSaleId }, tx);
 
                     if (original == null)
@@ -291,8 +294,8 @@ namespace PharmacySystem.Data
 
                     const string insertNc =
                         "DECLARE @folio INT = NEXT VALUE FOR dbo.seq_folio_nota_credito; " +
-                        "INSERT INTO sale(document_type, document_number, user_id, document_client, name_client, total_amount, amount_received, change_amount, net_amount, tax_amount, exempt_amount, recipient_tax_id, recipient_business_name, recipient_activity, recipient_address, recipient_commune, reference_id, reference_reason) " +
-                        "VALUES ('Nota de Credito', RIGHT('000000' + CAST(@folio AS VARCHAR(20)), 6), @user_id, @document_client, @name_client, @total, 0, 0, @net, @tax, @exempt, @rtaxid, @rname, @ractivity, @raddress, @rcommune, @reference, @reason); " +
+                        "INSERT INTO sale(document_type, document_number, user_id, document_client, name_client, total_amount, amount_received, change_amount, net_amount, tax_amount, exempt_amount, recipient_tax_id, recipient_business_name, recipient_activity, recipient_address, recipient_commune, client_id, reference_id, reference_reason) " +
+                        "VALUES ('Nota de Credito', RIGHT('000000' + CAST(@folio AS VARCHAR(20)), 6), @user_id, @document_client, @name_client, @total, 0, 0, @net, @tax, @exempt, @rtaxid, @rname, @ractivity, @raddress, @rcommune, @client_id, @reference, @reason); " +
                         "SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
                     int ncId = oConnection.ExecuteScalar<int>(insertNc, new
@@ -309,6 +312,7 @@ namespace PharmacySystem.Data
                         ractivity = original.RecipientActivity,
                         raddress = original.RecipientAddress,
                         rcommune = original.RecipientCommune,
+                        client_id = original.ClientId,
                         reference = originalSaleId,
                         reason = reason
                     }, tx);

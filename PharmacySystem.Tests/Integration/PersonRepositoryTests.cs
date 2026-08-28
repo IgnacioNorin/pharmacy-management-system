@@ -101,6 +101,51 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
+        public void FiscalProfile_RoundTripsThroughRegisterAndUpdate()
+        {
+            string document = SqlTestHelper.NewTag();
+            Person toRegister = NewPerson(document);
+            toRegister.businessName = "Comercial Ejemplo SpA";
+            toRegister.activity = "Venta al por menor";
+            toRegister.commune = "Providencia";
+            toRegister.email = "contacto@ejemplo.cl";
+            toRegister.isCompany = true;
+
+            Repository.Register(toRegister);
+
+            try
+            {
+                Person stored = Repository.GetByDocument(document);
+                Assert.Equal("Comercial Ejemplo SpA", stored.businessName);
+                Assert.Equal("Venta al por menor", stored.activity);
+                Assert.Equal("Providencia", stored.commune);
+                Assert.Equal("contacto@ejemplo.cl", stored.email);
+                Assert.True(stored.isCompany);
+
+                stored.businessName = "Otra Razon Ltda";
+                stored.activity = "Servicios";
+                stored.commune = "Nunoa";
+                stored.email = "nuevo@ejemplo.cl";
+                stored.isCompany = false;
+                stored.oPersonType = new TypePerson { idPersonType = PersonTypeId() };
+
+                bool updated = Repository.Update(stored);
+                Assert.True(updated);
+
+                Person reread = Repository.GetByDocument(document);
+                Assert.Equal("Otra Razon Ltda", reread.businessName);
+                Assert.Equal("Servicios", reread.activity);
+                Assert.Equal("Nunoa", reread.commune);
+                Assert.Equal("nuevo@ejemplo.cl", reread.email);
+                Assert.False(reread.isCompany);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
+
+        [Fact]
         public void UpdatePassword_ChangesStoredValue()
         {
             string document = SqlTestHelper.NewTag();

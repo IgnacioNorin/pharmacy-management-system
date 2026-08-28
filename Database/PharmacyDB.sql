@@ -786,6 +786,11 @@ CREATE PROCEDURE [dbo].[sp_update_person](
 @phone VARCHAR(50),
 @password VARCHAR(255),
 @person_type_id INT,
+@business_name VARCHAR(120) = NULL,
+@activity VARCHAR(80) = NULL,
+@commune VARCHAR(60) = NULL,
+@email VARCHAR(120) = NULL,
+@is_company BIT = 0,
 @result BIT OUTPUT
 ) AS
 BEGIN
@@ -807,7 +812,12 @@ BEGIN
             address = @address,
             phone = @phone,
             password = ISNULL(@password, password),
-            person_type_id = @person_type_id
+            person_type_id = @person_type_id,
+            business_name = @business_name,
+            activity = @activity,
+            commune = @commune,
+            email = @email,
+            is_company = @is_company
         WHERE id = @id_person;
         SET @result = 1;
     END
