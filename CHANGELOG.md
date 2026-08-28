@@ -105,9 +105,17 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   del mes (antes arrancaban en hoy y una consulta recién abierta salía vacía).
 - **Reportes: nombre de archivo exportado** con formato `Reporte_yyyyMMdd_HHmmss`
   (ordena cronológicamente en el explorador).
-- **Reportes: nombres de columna neutros.** En el informe de ventas, "CI
-  Vendedor" / "CI Cliente" pasan a llamarse "Documento Vendedor" / "Documento
-  Cliente".
+- **Reportes: nombres de columna neutros y con acentos.** En el informe de
+  ventas, "CI Vendedor" / "CI Cliente" pasan a "Documento Vendedor" / "Documento
+  Cliente"; se corrigen acentos en los encabezados ("Código", "Descripción",
+  "Categoría", "Número Documento", "Razón Social").
+- **Reporte de ventas: datos del receptor.** Dos columnas nuevas, "Documento
+  Receptor" y "Razón Social", que se llenan cuando la venta es una Factura
+  (vacías en Boleta).
+- **Reporte de productos: fila de totales.** Total de unidades en stock y
+  valorización del inventario a costo (Σ stock × precio de compra) y a precio de
+  venta (Σ stock × precio de venta), en la franja bajo la grilla y en la
+  exportación.
 
 ### Interno
 

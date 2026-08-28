@@ -357,6 +357,7 @@ namespace PharmacySystem.Data
                     const string sql =
                         "SELECT s.date_registered AS DateRegistered, s.document_type AS DocumentType, s.document_number AS DocumentNumber, " +
                         "p.document_number AS SellerDocument, p.name AS SellerName, s.document_client AS ClientDocument, s.name_client AS ClientName, " +
+                        "s.recipient_tax_id AS RecipientTaxId, s.recipient_business_name AS RecipientBusinessName, " +
                         "s.net_amount AS NetAmount, s.tax_amount AS TaxAmount, s.exempt_amount AS ExemptAmount, " +
                         "s.total_amount AS TotalAmount, s.amount_received AS AmountReceived, s.change_amount AS ChangeAmount " +
                         "FROM sale s " +

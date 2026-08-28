@@ -124,6 +124,8 @@ namespace PharmacySystem.Tests.Presentation
             var headers = f.View.SaleDefinition.Columns.Select(c => c.Header).ToList();
             Assert.Contains("Documento Vendedor", headers);
             Assert.Contains("Documento Cliente", headers);
+            Assert.Contains("Documento Receptor", headers);
+            Assert.Contains("Razón Social", headers);
             Assert.DoesNotContain("CI Vendedor", headers);
             Assert.DoesNotContain("CI Cliente", headers);
         }
@@ -165,7 +167,7 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void OnConsultProduct_PassesRowsThroughWithNoTotalsRow()
+        public void OnConsultProduct_TotalsRowCarriesUnitsAndInventoryValuation()
         {
             var f = Create();
             f.Products.ReportResult = new List<ProductReportRow>
@@ -177,16 +179,25 @@ namespace PharmacySystem.Tests.Presentation
                     CategoryDescription = "Meds", Stock = 20,
                     PurchasePrice = 1m, SalePrice = 2m,
                     DateExpired = new DateTime(2027, 1, 1), StatusName = "Activo"
+                },
+                new ProductReportRow
+                {
+                    Code = "B2", Name = "Gauze", CategoryDescription = "Supplies",
+                    Stock = 5, PurchasePrice = 3m, SalePrice = 4m, StatusName = "Activo"
                 }
             };
 
             f.Presenter.OnConsultProduct();
 
             var result = f.View.ProductReport;
-            Assert.Single(result.Rows);
-            Assert.False(result.HasTotals);
+            Assert.Equal(2, result.Rows.Count);
             Assert.Equal("Aspirin", result.Rows[0].Name);
             Assert.Equal(10, f.View.ProductDefinition.Columns.Count);
+
+            Assert.True(result.HasTotals);
+            Assert.Equal(25, result.Totals.Stock);              // 20 + 5 units
+            Assert.Equal(35m, result.Totals.PurchasePrice);     // 20*1 + 5*3, value at cost
+            Assert.Equal(60m, result.Totals.SalePrice);         // 20*2 + 5*4, value at sale price
         }
 
         // Fase 4 of the alerts rework (traceability). The type / severity / "Abierta" labels now

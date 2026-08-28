@@ -83,7 +83,7 @@ namespace PharmacySystem.Presentation
             if (!Can("reportes.productos")) return;
 
             List<ProductReportRow> rows = _productService.Report(_view.SelectedCategoryId);
-            _view.SetProductReport(ProductDefinition, new ReportResult<ProductReportRow>(rows));
+            _view.SetProductReport(ProductDefinition, new ReportResult<ProductReportRow>(rows, ProductTotals(rows)));
         }
 
         // Fase 4 of the alerts rework (traceability): every stock/expiration alert transition
@@ -122,15 +122,26 @@ namespace PharmacySystem.Presentation
             SalePrice = rows.Sum(r => r.SalePrice)
         };
 
+        // The totals row reinterprets the two price columns as inventory valuation: total units,
+        // value at cost (sum of stock * purchase price) and value at sale price.
+        private static ProductReportRow ProductTotals(List<ProductReportRow> rows) => new ProductReportRow
+        {
+            Stock = rows.Sum(r => r.Stock),
+            PurchasePrice = rows.Sum(r => r.Stock * r.PurchasePrice),
+            SalePrice = rows.Sum(r => r.Stock * r.SalePrice)
+        };
+
         private static readonly ReportDefinition<SaleReportRow> SaleDefinition = new ReportDefinition<SaleReportRow>(new[]
         {
             new ReportColumn<SaleReportRow>("Fecha Venta", ReportValueType.Date, r => r.DateRegistered),
             new ReportColumn<SaleReportRow>("Tipo Documento", ReportValueType.Text, r => r.DocumentType),
-            new ReportColumn<SaleReportRow>("Numero Documento", ReportValueType.Text, r => r.DocumentNumber),
+            new ReportColumn<SaleReportRow>("Número Documento", ReportValueType.Text, r => r.DocumentNumber),
             new ReportColumn<SaleReportRow>("Documento Vendedor", ReportValueType.Text, r => r.SellerDocument),
             new ReportColumn<SaleReportRow>("Nombre Vendedor", ReportValueType.Text, r => r.SellerName),
             new ReportColumn<SaleReportRow>("Documento Cliente", ReportValueType.Text, r => r.ClientDocument),
             new ReportColumn<SaleReportRow>("Nombre Cliente", ReportValueType.Text, r => r.ClientName),
+            new ReportColumn<SaleReportRow>("Documento Receptor", ReportValueType.Text, r => r.RecipientTaxId),
+            new ReportColumn<SaleReportRow>("Razón Social", ReportValueType.Text, r => r.RecipientBusinessName),
             new ReportColumn<SaleReportRow>("Neto", ReportValueType.Currency, r => r.NetAmount),
             new ReportColumn<SaleReportRow>("IVA", ReportValueType.Currency, r => r.TaxAmount),
             new ReportColumn<SaleReportRow>("Exento", ReportValueType.Currency, r => r.ExemptAmount),
@@ -143,9 +154,9 @@ namespace PharmacySystem.Presentation
         {
             new ReportColumn<PurchaseReportRow>("Fecha Compra", ReportValueType.Date, r => r.DateRegistered),
             new ReportColumn<PurchaseReportRow>("Documento Proveedor", ReportValueType.Text, r => r.SupplierDocument),
-            new ReportColumn<PurchaseReportRow>("Razon Social", ReportValueType.Text, r => r.CompanyName),
+            new ReportColumn<PurchaseReportRow>("Razón Social", ReportValueType.Text, r => r.CompanyName),
             new ReportColumn<PurchaseReportRow>("Tipo Documento", ReportValueType.Text, r => r.DocumentType),
-            new ReportColumn<PurchaseReportRow>("Numero Documento", ReportValueType.Text, r => r.DocumentNumber),
+            new ReportColumn<PurchaseReportRow>("Número Documento", ReportValueType.Text, r => r.DocumentNumber),
             new ReportColumn<PurchaseReportRow>("Monto Total", ReportValueType.Currency, r => r.TotalAmount),
             new ReportColumn<PurchaseReportRow>("Nombre", ReportValueType.Text, r => r.ProductName),
             new ReportColumn<PurchaseReportRow>("Cantidad", ReportValueType.Integer, r => r.Quantity),
@@ -156,10 +167,10 @@ namespace PharmacySystem.Presentation
         private static readonly ReportDefinition<ProductReportRow> ProductDefinition = new ReportDefinition<ProductReportRow>(new[]
         {
             new ReportColumn<ProductReportRow>("Fecha Registro", ReportValueType.Date, r => r.DateCreated),
-            new ReportColumn<ProductReportRow>("Codigo", ReportValueType.Text, r => r.Code),
+            new ReportColumn<ProductReportRow>("Código", ReportValueType.Text, r => r.Code),
             new ReportColumn<ProductReportRow>("Nombre", ReportValueType.Text, r => r.Name),
-            new ReportColumn<ProductReportRow>("Descripcion", ReportValueType.Text, r => r.Description),
-            new ReportColumn<ProductReportRow>("Categoria", ReportValueType.Text, r => r.CategoryDescription),
+            new ReportColumn<ProductReportRow>("Descripción", ReportValueType.Text, r => r.Description),
+            new ReportColumn<ProductReportRow>("Categoría", ReportValueType.Text, r => r.CategoryDescription),
             new ReportColumn<ProductReportRow>("Stock", ReportValueType.Integer, r => r.Stock),
             new ReportColumn<ProductReportRow>("Precio Compra", ReportValueType.Currency, r => r.PurchasePrice),
             new ReportColumn<ProductReportRow>("Precio Venta", ReportValueType.Currency, r => r.SalePrice),
@@ -171,7 +182,7 @@ namespace PharmacySystem.Presentation
         {
             new ReportColumn<ProductAlertHistoryEntry>("Fecha Detectada", ReportValueType.Date, r => r.DetectedAt),
             new ReportColumn<ProductAlertHistoryEntry>("Producto", ReportValueType.Text, r => r.ProductName),
-            new ReportColumn<ProductAlertHistoryEntry>("Codigo", ReportValueType.Text, r => r.ProductCode),
+            new ReportColumn<ProductAlertHistoryEntry>("Código", ReportValueType.Text, r => r.ProductCode),
             new ReportColumn<ProductAlertHistoryEntry>("Tipo", ReportValueType.Text, r => TypeLabel(r.AlertType)),
             new ReportColumn<ProductAlertHistoryEntry>("Severidad", ReportValueType.Text, r => SeverityLabel(r.Severity)),
             new ReportColumn<ProductAlertHistoryEntry>("Valor", ReportValueType.Text, r => r.TriggerValue?.ToString() ?? ""),

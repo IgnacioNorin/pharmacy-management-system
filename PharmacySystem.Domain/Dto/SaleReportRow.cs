@@ -13,6 +13,9 @@ namespace PharmacySystem.Model
         public string SellerName { get; set; }
         public string ClientDocument { get; set; }
         public string ClientName { get; set; }
+        // Recipient fiscal data, only present on a Factura (null on a Boleta).
+        public string RecipientTaxId { get; set; }
+        public string RecipientBusinessName { get; set; }
         public decimal NetAmount { get; set; }
         public decimal TaxAmount { get; set; }
         public decimal ExemptAmount { get; set; }

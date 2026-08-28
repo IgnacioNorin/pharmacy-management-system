@@ -91,6 +91,7 @@ namespace PharmacySystem
             _productDefinition = definition;
             _productResult = result;
             dgdataproduct.DataSource = BuildTable(definition, result);
+            lblProductTotals.Text = TotalsCaption(definition, result);
         }
 
         public void SetAlertHistoryReport(ReportDefinition<ProductAlertHistoryEntry> definition, ReportResult<ProductAlertHistoryEntry> result)

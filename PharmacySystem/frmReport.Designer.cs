@@ -72,6 +72,7 @@
             this.label12 = new System.Windows.Forms.Label();
             this.label13 = new System.Windows.Forms.Label();
             this.btnExportProduct = new System.Windows.Forms.Button();
+            this.lblProductTotals = new System.Windows.Forms.Label();
             this.label14 = new System.Windows.Forms.Label();
             this.label15 = new System.Windows.Forms.Label();
             this.tabAlertHistory = new System.Windows.Forms.TabPage();
@@ -511,6 +512,7 @@
             // 
             this.tabStore.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
             this.tabStore.Controls.Add(this.dgdataproduct);
+            this.tabStore.Controls.Add(this.lblProductTotals);
             this.tabStore.Controls.Add(this.btnConsultProduct);
             this.tabStore.Controls.Add(this.cbocategory);
             this.tabStore.Controls.Add(this.label12);
@@ -564,8 +566,20 @@
             this.dgdataproduct.RowTemplate.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black;
             this.dgdataproduct.RowTemplate.Height = 30;
             this.dgdataproduct.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgdataproduct.Size = new System.Drawing.Size(1189, 352);
+            this.dgdataproduct.Size = new System.Drawing.Size(1189, 326);
             this.dgdataproduct.TabIndex = 64;
+            //
+            // lblProductTotals
+            //
+            this.lblProductTotals.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblProductTotals.BackColor = System.Drawing.Color.White;
+            this.lblProductTotals.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.lblProductTotals.Location = new System.Drawing.Point(23, 490);
+            this.lblProductTotals.Name = "lblProductTotals";
+            this.lblProductTotals.Size = new System.Drawing.Size(1189, 22);
+            this.lblProductTotals.TabIndex = 65;
+            this.lblProductTotals.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // btnConsultProduct
             // 
@@ -882,6 +896,7 @@
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.Button btnExportProduct;
+        private System.Windows.Forms.Label lblProductTotals;
         private System.Windows.Forms.Label label14;
         private System.Windows.Forms.Label label15;
         private System.Windows.Forms.DataGridView dgdatasale;
