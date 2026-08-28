@@ -28,7 +28,7 @@ namespace PharmacySystem
             InitializeComponent();
             _IdSale = idsale;
             _storeService = new StoreService(new StoreRepository(CompositionRoot.ConnectionFactory));
-            _saleService = new SaleService(new SaleRepository(CompositionRoot.ConnectionFactory));
+            _saleService = new SaleService(new SaleRepository(CompositionRoot.ConnectionFactory), new LocalSequenceIssuer());
         }
 
         #region Plain Text Ticket Generation

@@ -71,6 +71,15 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   en una transacción. Los reportes suman todo, así que la NC netea sola; no se
   puede anular dos veces ni anular una nota de crédito. Migración
   `010_credit_note.sql` (`sale.reference_id`, `seq_folio_nota_credito`, permiso).
+- **Enganche de emisión fiscal (nivel 2, fase E).** Los comprobantes que emite el
+  sistema **no son documentos tributarios**: se numeran con la secuencia local y
+  no se envía nada a ninguna autoridad. Se agregó el punto de integración para
+  cuando haga falta emitir DTE: interfaz `IFiscalDocumentIssuer`, implementación
+  por defecto `LocalSequenceIssuer` (deja el comprobante como interno) y columnas
+  `sale.fiscal_status` / `fiscal_track_id` / `fiscal_barcode`. Al registrar una
+  venta, `SaleService` le pasa el comprobante al emisor y guarda lo que resuelva.
+  Conectar un proveedor DTE es escribir una implementación nueva de la interfaz y
+  cambiar el registro en `CompositionRoot`. Migración `011_fiscal_document_hook.sql`.
 
 ### Interno
 

@@ -28,6 +28,7 @@
 | `008_document_types.sql` | 1.2.0 | 1.2.0 (tipo de documento boleta/factura: correlativo por tipo, `store.default_document_type`) |
 | `009_factura_recipient.sql` | 1.2.0 | 1.2.0 (datos fiscales del receptor en la factura: `sale.recipient_*`) |
 | `010_credit_note.sql` | 1.2.0 | 1.2.0 (nota de crédito: `sale.reference_id`, `seq_folio_nota_credito`, permiso `ventas.nota_credito`) |
+| `011_fiscal_document_hook.sql` | 1.2.0 | 1.2.0 (enganche de emisión fiscal: `sale.fiscal_status` / `fiscal_track_id` / `fiscal_barcode`) |
 
 ## Si un paso falla por datos preexistentes
 

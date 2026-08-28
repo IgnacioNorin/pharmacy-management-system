@@ -23,7 +23,9 @@ namespace PharmacySystem
         private static readonly IStoreService _storeService = new StoreService(new StoreRepository(ConnectionFactory));
         private static readonly INotificationConfigService _notificationConfigService = new NotificationConfigService(new NotificationConfigRepository(ConnectionFactory), new ProductAlertHistoryRepository(ConnectionFactory));
         private static readonly IPurchaseService _purchaseService = new PurchaseService(new PurchaseRepository(ConnectionFactory));
-        private static readonly ISaleService _saleService = new SaleService(new SaleRepository(ConnectionFactory));
+        // LocalSequenceIssuer: receipts stay internal (numbered by the local sequence, no DTE).
+        // Replace with a provider-backed IFiscalDocumentIssuer to emit electronic documents.
+        private static readonly ISaleService _saleService = new SaleService(new SaleRepository(ConnectionFactory), new LocalSequenceIssuer());
         private static readonly IPermissionService _permissionService = new PermissionService(new PermissionRepository(ConnectionFactory));
 
         #region Supplier

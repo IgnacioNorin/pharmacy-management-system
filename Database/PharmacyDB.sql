@@ -263,6 +263,9 @@ CREATE TABLE [dbo].[sale](
     [recipient_commune] [varchar](60) NULL,
     [reference_id] [int] NULL,
     [reference_reason] [varchar](255) NULL,
+    [fiscal_status] [varchar](20) NOT NULL CONSTRAINT [DF_sale_fiscal_status] DEFAULT ('interno'),
+    [fiscal_track_id] [varchar](64) NULL,
+    [fiscal_barcode] [varchar](512) NULL,
     [date_registered] [datetime] NULL,
     CONSTRAINT [PK__VENTA__BC1240BD8994C395] PRIMARY KEY CLUSTERED ([id] ASC)
 )

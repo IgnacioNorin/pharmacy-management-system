@@ -11,17 +11,32 @@ namespace PharmacySystem.Business
     public class SaleService : ISaleService
     {
         private readonly ISaleRepository _repository;
+        private readonly IFiscalDocumentIssuer _issuer;
 
-        public SaleService(ISaleRepository repository)
+        public SaleService(ISaleRepository repository, IFiscalDocumentIssuer issuer)
         {
             _repository = repository;
+            _issuer = issuer;
         }
 
         public List<Sale> ListSale() => _repository.ListSale();
 
         public List<SaleDetail> ListSaleDetail() => _repository.ListSaleDetail();
 
-        public int Register(Sale sale) => _repository.Register(sale);
+        public int Register(Sale sale)
+        {
+            int id = _repository.Register(sale);
+            if (id == 0)
+                return 0;
+
+            // Hand the persisted sale to the fiscal issuer and store back whatever it resolves
+            // (status, and for a real DTE also the tracking id / barcode / assigned folio).
+            var fiscal = _issuer.Issue(id, sale);
+            if (fiscal != null)
+                _repository.SaveFiscalResult(id, fiscal);
+
+            return id;
+        }
 
         public SaleLookup FindByDocument(string documentType, string documentNumber) =>
             _repository.FindByDocument(documentType, documentNumber);

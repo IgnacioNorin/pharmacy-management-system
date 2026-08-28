@@ -30,6 +30,12 @@ namespace PharmacySystem.Model
         // Set on a Nota de Credito: the id of the sale it reverses, plus the reason.
         public int? referenceId { get; set; }
         public string referenceReason { get; set; }
+        // Fiscal issuance status. Defaults to "interno": the receipt is numbered by the local
+        // sequence and no tax authority is contacted. A DTE-provider issuer fills trackId /
+        // barcode and moves the status to pendiente / aceptado / rechazado.
+        public string fiscalStatus { get; set; } = "interno";
+        public string fiscalTrackId { get; set; }
+        public string fiscalBarcode { get; set; }
         public DateTime registrationDate { get; set; }
         public List<SaleDetail> oSaleDetail { get; set; }
     }

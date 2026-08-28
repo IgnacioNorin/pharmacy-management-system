@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using Dapper;
+using PharmacySystem.Fiscal;
 using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 
@@ -31,6 +32,7 @@ namespace PharmacySystem.Data
                         "recipient_tax_id AS recipientTaxId, recipient_business_name AS recipientBusinessName, " +
                         "recipient_activity AS recipientActivity, recipient_address AS recipientAddress, " +
                         "recipient_commune AS recipientCommune, reference_id AS referenceId, reference_reason AS referenceReason, " +
+                        "fiscal_status AS fiscalStatus, fiscal_track_id AS fiscalTrackId, fiscal_barcode AS fiscalBarcode, " +
                         "date_registered AS registrationDate FROM sale";
 
                     return oConnection.Query<Sale>(sql).ToList();
@@ -170,6 +172,38 @@ namespace PharmacySystem.Data
                 {
                     Logger.LogError(ex);
                     return 0;
+                }
+            }
+        }
+
+        // Stores back the fiscal issuer's outcome. document_number is only overwritten when the
+        // issuer assigned its own folio (result.DocumentNumber not null); otherwise the number
+        // set by Register stays.
+        public void SaveFiscalResult(int saleId, FiscalDocumentResult result)
+        {
+            if (result == null)
+                return;
+
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    const string sql =
+                        "UPDATE sale SET fiscal_status = @status, fiscal_track_id = @trackId, fiscal_barcode = @barcode, " +
+                        "document_number = COALESCE(@documentNumber, document_number) WHERE id = @id";
+
+                    oConnection.Execute(sql, new
+                    {
+                        id = saleId,
+                        status = result.Status,
+                        trackId = result.TrackId,
+                        barcode = result.Barcode,
+                        documentNumber = result.DocumentNumber
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
                 }
             }
         }
