@@ -35,17 +35,20 @@ namespace PharmacySystem.Helpers
             return value.ToString("0.00",CultureInfo.InvariantCulture);
         }
 
-        // FormatAsCurrency uses the active currency culture's own grouping/decimal separators, so a
-        // value it produced (always starting with "$") must be parsed back the same way - naively
+        // FormatAsCurrency uses the active currency culture's own symbol / grouping / decimal
+        // separators, so a value it produced must be parsed back with that same culture - naively
         // swapping "," for "." breaks as soon as a thousands separator is present (e.g. "$1.234,50"
         // would become "1.234.50", either throwing or being misread as 123450 depending on the
-        // machine's culture). Manually typed input (no "$") has no thousands grouping, so a single
-        // "," there is just an alternate decimal separator for the "##.##" hint shown to the user.
+        // machine's culture). A formatted value is recognised by carrying the culture's currency
+        // symbol (not a hard-coded "$": es-PE is "S/", etc.). Manually typed input has no symbol
+        // and no thousands grouping, so a single "," there is just an alternate decimal separator
+        // for the "##.##" hint shown to the user.
         public static decimal CultureInfoConverterStringToDecimal(string value)
         {
             value = value.Trim();
 
-            if (value.StartsWith("$", StringComparison.Ordinal))
+            string currencySymbol = _cultureInfo.NumberFormat.CurrencySymbol;
+            if (!string.IsNullOrEmpty(currencySymbol) && value.IndexOf(currencySymbol, StringComparison.Ordinal) >= 0)
             {
                 return decimal.Parse(value, NumberStyles.Currency, _cultureInfo);
             }

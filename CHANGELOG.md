@@ -171,6 +171,10 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 
 ### Corregido
 
+- **Monto "Paga con" con monedas sin símbolo `$`:** `CultureInfoHelper`
+  reconocía un importe ya formateado buscando `$` fijo; con `es-PE` (Sol, `S/`)
+  u otra moneda sin `$` eso fallaba al reconvertir el texto a número. Ahora usa
+  el símbolo real de la moneda activa.
 - **Alta de cliente / usuario:** `Register` devuelve el id de la fila nueva en
   vez de un booleano. Antes, un cliente o usuario recién creado quedaba con
   `Id = 0` en la grilla y volver a guardarlo desde esa fila lo registraba de

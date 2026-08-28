@@ -144,6 +144,25 @@ namespace PharmacySystem.Tests.Unit
         }
 
         [Fact]
+        public void FormatThenParse_RoundTrips_ForACurrencyWhoseSymbolIsNotDollar()
+        {
+            try
+            {
+                CultureInfoHelper.SetCurrency("es-PE"); // Sol peruano, symbol "S/"
+
+                string formatted = CultureInfoHelper.FormatAsCurrency(1234.50m);
+                Assert.DoesNotContain("$", formatted);
+
+                decimal parsedBack = CultureInfoHelper.CultureInfoConverterStringToDecimal(formatted);
+                Assert.Equal(1234.50m, parsedBack);
+            }
+            finally
+            {
+                CultureInfoHelper.SetCurrency("en-US");
+            }
+        }
+
+        [Fact]
         public void SetCurrency_ChileanPeso_FormatsWithZeroDecimalsAndStillRoundTrips()
         {
             try
