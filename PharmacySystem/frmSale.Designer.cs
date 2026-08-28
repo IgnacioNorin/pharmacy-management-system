@@ -69,7 +69,6 @@
             this.lblreccommune = new System.Windows.Forms.Label();
             this.label17 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
-            this.txtidclient = new System.Windows.Forms.TextBox();
             this.txtidproduct = new System.Windows.Forms.TextBox();
             this.dgdata = new System.Windows.Forms.DataGridView();
             this.txtstock = new System.Windows.Forms.TextBox();
@@ -496,17 +495,7 @@
             this.label3.Size = new System.Drawing.Size(101, 15);
             this.label3.TabIndex = 0;
             this.label3.Text = "Código Producto:";
-            // 
-            // txtidclient
-            // 
-            this.txtidclient.Enabled = false;
-            this.txtidclient.Location = new System.Drawing.Point(206, 37);
-            this.txtidclient.Name = "txtidclient";
-            this.txtidclient.Size = new System.Drawing.Size(16, 20);
-            this.txtidclient.TabIndex = 0;
-            this.txtidclient.Text = "0";
-            this.txtidclient.Visible = false;
-            // 
+            //
             // txtidproduct
             // 
             this.txtidproduct.Enabled = false;
@@ -671,7 +660,6 @@
             this.Controls.Add(this.dgdata);
             this.Controls.Add(this.txtstock);
             this.Controls.Add(this.txtidproduct);
-            this.Controls.Add(this.txtidclient);
             this.Controls.Add(this.btnSearchProduct);
             this.Controls.Add(this.btnSearchClient);
             this.Controls.Add(this.label17);
@@ -759,7 +747,6 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button btnSearchClient;
         private System.Windows.Forms.Button btnSearchProduct;
-        private System.Windows.Forms.TextBox txtidclient;
         private System.Windows.Forms.TextBox txtidproduct;
         private System.Windows.Forms.DataGridView dgdata;
         private System.Windows.Forms.TextBox txtstock;
