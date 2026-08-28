@@ -146,7 +146,7 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void SaleDefinition_UsesNeutralDocumentColumnNames()
+        public void SaleDefinition_HasOneNeutralClientPairNotTwo()
         {
             var f = Create();
 
@@ -155,8 +155,8 @@ namespace PharmacySystem.Tests.Presentation
             var headers = f.View.SaleDefinition.Columns.Select(c => c.Header).ToList();
             Assert.Contains("Documento Vendedor", headers);
             Assert.Contains("Documento Cliente", headers);
-            Assert.Contains("Documento Receptor", headers);
-            Assert.Contains("Razón Social", headers);
+            Assert.Contains("Cliente / Razón Social", headers);
+            Assert.DoesNotContain("Documento Receptor", headers); // merged into "Documento Cliente"
             Assert.DoesNotContain("CI Vendedor", headers);
             Assert.DoesNotContain("CI Cliente", headers);
         }

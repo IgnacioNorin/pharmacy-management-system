@@ -735,6 +735,50 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
+        public void ReportSale_Factura_MergesTheReceptorIntoTheClientColumns()
+        {
+            Person seller = CreatePerson(out string document);
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = CreateProductWithStock(categoryId, 10);
+
+            int saleId = 0;
+            try
+            {
+                saleId = Repository.Register(new Sale
+                {
+                    typeDocument = "Factura",
+                    oPerson = seller,
+                    documentClient = "",           // not duplicated on a Factura
+                    nameClient = "",
+                    recipientTaxId = "76.222.333-4",
+                    recipientBusinessName = "Comercial Test SpA",
+                    recipientActivity = "Comercio", recipientAddress = "Calle 1", recipientCommune = "Centro",
+                    totalPay = 5m, payWith = 5m, change = 0m,
+                    oSaleDetail = new System.Collections.Generic.List<SaleDetail>
+                    {
+                        new SaleDetail { oProduct = new Product { idProduct = productId }, amount = 1, salePrice = 5m, subtotal = 5m }
+                    }
+                });
+                Assert.True(saleId > 0);
+
+                SaleReportRow row = Repository
+                    .ReportSale(System.DateTime.Today.AddDays(-1), System.DateTime.Today.AddDays(1), 0)
+                    .Find(r => r.DocumentNumber != null && r.DocumentType == "Factura" && r.ClientDocument == "76.222.333-4");
+
+                Assert.NotNull(row);
+                Assert.Equal("Comercial Test SpA", row.ClientName);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
+
+        [Fact]
         public void ReportSale_WithAClientId_ReturnsOnlyThatClientSales()
         {
             Person client = CreatePerson(out string document);

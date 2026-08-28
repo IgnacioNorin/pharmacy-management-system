@@ -357,9 +357,9 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Equal("12.345.678-5", sale.recipientTaxId);
             Assert.Equal("Acme SpA", sale.recipientBusinessName);
             Assert.Equal("Santiago", sale.recipientCommune);
-            // The client columns fall back to the recipient identity for a factura.
-            Assert.Equal("12.345.678-5", sale.documentClient);
-            Assert.Equal("Acme SpA", sale.nameClient);
+            // On a Factura the identity is not duplicated into document_client / name_client.
+            Assert.Equal("", sale.documentClient);
+            Assert.Equal("", sale.nameClient);
         }
 
         [Fact]

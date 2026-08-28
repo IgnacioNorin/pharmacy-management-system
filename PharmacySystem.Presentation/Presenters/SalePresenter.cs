@@ -288,8 +288,10 @@ namespace PharmacySystem.Presentation
             {
                 typeDocument = _view.DocumentType,
                 oPerson = new Person { idPerson = _idPerson },
-                documentClient = isFactura ? (_view.RecipientTaxId ?? "").Trim() : _view.DocumentClient.Trim(),
-                nameClient = isFactura ? (_view.RecipientBusinessName ?? "").Trim() : _view.NameClient.Trim(),
+                // On a Factura the fiscal identity lives in recipient_*; document_client /
+                // name_client stay empty so the same data is not stored twice.
+                documentClient = isFactura ? "" : _view.DocumentClient.Trim(),
+                nameClient = isFactura ? "" : _view.NameClient.Trim(),
                 recipientTaxId = isFactura ? (_view.RecipientTaxId ?? "").Trim() : null,
                 recipientBusinessName = isFactura ? (_view.RecipientBusinessName ?? "").Trim() : null,
                 recipientActivity = isFactura ? (_view.RecipientActivity ?? "").Trim() : null,

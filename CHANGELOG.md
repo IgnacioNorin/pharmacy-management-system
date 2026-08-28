@@ -132,9 +132,11 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   ventas, "CI Vendedor" / "CI Cliente" pasan a "Documento Vendedor" / "Documento
   Cliente"; se corrigen acentos en los encabezados ("Código", "Descripción",
   "Categoría", "Número Documento", "Razón Social").
-- **Reporte de ventas: datos del receptor.** Dos columnas nuevas, "Documento
-  Receptor" y "Razón Social", que se llenan cuando la venta es una Factura
-  (vacías en Boleta).
+- **Reporte de ventas: un solo par de columnas para cliente/receptor.**
+  "Documento Cliente" y "Cliente / Razón Social" muestran el cliente en una
+  boleta y el receptor en una factura (el repositorio hace el `COALESCE`). En
+  una factura los datos del receptor ya no se guardan además en
+  `document_client` / `name_client`: se acabó la duplicación.
 - **Reporte de productos: fila de totales.** Total de unidades en stock y
   valorización del inventario a costo (Σ stock × precio de compra) y a precio de
   venta (Σ stock × precio de venta), en la franja bajo la grilla y en la

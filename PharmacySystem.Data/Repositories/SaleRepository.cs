@@ -217,7 +217,7 @@ namespace PharmacySystem.Data
                 {
                     const string sql =
                         "SELECT s.id AS Id, s.document_type AS DocumentType, s.document_number AS DocumentNumber, " +
-                        "s.date_registered AS Date, s.name_client AS ClientName, s.total_amount AS TotalAmount, " +
+                        "s.date_registered AS Date, COALESCE(NULLIF(s.recipient_business_name, ''), s.name_client) AS ClientName, s.total_amount AS TotalAmount, " +
                         "CAST(CASE WHEN s.document_type = 'Nota de Credito' THEN 1 ELSE 0 END AS BIT) AS IsCreditNote, " +
                         "CAST(CASE WHEN EXISTS (SELECT 1 FROM sale nc WHERE nc.reference_id = s.id) THEN 1 ELSE 0 END AS BIT) AS AlreadyCreditNoted " +
                         "FROM sale s WHERE s.document_type = @documentType AND s.document_number = @documentNumber";
@@ -360,8 +360,9 @@ namespace PharmacySystem.Data
                 {
                     const string sql =
                         "SELECT s.date_registered AS DateRegistered, s.document_type AS DocumentType, s.document_number AS DocumentNumber, " +
-                        "p.document_number AS SellerDocument, p.name AS SellerName, s.document_client AS ClientDocument, s.name_client AS ClientName, " +
-                        "s.recipient_tax_id AS RecipientTaxId, s.recipient_business_name AS RecipientBusinessName, " +
+                        "p.document_number AS SellerDocument, p.name AS SellerName, " +
+                        "COALESCE(NULLIF(s.recipient_tax_id, ''), s.document_client) AS ClientDocument, " +
+                        "COALESCE(NULLIF(s.recipient_business_name, ''), s.name_client) AS ClientName, " +
                         "s.net_amount AS NetAmount, s.tax_amount AS TaxAmount, s.exempt_amount AS ExemptAmount, " +
                         "s.total_amount AS TotalAmount, s.amount_received AS AmountReceived, s.change_amount AS ChangeAmount " +
                         "FROM sale s " +
