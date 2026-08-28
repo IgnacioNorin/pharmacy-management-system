@@ -35,7 +35,7 @@ namespace PharmacySystem.Presentation
 
             var summary = new HomeSummary
             {
-                SalesTodayCount = _saleService.ReportSale(today, today).Count,
+                SalesTodayCount = _saleService.ReportSale(today, today, 0).Count,
                 SalesTodayTotal = _saleService.SumTotalPay(today, today),
                 UrgentAlertsCount = alerts.Count(a => a.Severity == AlertSeverity.Critical || a.Severity == AlertSeverity.Expired),
                 OtherAlertsCount = alerts.Count(a => a.Severity == AlertSeverity.Low || a.Severity == AlertSeverity.ExpiringSoon),

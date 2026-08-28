@@ -44,7 +44,7 @@ namespace PharmacySystem.Business
         public CreditNoteResult CreateCreditNote(int originalSaleId, int userId, string reason) =>
             _repository.CreateCreditNote(originalSaleId, userId, reason);
 
-        public List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate) => _repository.ReportSale(startDate, endDate);
+        public List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate, int clientId) => _repository.ReportSale(startDate, endDate, clientId);
 
         public decimal SumTotalPay(DateTime startDate, DateTime endDate) => _repository.SumTotalPay(startDate, endDate);
     }

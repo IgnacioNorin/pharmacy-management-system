@@ -97,10 +97,12 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   "es empresa" (razón social y giro obligatorios si está marcada). La venta
   queda vinculada al cliente elegido (`sale.client_id`, en blanco para
   consumidor final), y al emitir una factura los datos del receptor se
-  precargan desde ese cliente. Migraciones `012_client_fiscal_profile.sql`
-  (`person.business_name` / `activity` / `commune` / `email` / `is_company`,
-  `sale.client_id`) y `013_person_update_fiscal_profile.sql` (`sp_update_person`
-  escribe los campos nuevos).
+  precargan desde ese cliente. El informe de ventas suma un filtro "Cliente"
+  (junto al rango de fechas) que usa ese vínculo. Migraciones
+  `012_client_fiscal_profile.sql` (`person.business_name` / `activity` /
+  `commune` / `email` / `is_company`, `sale.client_id`) y
+  `013_person_update_fiscal_profile.sql` (`sp_update_person` escribe los campos
+  nuevos).
 
 ### Cambiado
 

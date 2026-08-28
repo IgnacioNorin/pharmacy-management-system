@@ -20,6 +20,7 @@ namespace PharmacySystem.Presentation
         private readonly IPurchaseService _purchaseService;
         private readonly IProductService _productService;
         private readonly INotificationConfigService _notificationConfigService;
+        private readonly IPersonService _personService;
         private readonly CurrentUser _currentUser;
 
         public ReportPresenter(
@@ -30,6 +31,7 @@ namespace PharmacySystem.Presentation
             IPurchaseService purchaseService,
             IProductService productService,
             INotificationConfigService notificationConfigService,
+            IPersonService personService,
             CurrentUser currentUser)
         {
             _view = view;
@@ -39,6 +41,7 @@ namespace PharmacySystem.Presentation
             _purchaseService = purchaseService;
             _productService = productService;
             _notificationConfigService = notificationConfigService;
+            _personService = personService;
             _currentUser = currentUser;
         }
 
@@ -55,13 +58,20 @@ namespace PharmacySystem.Presentation
             var categoryOptions = new List<ComboBoxItem> { new ComboBoxItem { Value = "0", Text = "Todos" } };
             categoryOptions.AddRange(_categoryService.List().Select(c => new ComboBoxItem { Value = c.IdCategory, Text = c.description }));
             _view.LoadCategoryOptions(categoryOptions);
+
+            var clientOptions = new List<ComboBoxItem> { new ComboBoxItem { Value = "0", Text = "Todos" } };
+            clientOptions.AddRange(_personService.List()
+                .Where(p => p.oPersonType != null && p.oPersonType.idPersonType == (int)PersonType.Cliente)
+                .Select(p => new ComboBoxItem { Value = p.idPerson, Text = p.name }));
+            _view.LoadSaleClientOptions(clientOptions);
         }
 
         public void OnConsultSale()
         {
             if (!Can("reportes.ventas")) return;
 
-            List<SaleReportRow> rows = _saleService.ReportSale(_view.SaleStartDate, _view.SaleEndDate);
+            int clientId = int.TryParse(_view.SelectedSaleClientId, out int parsedClientId) ? parsedClientId : 0;
+            List<SaleReportRow> rows = _saleService.ReportSale(_view.SaleStartDate, _view.SaleEndDate, clientId);
             _view.SetSaleReport(SaleDefinition, new ReportResult<SaleReportRow>(rows, SaleTotals(rows)));
         }
 

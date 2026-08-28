@@ -733,5 +733,55 @@ namespace PharmacySystem.Tests.Integration
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
             }
         }
+
+        [Fact]
+        public void ReportSale_WithAClientId_ReturnsOnlyThatClientSales()
+        {
+            Person client = CreatePerson(out string document);
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = CreateProductWithStock(categoryId, 20);
+
+            var saleIds = new System.Collections.Generic.List<int>();
+            try
+            {
+                Sale Make(int? cid, string number) => new Sale
+                {
+                    typeDocument = "Boleta",
+                    oPerson = client,
+                    clientId = cid,
+                    documentClient = "x", nameClient = "x",
+                    totalPay = 5m, payWith = 5m, change = 0m,
+                    oSaleDetail = new System.Collections.Generic.List<SaleDetail>
+                    {
+                        new SaleDetail { oProduct = new Product { idProduct = productId }, amount = 1, salePrice = 5m, subtotal = 5m }
+                    }
+                };
+
+                int linked = Repository.Register(Make(client.idPerson, "linked"));
+                int walkIn = Repository.Register(Make(null, "walkin"));
+                saleIds.Add(linked);
+                saleIds.Add(walkIn);
+
+                var start = System.DateTime.Today.AddDays(-1);
+                var end = System.DateTime.Today.AddDays(1);
+
+                var all = Repository.ReportSale(start, end, 0);
+                var forClient = Repository.ReportSale(start, end, client.idPerson);
+
+                Assert.True(all.Count >= 2);
+                Assert.Single(forClient);
+            }
+            finally
+            {
+                foreach (int id in saleIds)
+                {
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", id));
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", id));
+                }
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
     }
 }

@@ -352,7 +352,7 @@ namespace PharmacySystem.Data
             }
         }
 
-        public List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate)
+        public List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate, int clientId)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
@@ -366,9 +366,10 @@ namespace PharmacySystem.Data
                         "s.total_amount AS TotalAmount, s.amount_received AS AmountReceived, s.change_amount AS ChangeAmount " +
                         "FROM sale s " +
                         "INNER JOIN person p ON p.id = s.user_id " +
-                        "WHERE s.date_registered >= @startDate AND s.date_registered < DATEADD(DAY, 1, @endDate)";
+                        "WHERE s.date_registered >= @startDate AND s.date_registered < DATEADD(DAY, 1, @endDate) " +
+                        "AND (@clientId = 0 OR s.client_id = @clientId)";
 
-                    return oConnection.Query<SaleReportRow>(sql, new { startDate = startDate.Date, endDate = endDate.Date }).ToList();
+                    return oConnection.Query<SaleReportRow>(sql, new { startDate = startDate.Date, endDate = endDate.Date, clientId }).ToList();
                 }
                 catch (Exception ex)
                 {

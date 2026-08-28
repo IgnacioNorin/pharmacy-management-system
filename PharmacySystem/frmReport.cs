@@ -47,6 +47,18 @@ namespace PharmacySystem
         public DateTime AlertHistoryEndDate => txtenddatealerthistory.Value;
         public string SelectedSupplierId => ((ComboBoxItem)cbosupplier.SelectedItem).Value.ToString();
         public string SelectedCategoryId => ((ComboBoxItem)cbocategory.SelectedItem).Value.ToString();
+        public string SelectedSaleClientId => (cbosaleclient.SelectedItem as ComboBoxItem)?.Value.ToString() ?? "0";
+
+        public void LoadSaleClientOptions(IReadOnlyList<ComboBoxItem> options)
+        {
+            foreach (ComboBoxItem item in options)
+            {
+                cbosaleclient.Items.Add(item);
+            }
+            cbosaleclient.DisplayMember = "Text";
+            cbosaleclient.ValueMember = "Value";
+            cbosaleclient.SelectedIndex = 0;
+        }
 
         public void LoadSupplierOptions(IReadOnlyList<ComboBoxItem> options)
         {

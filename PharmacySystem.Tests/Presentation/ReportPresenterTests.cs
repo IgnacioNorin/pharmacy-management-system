@@ -11,7 +11,7 @@ namespace PharmacySystem.Tests.Presentation
     {
         private static (ReportPresenter Presenter, FakeReportView View, FakeSupplierService Suppliers,
             FakeCategoryService Categories, FakeSaleService Sales, FakePurchaseService Purchases, FakeProductService Products,
-            FakeNotificationConfigService Notifications) Create()
+            FakeNotificationConfigService Notifications, FakePersonService Persons) Create()
         {
             var view = new FakeReportView();
             var suppliers = new FakeSupplierService();
@@ -20,14 +20,15 @@ namespace PharmacySystem.Tests.Presentation
             var purchases = new FakePurchaseService();
             var products = new FakeProductService();
             var notifications = new FakeNotificationConfigService();
-            var presenter = new ReportPresenter(view, suppliers, categories, sales, purchases, products, notifications,
+            var persons = new FakePersonService();
+            var presenter = new ReportPresenter(view, suppliers, categories, sales, purchases, products, notifications, persons,
                 TestUser.With("reportes.ventas", "reportes.compras", "reportes.productos", "reportes.alertas"));
-            return (presenter, view, suppliers, categories, sales, purchases, products, notifications);
+            return (presenter, view, suppliers, categories, sales, purchases, products, notifications, persons);
         }
 
         private static ReportPresenter PresenterFor(FakeReportView view, params string[] permissions) =>
             new ReportPresenter(view, new FakeSupplierService(), new FakeCategoryService(), new FakeSaleService(),
-                new FakePurchaseService(), new FakeProductService(), new FakeNotificationConfigService(),
+                new FakePurchaseService(), new FakeProductService(), new FakeNotificationConfigService(), new FakePersonService(),
                 TestUser.With(permissions));
 
         private static object Cell<TRow>(ReportDefinition<TRow> definition, TRow row, string header) =>
@@ -71,6 +72,36 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Equal(2, f.View.CategoryOptions.Count);
             Assert.Equal("0", f.View.CategoryOptions[0].Value);
             Assert.Equal(9, f.View.CategoryOptions[1].Value);
+        }
+
+        [Fact]
+        public void OnLoad_LoadsSaleClientOptions_TodosThenOnlyClients()
+        {
+            var f = Create();
+            f.Persons.ListResult = new List<Person>
+            {
+                new Person { idPerson = 7, name = "Clínica Andes", oPersonType = new TypePerson { idPersonType = 4 } }, // Cliente
+                new Person { idPerson = 8, name = "Empleado", oPersonType = new TypePerson { idPersonType = 3 } }
+            };
+
+            f.Presenter.OnLoad();
+
+            Assert.Equal(2, f.View.SaleClientOptions.Count);
+            Assert.Equal("0", f.View.SaleClientOptions[0].Value);
+            Assert.Equal("Todos", f.View.SaleClientOptions[0].Text);
+            Assert.Equal(7, f.View.SaleClientOptions[1].Value);
+            Assert.Equal("Clínica Andes", f.View.SaleClientOptions[1].Text);
+        }
+
+        [Fact]
+        public void OnConsultSale_PassesTheSelectedClientIdToTheService()
+        {
+            var f = Create();
+            f.View.SelectedSaleClientId = "7";
+
+            f.Presenter.OnConsultSale();
+
+            Assert.Equal(7, f.Sales.ReportClientId);
         }
 
         [Fact]

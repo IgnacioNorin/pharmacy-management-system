@@ -69,6 +69,8 @@
             this.dgdataproduct = new System.Windows.Forms.DataGridView();
             this.btnConsultProduct = new System.Windows.Forms.Button();
             this.cbocategory = new System.Windows.Forms.ComboBox();
+            this.cbosaleclient = new System.Windows.Forms.ComboBox();
+            this.lblsaleclient = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
             this.label13 = new System.Windows.Forms.Label();
             this.btnExportProduct = new System.Windows.Forms.Button();
@@ -127,6 +129,8 @@
             this.tabProduct.Controls.Add(this.label9);
             this.tabProduct.Controls.Add(this.label10);
             this.tabProduct.Controls.Add(this.btnConsultSale);
+            this.tabProduct.Controls.Add(this.cbosaleclient);
+            this.tabProduct.Controls.Add(this.lblsaleclient);
             this.tabProduct.Controls.Add(this.btnExportSale);
             this.tabProduct.Controls.Add(this.label3);
             this.tabProduct.Controls.Add(this.label2);
@@ -257,9 +261,27 @@
             this.btnConsultSale.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnConsultSale.UseVisualStyleBackColor = false;
             this.btnConsultSale.Click += new System.EventHandler(this.btnConsultSale_Click);
-            // 
+            //
+            // lblsaleclient
+            //
+            this.lblsaleclient.AutoSize = true;
+            this.lblsaleclient.Location = new System.Drawing.Point(770, 50);
+            this.lblsaleclient.Name = "lblsaleclient";
+            this.lblsaleclient.Size = new System.Drawing.Size(46, 15);
+            this.lblsaleclient.TabIndex = 45;
+            this.lblsaleclient.Text = "Cliente:";
+            //
+            // cbosaleclient
+            //
+            this.cbosaleclient.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbosaleclient.FormattingEnabled = true;
+            this.cbosaleclient.Location = new System.Drawing.Point(822, 45);
+            this.cbosaleclient.Name = "cbosaleclient";
+            this.cbosaleclient.Size = new System.Drawing.Size(260, 23);
+            this.cbosaleclient.TabIndex = 46;
+            //
             // btnExportSale
-            // 
+            //
             this.btnExportSale.BackColor = System.Drawing.Color.WhiteSmoke;
             this.btnExportSale.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnExportSale.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -893,6 +915,8 @@
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.ComboBox cbosupplier;
         private System.Windows.Forms.ComboBox cbocategory;
+        private System.Windows.Forms.ComboBox cbosaleclient;
+        private System.Windows.Forms.Label lblsaleclient;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.Button btnExportProduct;

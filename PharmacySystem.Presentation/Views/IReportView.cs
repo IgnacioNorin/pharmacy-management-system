@@ -14,9 +14,11 @@ namespace PharmacySystem.Presentation
         DateTime AlertHistoryEndDate { get; }
         string SelectedSupplierId { get; }
         string SelectedCategoryId { get; }
+        string SelectedSaleClientId { get; }
 
         void LoadSupplierOptions(IReadOnlyList<ComboBoxItem> options);
         void LoadCategoryOptions(IReadOnlyList<ComboBoxItem> options);
+        void LoadSaleClientOptions(IReadOnlyList<ComboBoxItem> options);
 
         void SetSaleReport(ReportDefinition<SaleReportRow> definition, ReportResult<SaleReportRow> result);
         void SetPurchaseReport(ReportDefinition<PurchaseReportRow> definition, ReportResult<PurchaseReportRow> result);

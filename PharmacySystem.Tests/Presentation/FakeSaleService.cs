@@ -39,7 +39,8 @@ namespace PharmacySystem.Tests.Presentation
             CreditNoteArgs = (originalSaleId, userId, reason);
             return CreateCreditNoteResult;
         }
-        public List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate) => ReportResult;
+        public List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate, int clientId) { ReportClientId = clientId; return ReportResult; }
+        public int ReportClientId { get; private set; }
         public decimal SumTotalPay(DateTime startDate, DateTime endDate) => SumTotalPayResult;
     }
 }

@@ -15,9 +15,11 @@ namespace PharmacySystem.Tests.Presentation
         public DateTime AlertHistoryEndDate { get; set; } = new DateTime(2026, 1, 31);
         public string SelectedSupplierId { get; set; } = "0";
         public string SelectedCategoryId { get; set; } = "0";
+        public string SelectedSaleClientId { get; set; } = "0";
 
         public IReadOnlyList<ComboBoxItem> SupplierOptions { get; private set; }
         public IReadOnlyList<ComboBoxItem> CategoryOptions { get; private set; }
+        public IReadOnlyList<ComboBoxItem> SaleClientOptions { get; private set; }
 
         public ReportDefinition<SaleReportRow> SaleDefinition { get; private set; }
         public ReportResult<SaleReportRow> SaleReport { get; private set; }
@@ -30,6 +32,7 @@ namespace PharmacySystem.Tests.Presentation
 
         public void LoadSupplierOptions(IReadOnlyList<ComboBoxItem> options) => SupplierOptions = options;
         public void LoadCategoryOptions(IReadOnlyList<ComboBoxItem> options) => CategoryOptions = options;
+        public void LoadSaleClientOptions(IReadOnlyList<ComboBoxItem> options) => SaleClientOptions = options;
 
         public void SetSaleReport(ReportDefinition<SaleReportRow> definition, ReportResult<SaleReportRow> result)
         {
