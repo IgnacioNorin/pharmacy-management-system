@@ -41,6 +41,17 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
     `005_protect_admin_general.sql`. Tras aplicarlas el comportamiento es
     idéntico al de la 1.1.0 hasta que un administrador edite un rol.
 
+- **Modelo de IVA (nivel 2, fase A).** La venta ahora guarda su desglose:
+  neto + IVA + exento = total. Los precios se siguen ingresando con IVA
+  incluido; el neto se calcula hacia atrás para la parte afecta. La tasa vive
+  en `store.default_tax_rate` (19 por defecto, pero es configurable, no una
+  constante), y cada producto tiene `tax_affected` (afecto / exento). El ticket
+  muestra NETO / IVA (tasa%) / EXENTO, y el reporte de ventas suma esas tres
+  columnas. Migración `Database/Migrations/007_tax_model.sql` (rellena las
+  ventas existentes asumiendo 100% afecto al 19%). Falta: el campo para marcar
+  un producto como exento en la pantalla de Gestión, y el campo de tasa en la
+  pantalla de Tienda (por ahora la tasa queda en 19).
+
 ### Interno
 
 - Se quitó la referencia muerta a Entity Framework 6 del proyecto WinForms

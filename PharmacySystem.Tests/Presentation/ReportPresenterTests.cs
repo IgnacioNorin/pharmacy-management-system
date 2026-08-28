@@ -89,6 +89,9 @@ namespace PharmacySystem.Tests.Presentation
                     SellerName = "Vendor",
                     ClientDocument = "222",
                     ClientName = "Client",
+                    NetAmount = 13m,
+                    TaxAmount = 2m,
+                    ExemptAmount = 0m,
                     TotalAmount = 15m,
                     AmountReceived = 20m,
                     ChangeAmount = 5m
@@ -101,16 +104,20 @@ namespace PharmacySystem.Tests.Presentation
             f.Presenter.OnConsultSale();
 
             var dt = f.View.SaleReport;
-            Assert.Equal(10, dt.Columns.Count);
+            Assert.Equal(13, dt.Columns.Count);
             Assert.Equal("Nombre Cliente", dt.Columns[6].ColumnName);
+            Assert.Equal("Neto", dt.Columns[7].ColumnName);
+            Assert.Equal("IVA", dt.Columns[8].ColumnName);
+            Assert.Equal("Exento", dt.Columns[9].ColumnName);
             Assert.Equal(3, dt.Rows.Count); // 1 data row + 1 blank spacer + 1 total row
 
             Assert.Equal("17-03-2026", dt.Rows[0]["Fecha Venta"]);
             Assert.Equal("Client", dt.Rows[0]["Nombre Cliente"]);
+            Assert.Contains("$", (string)dt.Rows[0]["Neto"]);
             Assert.Contains("$", (string)dt.Rows[0]["Total Pagar"]);
 
-            // Total row: "Total:" lands under "Nombre Cliente" (column index 6), sums under the
-            // next three columns - same layout as the original ReportSale()'s Rows.Add call.
+            // Total row: "Total:" still lands under "Nombre Cliente" (index 6); the sums follow
+            // under Neto / IVA / Exento / Total Pagar / Pago Con / Cambio.
             Assert.Equal("Total:", dt.Rows[2][6]);
             Assert.Equal(DBNull.Value, dt.Rows[2][0]);
         }

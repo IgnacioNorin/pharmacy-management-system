@@ -88,7 +88,7 @@ namespace PharmacySystem
             new PurchasePresenter(view, _purchaseService, _productService, idPerson);
 
         public static SalePresenter CreateSalePresenter(ISaleView view, int idPerson) =>
-            new SalePresenter(view, _saleService, _productService, idPerson);
+            new SalePresenter(view, _saleService, _productService, _storeService, idPerson);
 
         public static ReportPresenter CreateReportPresenter(IReportView view) =>
             new ReportPresenter(view, _supplierService, _categoryService, _saleService, _purchaseService, _productService, _notificationConfigService, MainForm.Session);

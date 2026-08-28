@@ -182,6 +182,7 @@ CREATE TABLE [dbo].[product](
     [stock] [int] NULL,
     [purchase_price] [decimal](18, 2) NULL,
     [sale_price] [decimal](18, 2) NULL,
+    [tax_affected] [bit] NOT NULL CONSTRAINT [DF_product_tax_affected] DEFAULT ((1)),
     [status] [int] NULL,
     [date_created] [datetime] NULL,
     [date_expired] [datetime] NULL,
@@ -209,6 +210,7 @@ CREATE TABLE [dbo].[store](
     [phone] [varchar](50) NULL,
     [address] [varchar](50) NULL,
     [currency_culture] [varchar](10) NULL,
+    [default_tax_rate] [decimal](5, 2) NOT NULL CONSTRAINT [DF_store_default_tax_rate] DEFAULT ((19)),
     PRIMARY KEY CLUSTERED ([id] ASC),
     -- Single-row store profile: the app always reads/writes id = 1.
     CONSTRAINT [CK_store_singleton] CHECK ([id] = 1)
@@ -250,6 +252,9 @@ CREATE TABLE [dbo].[sale](
     [total_amount] [decimal](18, 2) NULL,
     [amount_received] [decimal](18, 2) NOT NULL,
     [change_amount] [decimal](18, 2) NULL,
+    [net_amount] [decimal](18, 2) NOT NULL CONSTRAINT [DF_sale_net_amount] DEFAULT ((0)),
+    [tax_amount] [decimal](18, 2) NOT NULL CONSTRAINT [DF_sale_tax_amount] DEFAULT ((0)),
+    [exempt_amount] [decimal](18, 2) NOT NULL CONSTRAINT [DF_sale_exempt_amount] DEFAULT ((0)),
     [date_registered] [datetime] NULL,
     CONSTRAINT [PK__VENTA__BC1240BD8994C395] PRIMARY KEY CLUSTERED ([id] ASC)
 )
@@ -262,6 +267,7 @@ CREATE TABLE [dbo].[sale_detail](
     [stock] [int] NULL,
     [sale_price] [decimal](18, 2) NULL,
     [subtotal] [decimal](18, 2) NULL,
+    [tax_affected] [bit] NOT NULL CONSTRAINT [DF_sale_detail_tax_affected] DEFAULT ((1)),
     [date_registered] [datetime] NULL,
     PRIMARY KEY CLUSTERED ([id] ASC)
 )
@@ -530,8 +536,8 @@ GO
 -- (sp_update_notificacion_settings only UPDATEs id = 1), and the alert queries read 0/0.
 IF NOT EXISTS (SELECT 1 FROM [dbo].[store] WHERE id = 1)
 BEGIN
-    INSERT INTO [dbo].[store] (id, document_store, company_name, email, phone, address, currency_culture)
-    VALUES (1, '', 'Mi Farmacia', '', '', '', 'es-EC')
+    INSERT INTO [dbo].[store] (id, document_store, company_name, email, phone, address, currency_culture, default_tax_rate)
+    VALUES (1, '', 'Mi Farmacia', '', '', '', 'es-EC', 19)
 END
 GO
 IF NOT EXISTS (SELECT 1 FROM [dbo].[notification_settings] WHERE id = 1)

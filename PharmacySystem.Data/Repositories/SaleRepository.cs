@@ -26,7 +26,9 @@ namespace PharmacySystem.Data
                     const string sql =
                         "SELECT id AS idSale, document_type AS typeDocument, document_number AS numberDocument, " +
                         "document_client AS documentClient, name_client AS nameClient, total_amount AS totalPay, " +
-                        "amount_received AS payWith, change_amount AS change, date_registered AS registrationDate FROM sale";
+                        "amount_received AS payWith, change_amount AS change, " +
+                        "net_amount AS netAmount, tax_amount AS taxAmount, exempt_amount AS exemptAmount, " +
+                        "date_registered AS registrationDate FROM sale";
 
                     return oConnection.Query<Sale>(sql).ToList();
                 }
@@ -82,8 +84,8 @@ namespace PharmacySystem.Data
                         // same number to two simultaneous sales).
                         const string insertSaleQuery =
                             "DECLARE @folio INT = NEXT VALUE FOR dbo.seq_sale_folio; " +
-                            "INSERT INTO sale(document_type, document_number, user_id, document_client, name_client, total_amount, amount_received, change_amount) " +
-                            "VALUES (@document_type, RIGHT('000000' + CAST(@folio AS VARCHAR(20)), 6), @user_id, @document_client, @name_client, @total_amount, @amount_received, @change_amount); " +
+                            "INSERT INTO sale(document_type, document_number, user_id, document_client, name_client, total_amount, amount_received, change_amount, net_amount, tax_amount, exempt_amount) " +
+                            "VALUES (@document_type, RIGHT('000000' + CAST(@folio AS VARCHAR(20)), 6), @user_id, @document_client, @name_client, @total_amount, @amount_received, @change_amount, @net_amount, @tax_amount, @exempt_amount); " +
                             "SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
                         int idSale = oConnection.ExecuteScalar<int>(insertSaleQuery, new
@@ -94,7 +96,10 @@ namespace PharmacySystem.Data
                             name_client = obj.nameClient,
                             total_amount = obj.totalPay,
                             amount_received = obj.payWith,
-                            change_amount = obj.change
+                            change_amount = obj.change,
+                            net_amount = obj.netAmount,
+                            tax_amount = obj.taxAmount,
+                            exempt_amount = obj.exemptAmount
                         }, objTransacion);
 
                         if (idSale != 0)
@@ -103,8 +108,8 @@ namespace PharmacySystem.Data
                                 "UPDATE product SET stock = stock - @amount WHERE id = @product_id AND stock >= @amount";
 
                             const string insertDetailQuery =
-                                "INSERT INTO sale_detail(sale_id, product_id, stock, sale_price, subtotal) " +
-                                "VALUES (@sale_id, @product_id, @stock, @sale_price, @subtotal)";
+                                "INSERT INTO sale_detail(sale_id, product_id, stock, sale_price, subtotal, tax_affected) " +
+                                "VALUES (@sale_id, @product_id, @stock, @sale_price, @subtotal, @tax_affected)";
 
                             foreach (SaleDetail dv in obj.oSaleDetail)
                             {
@@ -130,7 +135,8 @@ namespace PharmacySystem.Data
                                     product_id = dv.oProduct.idProduct,
                                     stock = dv.amount,
                                     sale_price = dv.salePrice,
-                                    subtotal = dv.subtotal
+                                    subtotal = dv.subtotal,
+                                    tax_affected = dv.taxAffected
                                 }, objTransacion);
                             }
 
@@ -167,6 +173,7 @@ namespace PharmacySystem.Data
                     const string sql =
                         "SELECT s.date_registered AS DateRegistered, s.document_type AS DocumentType, s.document_number AS DocumentNumber, " +
                         "p.document_number AS SellerDocument, p.name AS SellerName, s.document_client AS ClientDocument, s.name_client AS ClientName, " +
+                        "s.net_amount AS NetAmount, s.tax_amount AS TaxAmount, s.exempt_amount AS ExemptAmount, " +
                         "s.total_amount AS TotalAmount, s.amount_received AS AmountReceived, s.change_amount AS ChangeAmount " +
                         "FROM sale s " +
                         "INNER JOIN person p ON p.id = s.user_id " +

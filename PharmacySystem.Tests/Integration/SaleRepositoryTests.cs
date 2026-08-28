@@ -98,6 +98,58 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
+        public void RegisterSale_PersistsVatBreakdownAndPerLineTaxAffectedFlag()
+        {
+            Person person = CreatePerson(out string document);
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = CreateProductWithStock(categoryId, 10);
+
+            int saleId = 0;
+            try
+            {
+                Sale sale = new Sale
+                {
+                    typeDocument = "Boleta",
+                    oPerson = person,
+                    documentClient = "9999999999",
+                    nameClient = "Walk-in client",
+                    totalPay = 1190m,
+                    payWith = 1190m,
+                    change = 0m,
+                    netAmount = 1000m,
+                    taxAmount = 190m,
+                    exemptAmount = 0m,
+                    oSaleDetail = new List<SaleDetail>
+                    {
+                        new SaleDetail
+                        {
+                            oProduct = new Product { idProduct = productId },
+                            amount = 1,
+                            salePrice = 1190m,
+                            subtotal = 1190m,
+                            taxAffected = false
+                        }
+                    }
+                };
+
+                saleId = Repository.Register(sale);
+                Assert.True(saleId > 0);
+
+                Assert.Equal(1000, SqlTestHelper.ExecuteScalarInt("SELECT net_amount FROM sale WHERE id = @id", new SqlParameter("@id", saleId)));
+                Assert.Equal(190, SqlTestHelper.ExecuteScalarInt("SELECT tax_amount FROM sale WHERE id = @id", new SqlParameter("@id", saleId)));
+                Assert.Equal(0, SqlTestHelper.ExecuteScalarInt("SELECT CAST(tax_affected AS INT) FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId)));
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
+
+        [Fact]
         public void RegisterSale_InsufficientStockOnOneLine_RollsBackWholeSale()
         {
             Person person = CreatePerson(out string document);

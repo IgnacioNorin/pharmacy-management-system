@@ -25,8 +25,8 @@ namespace PharmacySystem.Data
                 try
                 {
                     const string sql =
-                        "INSERT INTO product(code, name, description, category_id) " +
-                        "VALUES (@code, @name, @description, @category_id); " +
+                        "INSERT INTO product(code, name, description, category_id, tax_affected) " +
+                        "VALUES (@code, @name, @description, @category_id, @tax_affected); " +
                         "SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
                     return oConnection.ExecuteScalar<int>(sql, new
@@ -34,7 +34,8 @@ namespace PharmacySystem.Data
                         code = obj.code,
                         name = obj.name,
                         description = obj.description,
-                        category_id = obj.oCategory.IdCategory
+                        category_id = obj.oCategory.IdCategory,
+                        tax_affected = obj.taxAffected
                     });
                 }
                 catch (Exception ex) when (SqlErrorCodes.IsUniqueViolation(ex))
@@ -57,7 +58,7 @@ namespace PharmacySystem.Data
                 {
                     const string sql =
                         "UPDATE product SET code = @code, name = @name, description = @description, " +
-                        "category_id = @category_id WHERE id = @id_product;";
+                        "category_id = @category_id, tax_affected = @tax_affected WHERE id = @id_product;";
 
                     oConnection.Execute(sql, new
                     {
@@ -65,7 +66,8 @@ namespace PharmacySystem.Data
                         code = obj.code,
                         name = obj.name,
                         description = obj.description,
-                        category_id = obj.oCategory.IdCategory
+                        category_id = obj.oCategory.IdCategory,
+                        tax_affected = obj.taxAffected
                     });
 
                     return true;
@@ -94,7 +96,8 @@ namespace PharmacySystem.Data
                     // same 01/01/0001 that Convert.ToDateTime(null) produced in the original code.
                     const string sql =
                         "SELECT p.id AS idProduct, p.code, p.name, p.description AS description, p.stock, " +
-                        "p.purchase_price AS purchasePrice, p.sale_price AS salePrice, p.date_expired AS expirationDate, " +
+                        "p.purchase_price AS purchasePrice, p.sale_price AS salePrice, p.tax_affected AS taxAffected, " +
+                        "p.date_expired AS expirationDate, " +
                         "c.id AS IdCategory, c.description AS description " +
                         "FROM product p INNER JOIN category c ON c.id = p.category_id " +
                         "WHERE p.status = 1";

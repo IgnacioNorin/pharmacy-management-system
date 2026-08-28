@@ -7,8 +7,9 @@ namespace PharmacySystem.Tests.Presentation
 {
     public class SalePresenterTests
     {
-        private static SalePresenter CreatePresenter(FakeSaleView view, FakeSaleService saleService, FakeProductService productService, int idPerson = 1)
-            => new SalePresenter(view, saleService, productService, idPerson);
+        private static SalePresenter CreatePresenter(FakeSaleView view, FakeSaleService saleService, FakeProductService productService, int idPerson = 1, decimal taxRate = 19m)
+            => new SalePresenter(view, saleService, productService,
+                new FakeStoreService { ListStoreResult = new Store { defaultTaxRate = taxRate } }, idPerson);
 
         // The cart lives inside the Presenter now, not the View, so tests that need an existing
         // cart line build it through the real OnAddProduct() path instead of pre-seeding view state.
@@ -261,6 +262,47 @@ namespace PharmacySystem.Tests.Presentation
 
             Assert.Equal(new[] { "No se pudo registrar la venta.\nVerifique el stock disponible." }, view.ShownMessages);
             Assert.False(view.SaleCleared);
+        }
+
+        [Fact]
+        public void OnFinishSale_Succeeds_SetsVatBreakdownOnTheSale()
+        {
+            var view = new FakeSaleView { DocumentClient = "1", NameClient = "Juan" };
+            var saleService = new FakeSaleService { RegisterResult = 1 };
+            var presenter = CreatePresenter(view, saleService, new FakeProductService { VerifyResult = true });
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "1190.00");
+
+            view.PayWithText = "1190.00";
+            view.TotalPayText = "1190.00";
+            presenter.OnFinishSale();
+
+            Assert.Equal(1000m, saleService.RegisteredWith.netAmount);
+            Assert.Equal(190m, saleService.RegisteredWith.taxAmount);
+            Assert.Equal(0m, saleService.RegisteredWith.exemptAmount);
+            Assert.True(saleService.RegisteredWith.oSaleDetail[0].taxAffected);
+        }
+
+        [Fact]
+        public void OnFinishSale_ExemptProduct_SetsExemptAmountAndNoTax()
+        {
+            var view = new FakeSaleView { DocumentClient = "1", NameClient = "Juan" };
+            var saleService = new FakeSaleService { RegisterResult = 1 };
+            var productService = new FakeProductService
+            {
+                VerifyResult = true,
+                ListResult = new List<Product> { new Product { idProduct = 1, name = "Exento", taxAffected = false } }
+            };
+            var presenter = CreatePresenter(view, saleService, productService);
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "1000.00");
+
+            view.PayWithText = "1000.00";
+            view.TotalPayText = "1000.00";
+            presenter.OnFinishSale();
+
+            Assert.Equal(0m, saleService.RegisteredWith.netAmount);
+            Assert.Equal(0m, saleService.RegisteredWith.taxAmount);
+            Assert.Equal(1000m, saleService.RegisteredWith.exemptAmount);
+            Assert.False(saleService.RegisteredWith.oSaleDetail[0].taxAffected);
         }
 
         [Fact]

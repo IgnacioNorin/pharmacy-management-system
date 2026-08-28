@@ -31,14 +31,16 @@ namespace PharmacySystem.Presentation
         private readonly ISaleView _view;
         private readonly ISaleService _saleService;
         private readonly IProductService _productService;
+        private readonly IStoreService _storeService;
         private readonly int _idPerson;
         private readonly List<SaleCartLine> _cart = new List<SaleCartLine>();
 
-        public SalePresenter(ISaleView view, ISaleService saleService, IProductService productService, int idPerson)
+        public SalePresenter(ISaleView view, ISaleService saleService, IProductService productService, IStoreService storeService, int idPerson)
         {
             _view = view;
             _saleService = saleService;
             _productService = productService;
+            _storeService = storeService;
             _idPerson = idPerson;
         }
 
@@ -85,13 +87,16 @@ namespace PharmacySystem.Presentation
 
             decimal subTotal = _view.Amount * priceSale;
 
+            Product cartProduct = _productService.List().FirstOrDefault(p => p.idProduct == _view.SelectedProductId);
+
             var line = new SaleCartLine
             {
                 ProductId = _view.SelectedProductId,
                 Name = _view.SelectedProductName,
                 Quantity = _view.Amount,
                 SalePrice = priceSale,
-                SubTotal = subTotal
+                SubTotal = subTotal,
+                TaxAffected = cartProduct?.taxAffected ?? true
             };
 
             _cart.Add(line);
@@ -198,9 +203,14 @@ namespace PharmacySystem.Presentation
                     oProduct = new Product { idProduct = line.ProductId },
                     amount = (int)line.Quantity,
                     salePrice = line.SalePrice,
-                    subtotal = line.SubTotal
+                    subtotal = line.SubTotal,
+                    taxAffected = line.TaxAffected
                 });
             }
+
+            decimal taxRate = _storeService.ListStore()?.defaultTaxRate ?? 19m;
+            TaxCalculator.Breakdown vat = TaxCalculator.Compute(
+                _cart.Select(l => (l.SubTotal, l.TaxAffected)), taxRate);
 
             Sale sale = new Sale
             {
@@ -211,6 +221,9 @@ namespace PharmacySystem.Presentation
                 totalPay = totalToPay,
                 payWith = moneyToPay,
                 change = changeMoney,
+                netAmount = vat.Net,
+                taxAmount = vat.Tax,
+                exemptAmount = vat.Exempt,
                 oSaleDetail = details
             };
 

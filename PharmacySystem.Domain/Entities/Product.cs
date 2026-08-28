@@ -17,6 +17,8 @@ namespace PharmacySystem.Model
         public decimal  purchasePrice { get; set; }
         public decimal  salePrice{ get; set; }
         public DateTime expirationDate { get; set; }
+        // true = the sale price is affected by VAT (the default); false = VAT-exempt item.
+        public bool taxAffected { get; set; } = true;
 
     }
 }

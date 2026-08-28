@@ -80,6 +80,9 @@ namespace PharmacySystem.Presentation
             dt.Columns.Add("Nombre Vendedor", typeof(string));
             dt.Columns.Add("CI Cliente", typeof(string));
             dt.Columns.Add("Nombre Cliente", typeof(string));
+            dt.Columns.Add("Neto", typeof(string));
+            dt.Columns.Add("IVA", typeof(string));
+            dt.Columns.Add("Exento", typeof(string));
             dt.Columns.Add("Total Pagar", typeof(string));
             dt.Columns.Add("Pago Con", typeof(string));
             dt.Columns.Add("Cambio", typeof(string));
@@ -94,6 +97,9 @@ namespace PharmacySystem.Presentation
                     r.SellerName,
                     r.ClientDocument,
                     r.ClientName,
+                    CultureInfoHelper.FormatAsCurrency(r.NetAmount),
+                    CultureInfoHelper.FormatAsCurrency(r.TaxAmount),
+                    CultureInfoHelper.FormatAsCurrency(r.ExemptAmount),
                     CultureInfoHelper.FormatAsCurrency(r.TotalAmount),
                     CultureInfoHelper.FormatAsCurrency(r.AmountReceived),
                     CultureInfoHelper.FormatAsCurrency(r.ChangeAmount));
@@ -101,6 +107,9 @@ namespace PharmacySystem.Presentation
 
             dt.Rows.Add(null, null);
             dt.Rows.Add(null, null, null, null, null, null, "Total:",
+                CultureInfoHelper.FormatAsCurrency(rows.Sum(r => r.NetAmount)),
+                CultureInfoHelper.FormatAsCurrency(rows.Sum(r => r.TaxAmount)),
+                CultureInfoHelper.FormatAsCurrency(rows.Sum(r => r.ExemptAmount)),
                 CultureInfoHelper.FormatAsCurrency(sumTotalPay),
                 CultureInfoHelper.FormatAsCurrency(sumAmountReceived),
                 CultureInfoHelper.FormatAsCurrency(sumChangeAmount));

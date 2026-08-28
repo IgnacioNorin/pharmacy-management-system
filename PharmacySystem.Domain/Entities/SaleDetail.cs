@@ -14,5 +14,7 @@ namespace PharmacySystem.Model
         public int amount { get; set; }
         public decimal salePrice { get; set; }
         public decimal subtotal { get; set; }
+        // Snapshot of the product's taxAffected flag at the moment of the sale.
+        public bool taxAffected { get; set; } = true;
     }
 }

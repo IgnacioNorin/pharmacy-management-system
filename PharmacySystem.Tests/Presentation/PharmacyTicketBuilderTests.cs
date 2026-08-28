@@ -20,7 +20,8 @@ namespace PharmacySystem.Tests.Presentation
             document = "0102030405",
             address = "Av. Siempre Viva",
             phone = "0999999999",
-            email = "contacto@farmacia.com"
+            email = "contacto@farmacia.com",
+            defaultTaxRate = 19m
         };
 
         private static Sale MakeSale() => new Sale
@@ -28,9 +29,12 @@ namespace PharmacySystem.Tests.Presentation
             typeDocument = "Factura",
             numberDocument = "001-001-000001",
             registrationDate = new DateTime(2026, 3, 17, 14, 30, 0),
-            totalPay = 10m,
-            payWith = 20m,
-            change = 10m
+            netAmount = 840m,
+            taxAmount = 160m,
+            exemptAmount = 0m,
+            totalPay = 1000m,
+            payWith = 2000m,
+            change = 1000m
         };
 
         private static List<SaleDetail> MakeDetails() => new List<SaleDetail>
@@ -76,6 +80,8 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Contains("Documento: 0102030405", ticket);
             Assert.Contains("Paracetamol", ticket);
             Assert.Contains("17/03/2026", ticket);
+            Assert.Contains("NETO:", ticket);
+            Assert.Contains("IVA (19%):", ticket);
         }
 
         [Fact]

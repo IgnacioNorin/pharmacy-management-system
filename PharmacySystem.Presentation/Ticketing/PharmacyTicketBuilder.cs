@@ -82,6 +82,17 @@ namespace PharmacySystem.Presentation
 
             formatter.AddCharacter("-");
 
+            // VAT breakdown (net + tax + exempt == totalPay)
+            formatter.AddTwoColumns("NETO:", CultureInfoHelper.FormatAsCurrency(sale.netAmount));
+            string ivaLabel = store.defaultTaxRate > 0
+                ? $"IVA ({store.defaultTaxRate:0.##}%):"
+                : "IVA:";
+            formatter.AddTwoColumns(ivaLabel, CultureInfoHelper.FormatAsCurrency(sale.taxAmount));
+            if (sale.exemptAmount > 0)
+            {
+                formatter.AddTwoColumns("EXENTO:", CultureInfoHelper.FormatAsCurrency(sale.exemptAmount));
+            }
+
             // Totals
             formatter.AddTwoColumns("TOTAL A PAGAR:", CultureInfoHelper.FormatAsCurrency(sale.totalPay));
             formatter.AddTwoColumns("PAGO CON:", CultureInfoHelper.FormatAsCurrency(sale.payWith));
