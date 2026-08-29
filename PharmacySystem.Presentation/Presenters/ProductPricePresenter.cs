@@ -113,11 +113,15 @@ namespace PharmacySystem.Presentation
 
         private static ProductPriceRow ToRow(Product p)
         {
+            // Prefer the moving weighted average; fall back to the last purchase price for a
+            // product that has never been costed.
+            decimal cost = p.averageCost > 0m ? p.averageCost : p.purchasePrice;
+
             decimal? salePrice = p.isReleased ? p.salePrice : (decimal?)null;
             decimal? margin = null;
             if (salePrice.HasValue && salePrice.Value > 0m)
             {
-                margin = Math.Round((salePrice.Value - p.purchasePrice) / salePrice.Value * 100m, 1);
+                margin = Math.Round((salePrice.Value - cost) / salePrice.Value * 100m, 1);
             }
 
             return new ProductPriceRow
@@ -126,7 +130,7 @@ namespace PharmacySystem.Presentation
                 Code = p.code,
                 Name = p.name,
                 Stock = p.stock,
-                Cost = p.purchasePrice,
+                Cost = cost,
                 SalePrice = salePrice,
                 MarginPercent = margin,
                 TaxAffected = p.taxAffected

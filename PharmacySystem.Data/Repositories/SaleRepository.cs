@@ -121,9 +121,13 @@ namespace PharmacySystem.Data
                             const string subtractStockQuery =
                                 "UPDATE product SET stock = stock - @amount WHERE id = @product_id AND stock >= @amount";
 
+                            // unit_cost freezes the product's average cost on the line, so the
+                            // margin of this sale stays fixed even if the cost changes later.
                             const string insertDetailQuery =
-                                "INSERT INTO sale_detail(sale_id, product_id, stock, sale_price, subtotal, tax_affected) " +
-                                "VALUES (@sale_id, @product_id, @stock, @sale_price, @subtotal, @tax_affected)";
+                                "INSERT INTO sale_detail(sale_id, product_id, stock, sale_price, unit_cost, subtotal, tax_affected) " +
+                                "VALUES (@sale_id, @product_id, @stock, @sale_price, " +
+                                "(SELECT ISNULL(average_cost, purchase_price) FROM product WHERE id = @product_id), " +
+                                "@subtotal, @tax_affected)";
 
                             foreach (SaleDetail dv in obj.oSaleDetail)
                             {

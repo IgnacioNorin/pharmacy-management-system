@@ -15,6 +15,8 @@ namespace PharmacySystem.Model
         public Categories oCategory { get; set; }
         public int stock { get; set; }
         public decimal  purchasePrice { get; set; }
+        // Moving weighted average cost, recomputed on every purchase. 0 until the first purchase.
+        public decimal  averageCost { get; set; }
         public decimal  salePrice{ get; set; }
         public DateTime expirationDate { get; set; }
         // true = the sale price is affected by VAT (the default); false = VAT-exempt item.

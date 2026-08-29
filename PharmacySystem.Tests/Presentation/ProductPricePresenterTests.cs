@@ -11,7 +11,7 @@ namespace PharmacySystem.Tests.Presentation
         private static ProductPricePresenter Create(FakeProductPriceView view, FakeProductService productService, params string[] permissions)
             => new ProductPricePresenter(view, productService, TestUser.With(permissions.Length == 0 ? new[] { "productos.editar_precios" } : permissions));
 
-        private static Product Prod(int id, string code, int stock, bool released, decimal cost = 0m, decimal salePrice = 0m) => new Product
+        private static Product Prod(int id, string code, int stock, bool released, decimal cost = 0m, decimal salePrice = 0m, decimal averageCost = 0m) => new Product
         {
             idProduct = id,
             code = code,
@@ -19,6 +19,7 @@ namespace PharmacySystem.Tests.Presentation
             stock = stock,
             isReleased = released,
             purchasePrice = cost,
+            averageCost = averageCost,
             salePrice = salePrice,
             oCategory = new Categories { description = "cat" }
         };
@@ -43,6 +44,25 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Equal(new[] { 3 }, view.Commercialized.Select(r => r.Id));
             Assert.Null(view.Releasable[0].SalePrice);
             Assert.Equal(40m, view.Commercialized[0].MarginPercent); // (10 - 6) / 10 * 100
+        }
+
+        [Fact]
+        public void OnLoad_MarginUsesTheWeightedAverageCostWhenItIsSet()
+        {
+            var view = new FakeProductPriceView();
+            var service = new FakeProductService
+            {
+                ListResult = new List<Product>
+                {
+                    // last purchase price 6, but the moving average is 8 -> margin is over 8
+                    Prod(1, "A", stock: 3, released: true, cost: 6m, salePrice: 10m, averageCost: 8m)
+                }
+            };
+
+            Create(view, service).OnLoad();
+
+            Assert.Equal(8m, view.Commercialized[0].Cost);
+            Assert.Equal(20m, view.Commercialized[0].MarginPercent); // (10 - 8) / 10 * 100
         }
 
         [Fact]

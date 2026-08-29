@@ -98,7 +98,7 @@ namespace PharmacySystem.Data
                     using (SqlTransaction tx = oConnection.BeginTransaction())
                     {
                         ProductPriceSnapshot current = oConnection.QueryFirstOrDefault<ProductPriceSnapshot>(
-                            "SELECT is_released, purchase_price FROM product WHERE id = @idProduct",
+                            "SELECT is_released, ISNULL(average_cost, purchase_price) AS cost FROM product WHERE id = @idProduct",
                             new { idProduct }, tx);
 
                         if (current == null)
@@ -116,7 +116,7 @@ namespace PharmacySystem.Data
                         oConnection.Execute(
                             "INSERT INTO product_price_history(product_id, event_type, sale_price, cost, user_id, reason) " +
                             "VALUES (@idProduct, @eventType, @salePrice, @cost, @userId, @reason)",
-                            new { idProduct, eventType, salePrice, cost = current.purchase_price, userId, reason }, tx);
+                            new { idProduct, eventType, salePrice, cost = current.cost, userId, reason }, tx);
 
                         tx.Commit();
                         return true;
@@ -151,7 +151,7 @@ namespace PharmacySystem.Data
 
                         oConnection.Execute(
                             "INSERT INTO product_price_history(product_id, event_type, sale_price, cost, user_id, reason) " +
-                            "SELECT id, 'retiro', ISNULL(sale_price, 0), purchase_price, @userId, @reason FROM product WHERE id = @idProduct",
+                            "SELECT id, 'retiro', ISNULL(sale_price, 0), ISNULL(average_cost, purchase_price), @userId, @reason FROM product WHERE id = @idProduct",
                             new { idProduct, userId, reason }, tx);
 
                         tx.Commit();
@@ -194,8 +194,8 @@ namespace PharmacySystem.Data
         // Convert.ToDateTime(null) produced in the original code.
         private const string ProductSelect =
             "SELECT p.id AS idProduct, p.code, p.name, p.description AS description, p.stock, " +
-            "p.purchase_price AS purchasePrice, p.sale_price AS salePrice, p.tax_affected AS taxAffected, " +
-            "p.is_released AS isReleased, p.date_expired AS expirationDate, " +
+            "p.purchase_price AS purchasePrice, p.average_cost AS averageCost, p.sale_price AS salePrice, " +
+            "p.tax_affected AS taxAffected, p.is_released AS isReleased, p.date_expired AS expirationDate, " +
             "c.id AS IdCategory, c.description AS description " +
             "FROM product p INNER JOIN category c ON c.id = p.category_id " +
             "WHERE p.status = 1";
@@ -203,7 +203,7 @@ namespace PharmacySystem.Data
         private class ProductPriceSnapshot
         {
             public bool is_released { get; set; }
-            public decimal? purchase_price { get; set; }
+            public decimal? cost { get; set; }
         }
 
         public List<Product> List() => QueryProducts(ProductSelect);

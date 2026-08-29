@@ -58,8 +58,16 @@ namespace PharmacySystem.Data
                             // line above; on the product master the date only moves EARLIER, so a
                             // newer lot with a later expiry does not switch off the alert for older
                             // stock still on the shelf.
+                            //
+                            // average_cost is a moving weighted average. Every SET clause reads the
+                            // pre-update column values, so `stock` here is the stock BEFORE this
+                            // purchase: avg' = (oldStock*oldAvg + qty*buyCost) / (oldStock + qty).
                             const string updateProductQuery =
-                                "UPDATE product SET stock = (stock + @quantity), purchase_price = @purchase_price, " +
+                                "UPDATE product SET " +
+                                "average_cost = CASE WHEN ISNULL(stock, 0) + @quantity <= 0 THEN @purchase_price " +
+                                "ELSE ROUND((ISNULL(stock, 0) * ISNULL(average_cost, @purchase_price) + @quantity * @purchase_price) " +
+                                "/ (ISNULL(stock, 0) + @quantity), 2) END, " +
+                                "stock = (stock + @quantity), purchase_price = @purchase_price, " +
                                 "date_expired = CASE WHEN date_expired IS NULL OR @date_expired < date_expired THEN @date_expired ELSE date_expired END " +
                                 "WHERE id = @product_id";
 

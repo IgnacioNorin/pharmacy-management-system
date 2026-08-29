@@ -64,6 +64,7 @@ fijan al inicio; `sqlcmd` por defecto los deja en `OFF`).
 | `018_purchase_detail_expiry.sql` | 1.2.0 | 1.2.0 (`purchase_detail.date_expired`: guarda el vencimiento de cada lote comprado; el maestro `product.date_expired` solo se adelanta, nunca se atrasa, en la compra) |
 | `019_price_management.sql` | 1.2.0 | 1.2.0 (`product.is_released`: estado de comercialización, backfill `= 1` si `sale_price > 0`; tabla `product_price_history` con costo, usuario y motivo por cada cambio de precio) |
 | `020_purchase_invoice_unique.sql` | 1.2.0 | 1.2.0 (índice único `UX_purchase_supplier_document` sobre `purchase(supplier_id, document_type, document_number)`: no se puede registrar dos veces la misma factura de un proveedor) |
+| `021_weighted_average_cost.sql` | 1.2.0 | 1.2.0 (`product.average_cost`: costo promedio ponderado recalculado en cada compra, backfill desde `purchase_price`; `sale_detail.unit_cost`: costo del producto congelado por línea al vender) |
 
 ## Si un paso falla por datos preexistentes
 

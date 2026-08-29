@@ -99,6 +99,51 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
+        public void RegisterSale_FreezesTheProductAverageCostOnTheDetailLine()
+        {
+            Person person = CreatePerson(out string document);
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = CreateProductWithStock(categoryId, 10);
+            SqlTestHelper.ExecuteNonQuery("UPDATE product SET average_cost = 7.50 WHERE id = @id", new SqlParameter("@id", productId));
+
+            int saleId = 0;
+            try
+            {
+                saleId = Repository.Register(new Sale
+                {
+                    typeDocument = "Boleta",
+                    oPerson = person,
+                    documentClient = "9999999999",
+                    nameClient = "Walk-in client",
+                    totalPay = 20m, payWith = 20m, change = 0m,
+                    oSaleDetail = new List<SaleDetail>
+                    {
+                        new SaleDetail { oProduct = new Product { idProduct = productId }, amount = 2, salePrice = 10m, subtotal = 20m }
+                    }
+                });
+                Assert.True(saleId > 0);
+
+                decimal unitCost = (decimal)SqlTestHelper.ExecuteScalar(
+                    "SELECT unit_cost FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
+                Assert.Equal(7.50m, unitCost);
+
+                // Changing the cost afterwards does not touch the frozen line.
+                SqlTestHelper.ExecuteNonQuery("UPDATE product SET average_cost = 99 WHERE id = @id", new SqlParameter("@id", productId));
+                unitCost = (decimal)SqlTestHelper.ExecuteScalar(
+                    "SELECT unit_cost FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
+                Assert.Equal(7.50m, unitCost);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
+
+        [Fact]
         public void RegisterSale_BoletaAndFactura_NumberedByIndependentSequences()
         {
             Person person = CreatePerson(out string document);

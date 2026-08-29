@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Linq;
 using PharmacySystem.Data;
 using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
@@ -94,6 +95,83 @@ namespace PharmacySystem.Tests.Integration
             {
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase_detail WHERE purchase_id = @id", new SqlParameter("@id", purchaseId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase WHERE id = @id", new SqlParameter("@id", purchaseId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM supplier WHERE id = @id", new SqlParameter("@id", supplierId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
+
+        [Fact]
+        public void Register_TwoPurchases_MovesTheWeightedAverageCost()
+        {
+            string document = SqlTestHelper.NewTag();
+            PersonRepo.Register(new Person
+            {
+                document = document,
+                name = "Avg tester",
+                address = "Address",
+                phone = "0999999999",
+                password = "Passw0rd!",
+                oPersonType = new TypePerson { idPersonType = PersonTypeId() }
+            });
+            Person person = PersonRepo.GetByDocument(document);
+
+            int supplierId = SupplierRepo.Register(new Supplier
+            {
+                document = SqlTestHelper.NewTag(),
+                companyName = "Avg supplier",
+                email = "supplier@test.local",
+                phone = "0999999999"
+            });
+
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = ProductRepo.Register(new Product
+            {
+                code = SqlTestHelper.NewTag(),
+                name = "Avg product",
+                description = "Avg product",
+                oCategory = new Categories { IdCategory = categoryId }
+            });
+
+            var purchaseIds = new List<int>();
+            try
+            {
+                void Buy(int qty, decimal unitCost)
+                {
+                    string doc = SqlTestHelper.NewTag();
+                    Assert.True(Repository.Register(new Purchase
+                    {
+                        oPerson = person,
+                        oSupplier = new Supplier { idSupplier = supplierId },
+                        totalAmount = qty * unitCost,
+                        documentType = "Factura",
+                        documentNumber = doc,
+                        oPurchaseDetail = new List<PurchaseDetail>
+                        {
+                            new PurchaseDetail { oProduct = new Product { idProduct = productId }, quantity = qty, expirationDate = DateTime.Today.AddYears(1), purchasePrice = unitCost, total = qty * unitCost }
+                        }
+                    }));
+                    purchaseIds.Add(SqlTestHelper.ExecuteScalarInt("SELECT id FROM purchase WHERE document_number = @doc", new SqlParameter("@doc", doc)));
+                }
+
+                Buy(10, 3m);   // avg = 3
+                Product afterFirst = ProductRepo.List().Single(p => p.idProduct == productId);
+                Assert.Equal(3m, afterFirst.averageCost);
+
+                Buy(10, 5m);   // (10*3 + 10*5) / 20 = 4
+                Product afterSecond = ProductRepo.List().Single(p => p.idProduct == productId);
+                Assert.Equal(4m, afterSecond.averageCost);
+                Assert.Equal(5m, afterSecond.purchasePrice); // last price, not the average
+                Assert.Equal(20, afterSecond.stock);
+            }
+            finally
+            {
+                foreach (int id in purchaseIds)
+                {
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase_detail WHERE purchase_id = @id", new SqlParameter("@id", id));
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase WHERE id = @id", new SqlParameter("@id", id));
+                }
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM supplier WHERE id = @id", new SqlParameter("@id", supplierId));
