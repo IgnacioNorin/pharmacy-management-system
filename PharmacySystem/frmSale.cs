@@ -12,10 +12,35 @@ namespace PharmacySystem
     {
         private readonly SalePresenter _presenter;
 
+        // Built in code so the large frmSale Designer stays untouched. Sits between the "Cambio"
+        // field and the "Terminar Venta" button.
+        private System.Windows.Forms.ComboBox cbopaymentmethod;
+
         public frmSale(int idperson = 0)
         {
             InitializeComponent();
+            BuildPaymentMethodCombo();
             _presenter = CompositionRoot.CreateSalePresenter(this, idperson);
+        }
+
+        private void BuildPaymentMethodCombo()
+        {
+            var lbl = new System.Windows.Forms.Label
+            {
+                Text = "Forma de pago:",
+                Location = new System.Drawing.Point(795, 496),
+                AutoSize = true
+            };
+            cbopaymentmethod = new System.Windows.Forms.ComboBox
+            {
+                Location = new System.Drawing.Point(795, 513),
+                Size = new System.Drawing.Size(150, 21),
+                DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList,
+                DisplayMember = "Text",
+                ValueMember = "Value"
+            };
+            Controls.Add(lbl);
+            Controls.Add(cbopaymentmethod);
         }
 
         private void frmSale_Load(object sender, EventArgs e)
@@ -210,6 +235,7 @@ namespace PharmacySystem
         string ISaleView.TotalPayText => txttotalpay.Text;
         string ISaleView.ChangeText => txtchange.Text;
         string ISaleView.DocumentType => ((ComboBoxItem)cbodocumenttype.SelectedItem)?.Value.ToString() ?? "";
+        string ISaleView.PaymentMethod => ((ComboBoxItem)cbopaymentmethod.SelectedItem)?.Value.ToString() ?? "";
 
         public string RecipientTaxId => txtrectaxid.Text;
         public string RecipientBusinessName => txtrecname.Text;
@@ -239,12 +265,18 @@ namespace PharmacySystem
         public void ShowMessage(string message) =>
             MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 
-        public void SetDocumentTypeOptions(IReadOnlyList<string> options, string selected)
+        public void SetDocumentTypeOptions(IReadOnlyList<string> options, string selected) =>
+            FillOptionCombo(cbodocumenttype, options, selected);
+
+        public void SetPaymentMethodOptions(IReadOnlyList<string> options, string selected) =>
+            FillOptionCombo(cbopaymentmethod, options, selected);
+
+        private static void FillOptionCombo(ComboBox combo, IReadOnlyList<string> options, string selected)
         {
-            cbodocumenttype.Items.Clear();
+            combo.Items.Clear();
             foreach (string option in options)
             {
-                cbodocumenttype.Items.Add(new ComboBoxItem { Value = option, Text = option });
+                combo.Items.Add(new ComboBoxItem { Value = option, Text = option });
             }
 
             int index = 0;
@@ -256,9 +288,9 @@ namespace PharmacySystem
                     break;
                 }
             }
-            if (cbodocumenttype.Items.Count > 0)
+            if (combo.Items.Count > 0)
             {
-                cbodocumenttype.SelectedIndex = index;
+                combo.SelectedIndex = index;
             }
         }
 

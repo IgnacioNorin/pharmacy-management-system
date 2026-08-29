@@ -117,6 +117,7 @@ namespace PharmacySystem.Presentation
 
             // Totals
             formatter.AddTwoColumns("TOTAL A PAGAR:", CultureInfoHelper.FormatAsCurrency(sale.totalPay));
+            formatter.AddTwoColumns("FORMA DE PAGO:", string.IsNullOrWhiteSpace(sale.paymentMethod) ? PaymentMethods.Default : sale.paymentMethod);
             formatter.AddTwoColumns("PAGO CON:", CultureInfoHelper.FormatAsCurrency(sale.payWith));
             formatter.AddTwoColumns("CAMBIO:", CultureInfoHelper.FormatAsCurrency(sale.change));
 

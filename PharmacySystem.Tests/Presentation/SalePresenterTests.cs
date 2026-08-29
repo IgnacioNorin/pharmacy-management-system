@@ -38,6 +38,8 @@ namespace PharmacySystem.Tests.Presentation
 
             Assert.Equal(new[] { "Boleta", "Factura" }, view.DocumentTypeOptions);
             Assert.Equal("Factura", view.SelectedDocumentTypeOption);
+            Assert.Equal(new[] { "Efectivo", "Tarjeta", "Transferencia" }, view.PaymentMethodOptions);
+            Assert.Equal("Efectivo", view.SelectedPaymentMethodOption);
         }
 
         [Fact]
@@ -535,6 +537,21 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Single(saleService.RegisteredWith.oSaleDetail);
             Assert.True(view.SaleCleared);
             Assert.Equal(99, view.RegisteredSaleId);
+        }
+
+        [Fact]
+        public void OnFinishSale_CarriesTheSelectedPaymentMethodOntoTheSale()
+        {
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan", PaymentMethod = "Tarjeta" };
+            var saleService = new FakeSaleService { RegisterResult = 1 };
+            var presenter = CreatePresenter(view, saleService, new FakeProductService { VerifyResult = true });
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            view.PayWithText = "10.00";
+            view.TotalPayText = "10.00";
+            presenter.OnFinishSale();
+
+            Assert.Equal("Tarjeta", saleService.RegisteredWith.paymentMethod);
         }
 
         // Fase 2 of the alerts rework: a successful sale must let MainForm know stock just

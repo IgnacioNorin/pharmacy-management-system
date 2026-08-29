@@ -4,6 +4,14 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 
 ## [Sin publicar]
 
+### Agregado
+
+- **Forma de pago en la venta.** La pantalla de venta pide cómo se cobró
+  (Efectivo / Tarjeta / Transferencia), un método por venta. Se guarda en
+  `sale.payment_method` (migración `023`), sale en el comprobante y hay una
+  columna "Forma de Pago" en el reporte de ventas. Las ventas anteriores quedan
+  en Efectivo.
+
 ### Cambiado
 
 - **Baja lógica coherente.** Un proveedor referenciado por compras se da de baja

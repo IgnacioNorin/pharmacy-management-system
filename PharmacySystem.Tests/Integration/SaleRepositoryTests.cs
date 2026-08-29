@@ -69,6 +69,7 @@ namespace PharmacySystem.Tests.Integration
                     totalPay = 15m,
                     payWith = 20m,
                     change = 5m,
+                    paymentMethod = "Transferencia",
                     oSaleDetail = new List<SaleDetail>
                     {
                         new SaleDetail
@@ -93,6 +94,7 @@ namespace PharmacySystem.Tests.Integration
                 Sale one = Repository.GetById(saleId);
                 Assert.NotNull(one);
                 Assert.Equal("Walk-in client", one.nameClient);
+                Assert.Equal("Transferencia", one.paymentMethod);
                 Assert.Null(Repository.GetById(-1));
 
                 var lines = Repository.GetDetailsBySaleId(saleId);

@@ -204,6 +204,7 @@ namespace PharmacySystem
                 ticketText = ticketText.Replace("¡detalleventa!", tableRows.ToString());
 
                 ticketText = ticketText.Replace("¡totalpagar!", CultureInfoHelper.FormatAsCurrency(sale.totalPay));
+                ticketText = ticketText.Replace("¡formapago!", string.IsNullOrWhiteSpace(sale.paymentMethod) ? PaymentMethods.Default : sale.paymentMethod);
                 ticketText = ticketText.Replace("¡pagocon!", CultureInfoHelper.FormatAsCurrency(sale.payWith));
                 ticketText = ticketText.Replace("¡cambio!", CultureInfoHelper.FormatAsCurrency(sale.change));
 

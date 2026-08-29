@@ -152,6 +152,7 @@ namespace PharmacySystem.Presentation
             new ReportColumn<SaleReportRow>("IVA", ReportValueType.Currency, r => r.TaxAmount),
             new ReportColumn<SaleReportRow>("Exento", ReportValueType.Currency, r => r.ExemptAmount),
             new ReportColumn<SaleReportRow>("Total Pagar", ReportValueType.Currency, r => r.TotalAmount),
+            new ReportColumn<SaleReportRow>("Forma de Pago", ReportValueType.Text, r => r.PaymentMethod),
             new ReportColumn<SaleReportRow>("Pago Con", ReportValueType.Currency, r => r.AmountReceived),
             new ReportColumn<SaleReportRow>("Cambio", ReportValueType.Currency, r => r.ChangeAmount)
         });

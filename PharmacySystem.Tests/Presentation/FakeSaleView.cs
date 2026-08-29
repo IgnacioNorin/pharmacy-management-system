@@ -17,6 +17,7 @@ namespace PharmacySystem.Tests.Presentation
         public string TotalPayText { get; set; } = "0";
         public string ChangeText { get; set; } = "0";
         public string DocumentType { get; set; } = "Boleta";
+        public string PaymentMethod { get; set; } = "Efectivo";
 
         public string RecipientTaxId { get; set; } = "";
         public string RecipientBusinessName { get; set; } = "";
@@ -31,6 +32,15 @@ namespace PharmacySystem.Tests.Presentation
             DocumentTypeOptions = options;
             SelectedDocumentTypeOption = selected;
             DocumentType = selected; // mirrors the real combo landing on the selected item
+        }
+
+        public IReadOnlyList<string> PaymentMethodOptions { get; private set; }
+        public string SelectedPaymentMethodOption { get; private set; }
+        public void SetPaymentMethodOptions(IReadOnlyList<string> options, string selected)
+        {
+            PaymentMethodOptions = options;
+            SelectedPaymentMethodOption = selected;
+            PaymentMethod = selected;
         }
 
         public bool? FacturaFieldsVisible { get; private set; }

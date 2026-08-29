@@ -34,7 +34,8 @@ namespace PharmacySystem.Tests.Presentation
             exemptAmount = 0m,
             totalPay = 1000m,
             payWith = 2000m,
-            change = 1000m
+            change = 1000m,
+            paymentMethod = "Tarjeta"
         };
 
         private static List<SaleDetail> MakeDetails() => new List<SaleDetail>
@@ -82,6 +83,8 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Contains("17/03/2026", ticket);
             Assert.Contains("NETO:", ticket);
             Assert.Contains("IVA (19%):", ticket);
+            Assert.Contains("FORMA DE PAGO:", ticket);
+            Assert.Contains("Tarjeta", ticket);
             Assert.Contains("Cliente: Público General", ticket); // no recipient block for a plain sale
         }
 
