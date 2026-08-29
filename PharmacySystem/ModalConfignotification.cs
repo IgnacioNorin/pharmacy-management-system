@@ -34,11 +34,16 @@ namespace PharmacySystem
         public void ShowSaveFailed() =>
             MessageBox.Show("No se pudo guardar/revise los valores", "Fallido", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
+        public void ShowMessage(string message) =>
+            MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
         #endregion
 
         private void ModalConfignotificacion_Load(object sender, EventArgs e)
         {
             _presenter.OnLoad();
+
+            btnSaveConfig.Enabled = MainForm.Session?.Can("alertas.configurar") ?? false;
         }
 
         private void btnSaveConfig_Click(object sender, EventArgs e)

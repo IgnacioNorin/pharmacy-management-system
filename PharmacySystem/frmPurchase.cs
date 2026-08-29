@@ -23,13 +23,12 @@ namespace PharmacySystem
         private Dictionary<string, string> namesMessages = new Dictionary<string, string>
         {
             { "txtnumberdocument", "Número Documento" },
-            { "txtdocumentsupplier", "RUC/ Documento Proveedor" },
+            { "txtdocumentsupplier", "Documento Proveedor" },
             { "txtnamesupplier", "Razón Social Proveedor" },
             { "txtcodeproduct", "Código Producto" },
             { "txtnameproduct", "Nombre Producto" },
             { "txtamount", "Cantidad" },
             { "txtpricepurchase", "Precio Compra" },
-            { "txtpricesale", "Precio Venta" },
         };
         private void InitializeValidators()
         {
@@ -37,14 +36,13 @@ namespace PharmacySystem
             txtAmountInternal.Name = "txtcantidad";
             campWithRules = new Dictionary<TextBox, List<string>>
             {
-                { txtnumberdocument, new List<string>{ "NotEmpty", "ValidatorRUC/CI" } },
-                { txtdocumentsupplier, new List<string>{ "NotEmpty", "ValidatorRUC/CI" } },
+                { txtnumberdocument, new List<string>{ "NotEmpty", "ValidateDocument" } },
+                { txtdocumentsupplier, new List<string>{ "NotEmpty", "ValidateDocument" } },
                 { txtnamesupplier, new List<string>{ "NotEmpty" } },
                 { txtcodeproduct, new List<string>{ "NotEmpty" } },
                 { txtnameproduct, new List<string>{ "NotEmpty" } },
                 { txtAmountInternal, new List<string>{ "NotEmpty" } },
                 { txtpricepurchase, new List<string>{ "NotEmpty" } },
-                { txtpricesale, new List<string>{ "NotEmpty" } },
             };
         }
 
@@ -68,11 +66,9 @@ namespace PharmacySystem
             dgdata.Columns.Add("Cantidad", "Cantidad");
             dgdata.Columns.Add("FechaVencimiento", "FechaVencimiento");
             dgdata.Columns.Add("PrecioCompra", "Precio Compra");
-            dgdata.Columns.Add("PrecioVenta", "Precio Venta");
             dgdata.Columns.Add("SubTotal", "SubTotal");
 
             dgdata.Columns["IdProducto"].Visible = false;
-            dgdata.Columns["PrecioVenta"].Visible = false;
 
             cbotypedocument.Items.Add(new ComboBoxItem() { Value = "Factura", Text = "Factura" });
             cbotypedocument.DisplayMember = "Text";
@@ -140,32 +136,6 @@ namespace PharmacySystem
 
         }
 
-        private void txtPriceSale_KeyPress(object sender, KeyPressEventArgs e)
-        {
-            if (Char.IsDigit(e.KeyChar))
-            {
-                e.Handled = false;
-            }
-            else
-            {
-                if (txtpricesale.Text.Trim().Length == 0 && e.KeyChar.ToString() == ".")
-                {
-                    e.Handled = true;
-                }
-                else
-                {
-                    if (Char.IsControl(e.KeyChar) || e.KeyChar.ToString() == ".")
-                    {
-                        e.Handled = false;
-                    }
-                    else
-                    {
-                        e.Handled = true;
-                    }
-                }
-            }
-        }
-
         private void btnAdd_Click(object sender, EventArgs e) => _presenter.OnAddProduct();
 
         public void CleanProduct() {
@@ -174,7 +144,6 @@ namespace PharmacySystem
             txtnameproduct.Text = "";
             txtamount.Value = 1;
             txtpricepurchase.Text = "";
-            txtpricesale.Text = "";
         }
 
 
@@ -273,7 +242,6 @@ namespace PharmacySystem
         decimal IPurchaseView.Amount => txtamount.Value;
         DateTime IPurchaseView.ExpirationDate => DTPexpireddate.Value;
         string IPurchaseView.PricePurchaseText => txtpricepurchase.Text;
-        string IPurchaseView.PriceSaleText => txtpricesale.Text;
 
         string IPurchaseView.DocumentNumber => txtnumberdocument.Text.Trim();
         string IPurchaseView.DocumentType => ((ComboBoxItem)cbotypedocument.SelectedItem).Value.ToString();
@@ -307,7 +275,6 @@ namespace PharmacySystem
             row.Cells["Cantidad"].Value = line.Quantity.ToString();
             row.Cells["FechaVencimiento"].Value = line.ExpirationDate.ToShortDateString();
             row.Cells["PrecioCompra"].Value = CultureInfoHelper.FormatAsCurrency(line.PurchasePrice);
-            row.Cells["PrecioVenta"].Value = CultureInfoHelper.FormatAsCurrency(line.SalePrice);
             row.Cells["SubTotal"].Value = CultureInfoHelper.FormatAsCurrency(line.SubTotal);
         }
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using PharmacySystem.Data;
 using PharmacySystem.Model;
@@ -5,31 +6,46 @@ using PharmacySystem.Model;
 namespace PharmacySystem.Business
 {
     // Thin: same reasoning as PurchaseService - the sale + detail rows transaction is a
-    // persistence concern, not a branching business rule.
+    // persistence concern, not a branching business rule. Stock is now discounted inside that
+    // same transaction (SaleRepository.Register), so there is no separate ControlStock step.
     public class SaleService : ISaleService
     {
         private readonly ISaleRepository _repository;
+        private readonly IFiscalDocumentIssuer _issuer;
 
-        public SaleService(ISaleRepository repository)
+        public SaleService(ISaleRepository repository, IFiscalDocumentIssuer issuer)
         {
             _repository = repository;
+            _issuer = issuer;
         }
 
         public List<Sale> ListSale() => _repository.ListSale();
 
         public List<SaleDetail> ListSaleDetail() => _repository.ListSaleDetail();
 
-        public bool ControlStock(int idproduct, int amount, bool subtract) =>
-            _repository.ControlStock(idproduct, amount, subtract);
+        public int Register(Sale sale)
+        {
+            int id = _repository.Register(sale);
+            if (id == 0)
+                return 0;
 
-        public int Register(Sale sale) => _repository.Register(sale);
+            // Hand the persisted sale to the fiscal issuer and store back whatever it resolves
+            // (status, and for a real DTE also the tracking id / barcode / assigned folio).
+            var fiscal = _issuer.Issue(id, sale);
+            if (fiscal != null)
+                _repository.SaveFiscalResult(id, fiscal);
 
-        public List<SaleReportRow> ReportSale(string startDate, string endDate) => _repository.ReportSale(startDate, endDate);
+            return id;
+        }
 
-        public decimal SumTotalPay(string startDate, string endDate) => _repository.SumTotalPay(startDate, endDate);
+        public SaleLookup FindByDocument(string documentType, string documentNumber) =>
+            _repository.FindByDocument(documentType, documentNumber);
 
-        public decimal SumAmountReceived(string startDate, string endDate) => _repository.SumAmountReceived(startDate, endDate);
+        public CreditNoteResult CreateCreditNote(int originalSaleId, int userId, string reason) =>
+            _repository.CreateCreditNote(originalSaleId, userId, reason);
 
-        public decimal SumChangeAmount(string startDate, string endDate) => _repository.SumChangeAmount(startDate, endDate);
+        public List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate, int clientId) => _repository.ReportSale(startDate, endDate, clientId);
+
+        public decimal SumTotalPay(DateTime startDate, DateTime endDate) => _repository.SumTotalPay(startDate, endDate);
     }
 }

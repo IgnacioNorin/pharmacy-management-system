@@ -12,13 +12,14 @@ namespace PharmacySystem.Helpers
 {
     public  static class CultureInfoHelper
     {
-        private const string DefaultCurrencyCulture = "es-EC";
+        // Neutral fallback used only when no store currency is configured. A country preset
+        // (CountryPresets) is what normally sets the store's currency_culture.
+        private const string DefaultCurrencyCulture = "en-US";
 
         // Curated on purpose: an admin can only pick a culture .NET actually formats currency
         // with correctly, instead of typing an arbitrary/invalid culture name into a setting.
         public static readonly IReadOnlyList<ComboBoxItem> SupportedCurrencies = new List<ComboBoxItem>
         {
-            new ComboBoxItem { Value = "es-EC", Text = "Dólar estadounidense - Ecuador (USD)" },
             new ComboBoxItem { Value = "en-US", Text = "Dólar estadounidense (USD)" },
             new ComboBoxItem { Value = "es-CL", Text = "Peso chileno (CLP)" },
             new ComboBoxItem { Value = "es-MX", Text = "Peso mexicano (MXN)" },
@@ -34,17 +35,20 @@ namespace PharmacySystem.Helpers
             return value.ToString("0.00",CultureInfo.InvariantCulture);
         }
 
-        // FormatAsCurrency uses the active currency culture's own grouping/decimal separators, so a
-        // value it produced (always starting with "$") must be parsed back the same way - naively
+        // FormatAsCurrency uses the active currency culture's own symbol / grouping / decimal
+        // separators, so a value it produced must be parsed back with that same culture - naively
         // swapping "," for "." breaks as soon as a thousands separator is present (e.g. "$1.234,50"
         // would become "1.234.50", either throwing or being misread as 123450 depending on the
-        // machine's culture). Manually typed input (no "$") has no thousands grouping, so a single
-        // "," there is just an alternate decimal separator for the "##.##" hint shown to the user.
+        // machine's culture). A formatted value is recognised by carrying the culture's currency
+        // symbol (not a hard-coded "$": es-PE is "S/", etc.). Manually typed input has no symbol
+        // and no thousands grouping, so a single "," there is just an alternate decimal separator
+        // for the "##.##" hint shown to the user.
         public static decimal CultureInfoConverterStringToDecimal(string value)
         {
             value = value.Trim();
 
-            if (value.StartsWith("$", StringComparison.Ordinal))
+            string currencySymbol = _cultureInfo.NumberFormat.CurrencySymbol;
+            if (!string.IsNullOrEmpty(currencySymbol) && value.IndexOf(currencySymbol, StringComparison.Ordinal) >= 0)
             {
                 return decimal.Parse(value, NumberStyles.Currency, _cultureInfo);
             }

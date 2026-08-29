@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using PharmacySystem.Business;
 using PharmacySystem.Model;
@@ -7,24 +8,18 @@ namespace PharmacySystem.Tests.Presentation
     internal class FakePurchaseService : IPurchaseService
     {
         public bool RegisterResult { get; set; } = true;
+        public Exception RegisterThrows { get; set; }
         public List<PurchaseReportRow> ReportResult { get; set; } = new List<PurchaseReportRow>();
         public decimal TotalAmountResult { get; set; }
-        public decimal TotalPurchasePriceResult { get; set; }
-        public int TotalQuantityResult { get; set; }
-        public decimal TotalSalesPriceResult { get; set; }
-        public decimal SubTotalResult { get; set; }
         public Purchase RegisteredWith { get; private set; }
 
         public bool Register(Purchase purchase)
         {
             RegisteredWith = purchase;
+            if (RegisterThrows != null) throw RegisterThrows;
             return RegisterResult;
         }
-        public List<PurchaseReportRow> ReportPurchase(string idSupplier, string startDate, string endDate) => ReportResult;
-        public decimal GetTotalAmount(string idSupplier, string startDate, string endDate) => TotalAmountResult;
-        public decimal GetTotalPurchasePrice(string idSupplier, string startDate, string endDate) => TotalPurchasePriceResult;
-        public int GetTotalQuantity(string idSupplier, string startDate, string endDate) => TotalQuantityResult;
-        public decimal GetTotalSalesPrice(string idSupplier, string startDate, string endDate) => TotalSalesPriceResult;
-        public decimal GetSubTotal(string idSupplier, string startDate, string endDate) => SubTotalResult;
+        public List<PurchaseReportRow> ReportPurchase(string idSupplier, DateTime startDate, DateTime endDate) => ReportResult;
+        public decimal GetTotalAmount(string idSupplier, DateTime startDate, DateTime endDate) => TotalAmountResult;
     }
 }

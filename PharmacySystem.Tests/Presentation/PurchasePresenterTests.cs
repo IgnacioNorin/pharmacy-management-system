@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using Xunit;
@@ -12,14 +13,13 @@ namespace PharmacySystem.Tests.Presentation
 
         // The cart lives inside the Presenter now, not the View, so tests that need an existing
         // cart line build it through the real OnAddProduct() path instead of pre-seeding view state.
-        private static void AddLine(PurchasePresenter presenter, FakePurchaseView view, int productId, decimal amount, string pricePurchaseText, string priceSaleText = "1.00")
+        private static void AddLine(PurchasePresenter presenter, FakePurchaseView view, int productId, decimal amount, string pricePurchaseText)
         {
             view.SelectedProductId = productId;
             view.SelectedProductCode = "P" + productId;
             view.SelectedProductName = "Product " + productId;
             view.Amount = amount;
             view.PricePurchaseText = pricePurchaseText;
-            view.PriceSaleText = priceSaleText;
             presenter.OnAddProduct();
         }
 
@@ -73,22 +73,11 @@ namespace PharmacySystem.Tests.Presentation
         [Fact]
         public void OnAddProduct_InvalidPurchasePrice_ShowsMessage()
         {
-            var view = new FakePurchaseView { SelectedProductId = 1, PricePurchaseText = "not-a-number", PriceSaleText = "5.00" };
+            var view = new FakePurchaseView { SelectedProductId = 1, PricePurchaseText = "not-a-number" };
 
             CreatePresenter(view, new FakePurchaseService(), new FakeProductService()).OnAddProduct();
 
             Assert.Equal(new[] { "Error al convertir el tipo de moneda - Precio Compra\nEjemplo Formato ##.##" }, view.ShownMessages);
-            Assert.Empty(view.RenderedCartLines);
-        }
-
-        [Fact]
-        public void OnAddProduct_InvalidSalePrice_ShowsMessage()
-        {
-            var view = new FakePurchaseView { SelectedProductId = 1, PricePurchaseText = "5.00", PriceSaleText = "not-a-number" };
-
-            CreatePresenter(view, new FakePurchaseService(), new FakeProductService()).OnAddProduct();
-
-            Assert.Equal(new[] { "Error al convertir el tipo de moneda - Precio Venta\nEjemplo Formato ##.##" }, view.ShownMessages);
             Assert.Empty(view.RenderedCartLines);
         }
 
@@ -101,8 +90,7 @@ namespace PharmacySystem.Tests.Presentation
                 SelectedProductCode = "P1",
                 SelectedProductName = "Paracetamol",
                 Amount = 3,
-                PricePurchaseText = "2.00",
-                PriceSaleText = "5.00"
+                PricePurchaseText = "2.00"
             };
 
             CreatePresenter(view, new FakePurchaseService(), new FakeProductService()).OnAddProduct();
@@ -119,11 +107,10 @@ namespace PharmacySystem.Tests.Presentation
         {
             var view = new FakePurchaseView();
             var presenter = CreatePresenter(view, new FakePurchaseService(), new FakeProductService());
-            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "2.00", priceSaleText: "5.00");
+            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "2.00");
 
             view.SelectedProductId = 1;
             view.PricePurchaseText = "2.00";
-            view.PriceSaleText = "5.00";
             presenter.OnAddProduct();
 
             Assert.Single(view.RenderedCartLines); // unchanged - no second line rendered
@@ -182,7 +169,7 @@ namespace PharmacySystem.Tests.Presentation
             var view = new FakePurchaseView { DocumentType = "Factura" };
             var purchaseService = new FakePurchaseService { RegisterResult = true };
             var presenter = CreatePresenter(view, purchaseService, new FakeProductService(), idPerson: 42);
-            AddLine(presenter, view, productId: 1, amount: 2, pricePurchaseText: "5.00", priceSaleText: "8.00");
+            AddLine(presenter, view, productId: 1, amount: 2, pricePurchaseText: "5.00");
 
             view.DocumentNumber = " 001 ";
             view.SelectedSupplierId = 3;
@@ -211,6 +198,38 @@ namespace PharmacySystem.Tests.Presentation
             presenter.OnFinishPurchase();
 
             Assert.Equal(new[] { "No se pudo registrar la compra" }, view.ShownMessages);
+            Assert.False(view.PurchaseCleared);
+        }
+
+        [Fact]
+        public void OnFinishPurchase_DuplicateInvoice_ShowsSpecificMessageAndDoesNotClear()
+        {
+            var view = new FakePurchaseView();
+            var purchaseService = new FakePurchaseService { RegisterThrows = new DuplicateInvoiceException() };
+            var presenter = CreatePresenter(view, purchaseService, new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "10.00");
+
+            view.DocumentNumber = "001";
+            view.SelectedSupplierId = 3;
+            presenter.OnFinishPurchase();
+
+            Assert.Equal(new[] { DuplicateInvoiceException.DefaultMessage }, view.ShownMessages);
+            Assert.False(view.PurchaseCleared);
+        }
+
+        [Fact]
+        public void OnFinishPurchase_DatabaseUnavailable_ShowsConnectionErrorAndDoesNotClear()
+        {
+            var view = new FakePurchaseView();
+            var purchaseService = new FakePurchaseService { RegisterThrows = new DataUnavailableException() };
+            var presenter = CreatePresenter(view, purchaseService, new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "10.00");
+
+            view.DocumentNumber = "001";
+            view.SelectedSupplierId = 3;
+            presenter.OnFinishPurchase();
+
+            Assert.Equal(new[] { DataUnavailableException.DefaultMessage }, view.ShownMessages);
             Assert.False(view.PurchaseCleared);
         }
 

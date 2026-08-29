@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using PharmacySystem.Business;
 using PharmacySystem.Helpers;
@@ -16,32 +17,71 @@ namespace PharmacySystem.Presentation
     {
         private readonly IStoreManagementView _view;
         private readonly IStoreService _service;
+        private readonly CurrentUser _currentUser;
 
-        public StoreManagementPresenter(IStoreManagementView view, IStoreService service)
+        public StoreManagementPresenter(IStoreManagementView view, IStoreService service, CurrentUser currentUser)
         {
             _view = view;
             _service = service;
+            _currentUser = currentUser;
         }
+
+        private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
 
         public void OnLoad()
         {
             Store store = _service.ListStore();
             _view.LoadStoreFields(store.document, store.companyName, store.email, store.phone, store.address);
+            _view.SetTaxRate(store.defaultTaxRate.ToString("0.##", CultureInfo.InvariantCulture));
+            _view.LoadDocumentTypeOptions(DocumentTypes.Selectable, store.defaultDocumentType);
 
             var options = CultureInfoHelper.SupportedCurrencies;
             int currencyIndex = options.ToList()
                 .FindIndex(c => string.Equals((string)c.Value, store.currencyCulture, StringComparison.OrdinalIgnoreCase));
             _view.LoadCurrencyOptions(options, currencyIndex >= 0 ? currencyIndex : 0);
 
+            var presetOptions = CountryPresets.All
+                .Select(p => new ComboBoxItem { Value = p.Code, Text = p.DisplayName })
+                .ToList();
+            int presetIndex = presetOptions.FindIndex(o =>
+                string.Equals((string)o.Value, store.countryCode ?? "", StringComparison.OrdinalIgnoreCase));
+            _view.LoadCountryPresetOptions(presetOptions, presetIndex >= 0 ? presetIndex : 0);
+
             _view.SetCurrencyEditable(!_service.HasOperationalData());
+        }
+
+        // A concrete preset (not "Genérico") pre-fills the VAT rate and currency; the admin can
+        // still change them before saving. Picking "Genérico" leaves the fields as they are.
+        public void OnCountryPresetChanged()
+        {
+            CountryPreset preset = CountryPresets.ForCode(_view.SelectedCountryCode);
+            if (preset.IsGeneric)
+            {
+                return;
+            }
+            _view.SetTaxRate(preset.DefaultTaxRate.ToString("0.##", CultureInfo.InvariantCulture));
+            _view.SelectCurrency(preset.CurrencyCulture);
         }
 
         public void OnSave()
         {
+            if (!Can("tienda.editar"))
+            {
+                _view.ShowError("No tiene permiso para modificar los datos de la tienda.");
+                return;
+            }
+
             var errors = _view.Validate();
             if (errors.Count > 0)
             {
                 _view.ShowValidationErrors(errors);
+                return;
+            }
+
+            if (!decimal.TryParse((_view.TaxRate ?? "").Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out decimal taxRate)
+                || taxRate < 0m || taxRate > 100m)
+            {
+                _view.ShowError("La tasa de IVA debe ser un número entre 0 y 100.");
                 return;
             }
 
@@ -54,7 +94,10 @@ namespace PharmacySystem.Presentation
                 email = _view.Email,
                 phone = _view.Phone,
                 address = _view.Address,
-                currencyCulture = selectedCurrency
+                currencyCulture = selectedCurrency,
+                countryCode = string.IsNullOrWhiteSpace(_view.SelectedCountryCode) ? null : _view.SelectedCountryCode.Trim(),
+                defaultTaxRate = taxRate,
+                defaultDocumentType = _view.DefaultDocumentType
             });
 
             if (isSuccess)

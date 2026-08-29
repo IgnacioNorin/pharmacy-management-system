@@ -17,5 +17,8 @@ namespace PharmacySystem.Presentation
         void ShowEmptyFieldsError();
         void ShowSaveSucceeded();
         void ShowSaveFailed();
+
+        // Generic notice (used for the "no tiene permiso" message).
+        void ShowMessage(string message);
     }
 }

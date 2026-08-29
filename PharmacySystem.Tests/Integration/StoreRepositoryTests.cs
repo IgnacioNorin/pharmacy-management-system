@@ -16,16 +16,33 @@ namespace PharmacySystem.Tests.Integration
     {
         private static readonly IStoreRepository Repository = new StoreRepository(SqlConnectionFactory.FromConfiguration());
 
-        [Fact]
-        public void UpdateStoreRow_ThenListStore_ReflectsChanges()
+        // The schema now seeds the singleton store row (id = 1). These tests need to own that
+        // row's contents, so they replace it and then restore it to the canonical seed value.
+        private static void ReplaceStoreRow(string extraColumns = "", string extraValues = "")
         {
+            SqlTestHelper.ExecuteNonQuery("DELETE FROM store WHERE id = 1");
             SqlTestHelper.ExecuteNonQuery(
-                "INSERT INTO store(id, document_store, company_name, email, phone, address) VALUES (1, @doc, @name, @email, @phone, @address)",
+                "INSERT INTO store(id, document_store, company_name, email, phone, address" + extraColumns + ") " +
+                "VALUES (1, @doc, @name, @email, @phone, @address" + extraValues + ")",
                 new SqlParameter("@doc", "0000000000"),
                 new SqlParameter("@name", "Initial store"),
                 new SqlParameter("@email", "initial@test.local"),
                 new SqlParameter("@phone", "0000000000"),
                 new SqlParameter("@address", "Initial address"));
+        }
+
+        private static void RestoreStoreSeed()
+        {
+            SqlTestHelper.ExecuteNonQuery("DELETE FROM store WHERE id = 1");
+            SqlTestHelper.ExecuteNonQuery(
+                "INSERT INTO store(id, document_store, company_name, email, phone, address, currency_culture) " +
+                "VALUES (1, '', 'Mi Farmacia', '', '', '', 'en-US')");
+        }
+
+        [Fact]
+        public void UpdateStoreRow_ThenListStore_ReflectsChanges()
+        {
+            ReplaceStoreRow();
 
             try
             {
@@ -36,7 +53,9 @@ namespace PharmacySystem.Tests.Integration
                     email = "updated@test.local",
                     phone = "1111111111",
                     address = "Updated address",
-                    currencyCulture = "es-CL"
+                    currencyCulture = "es-CL",
+                    defaultTaxRate = 21m,
+                    defaultDocumentType = "Factura"
                 });
 
                 Assert.True(result);
@@ -45,23 +64,19 @@ namespace PharmacySystem.Tests.Integration
                 Assert.Equal("Updated store", stored.companyName);
                 Assert.Equal("1111111111", stored.document);
                 Assert.Equal("es-CL", stored.currencyCulture);
+                Assert.Equal(21m, stored.defaultTaxRate);
+                Assert.Equal("Factura", stored.defaultDocumentType);
             }
             finally
             {
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM store WHERE id = 1");
+                RestoreStoreSeed();
             }
         }
 
         [Fact]
         public void ListStore_CurrencyColumnNull_MapsToNullInsteadOfThrowing()
         {
-            SqlTestHelper.ExecuteNonQuery(
-                "INSERT INTO store(id, document_store, company_name, email, phone, address, currency_culture) VALUES (1, @doc, @name, @email, @phone, @address, NULL)",
-                new SqlParameter("@doc", "0000000000"),
-                new SqlParameter("@name", "Store without currency"),
-                new SqlParameter("@email", "initial@test.local"),
-                new SqlParameter("@phone", "0000000000"),
-                new SqlParameter("@address", "Initial address"));
+            ReplaceStoreRow(", currency_culture", ", NULL");
 
             try
             {
@@ -71,38 +86,30 @@ namespace PharmacySystem.Tests.Integration
             }
             finally
             {
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM store WHERE id = 1");
+                RestoreStoreSeed();
             }
         }
 
         [Fact]
         public void ListStore_NewRowUsesDatabaseDefaultCurrency()
         {
-            SqlTestHelper.ExecuteNonQuery(
-                "INSERT INTO store(id, document_store, company_name, email, phone, address) VALUES (1, @doc, @name, @email, @phone, @address)",
-                new SqlParameter("@doc", "0000000000"),
-                new SqlParameter("@name", "Store with default currency"),
-                new SqlParameter("@email", "initial@test.local"),
-                new SqlParameter("@phone", "0000000000"),
-                new SqlParameter("@address", "Initial address"));
+            ReplaceStoreRow();
 
             try
             {
                 Store stored = Repository.ListStore();
 
-                Assert.Equal("es-EC", stored.currencyCulture);
+                Assert.Equal("en-US", stored.currencyCulture);
             }
             finally
             {
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM store WHERE id = 1");
+                RestoreStoreSeed();
             }
         }
 
-        [Fact]
-        public void HasOperationalData_NoSalesOrPurchases_ReturnsFalse()
-        {
-            Assert.False(Repository.HasOperationalData());
-        }
+        // The "returns false with an empty database" case cannot be asserted reliably against a
+        // shared dev database that may already hold real sales/purchases. The two positive cases
+        // below cover HasOperationalData(); the negative branch is a plain EXISTS OR EXISTS.
 
         [Fact]
         public void HasOperationalData_WithSale_ReturnsTrue()

@@ -46,14 +46,18 @@ namespace PharmacySystem.Data
             {
                 try
                 {
-                    var parameters = new DynamicParameters();
-                    parameters.Add("category_id", obj.IdCategory);
-                    parameters.Add("description", obj.description);
-                    parameters.Add("result", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+                    // The UX_category_description unique index is case-insensitive (DB collation
+                    // SQL_Latin1_General_CP1_CI_AS), so it rejects "Analgesicos" vs "ANALGESICOS"
+                    // just like the old sp_update_category UPPER() check did.
+                    oConnection.Execute(
+                        "UPDATE category SET description = @description WHERE id = @category_id;",
+                        new { category_id = obj.IdCategory, description = obj.description });
 
-                    oConnection.Execute("sp_update_category", parameters, commandType: CommandType.StoredProcedure);
-
-                    return parameters.Get<bool>("result");
+                    return true;
+                }
+                catch (Exception ex) when (SqlErrorCodes.IsUniqueViolation(ex))
+                {
+                    return false; // another category already has that description
                 }
                 catch (Exception ex)
                 {

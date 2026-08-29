@@ -46,6 +46,7 @@ namespace PharmacySystem
             this.btnSuppliers = new System.Windows.Forms.Button();
             this.btnClients = new System.Windows.Forms.Button();
             this.btnUsers = new System.Windows.Forms.Button();
+            this.btnRoles = new System.Windows.Forms.Button();
             this.lblGroupConsulta = new System.Windows.Forms.Label();
             this.btnReports = new System.Windows.Forms.Button();
             this.btnAlerts = new System.Windows.Forms.Button();
@@ -186,11 +187,12 @@ namespace PharmacySystem
             // Fill-docked BEFORE pnlSidebarBottom is added below with Dock=Bottom, so the bottom
             // block claims its fixed strip and this one takes whatever remains above it. Its
             // children are positioned by MainForm.LayoutSidebarItems() at runtime, skipping
-            // whichever are hidden for the current role - not a fixed Designer layout, since which
-            // items show depends on SetAdministrativeMenusVisible.
+            // whichever are hidden for the current user - not a fixed Designer layout, since which
+            // items show depends on ApplySidebarPermissions.
             this.pnlSidebarItems.Controls.Add(this.btnAlerts);
             this.pnlSidebarItems.Controls.Add(this.btnReports);
             this.pnlSidebarItems.Controls.Add(this.lblGroupConsulta);
+            this.pnlSidebarItems.Controls.Add(this.btnRoles);
             this.pnlSidebarItems.Controls.Add(this.btnUsers);
             this.pnlSidebarItems.Controls.Add(this.btnClients);
             this.pnlSidebarItems.Controls.Add(this.btnSuppliers);
@@ -374,6 +376,27 @@ namespace PharmacySystem
             this.btnUsers.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnUsers.UseVisualStyleBackColor = false;
             this.btnUsers.Click += new System.EventHandler(this.btnUsers_Click);
+            //
+            // btnRoles
+            //
+            this.btnRoles.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(37)))), ((int)(((byte)(69)))));
+            this.btnRoles.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnRoles.FlatAppearance.BorderSize = 0;
+            this.btnRoles.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnRoles.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
+            this.btnRoles.ForeColor = System.Drawing.Color.White;
+            this.btnRoles.Image = new System.Drawing.Bitmap(global::PharmacySystem.Properties.Resources.configuracionicon, new System.Drawing.Size(20, 20));
+            this.btnRoles.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnRoles.Location = new System.Drawing.Point(10, 404);
+            this.btnRoles.Name = "btnRoles";
+            this.btnRoles.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
+            this.btnRoles.Size = new System.Drawing.Size(190, 40);
+            this.btnRoles.TabIndex = 9;
+            this.btnRoles.Text = "        Roles";
+            this.btnRoles.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnRoles.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
+            this.btnRoles.UseVisualStyleBackColor = false;
+            this.btnRoles.Click += new System.EventHandler(this.btnRoles_Click);
             //
             // lblGroupConsulta
             //
@@ -588,6 +611,7 @@ namespace PharmacySystem
         private System.Windows.Forms.Button btnSuppliers;
         private System.Windows.Forms.Button btnClients;
         private System.Windows.Forms.Button btnUsers;
+        private System.Windows.Forms.Button btnRoles;
         private System.Windows.Forms.Label lblGroupConsulta;
         private System.Windows.Forms.Button btnReports;
         private System.Windows.Forms.Button btnAlerts;

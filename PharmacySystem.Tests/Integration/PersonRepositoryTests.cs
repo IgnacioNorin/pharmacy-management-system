@@ -36,11 +36,11 @@ namespace PharmacySystem.Tests.Integration
         public void Register_New_PersistsPasswordVerbatim()
         {
             string document = SqlTestHelper.NewTag();
-            bool result = Repository.Register(NewPerson(document, "some-already-hashed-string"));
+            int newId = Repository.Register(NewPerson(document, "some-already-hashed-string"));
 
             try
             {
-                Assert.True(result);
+                Assert.True(newId > 0);
 
                 Person stored = Repository.GetByDocument(document);
 
@@ -54,16 +54,16 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void Register_DuplicateDocument_ReturnsFalse()
+        public void Register_DuplicateDocument_ReturnsZero()
         {
             string document = SqlTestHelper.NewTag();
             Repository.Register(NewPerson(document));
 
             try
             {
-                bool result = Repository.Register(NewPerson(document));
+                int result = Repository.Register(NewPerson(document));
 
-                Assert.False(result);
+                Assert.Equal(0, result);
             }
             finally
             {
@@ -93,6 +93,51 @@ namespace PharmacySystem.Tests.Integration
 
                 Assert.True(result);
                 Assert.Equal("Updated name", Repository.GetByDocument(document).name);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
+
+        [Fact]
+        public void FiscalProfile_RoundTripsThroughRegisterAndUpdate()
+        {
+            string document = SqlTestHelper.NewTag();
+            Person toRegister = NewPerson(document);
+            toRegister.businessName = "Comercial Ejemplo SpA";
+            toRegister.activity = "Venta al por menor";
+            toRegister.commune = "Providencia";
+            toRegister.email = "contacto@ejemplo.cl";
+            toRegister.isCompany = true;
+
+            Repository.Register(toRegister);
+
+            try
+            {
+                Person stored = Repository.GetByDocument(document);
+                Assert.Equal("Comercial Ejemplo SpA", stored.businessName);
+                Assert.Equal("Venta al por menor", stored.activity);
+                Assert.Equal("Providencia", stored.commune);
+                Assert.Equal("contacto@ejemplo.cl", stored.email);
+                Assert.True(stored.isCompany);
+
+                stored.businessName = "Otra Razon Ltda";
+                stored.activity = "Servicios";
+                stored.commune = "Nunoa";
+                stored.email = "nuevo@ejemplo.cl";
+                stored.isCompany = false;
+                stored.oPersonType = new TypePerson { idPersonType = PersonTypeId() };
+
+                bool updated = Repository.Update(stored);
+                Assert.True(updated);
+
+                Person reread = Repository.GetByDocument(document);
+                Assert.Equal("Otra Razon Ltda", reread.businessName);
+                Assert.Equal("Servicios", reread.activity);
+                Assert.Equal("Nunoa", reread.commune);
+                Assert.Equal("nuevo@ejemplo.cl", reread.email);
+                Assert.False(reread.isCompany);
             }
             finally
             {
@@ -137,6 +182,88 @@ namespace PharmacySystem.Tests.Integration
         public void GetByDocument_UnknownDocument_ReturnsNull()
         {
             Assert.Null(Repository.GetByDocument(SqlTestHelper.NewTag()));
+        }
+
+        // --- Administrador General protection (migration 005) ---
+        // The seeded account id 1 is an active Administrador General; these tests either lean on
+        // it as a second active one, or deactivate it inside a try/finally to isolate the case.
+
+        private static int InsertAdminGeneral(string document)
+        {
+            SqlTestHelper.ExecuteNonQuery(
+                "INSERT INTO person(document_number, name, person_type_id, status) VALUES (@d, 'AG test', 1, 1)",
+                new SqlParameter("@d", document));
+            return SqlTestHelper.ExecuteScalarInt(
+                "SELECT id FROM person WHERE document_number = @d", new SqlParameter("@d", document));
+        }
+
+        [Fact]
+        public void Delete_AdminGeneral_NotTheLastActiveOne_Succeeds()
+        {
+            string document = SqlTestHelper.NewTag();
+            int id = InsertAdminGeneral(document);
+
+            try
+            {
+                Assert.True(Repository.Delete(id)); // seeded id 1 is still an active Administrador General
+                Assert.Null(Repository.GetByDocument(document));
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @d", new SqlParameter("@d", document));
+            }
+        }
+
+        [Fact]
+        public void Delete_LastActiveAdminGeneral_IsRejected()
+        {
+            string document = SqlTestHelper.NewTag();
+            int id = InsertAdminGeneral(document);
+            SqlTestHelper.ExecuteNonQuery("UPDATE person SET status = 0 WHERE id = 1");
+
+            try
+            {
+                Assert.False(Repository.Delete(id));
+
+                Person still = Repository.GetByDocument(document);
+                Assert.NotNull(still);
+                Assert.True(still.Estado);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("UPDATE person SET status = 1 WHERE id = 1");
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @d", new SqlParameter("@d", document));
+            }
+        }
+
+        [Fact]
+        public void Update_DemotingLastActiveAdminGeneral_IsRejected()
+        {
+            string document = SqlTestHelper.NewTag();
+            int id = InsertAdminGeneral(document);
+            SqlTestHelper.ExecuteNonQuery("UPDATE person SET status = 0 WHERE id = 1");
+
+            try
+            {
+                bool result = Repository.Update(new Person
+                {
+                    idPerson = id,
+                    document = document,
+                    name = "AG test",
+                    address = "",
+                    phone = "",
+                    password = "keep",
+                    oPersonType = new TypePerson { idPersonType = 2 } // demote to Administrador
+                });
+
+                Assert.False(result);
+                Assert.Equal(1, Repository.GetByDocument(document).oPersonType.idPersonType);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("UPDATE person SET status = 1 WHERE id = 1");
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @d", new SqlParameter("@d", document));
+            }
         }
     }
 }

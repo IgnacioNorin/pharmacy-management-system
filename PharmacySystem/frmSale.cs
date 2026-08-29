@@ -20,10 +20,10 @@ namespace PharmacySystem
 
         private void frmSale_Load(object sender, EventArgs e)
         {
-            cbodocumenttype.Items.Add(new ComboBoxItem() { Value = "Factura", Text = "Factura" });
             cbodocumenttype.DisplayMember = "Text";
             cbodocumenttype.ValueMember = "Value";
-            cbodocumenttype.SelectedIndex = 0;
+            _presenter.OnLoad();
+            btnCreditNote.Enabled = MainForm.Session?.Can("ventas.nota_credito") ?? false;
             txtstock.Visible = false;
 
             DataGridViewButtonColumn Button = new DataGridViewButtonColumn();
@@ -50,12 +50,9 @@ namespace PharmacySystem
         {
             using (var form = new ModalPerson())
             {
-                var result = form.ShowDialog();
-                if (result == DialogResult.OK)
+                if (form.ShowDialog() == DialogResult.OK)
                 {
-                    txtdocumentclient.Text = form.document;
-                    txtnameclient.Text = form.name;
-                    txtidclient.Text = form.idClient;
+                    _presenter.OnClientSelected(form.SelectedClient);
                 }
             }
         }
@@ -138,10 +135,23 @@ namespace PharmacySystem
 
         private void btnFinishSale_Click(object sender, EventArgs e) => _presenter.OnFinishSale();
 
+        private void btnCreditNote_Click(object sender, EventArgs e)
+        {
+            using (var form = new frmCreditNote())
+            {
+                form.ShowDialog(this);
+            }
+        }
+
         private void Clean()
         {
             txtdocumentclient.Text = "";
             txtnameclient.Text = "";
+            txtrectaxid.Text = "";
+            txtrecname.Text = "";
+            txtrecactivity.Text = "";
+            txtrecaddress.Text = "";
+            txtreccommune.Text = "";
             txttotalpay.Text = "0";
             txtpaywith.Text = "0";
             txtchange.Text = "0";
@@ -199,10 +209,58 @@ namespace PharmacySystem
         string ISaleView.PayWithText => txtpaywith.Text;
         string ISaleView.TotalPayText => txttotalpay.Text;
         string ISaleView.ChangeText => txtchange.Text;
-        string ISaleView.DocumentType => ((ComboBoxItem)cbodocumenttype.SelectedItem).Value.ToString();
+        string ISaleView.DocumentType => ((ComboBoxItem)cbodocumenttype.SelectedItem)?.Value.ToString() ?? "";
+
+        public string RecipientTaxId => txtrectaxid.Text;
+        public string RecipientBusinessName => txtrecname.Text;
+        public string RecipientActivity => txtrecactivity.Text;
+        public string RecipientAddress => txtrecaddress.Text;
+        public string RecipientCommune => txtreccommune.Text;
+
+        public void SetFacturaFieldsVisible(bool visible) => pnlFactura.Visible = visible;
+
+        public void SetClient(string document, string name)
+        {
+            txtdocumentclient.Text = document ?? "";
+            txtnameclient.Text = name ?? "";
+        }
+
+        public void SetRecipient(string taxId, string businessName, string activity, string address, string commune)
+        {
+            txtrectaxid.Text = taxId ?? "";
+            txtrecname.Text = businessName ?? "";
+            txtrecactivity.Text = activity ?? "";
+            txtrecaddress.Text = address ?? "";
+            txtreccommune.Text = commune ?? "";
+        }
+
+        private void cbodocumenttype_SelectedIndexChanged(object sender, EventArgs e) => _presenter.OnDocumentTypeChanged();
 
         public void ShowMessage(string message) =>
             MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+        public void SetDocumentTypeOptions(IReadOnlyList<string> options, string selected)
+        {
+            cbodocumenttype.Items.Clear();
+            foreach (string option in options)
+            {
+                cbodocumenttype.Items.Add(new ComboBoxItem { Value = option, Text = option });
+            }
+
+            int index = 0;
+            for (int i = 0; i < options.Count; i++)
+            {
+                if (string.Equals(options[i], selected, StringComparison.OrdinalIgnoreCase))
+                {
+                    index = i;
+                    break;
+                }
+            }
+            if (cbodocumenttype.Items.Count > 0)
+            {
+                cbodocumenttype.SelectedIndex = index;
+            }
+        }
 
         public void SetSelectedProduct(int id, string code, string name, int stock, string priceSaleFormatted)
         {

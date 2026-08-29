@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using PharmacySystem.Fiscal;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Data
@@ -7,11 +9,11 @@ namespace PharmacySystem.Data
     {
         List<Sale> ListSale();
         List<SaleDetail> ListSaleDetail();
-        bool ControlStock(int idproduct, int amount, bool subtract);
         int Register(Sale sale);
-        List<SaleReportRow> ReportSale(string startDate, string endDate);
-        decimal SumTotalPay(string startDate, string endDate);
-        decimal SumAmountReceived(string startDate, string endDate);
-        decimal SumChangeAmount(string startDate, string endDate);
+        void SaveFiscalResult(int saleId, FiscalDocumentResult result);
+        SaleLookup FindByDocument(string documentType, string documentNumber);
+        CreditNoteResult CreateCreditNote(int originalSaleId, int userId, string reason);
+        List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate, int clientId);
+        decimal SumTotalPay(DateTime startDate, DateTime endDate);
     }
 }

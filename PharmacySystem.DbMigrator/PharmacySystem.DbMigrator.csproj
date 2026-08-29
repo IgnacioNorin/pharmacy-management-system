@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>PharmacySystem.DbMigrator</RootNamespace>
+    <AssemblyName>PharmacySystem.DbMigrator</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="dbup-sqlserver" Version="5.0.41" />
+    <Reference Include="System.Configuration" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The migration scripts live under Database/Migrations and are embedded here so the tool
+         is self-contained. They are matched by the "...Migrations." resource-name prefix. -->
+    <EmbeddedResource Include="..\Database\Migrations\*.sql">
+      <Link>Migrations\%(Filename)%(Extension)</Link>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

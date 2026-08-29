@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using PharmacySystem.Business;
 using PharmacySystem.Model;
@@ -6,12 +7,13 @@ namespace PharmacySystem.Tests.Presentation
 {
     internal class FakePersonService : IPersonService
     {
-        public bool RegisterResult { get; set; } = true;
+        public int RegisterResult { get; set; } = 1;
         public bool UpdateResult { get; set; } = true;
         public bool DeleteResult { get; set; } = true;
         public bool UpdatePasswordResult { get; set; } = true;
         public List<Person> ListResult { get; set; } = new List<Person>();
         public Person GetByDocumentResult { get; set; }
+        public Exception GetByDocumentThrows { get; set; }
 
         public Person RegisteredWith { get; private set; }
         public Person UpdatedWith { get; private set; }
@@ -19,7 +21,7 @@ namespace PharmacySystem.Tests.Presentation
         public int? UpdatedPasswordForId { get; private set; }
         public string UpdatedPasswordHash { get; private set; }
 
-        public bool Register(Person person)
+        public int Register(Person person)
         {
             RegisteredWith = person;
             return RegisterResult;
@@ -37,6 +39,7 @@ namespace PharmacySystem.Tests.Presentation
         public Person GetByDocument(string document)
         {
             RequestedDocument = document;
+            if (GetByDocumentThrows != null) throw GetByDocumentThrows;
             return GetByDocumentResult;
         }
 

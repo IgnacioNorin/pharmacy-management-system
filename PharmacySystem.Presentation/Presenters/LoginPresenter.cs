@@ -1,5 +1,6 @@
 using PharmacySystem.Business;
 using PharmacySystem.Helpers;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
@@ -20,15 +21,22 @@ namespace PharmacySystem.Presentation
 
         public void OnLogin()
         {
-            Person person = _personService.GetByDocument(_view.Document?.Trim());
+            try
+            {
+                Person person = _personService.GetByDocument(_view.Document?.Trim());
 
-            if (person != null && person.oPersonType.idPersonType != (int)PersonType.Cliente && VerifyPassword(person, _view.Password))
-            {
-                _view.LoginSucceeded(person);
+                if (person != null && person.Estado && person.oPersonType.idPersonType != (int)PersonType.Cliente && VerifyPassword(person, _view.Password))
+                {
+                    _view.LoginSucceeded(person);
+                }
+                else
+                {
+                    _view.ShowError("No se encontraron coincidencias del usuario");
+                }
             }
-            else
+            catch (DataUnavailableException ex)
             {
-                _view.ShowError("No se econtraron coincidencias del usuario");
+                _view.ShowError(ex.Message);
             }
         }
 

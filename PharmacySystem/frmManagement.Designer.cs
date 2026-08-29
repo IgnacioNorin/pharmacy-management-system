@@ -89,6 +89,14 @@
             this.label20 = new System.Windows.Forms.Label();
             this.cbocurrency = new System.Windows.Forms.ComboBox();
             this.label24 = new System.Windows.Forms.Label();
+            this.txttaxrate = new System.Windows.Forms.TextBox();
+            this.lbltaxrate = new System.Windows.Forms.Label();
+            this.chkTaxAffected = new System.Windows.Forms.CheckBox();
+            this.cbodefaultdoctype = new System.Windows.Forms.ComboBox();
+            this.lbldefaultdoctype = new System.Windows.Forms.Label();
+            this.cbocountrypreset = new System.Windows.Forms.ComboBox();
+            this.lblcountrypreset = new System.Windows.Forms.Label();
+            this.lblfiscal = new System.Windows.Forms.Label();
             this.label15 = new System.Windows.Forms.Label();
             this.tabManagement.SuspendLayout();
             this.tabProduct.SuspendLayout();
@@ -130,6 +138,7 @@
             this.tabProduct.Controls.Add(this.btnclear);
             this.tabProduct.Controls.Add(this.btnsearch);
             this.tabProduct.Controls.Add(this.cbocategory);
+            this.tabProduct.Controls.Add(this.chkTaxAffected);
             this.tabProduct.Controls.Add(this.label9);
             this.tabProduct.Controls.Add(this.label10);
             this.tabProduct.Controls.Add(this.btnDeleteProduct);
@@ -287,9 +296,22 @@
             this.cbocategory.Name = "cbocategory";
             this.cbocategory.Size = new System.Drawing.Size(243, 23);
             this.cbocategory.TabIndex = 41;
-            // 
+            //
+            // chkTaxAffected
+            //
+            this.chkTaxAffected.AutoSize = true;
+            this.chkTaxAffected.Checked = true;
+            this.chkTaxAffected.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkTaxAffected.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.chkTaxAffected.Location = new System.Drawing.Point(35, 297);
+            this.chkTaxAffected.Name = "chkTaxAffected";
+            this.chkTaxAffected.Size = new System.Drawing.Size(110, 19);
+            this.chkTaxAffected.TabIndex = 42;
+            this.chkTaxAffected.Text = "Afecto a IVA";
+            this.chkTaxAffected.UseVisualStyleBackColor = true;
+            //
             // label9
-            // 
+            //
             this.label9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label9.AutoSize = true;
             this.label9.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
@@ -318,7 +340,7 @@
             this.btnDeleteProduct.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnDeleteProduct.Image = global::PharmacySystem.Properties.Resources.delete32;
             this.btnDeleteProduct.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnDeleteProduct.Location = new System.Drawing.Point(34, 411);
+            this.btnDeleteProduct.Location = new System.Drawing.Point(34, 421);
             this.btnDeleteProduct.Name = "btnDeleteProduct";
             this.btnDeleteProduct.Size = new System.Drawing.Size(244, 38);
             this.btnDeleteProduct.TabIndex = 35;
@@ -334,7 +356,7 @@
             this.btnCleanProduct.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCleanProduct.Image = global::PharmacySystem.Properties.Resources.clear32;
             this.btnCleanProduct.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnCleanProduct.Location = new System.Drawing.Point(34, 367);
+            this.btnCleanProduct.Location = new System.Drawing.Point(34, 377);
             this.btnCleanProduct.Name = "btnCleanProduct";
             this.btnCleanProduct.Size = new System.Drawing.Size(244, 38);
             this.btnCleanProduct.TabIndex = 34;
@@ -350,7 +372,7 @@
             this.btnSaveProduct.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnSaveProduct.Image = global::PharmacySystem.Properties.Resources.save32;
             this.btnSaveProduct.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnSaveProduct.Location = new System.Drawing.Point(34, 323);
+            this.btnSaveProduct.Location = new System.Drawing.Point(34, 333);
             this.btnSaveProduct.Name = "btnSaveProduct";
             this.btnSaveProduct.Size = new System.Drawing.Size(244, 38);
             this.btnSaveProduct.TabIndex = 36;
@@ -707,7 +729,14 @@
             this.tabStore.Controls.Add(this.txttaxid);
             this.tabStore.Controls.Add(this.label20);
             this.tabStore.Controls.Add(this.cbocurrency);
+            this.tabStore.Controls.Add(this.cbocountrypreset);
+            this.tabStore.Controls.Add(this.lblcountrypreset);
             this.tabStore.Controls.Add(this.label24);
+            this.tabStore.Controls.Add(this.txttaxrate);
+            this.tabStore.Controls.Add(this.lblfiscal);
+            this.tabStore.Controls.Add(this.lbltaxrate);
+            this.tabStore.Controls.Add(this.cbodefaultdoctype);
+            this.tabStore.Controls.Add(this.lbldefaultdoctype);
             this.tabStore.Controls.Add(this.label15);
             this.tabStore.Location = new System.Drawing.Point(4, 25);
             this.tabStore.Name = "tabStore";
@@ -761,6 +790,82 @@
             this.cbocurrency.Name = "cbocurrency";
             this.cbocurrency.Size = new System.Drawing.Size(247, 23);
             this.cbocurrency.TabIndex = 62;
+            //
+            // lblfiscal
+            //
+            this.lblfiscal.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.lblfiscal.AutoSize = true;
+            this.lblfiscal.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblfiscal.Location = new System.Drawing.Point(800, 61);
+            this.lblfiscal.Name = "lblfiscal";
+            this.lblfiscal.Size = new System.Drawing.Size(103, 20);
+            this.lblfiscal.TabIndex = 67;
+            this.lblfiscal.Text = "Facturación";
+            //
+            // lblcountrypreset
+            //
+            this.lblcountrypreset.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.lblcountrypreset.AutoSize = true;
+            this.lblcountrypreset.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.lblcountrypreset.Location = new System.Drawing.Point(800, 91);
+            this.lblcountrypreset.Name = "lblcountrypreset";
+            this.lblcountrypreset.Size = new System.Drawing.Size(80, 15);
+            this.lblcountrypreset.TabIndex = 68;
+            this.lblcountrypreset.Text = "País / preset:";
+            //
+            // cbocountrypreset
+            //
+            this.cbocountrypreset.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.cbocountrypreset.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbocountrypreset.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.cbocountrypreset.FormattingEnabled = true;
+            this.cbocountrypreset.Location = new System.Drawing.Point(803, 121);
+            this.cbocountrypreset.Name = "cbocountrypreset";
+            this.cbocountrypreset.Size = new System.Drawing.Size(200, 23);
+            this.cbocountrypreset.TabIndex = 69;
+            this.cbocountrypreset.SelectedIndexChanged += new System.EventHandler(this.cbocountrypreset_SelectedIndexChanged);
+            //
+            // lbltaxrate
+            //
+            this.lbltaxrate.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.lbltaxrate.AutoSize = true;
+            this.lbltaxrate.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.lbltaxrate.Location = new System.Drawing.Point(800, 157);
+            this.lbltaxrate.Name = "lbltaxrate";
+            this.lbltaxrate.Size = new System.Drawing.Size(80, 15);
+            this.lbltaxrate.TabIndex = 63;
+            this.lbltaxrate.Text = "Tasa IVA (%):";
+            //
+            // txttaxrate
+            //
+            this.txttaxrate.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.txttaxrate.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.txttaxrate.Location = new System.Drawing.Point(803, 187);
+            this.txttaxrate.Name = "txttaxrate";
+            this.txttaxrate.Size = new System.Drawing.Size(120, 21);
+            this.txttaxrate.TabIndex = 64;
+            //
+            // lbldefaultdoctype
+            //
+            this.lbldefaultdoctype.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.lbldefaultdoctype.AutoSize = true;
+            this.lbldefaultdoctype.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.lbldefaultdoctype.Location = new System.Drawing.Point(800, 221);
+            this.lbldefaultdoctype.Name = "lbldefaultdoctype";
+            this.lbldefaultdoctype.Size = new System.Drawing.Size(140, 15);
+            this.lbldefaultdoctype.TabIndex = 65;
+            this.lbldefaultdoctype.Text = "Documento por defecto:";
+            //
+            // cbodefaultdoctype
+            //
+            this.cbodefaultdoctype.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.cbodefaultdoctype.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbodefaultdoctype.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.cbodefaultdoctype.FormattingEnabled = true;
+            this.cbodefaultdoctype.Location = new System.Drawing.Point(803, 251);
+            this.cbodefaultdoctype.Name = "cbodefaultdoctype";
+            this.cbodefaultdoctype.Size = new System.Drawing.Size(200, 23);
+            this.cbodefaultdoctype.TabIndex = 66;
             //
             // btnSaveStore
             //
@@ -886,7 +991,7 @@
             this.label15.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.label15.Location = new System.Drawing.Point(333, 15);
             this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(578, 479);
+            this.label15.Size = new System.Drawing.Size(772, 479);
             this.label15.TabIndex = 0;
             // 
             // frmManagement
@@ -960,6 +1065,14 @@
         private System.Windows.Forms.Label label22;
         private System.Windows.Forms.Label label24;
         private System.Windows.Forms.ComboBox cbocurrency;
+        private System.Windows.Forms.TextBox txttaxrate;
+        private System.Windows.Forms.Label lbltaxrate;
+        private System.Windows.Forms.CheckBox chkTaxAffected;
+        private System.Windows.Forms.ComboBox cbodefaultdoctype;
+        private System.Windows.Forms.Label lbldefaultdoctype;
+        private System.Windows.Forms.ComboBox cbocountrypreset;
+        private System.Windows.Forms.Label lblcountrypreset;
+        private System.Windows.Forms.Label lblfiscal;
         private System.Windows.Forms.Button btnSaveStore;
         private System.Windows.Forms.DataGridView dgdatacategory;
         private System.Windows.Forms.TextBox txtindexcategory;

@@ -3,6 +3,7 @@ using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using System;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace PharmacySystem
@@ -60,6 +61,8 @@ namespace PharmacySystem
 
         private void frmHome_Load(object sender, EventArgs e)
         {
+            ApplyPermissions();
+
             dgAttention.Columns.Add("Severidad", "Severidad");
             dgAttention.Columns.Add("Producto", "Producto");
             dgAttention.Columns.Add("Detalle", "Detalle");
@@ -71,6 +74,88 @@ namespace PharmacySystem
             dgAttention.Columns["Detalle"].Width = 380;
 
             _presenter.OnLoad();
+        }
+
+        // What the landing screen is allowed to show for a given session. The presenter still
+        // gates every real action; this only decides which tiles, quick-access buttons and the
+        // product drill-down the current role can see. A null session (design time / tests)
+        // resolves to everything visible.
+        internal struct HomeAccess
+        {
+            public bool SalesTile;
+            public bool AlertTiles;
+            public bool AttentionList;
+            public bool NewSale;
+            public bool NewPurchase;
+            public bool ManageProducts;
+            public bool ProductDrillDown;
+            public bool QuickActionsPanel => NewSale || NewPurchase || ManageProducts;
+        }
+
+        internal static HomeAccess ResolveAccess(CurrentUser session)
+        {
+            bool Can(string permission) => session?.Can(permission) ?? true;
+
+            bool canProducts = Can("productos.acceso");
+            bool canAlerts = Can("alertas.acceso");
+
+            return new HomeAccess
+            {
+                SalesTile = Can("ventas.acceso"),
+                AlertTiles = canAlerts,
+                AttentionList = canAlerts,
+                NewSale = Can("ventas.acceso"),
+                NewPurchase = Can("compras.acceso"),
+                ManageProducts = canProducts,
+                ProductDrillDown = canProducts
+            };
+        }
+
+        private void ApplyPermissions()
+        {
+            HomeAccess access = ResolveAccess(MainForm.Session);
+
+            pnlTileSales.Visible = access.SalesTile;
+            pnlTileAlerts.Visible = access.AlertTiles;
+            pnlTileExpiring.Visible = access.AlertTiles;
+            pnlTileStock.Visible = access.AlertTiles;
+            Restack(new Panel[] { pnlTileSales, pnlTileAlerts, pnlTileExpiring, pnlTileStock },
+                    horizontal: true, start: 20, gap: 16);
+
+            btnNewSale.Visible = access.NewSale;
+            btnNewPurchase.Visible = access.NewPurchase;
+            btnManageProducts.Visible = access.ManageProducts;
+            Restack(new Control[] { btnNewSale, btnNewPurchase, btnManageProducts },
+                    horizontal: false, start: 12, gap: 12);
+
+            pnlAttention.Visible = access.AttentionList;
+            pnlQuickActions.Visible = access.QuickActionsPanel;
+
+            // Pull the quick-actions panel to the left edge when the attention list next to it
+            // is hidden, so it does not sit alone against the right margin.
+            if (!pnlAttention.Visible && pnlQuickActions.Visible)
+            {
+                pnlQuickActions.Left = pnlTileSales.Left;
+            }
+        }
+
+        // Re-flows the visible controls of a row/column so hiding one does not leave a gap.
+        private static void Restack(Control[] items, bool horizontal, int start, int gap)
+        {
+            int offset = start;
+            foreach (Control item in items.Where(c => c.Visible))
+            {
+                if (horizontal)
+                {
+                    item.Left = offset;
+                    offset += item.Width + gap;
+                }
+                else
+                {
+                    item.Top = offset;
+                    offset += item.Height + gap;
+                }
+            }
         }
 
         private static string SeverityLabel(AlertSeverity severity)
@@ -99,12 +184,17 @@ namespace PharmacySystem
 
         private void dgAttention_CellMouseEnter(object sender, DataGridViewCellEventArgs e)
         {
-            dgAttention.Cursor = e.RowIndex >= 0 ? Cursors.Hand : Cursors.Default;
+            bool clickable = e.RowIndex >= 0 && ResolveAccess(MainForm.Session).ProductDrillDown;
+            dgAttention.Cursor = clickable ? Cursors.Hand : Cursors.Default;
         }
 
         private void dgAttention_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
+
+            // The row jumps to the product tab in frmManagement; a role without that section
+            // must not trigger it (the tab is not even loaded for them).
+            if (!ResolveAccess(MainForm.Session).ProductDrillDown) return;
 
             string code = dgAttention.Rows[e.RowIndex].Cells["Codigo"].Value?.ToString();
             if (!string.IsNullOrEmpty(code))

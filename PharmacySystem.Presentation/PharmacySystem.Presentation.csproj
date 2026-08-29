@@ -13,4 +13,12 @@
     <ProjectReference Include="..\PharmacySystem.Business\PharmacySystem.Business.csproj" />
   </ItemGroup>
 
+  <!-- Report exporters (CSV needs nothing; XLSX uses ClosedXML; PDF uses the GDI build of
+       PDFsharp/MigraDoc, which is fully managed - no native binaries to package). None of
+       these pull in a UI type, so the project stays unit-testable without a Form. -->
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.95.4" />
+    <PackageReference Include="PDFsharp-MigraDoc-GDI" Version="1.50.5147" />
+  </ItemGroup>
+
 </Project>

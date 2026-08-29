@@ -11,5 +11,6 @@ namespace PharmacySystem.Presentation
         public string CategoryText { get; set; }
         public string Stock { get; set; }
         public string ExpirationDateText { get; set; }
+        public bool TaxAffected { get; set; } = true;
     }
 }

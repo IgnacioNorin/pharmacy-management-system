@@ -42,8 +42,6 @@
             this.label5 = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
             this.txtpricepurchase = new System.Windows.Forms.TextBox();
-            this.label13 = new System.Windows.Forms.Label();
-            this.txtpricesale = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.txtnumberdocument = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
@@ -197,29 +195,9 @@
             this.txtpricepurchase.Size = new System.Drawing.Size(244, 21);
             this.txtpricepurchase.TabIndex = 10;
             this.txtpricepurchase.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtPricePurchase_KeyPress);
-            // 
-            // label13
-            // 
-            this.label13.AutoSize = true;
-            this.label13.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
-            this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label13.Location = new System.Drawing.Point(18, 421);
-            this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(79, 15);
-            this.label13.TabIndex = 0;
-            this.label13.Text = "Precio Venta:";
-            // 
-            // txtpricesale
-            // 
-            this.txtpricesale.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtpricesale.Location = new System.Drawing.Point(21, 439);
-            this.txtpricesale.Name = "txtpricesale";
-            this.txtpricesale.Size = new System.Drawing.Size(244, 21);
-            this.txtpricesale.TabIndex = 11;
-            this.txtpricesale.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtPriceSale_KeyPress);
-            // 
+            //
             // label6
-            // 
+            //
             this.label6.AutoSize = true;
             this.label6.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -280,7 +258,7 @@
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(168, 15);
             this.label14.TabIndex = 0;
-            this.label14.Text = "RUC / Documento Proveedor:";
+            this.label14.Text = "Documento Proveedor:";
             // 
             // label15
             // 
@@ -547,8 +525,6 @@
             this.Controls.Add(this.btnFinishPurchase);
             this.Controls.Add(this.txtnumberdocument);
             this.Controls.Add(this.label6);
-            this.Controls.Add(this.txtpricesale);
-            this.Controls.Add(this.label13);
             this.Controls.Add(this.txtpricepurchase);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.label5);
@@ -586,8 +562,6 @@
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.TextBox txtpricepurchase;
-        private System.Windows.Forms.Label label13;
-        private System.Windows.Forms.TextBox txtpricesale;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox txtnumberdocument;
         private System.Windows.Forms.Button btnFinishPurchase;

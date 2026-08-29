@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
 
 namespace PharmacySystem.Model
 {
@@ -13,7 +9,6 @@ namespace PharmacySystem.Model
         public int quantity { get; set; }
         public DateTime expirationDate { get; set; }
         public decimal purchasePrice { get; set; }
-        public decimal salePrice { get; set; }
         public decimal total { get; set; }
     }
 }

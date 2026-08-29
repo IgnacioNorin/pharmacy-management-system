@@ -9,7 +9,7 @@ namespace PharmacySystem.Tests.Presentation
     {
         public string UserName { get; private set; }
         public string UserRole { get; private set; }
-        public bool? AdministrativeMenusVisible { get; private set; }
+        public SidebarPermissions AppliedSidebarPermissions { get; private set; }
         public List<ProductAlert> ShownAlerts { get; private set; }
 
         public void SetUserName(string name, string role)
@@ -17,7 +17,7 @@ namespace PharmacySystem.Tests.Presentation
             UserName = name;
             UserRole = role;
         }
-        public void SetAdministrativeMenusVisible(bool visible) => AdministrativeMenusVisible = visible;
+        public void ApplySidebarPermissions(SidebarPermissions permissions) => AppliedSidebarPermissions = permissions;
         public void ShowAlerts(IReadOnlyList<ProductAlert> alerts) => ShownAlerts = alerts.ToList();
     }
 }

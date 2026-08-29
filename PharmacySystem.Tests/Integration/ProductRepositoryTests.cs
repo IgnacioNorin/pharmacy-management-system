@@ -33,6 +33,55 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
+        public void SetSalePrice_ReleasesTheProduct_WritesHistory_AndSaleListPicksItUp()
+        {
+            int categoryId = CreateCategory();
+            int productId = 0;
+
+            try
+            {
+                productId = Repository.Register(NewProduct(categoryId));
+
+                // A brand-new product is not released, so it is not sellable.
+                Assert.DoesNotContain(Repository.ListSellable(), p => p.idProduct == productId);
+                Assert.False(Repository.List().Single(p => p.idProduct == productId).isReleased);
+
+                Assert.True(Repository.SetSalePrice(productId, 56.78m, "primera carga", null));
+
+                Product listed = Repository.List().Single(p => p.idProduct == productId);
+                Assert.Equal(56.78m, listed.salePrice);
+                Assert.True(listed.isReleased);
+                Assert.Contains(Repository.ListSellable(), p => p.idProduct == productId);
+
+                // Re-price it.
+                Assert.True(Repository.SetSalePrice(productId, 60m, "ajuste", null));
+
+                var history = Repository.GetPriceHistory(productId);
+                Assert.Equal(2, history.Count);
+                Assert.Equal("cambio", history[0].EventType);       // newest first
+                Assert.Equal(60m, history[0].SalePrice);
+                Assert.Equal("liberacion", history[1].EventType);
+
+                // Withdraw from sale.
+                Assert.True(Repository.Unrelease(productId, "reformulacion", null));
+                Assert.False(Repository.List().Single(p => p.idProduct == productId).isReleased);
+                Assert.DoesNotContain(Repository.ListSellable(), p => p.idProduct == productId);
+                Assert.Equal(3, Repository.GetPriceHistory(productId).Count);
+                Assert.Equal("retiro", Repository.GetPriceHistory(productId)[0].EventType);
+
+                // Unreleasing again is a no-op.
+                Assert.False(Repository.Unrelease(productId, "otra vez", null));
+                Assert.False(Repository.SetSalePrice(-1, 1m, "x", null));
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_price_history WHERE product_id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+            }
+        }
+
+        [Fact]
         public void Register_New_IsListedAndVerifiable()
         {
             int categoryId = CreateCategory();
@@ -112,11 +161,15 @@ namespace PharmacySystem.Tests.Integration
                     code = newCode,
                     name = "Updated name",
                     description = "Updated description",
+                    taxAffected = false,
                     oCategory = new Categories { IdCategory = categoryId }
                 });
 
                 Assert.True(result);
-                Assert.Contains(Repository.List(), p => p.idProduct == productId && p.code == newCode && p.name == "Updated name");
+                Product updated = Repository.List().Single(p => p.idProduct == productId);
+                Assert.Equal(newCode, updated.code);
+                Assert.Equal("Updated name", updated.name);
+                Assert.False(updated.taxAffected); // exempt flag round-trips
             }
             finally
             {

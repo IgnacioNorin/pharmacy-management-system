@@ -71,7 +71,7 @@ namespace PharmacySystem.Data
             {
                 try
                 {
-                    return oConnection.QueryFirstOrDefault<int>("SELECT notify_day FROM notification_settings");
+                    return oConnection.QueryFirstOrDefault<int>("SELECT notify_day FROM notification_settings WHERE id = 1");
                 }
                 catch (Exception ex)
                 {
@@ -87,7 +87,7 @@ namespace PharmacySystem.Data
             {
                 try
                 {
-                    return oConnection.QueryFirstOrDefault<int>("SELECT critical_stock FROM notification_settings");
+                    return oConnection.QueryFirstOrDefault<int>("SELECT critical_stock FROM notification_settings WHERE id = 1");
                 }
                 catch (Exception ex)
                 {

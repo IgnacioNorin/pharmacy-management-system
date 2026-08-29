@@ -10,8 +10,23 @@ namespace PharmacySystem.Tests.Presentation
         {
             public readonly FakeNotificationConfigView View = new FakeNotificationConfigView();
             public readonly FakeNotificationConfigService Service = new FakeNotificationConfigService();
+            public PharmacySystem.Presentation.CurrentUser User = TestUser.With("alertas.configurar");
             public PharmacySystem.Presentation.NotificationConfigPresenter Presenter =>
-                new PharmacySystem.Presentation.NotificationConfigPresenter(View, Service);
+                new PharmacySystem.Presentation.NotificationConfigPresenter(View, Service, User);
+        }
+
+        [Fact]
+        public void OnSave_WithoutConfigurePermission_ShowsDeniedAndDoesNotSave()
+        {
+            var f = Create();
+            f.User = TestUser.With();
+            f.View.DaysText = "10";
+            f.View.StockText = "5";
+
+            f.Presenter.OnSave();
+
+            Assert.Contains("No tiene permiso", f.View.ShownMessage ?? "");
+            Assert.Equal(0, f.View.SaveSucceededCount);
         }
 
         [Fact]

@@ -12,6 +12,9 @@ namespace PharmacySystem
 {
     public partial class MainForm : Form, IMainFormView
     {
+        // The signed-in user and their resolved permission set. Child forms still read oPerson
+        // for the person id; anything gating on permissions uses Session.
+        public static CurrentUser Session;
         public static Person oPerson;
 
         private readonly MainFormPresenter _presenter;
@@ -22,20 +25,24 @@ namespace PharmacySystem
         private Button[] NavButtons => new[]
         {
             btnHome, btnSales, btnPurchases, btnManagement, btnSuppliers,
-            btnClients, btnUsers, btnReports, btnAlerts
+            btnClients, btnUsers, btnRoles, btnReports, btnAlerts
         };
 
-        public MainForm(Person obj = null)
+        public MainForm(CurrentUser session = null)
         {
             InitializeComponent();
-            oPerson = obj;
+            Session = session;
+            oPerson = session?.Person;
             _presenter = CompositionRoot.CreateMainFormPresenter(this);
             InventoryChangeNotifier.StockChanged += OnInventoryChangedElsewhere;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            _presenter.OnLoad(oPerson);
+            if (Session != null)
+            {
+                _presenter.OnLoad(Session);
+            }
 
             timerNotification.Start();
             // Safety net only - a sale or purchase now triggers an immediate recheck via
@@ -64,16 +71,21 @@ namespace PharmacySystem
             lblUserRole.Text = role;
         }
 
-        public void SetAdministrativeMenusVisible(bool visible)
+        public void ApplySidebarPermissions(SidebarPermissions p)
         {
-            btnUsers.Visible = visible;
-            btnManagement.Visible = visible;
-            btnSuppliers.Visible = visible;
-            btnReports.Visible = visible;
-            btnPurchases.Visible = visible;
+            btnSales.Visible = p.Sales;
+            btnPurchases.Visible = p.Purchases;
+            btnClients.Visible = p.Clients;
+            btnSuppliers.Visible = p.Suppliers;
+            btnManagement.Visible = p.Management;
+            btnUsers.Visible = p.Users;
+            btnRoles.Visible = p.Roles;
+            btnReports.Visible = p.Reports;
+            btnAlerts.Visible = p.Alerts;
+            if (!p.Alerts) lblAlertBadge.Visible = false;
 
             // Hiding/showing items above changes which sidebar rows should butt up against each
-            // other - re-stack everything below the highest hidden row.
+            // other - re-stack everything (and hide a group header whose items are all hidden).
             LayoutSidebarItems();
         }
 
@@ -88,15 +100,16 @@ namespace PharmacySystem
             int y = 14;
 
             y = PlaceItem(btnHome, y, itemGap);
-            y = PlaceHeader(lblGroupOperacion, y, headerGapBefore, itemGap);
+            y = PlaceGroupHeader(lblGroupOperacion, y, headerGapBefore, itemGap, btnSales, btnPurchases);
             y = PlaceItem(btnSales, y, itemGap);
             y = PlaceItem(btnPurchases, y, itemGap);
-            y = PlaceHeader(lblGroupGestion, y, headerGapBefore, itemGap);
+            y = PlaceGroupHeader(lblGroupGestion, y, headerGapBefore, itemGap, btnManagement, btnSuppliers, btnClients, btnUsers, btnRoles);
             y = PlaceItem(btnManagement, y, itemGap);
             y = PlaceItem(btnSuppliers, y, itemGap);
             y = PlaceItem(btnClients, y, itemGap);
             y = PlaceItem(btnUsers, y, itemGap);
-            y = PlaceHeader(lblGroupConsulta, y, headerGapBefore, itemGap);
+            y = PlaceItem(btnRoles, y, itemGap);
+            y = PlaceGroupHeader(lblGroupConsulta, y, headerGapBefore, itemGap, btnReports, btnAlerts);
             y = PlaceItem(btnReports, y, itemGap);
             PlaceItem(btnAlerts, y, itemGap);
         }
@@ -108,8 +121,14 @@ namespace PharmacySystem
             return y + control.Height + gap;
         }
 
-        private static int PlaceHeader(Control header, int y, int gapBefore, int gapAfter)
+        // Hides the group header when every item in the group is hidden (a custom role can now
+        // leave a whole group with nothing in it), otherwise places it like before.
+        private static int PlaceGroupHeader(Control header, int y, int gapBefore, int gapAfter, params Control[] items)
         {
+            bool anyVisible = items.Any(c => c.Visible);
+            header.Visible = anyVisible;
+            if (!anyVisible) return y;
+
             header.Top = y + gapBefore;
             return header.Top + header.Height + gapAfter;
         }
@@ -132,7 +151,8 @@ namespace PharmacySystem
             int unmutedCount = alerts.Count(a => a.MutedAt == null);
 
             lblAlertBadge.Text = unmutedCount > 99 ? "99+" : unmutedCount.ToString();
-            lblAlertBadge.Visible = unmutedCount > 0;
+            // No badge for a user whose role can't open the notification center.
+            lblAlertBadge.Visible = btnAlerts.Visible && unmutedCount > 0;
         }
 
         // The query now hits an indexed, server-filtered SELECT (Fase 1), but it still crosses the
@@ -145,9 +165,14 @@ namespace PharmacySystem
         // frmManagement's existing search, instead of leaving the user to find it manually.
         private void OpenAlertsCenter(object sender, EventArgs e)
         {
+            if (!CanNavigate("alertas.acceso")) return;
+
             using (var modal = new ModalAlerts(_currentAlerts, CompositionRoot.NotificationConfigService, oPerson.idPerson))
             {
-                if (modal.ShowDialog(this) == DialogResult.OK && !string.IsNullOrEmpty(modal.SelectedProductCode))
+                // The click-through opens the Producto tab in frmManagement; skip it for a role
+                // that can see alerts but not the products section (that tab is not loaded).
+                bool canOpenProduct = Session?.Can("productos.acceso") ?? true;
+                if (modal.ShowDialog(this) == DialogResult.OK && canOpenProduct && !string.IsNullOrEmpty(modal.SelectedProductCode))
                 {
                     frmManagement childForm = new frmManagement();
                     ShowForm(childForm, btnManagement);
@@ -177,8 +202,16 @@ namespace PharmacySystem
             ShowForm(childForm, btnHome);
         }
 
+        // Navigation gate. The sidebar already hides what the role cannot reach, but frmHome's
+        // quick-access buttons call these same handlers through callbacks - this keeps a hidden
+        // destination unreachable even if something triggers its handler. Open when there is no
+        // session (design time / tests).
+        private static bool CanNavigate(string permission) => Session?.Can(permission) ?? true;
+
         private void btnClients_Click(object sender, EventArgs e)
         {
+            if (!CanNavigate("clientes.acceso")) return;
+
             frmClient childForm = new frmClient();
 
             ShowForm(childForm, sender);
@@ -186,6 +219,8 @@ namespace PharmacySystem
 
         private void btnSuppliers_Click(object sender, EventArgs e)
         {
+            if (!CanNavigate("proveedores.acceso")) return;
+
             frmSupplier childForm = new frmSupplier();
 
             ShowForm(childForm, sender);
@@ -193,6 +228,11 @@ namespace PharmacySystem
 
         private void btnManagement_Click(object sender, EventArgs e)
         {
+            if (!(CanNavigate("productos.acceso") || CanNavigate("categorias.acceso") || CanNavigate("tienda.acceso")))
+            {
+                return;
+            }
+
             frmManagement childForm = new frmManagement();
 
             ShowForm(childForm, sender);
@@ -200,6 +240,8 @@ namespace PharmacySystem
 
         private void btnPurchases_Click(object sender, EventArgs e)
         {
+            if (!CanNavigate("compras.acceso")) return;
+
             frmPurchase childForm = new frmPurchase(oPerson.idPerson);
 
             ShowForm(childForm, sender);
@@ -207,6 +249,8 @@ namespace PharmacySystem
 
         private void btnSales_Click(object sender, EventArgs e)
         {
+            if (!CanNavigate("ventas.acceso")) return;
+
             frmSale childForm = new frmSale(oPerson.idPerson);
 
             ShowForm(childForm, sender);
@@ -214,13 +258,26 @@ namespace PharmacySystem
 
         private void btnUsers_Click(object sender, EventArgs e)
         {
+            if (!CanNavigate("usuarios.acceso")) return;
+
             frmUser childForm = new frmUser();
+
+            ShowForm(childForm, sender);
+        }
+
+        private void btnRoles_Click(object sender, EventArgs e)
+        {
+            if (!CanNavigate("roles.gestionar")) return;
+
+            frmRoles childForm = new frmRoles();
 
             ShowForm(childForm, sender);
         }
 
         private void btnReports_Click(object sender, EventArgs e)
         {
+            if (!CanNavigate("reportes.acceso")) return;
+
             frmReport childForm = new frmReport();
 
             ShowForm(childForm, sender);

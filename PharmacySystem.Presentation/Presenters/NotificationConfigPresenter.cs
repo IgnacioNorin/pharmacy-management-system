@@ -11,12 +11,16 @@ namespace PharmacySystem.Presentation
     {
         private readonly INotificationConfigView _view;
         private readonly INotificationConfigService _service;
+        private readonly CurrentUser _currentUser;
 
-        public NotificationConfigPresenter(INotificationConfigView view, INotificationConfigService service)
+        public NotificationConfigPresenter(INotificationConfigView view, INotificationConfigService service, CurrentUser currentUser)
         {
             _view = view;
             _service = service;
+            _currentUser = currentUser;
         }
+
+        private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
 
         public void OnLoad()
         {
@@ -26,6 +30,12 @@ namespace PharmacySystem.Presentation
 
         public void OnSave()
         {
+            if (!Can("alertas.configurar"))
+            {
+                _view.ShowMessage("No tiene permiso para cambiar la configuracion de alertas.");
+                return;
+            }
+
             string daysText = _view.DaysText;
             string stockText = _view.StockText;
 

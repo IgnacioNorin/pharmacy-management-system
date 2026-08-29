@@ -15,12 +15,16 @@ namespace PharmacySystem.Presentation
     {
         private readonly ICategoryManagementView _view;
         private readonly ICategoryService _service;
+        private readonly CurrentUser _currentUser;
 
-        public CategoryManagementPresenter(ICategoryManagementView view, ICategoryService service)
+        public CategoryManagementPresenter(ICategoryManagementView view, ICategoryService service, CurrentUser currentUser)
         {
             _view = view;
             _service = service;
+            _currentUser = currentUser;
         }
+
+        private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
 
         public void OnLoad()
         {
@@ -29,6 +33,12 @@ namespace PharmacySystem.Presentation
 
         public void OnSave()
         {
+            if (!Can("categorias.gestionar"))
+            {
+                _view.ShowMessage("No tiene permiso para crear o editar categorias.");
+                return;
+            }
+
             var errors = _view.Validate();
             if (errors.Count > 0)
             {
@@ -76,6 +86,12 @@ namespace PharmacySystem.Presentation
         {
             if (_view.SelectedIndex <= 0)
             {
+                return;
+            }
+
+            if (!Can("categorias.gestionar"))
+            {
+                _view.ShowMessage("No tiene permiso para eliminar categorias.");
                 return;
             }
 

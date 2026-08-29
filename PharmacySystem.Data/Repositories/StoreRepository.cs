@@ -23,7 +23,9 @@ namespace PharmacySystem.Data
                 try
                 {
                     Store row = oConnection.Query<Store>(
-                        "SELECT document_store AS document, company_name AS companyName, email, phone, address, currency_culture AS currencyCulture " +
+                        "SELECT document_store AS document, company_name AS companyName, email, phone, address, " +
+                        "currency_culture AS currencyCulture, country_code AS countryCode, default_tax_rate AS defaultTaxRate, " +
+                        "default_document_type AS defaultDocumentType " +
                         "FROM store WHERE id = 1")
                         .FirstOrDefault();
 
@@ -76,18 +78,34 @@ namespace PharmacySystem.Data
             {
                 try
                 {
-                    oConnection.Execute(
+                    var parameters = new
+                    {
+                        document = obj.document,
+                        companyName = obj.companyName,
+                        email = obj.email,
+                        phone = obj.phone,
+                        address = obj.address,
+                        currencyCulture = obj.currencyCulture,
+                        countryCode = string.IsNullOrWhiteSpace(obj.countryCode) ? null : obj.countryCode.Trim(),
+                        defaultTaxRate = obj.defaultTaxRate,
+                        defaultDocumentType = obj.defaultDocumentType
+                    };
+
+                    int affected = oConnection.Execute(
                         "UPDATE store SET document_store = @document, company_name = @companyName, email = @email, " +
-                        "phone = @phone, address = @address, currency_culture = @currencyCulture WHERE id = 1",
-                        new
-                        {
-                            document = obj.document,
-                            companyName = obj.companyName,
-                            email = obj.email,
-                            phone = obj.phone,
-                            address = obj.address,
-                            currencyCulture = obj.currencyCulture
-                        });
+                        "phone = @phone, address = @address, currency_culture = @currencyCulture, country_code = @countryCode, " +
+                        "default_tax_rate = @defaultTaxRate, default_document_type = @defaultDocumentType WHERE id = 1",
+                        parameters);
+
+                    // Fresh database: the singleton row may not have been seeded yet. Insert it so
+                    // the store profile / currency is not silently dropped on a "successful" save.
+                    if (affected == 0)
+                    {
+                        oConnection.Execute(
+                            "INSERT INTO store(id, document_store, company_name, email, phone, address, currency_culture, country_code, default_tax_rate, default_document_type) " +
+                            "VALUES (1, @document, @companyName, @email, @phone, @address, @currencyCulture, @countryCode, @defaultTaxRate, @defaultDocumentType)",
+                            parameters);
+                    }
 
                     return true;
                 }

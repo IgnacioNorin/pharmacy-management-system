@@ -30,7 +30,27 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         private static ProductManagementPresenter CreatePresenter(FakeProductManagementView view, FakeProductService productService, FakeCategoryService categoryService)
-            => new ProductManagementPresenter(view, productService, categoryService);
+            => new ProductManagementPresenter(view, productService, categoryService, TestUser.With("productos.gestionar", "productos.eliminar"));
+
+        [Fact]
+        public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotRegister()
+        {
+            var view = new FakeProductManagementView { ProductId = 0, Code = "P", Name = "N", Description = "D", SelectedCategoryId = 1 };
+            new ProductManagementPresenter(view, new FakeProductService(), new FakeCategoryService(), TestUser.With()).OnSave();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Empty(view.AddedRows);
+        }
+
+        [Fact]
+        public void OnDelete_WithoutDeletePermission_ShowsDeniedAndDoesNotRemove()
+        {
+            var view = new FakeProductManagementView { SelectedIndex = 2, ProductId = 5 };
+            new ProductManagementPresenter(view, new FakeProductService(), new FakeCategoryService(), TestUser.With("productos.gestionar")).OnDelete();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Empty(view.RemovedIndexes);
+        }
 
         [Fact]
         public void OnLoad_PopulatesCategoryOptionsAndProducts()
@@ -117,7 +137,24 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Single(view.AddedRows);
             Assert.Equal(7, view.AddedRows[0].Id);
             Assert.Equal("0", view.AddedRows[0].Stock);
+            Assert.True(view.AddedRows[0].TaxAffected); // default from the view
             Assert.True(view.ClearFormCalled);
+        }
+
+        [Fact]
+        public void OnSave_NewExemptProduct_CarriesTheFlagToTheRow()
+        {
+            var view = new FakeProductManagementView
+            {
+                ProductId = 0, Code = "EX1", Name = "Libro", Description = "Exento",
+                SelectedCategoryId = 1, SelectedCategoryText = "Varios",
+                TaxAffected = false
+            };
+            var productService = new FakeProductService { RegisterResult = 8 };
+
+            CreatePresenter(view, productService, new FakeCategoryService()).OnSave();
+
+            Assert.False(view.AddedRows[0].TaxAffected);
         }
 
         [Fact]

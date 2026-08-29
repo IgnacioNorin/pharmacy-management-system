@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using Xunit;
@@ -7,8 +8,12 @@ namespace PharmacySystem.Tests.Presentation
 {
     public class SalePresenterTests
     {
-        private static SalePresenter CreatePresenter(FakeSaleView view, FakeSaleService saleService, FakeProductService productService, int idPerson = 1)
-            => new SalePresenter(view, saleService, productService, idPerson);
+        // countryCode defaults to "CL" so the existing Factura tests (which use Chilean RUT
+        // vectors) keep the modulo-11 validation; pass "" for the generic preset.
+        private static SalePresenter CreatePresenter(FakeSaleView view, FakeSaleService saleService, FakeProductService productService,
+            int idPerson = 1, decimal taxRate = 19m, string countryCode = "CL")
+            => new SalePresenter(view, saleService, productService,
+                new FakeStoreService { ListStoreResult = new Store { defaultTaxRate = taxRate, countryCode = countryCode } }, idPerson);
 
         // The cart lives inside the Presenter now, not the View, so tests that need an existing
         // cart line build it through the real OnAddProduct() path instead of pre-seeding view state.
@@ -20,6 +25,19 @@ namespace PharmacySystem.Tests.Presentation
             view.Amount = amount;
             view.PriceSaleText = priceSaleText;
             presenter.OnAddProduct();
+        }
+
+        [Fact]
+        public void OnLoad_SetsDocumentTypeOptionsAndDefaultFromStore()
+        {
+            var view = new FakeSaleView();
+            var presenter = new SalePresenter(view, new FakeSaleService(), new FakeProductService(),
+                new FakeStoreService { ListStoreResult = new Store { defaultDocumentType = "Factura" } }, 1);
+
+            presenter.OnLoad();
+
+            Assert.Equal(new[] { "Boleta", "Factura" }, view.DocumentTypeOptions);
+            Assert.Equal("Factura", view.SelectedDocumentTypeOption);
         }
 
         [Fact]
@@ -155,6 +173,196 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Equal(new[] { "Error al convertir el tipo de moneda - Paga con\nEjemplo Formato ##.##" }, view.ShownMessages);
         }
 
+        private static FakeSaleView FacturaView() => new FakeSaleView
+        {
+            DocumentType = "Factura",
+            RecipientTaxId = "12.345.678-5",
+            RecipientBusinessName = "Acme SpA",
+            RecipientActivity = "Comercio",
+            RecipientAddress = "Calle 1",
+            RecipientCommune = "Santiago",
+            PayWithText = "10.00",
+            TotalPayText = "10.00"
+        };
+
+        [Fact]
+        public void OnDocumentTypeChanged_TogglesTheFacturaPanel()
+        {
+            var view = new FakeSaleView { DocumentType = "Factura" };
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+
+            presenter.OnDocumentTypeChanged();
+            Assert.True(view.FacturaFieldsVisible);
+
+            view.DocumentType = "Boleta";
+            presenter.OnDocumentTypeChanged();
+            Assert.False(view.FacturaFieldsVisible);
+        }
+
+        private static ClientRow ClientRowSample() => new ClientRow
+        {
+            Id = 42,
+            Document = "12.345.678-5",
+            Name = "Contacto Ejemplo",
+            Address = "Calle 1",
+            BusinessName = "Ejemplo SpA",
+            Activity = "Comercio",
+            Commune = "Santiago",
+            IsCompany = true
+        };
+
+        [Fact]
+        public void OnClientSelected_SetsTheClientFieldsFromThePickedRow()
+        {
+            var view = new FakeSaleView { DocumentType = "Boleta" };
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+
+            presenter.OnClientSelected(ClientRowSample());
+
+            Assert.Equal(("12.345.678-5", "Contacto Ejemplo"), view.ClientSetTo);
+            Assert.Null(view.RecipientSetTo); // Boleta: recipient block untouched
+        }
+
+        [Fact]
+        public void OnClientSelected_Factura_PrefillsTheRecipientFromTheClientFiscalProfile()
+        {
+            var view = new FakeSaleView { DocumentType = "Factura" };
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+
+            presenter.OnClientSelected(ClientRowSample());
+
+            Assert.Equal(("12.345.678-5", "Ejemplo SpA", "Comercio", "Calle 1", "Santiago"), view.RecipientSetTo);
+        }
+
+        [Fact]
+        public void OnClientSelected_Factura_ClientWithoutBusinessName_UsesTheName()
+        {
+            var view = new FakeSaleView { DocumentType = "Factura" };
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+
+            var client = ClientRowSample();
+            client.BusinessName = "   ";
+            presenter.OnClientSelected(client);
+
+            Assert.Equal("Contacto Ejemplo", view.RecipientSetTo.Value.BusinessName);
+        }
+
+        [Fact]
+        public void OnDocumentTypeChanged_ToFactura_PrefillsFromTheAlreadySelectedClient()
+        {
+            var view = new FakeSaleView { DocumentType = "Boleta" };
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+
+            presenter.OnClientSelected(ClientRowSample());
+            Assert.Null(view.RecipientSetTo);
+
+            view.DocumentType = "Factura";
+            presenter.OnDocumentTypeChanged();
+
+            Assert.Equal("Ejemplo SpA", view.RecipientSetTo.Value.BusinessName);
+        }
+
+        [Fact]
+        public void OnFinishSale_WithASelectedClient_LinksTheSaleToThatClient()
+        {
+            var view = FacturaView();
+            var saleService = new FakeSaleService { RegisterResult = 1 };
+            var presenter = CreatePresenter(view, saleService, new FakeProductService { VerifyResult = true });
+            presenter.OnClientSelected(ClientRowSample());
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnFinishSale();
+
+            Assert.Equal(42, saleService.RegisteredWith.clientId);
+        }
+
+        [Fact]
+        public void OnFinishSale_WalkInWithNoSelectedClient_LeavesClientIdNull()
+        {
+            var view = FacturaView();
+            var saleService = new FakeSaleService { RegisterResult = 1 };
+            var presenter = CreatePresenter(view, saleService, new FakeProductService { VerifyResult = true });
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnFinishSale();
+
+            Assert.Null(saleService.RegisteredWith.clientId);
+        }
+
+        [Fact]
+        public void OnFinishSale_Factura_GenericPreset_AcceptsANonRutRecipientDocument()
+        {
+            var view = FacturaView();
+            view.RecipientTaxId = "AB-1234.5"; // not a Chilean RUT, but a valid generic document
+            var saleService = new FakeSaleService { RegisterResult = 1 };
+            var presenter = CreatePresenter(view, saleService, new FakeProductService { VerifyResult = true }, countryCode: "");
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnFinishSale();
+
+            Assert.NotNull(saleService.RegisteredWith);
+            Assert.DoesNotContain(view.ShownMessages, m => m.Contains("no es válido"));
+        }
+
+        [Fact]
+        public void OnFinishSale_Factura_GenericPreset_RejectsAMalformedRecipientDocument()
+        {
+            var view = FacturaView();
+            view.RecipientTaxId = "@@"; // too short and invalid characters for the generic check
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService { VerifyResult = true }, countryCode: "");
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnFinishSale();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("documento del receptor no es válido"));
+        }
+
+        [Fact]
+        public void OnFinishSale_Factura_MissingRecipientData_ShowsMessage()
+        {
+            var view = FacturaView();
+            view.RecipientActivity = "";
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService { VerifyResult = true });
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnFinishSale();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("receptor de la factura"));
+        }
+
+        [Fact]
+        public void OnFinishSale_Factura_InvalidRut_ShowsMessage()
+        {
+            var view = FacturaView();
+            view.RecipientTaxId = "12.345.678-9"; // wrong check digit
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService { VerifyResult = true });
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnFinishSale();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("RUT del receptor no es válido"));
+        }
+
+        [Fact]
+        public void OnFinishSale_Factura_ValidRecipient_RegistersWithRecipientData()
+        {
+            var view = FacturaView();
+            var saleService = new FakeSaleService { RegisterResult = 1 };
+            var presenter = CreatePresenter(view, saleService, new FakeProductService { VerifyResult = true });
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnFinishSale();
+
+            var sale = saleService.RegisteredWith;
+            Assert.NotNull(sale);
+            Assert.Equal("12.345.678-5", sale.recipientTaxId);
+            Assert.Equal("Acme SpA", sale.recipientBusinessName);
+            Assert.Equal("Santiago", sale.recipientCommune);
+            // On a Factura the identity is not duplicated into document_client / name_client.
+            Assert.Equal("", sale.documentClient);
+            Assert.Equal("", sale.nameClient);
+        }
+
         [Fact]
         public void OnFinishSale_MissingClientData_ShowsMessage()
         {
@@ -202,16 +410,16 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Equal(new[] { "Falta dinero para pagar" }, view.ShownMessages);
         }
 
-        // Regression test: OnFinishSale used to run an extra ControlStock() check against the
-        // product-entry fields (SelectedProductId/Amount) before touching the cart, and those are
-        // "0"/1 after the last CleanProduct(). A real cashier hits this on every sale - after
-        // adding their last item, the entry fields reset, yet the sale must still register. Fixed
-        // by removing that check; only the per-line ControlStock in the loop below gates the sale now.
+        // Regression test: OnFinishSale used to run an extra stock check against the product-entry
+        // fields (SelectedProductId/Amount) before touching the cart, and those are "0"/1 after
+        // the last CleanProduct(). A real cashier hits this on every sale - after adding their
+        // last item, the entry fields reset, yet the sale must still register. The presenter now
+        // only reads the cart; stock is enforced inside Register's transaction.
         [Fact]
         public void OnFinishSale_ProductEntryFieldsResetAfterLastAdd_StillRegistersSale()
         {
             var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
-            var saleService = new FakeSaleService { ControlStockResult = true, RegisterResult = 5 };
+            var saleService = new FakeSaleService { RegisterResult = 5 };
             var productService = new FakeProductService { VerifyResult = true };
             var presenter = CreatePresenter(view, saleService, productService);
             AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
@@ -225,14 +433,13 @@ namespace PharmacySystem.Tests.Presentation
 
             Assert.NotNull(saleService.RegisteredWith);
             Assert.True(view.SaleCleared);
-            Assert.DoesNotContain(saleService.ControlStockCalls, c => c.IdProduct == 0);
         }
 
         [Fact]
         public void OnFinishSale_LineProductNoLongerExists_ShowsMessage()
         {
             var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
-            var saleService = new FakeSaleService { ControlStockResult = true };
+            var saleService = new FakeSaleService();
             var productService = new FakeProductService { VerifyResult = false };
             var presenter = CreatePresenter(view, saleService, productService);
             AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
@@ -245,29 +452,71 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Null(saleService.RegisteredWith);
         }
 
+        // Register returns 0 when a line's stock ran out (the guard is now inside its
+        // transaction). The presenter reports it and leaves the sale uncommitted.
         [Fact]
-        public void OnFinishSale_SubtractStockFails_ShowsMessage()
+        public void OnFinishSale_RegisterReportsStockShortage_ShowsMessageAndDoesNotClear()
         {
             var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
-            var saleService = new FakeSaleService();
+            var saleService = new FakeSaleService { RegisterResult = 0 };
             var productService = new FakeProductService { VerifyResult = true };
             var presenter = CreatePresenter(view, saleService, productService);
             AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
 
-            saleService.ControlStockResult = false;
             view.PayWithText = "10.00";
             view.TotalPayText = "10.00";
             presenter.OnFinishSale();
 
-            Assert.Equal(new[] { "No se pudo registrar la venta\n Problema con Stock" }, view.ShownMessages);
-            Assert.Null(saleService.RegisteredWith);
+            Assert.Equal(new[] { "No se pudo registrar la venta.\nVerifique el stock disponible." }, view.ShownMessages);
+            Assert.False(view.SaleCleared);
+        }
+
+        [Fact]
+        public void OnFinishSale_Succeeds_SetsVatBreakdownOnTheSale()
+        {
+            var view = new FakeSaleView { DocumentClient = "1", NameClient = "Juan" };
+            var saleService = new FakeSaleService { RegisterResult = 1 };
+            var presenter = CreatePresenter(view, saleService, new FakeProductService { VerifyResult = true });
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "1190.00");
+
+            view.PayWithText = "1190.00";
+            view.TotalPayText = "1190.00";
+            presenter.OnFinishSale();
+
+            Assert.Equal(1000m, saleService.RegisteredWith.netAmount);
+            Assert.Equal(190m, saleService.RegisteredWith.taxAmount);
+            Assert.Equal(0m, saleService.RegisteredWith.exemptAmount);
+            Assert.True(saleService.RegisteredWith.oSaleDetail[0].taxAffected);
+        }
+
+        [Fact]
+        public void OnFinishSale_ExemptProduct_SetsExemptAmountAndNoTax()
+        {
+            var view = new FakeSaleView { DocumentClient = "1", NameClient = "Juan" };
+            var saleService = new FakeSaleService { RegisterResult = 1 };
+            var productService = new FakeProductService
+            {
+                VerifyResult = true,
+                ListResult = new List<Product> { new Product { idProduct = 1, name = "Exento", taxAffected = false } }
+            };
+            var presenter = CreatePresenter(view, saleService, productService);
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "1000.00");
+
+            view.PayWithText = "1000.00";
+            view.TotalPayText = "1000.00";
+            presenter.OnFinishSale();
+
+            Assert.Equal(0m, saleService.RegisteredWith.netAmount);
+            Assert.Equal(0m, saleService.RegisteredWith.taxAmount);
+            Assert.Equal(1000m, saleService.RegisteredWith.exemptAmount);
+            Assert.False(saleService.RegisteredWith.oSaleDetail[0].taxAffected);
         }
 
         [Fact]
         public void OnFinishSale_Succeeds_RegistersSaleClearsAndNotifiesView()
         {
-            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan", DocumentType = "Factura" };
-            var saleService = new FakeSaleService { ControlStockResult = true, RegisterResult = 99 };
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
+            var saleService = new FakeSaleService { RegisterResult = 99 };
             var productService = new FakeProductService { VerifyResult = true };
             var presenter = CreatePresenter(view, saleService, productService, idPerson: 7);
             AddLine(presenter, view, productId: 1, amount: 2, priceSaleText: "5.00");
@@ -294,7 +543,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnFinishSale_Succeeds_RaisesInventoryChangedNotification()
         {
             var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan", PayWithText = "10.00", TotalPayText = "10.00" };
-            var saleService = new FakeSaleService { ControlStockResult = true, RegisterResult = 99 };
+            var saleService = new FakeSaleService { RegisterResult = 99 };
             var productService = new FakeProductService { VerifyResult = true };
             var presenter = CreatePresenter(view, saleService, productService);
             AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
@@ -318,7 +567,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnFinishSale_RegisterFails_DoesNotRaiseInventoryChangedNotification()
         {
             var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan", PayWithText = "10.00", TotalPayText = "10.00" };
-            var saleService = new FakeSaleService { ControlStockResult = true, RegisterResult = 0 };
+            var saleService = new FakeSaleService { RegisterResult = 0 };
             var productService = new FakeProductService { VerifyResult = true };
             var presenter = CreatePresenter(view, saleService, productService);
             AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
@@ -342,7 +591,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnFinishSale_RegisterFails_ShowsMessage()
         {
             var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
-            var saleService = new FakeSaleService { ControlStockResult = true, RegisterResult = 0 };
+            var saleService = new FakeSaleService { RegisterResult = 0 };
             var productService = new FakeProductService { VerifyResult = true };
             var presenter = CreatePresenter(view, saleService, productService);
             AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
@@ -351,7 +600,24 @@ namespace PharmacySystem.Tests.Presentation
             view.TotalPayText = "10.00";
             presenter.OnFinishSale();
 
-            Assert.Equal(new[] { "No se pudo registrar la venta" }, view.ShownMessages);
+            Assert.Equal(new[] { "No se pudo registrar la venta.\nVerifique el stock disponible." }, view.ShownMessages);
+            Assert.False(view.SaleCleared);
+        }
+
+        [Fact]
+        public void OnFinishSale_DatabaseUnavailable_ShowsConnectionErrorAndDoesNotClear()
+        {
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
+            var saleService = new FakeSaleService { RegisterThrows = new DataUnavailableException() };
+            var productService = new FakeProductService { VerifyResult = true };
+            var presenter = CreatePresenter(view, saleService, productService);
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            view.PayWithText = "10.00";
+            view.TotalPayText = "10.00";
+            presenter.OnFinishSale();
+
+            Assert.Equal(new[] { DataUnavailableException.DefaultMessage }, view.ShownMessages);
             Assert.False(view.SaleCleared);
         }
 
@@ -359,7 +625,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnFinishSale_Succeeds_ClearsThePresenterOwnedCartToo()
         {
             var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
-            var saleService = new FakeSaleService { ControlStockResult = true, RegisterResult = 5 };
+            var saleService = new FakeSaleService { RegisterResult = 5 };
             var productService = new FakeProductService { VerifyResult = true };
             var presenter = CreatePresenter(view, saleService, productService);
             AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");

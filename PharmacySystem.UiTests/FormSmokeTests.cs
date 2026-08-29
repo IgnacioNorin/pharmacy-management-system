@@ -108,6 +108,30 @@ namespace PharmacySystem.UiTests
         }
 
         [Fact]
+        public void FrmRoles_ConstructsAndImplementsView()
+        {
+            StaThread.Run(() =>
+            {
+                using (var form = new frmRoles())
+                {
+                    Assert.IsAssignableFrom<IRolesView>(form);
+                }
+            });
+        }
+
+        [Fact]
+        public void FrmCreditNote_ConstructsAndImplementsView()
+        {
+            StaThread.Run(() =>
+            {
+                using (var form = new frmCreditNote())
+                {
+                    Assert.IsAssignableFrom<ICreditNoteView>(form);
+                }
+            });
+        }
+
+        [Fact]
         public void FrmManagement_ConstructsAndImplementsAllThreeTabViews()
         {
             StaThread.Run(() =>
@@ -116,6 +140,7 @@ namespace PharmacySystem.UiTests
                 {
                     Assert.IsAssignableFrom<ICategoryManagementView>(form);
                     Assert.IsAssignableFrom<IProductManagementView>(form);
+                    Assert.IsAssignableFrom<IProductPriceView>(form);
                     Assert.IsAssignableFrom<IStoreManagementView>(form);
                 }
             });

@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Linq;
 using PharmacySystem.Business;
+using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
@@ -8,17 +10,23 @@ namespace PharmacySystem.Presentation
     // on failure (`if (!result) return;` inside each branch), same shape as SupplierPresenter -
     // the trailing `if (result) CleanProduct(); else MessageBox.Show(...)` is dead code in the
     // original for the same reason it was in frmSupplier.cs, and stays dead here too.
+    //
+    // This screen never touches prices or the release state. The purchase flow moves stock and
+    // cost; the Prices screen (ProductPricePresenter) sets the sale price and releases the
+    // product for sale.
     public class ProductManagementPresenter
     {
         private readonly IProductManagementView _view;
         private readonly IProductService _productService;
         private readonly ICategoryService _categoryService;
+        private readonly CurrentUser _currentUser;
 
-        public ProductManagementPresenter(IProductManagementView view, IProductService productService, ICategoryService categoryService)
+        public ProductManagementPresenter(IProductManagementView view, IProductService productService, ICategoryService categoryService, CurrentUser currentUser)
         {
             _view = view;
             _productService = productService;
             _categoryService = categoryService;
+            _currentUser = currentUser;
         }
 
         public void OnLoad()
@@ -32,7 +40,13 @@ namespace PharmacySystem.Presentation
 
         public void OnSave()
         {
-            var errors = _view.Validate();
+            if (!Can("productos.gestionar"))
+            {
+                _view.ShowMessage("No tiene permiso para crear o editar productos.");
+                return;
+            }
+
+            var errors = new List<string>(_view.Validate());
             if (errors.Count > 0)
             {
                 _view.ShowValidationErrors(errors);
@@ -45,6 +59,7 @@ namespace PharmacySystem.Presentation
                 code = _view.Code?.Trim(),
                 name = _view.Name?.Trim(),
                 description = _view.Description?.Trim(),
+                taxAffected = _view.TaxAffected,
                 oCategory = new Categories { IdCategory = _view.SelectedCategoryId }
             };
 
@@ -63,6 +78,7 @@ namespace PharmacySystem.Presentation
                     Name = product.name,
                     Description = product.description,
                     CategoryText = _view.SelectedCategoryText,
+                    TaxAffected = product.taxAffected,
                     Stock = "0"
                 });
             }
@@ -80,6 +96,7 @@ namespace PharmacySystem.Presentation
                     Name = product.name,
                     Description = product.description,
                     CategoryText = _view.SelectedCategoryText,
+                    TaxAffected = product.taxAffected,
                     // Stock/expiration aren't touched on update, same as the original, which
                     // never rewrote those two grid cells in the else branch.
                     Stock = null,
@@ -94,6 +111,12 @@ namespace PharmacySystem.Presentation
         {
             if (_view.SelectedIndex <= 0)
             {
+                return;
+            }
+
+            if (!Can("productos.eliminar"))
+            {
+                _view.ShowMessage("No tiene permiso para eliminar productos.");
                 return;
             }
 
@@ -112,6 +135,8 @@ namespace PharmacySystem.Presentation
             _view.ClearForm();
         }
 
+        private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
+
         private static ManagementProductRow ToRow(Product p)
         {
             const string epoch = "01/01/0001";
@@ -124,6 +149,7 @@ namespace PharmacySystem.Presentation
                 Name = p.name,
                 Description = p.description,
                 CategoryText = p.oCategory.description,
+                TaxAffected = p.taxAffected,
                 Stock = p.stock.ToString(),
                 ExpirationDateText = shortDate == epoch ? "" : shortDate
             };

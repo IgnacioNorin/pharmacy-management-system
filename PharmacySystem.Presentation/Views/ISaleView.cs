@@ -17,8 +17,19 @@ namespace PharmacySystem.Presentation
         string ChangeText { get; }
         string DocumentType { get; }
 
+        // Recipient fiscal data, only read when DocumentType is a Factura.
+        string RecipientTaxId { get; }
+        string RecipientBusinessName { get; }
+        string RecipientActivity { get; }
+        string RecipientAddress { get; }
+        string RecipientCommune { get; }
+
         void ShowMessage(string message);
 
+        void SetDocumentTypeOptions(IReadOnlyList<string> options, string selected);
+        void SetFacturaFieldsVisible(bool visible);
+        void SetClient(string document, string name);
+        void SetRecipient(string taxId, string businessName, string activity, string address, string commune);
         void SetSelectedProduct(int id, string code, string name, int stock, string priceSaleFormatted);
         void AddCartLine(SaleCartLine line);
         void RemoveCartLineAt(int index);

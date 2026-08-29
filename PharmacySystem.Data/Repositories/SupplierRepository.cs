@@ -24,16 +24,22 @@ namespace PharmacySystem.Data
             {
                 try
                 {
-                    var parameters = new DynamicParameters();
-                    parameters.Add("document", obj.document);
-                    parameters.Add("company_name", obj.companyName);
-                    parameters.Add("email", obj.email);
-                    parameters.Add("phone", obj.phone);
-                    parameters.Add("result", dbType: DbType.Int32, direction: ParameterDirection.Output);
+                    const string sql =
+                        "INSERT INTO supplier(document_number, company_name, email, phone) " +
+                        "VALUES (@document, @company_name, @email, @phone); " +
+                        "SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
-                    oConnection.Execute("sp_create_supplier", parameters, commandType: CommandType.StoredProcedure);
-
-                    return parameters.Get<int>("result");
+                    return oConnection.ExecuteScalar<int>(sql, new
+                    {
+                        document = obj.document,
+                        company_name = obj.companyName,
+                        email = obj.email,
+                        phone = obj.phone
+                    });
+                }
+                catch (Exception ex) when (SqlErrorCodes.IsUniqueViolation(ex))
+                {
+                    return 0; // a supplier with that document already exists
                 }
                 catch (Exception ex)
                 {
@@ -49,17 +55,24 @@ namespace PharmacySystem.Data
             {
                 try
                 {
-                    var parameters = new DynamicParameters();
-                    parameters.Add("id_supplier", obj.idSupplier);
-                    parameters.Add("document", obj.document);
-                    parameters.Add("company_name", obj.companyName);
-                    parameters.Add("email", obj.email);
-                    parameters.Add("phone", obj.phone);
-                    parameters.Add("result", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+                    const string sql =
+                        "UPDATE supplier SET document_number = @document, company_name = @company_name, " +
+                        "email = @email, phone = @phone WHERE id = @id_supplier;";
 
-                    oConnection.Execute("sp_update_supplier", parameters, commandType: CommandType.StoredProcedure);
+                    oConnection.Execute(sql, new
+                    {
+                        id_supplier = obj.idSupplier,
+                        document = obj.document,
+                        company_name = obj.companyName,
+                        email = obj.email,
+                        phone = obj.phone
+                    });
 
-                    return parameters.Get<bool>("result");
+                    return true;
+                }
+                catch (Exception ex) when (SqlErrorCodes.IsUniqueViolation(ex))
+                {
+                    return false; // another supplier already uses that document
                 }
                 catch (Exception ex)
                 {

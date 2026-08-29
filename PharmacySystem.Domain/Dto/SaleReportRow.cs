@@ -11,8 +11,13 @@ namespace PharmacySystem.Model
         public string DocumentNumber { get; set; }
         public string SellerDocument { get; set; }
         public string SellerName { get; set; }
+        // Client or, on a Factura, the receptor - the repository merges the two so there is one
+        // pair of columns, not two.
         public string ClientDocument { get; set; }
         public string ClientName { get; set; }
+        public decimal NetAmount { get; set; }
+        public decimal TaxAmount { get; set; }
+        public decimal ExemptAmount { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal AmountReceived { get; set; }
         public decimal ChangeAmount { get; set; }

@@ -13,6 +13,11 @@ namespace PharmacySystem.Tests.Presentation
         public string Name { get; set; }
         public string Address { get; set; }
         public string Phone { get; set; }
+        public string BusinessName { get; set; }
+        public string Activity { get; set; }
+        public string Commune { get; set; }
+        public string Email { get; set; }
+        public bool IsCompany { get; set; }
         public List<string> ValidationErrors { get; set; } = new List<string>();
         public bool ConfirmDeleteResult { get; set; } = true;
 

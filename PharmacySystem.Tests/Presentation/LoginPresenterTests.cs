@@ -1,4 +1,5 @@
 using PharmacySystem.Helpers;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using Xunit;
@@ -18,7 +19,7 @@ namespace PharmacySystem.Tests.Presentation
 
             CreatePresenter(view, service).OnLogin();
 
-            Assert.Equal("No se econtraron coincidencias del usuario", view.ShownError);
+            Assert.Equal("No se encontraron coincidencias del usuario", view.ShownError);
             Assert.Null(view.LoggedInPerson);
         }
 
@@ -33,7 +34,7 @@ namespace PharmacySystem.Tests.Presentation
 
             CreatePresenter(view, service).OnLogin();
 
-            Assert.Equal("No se econtraron coincidencias del usuario", view.ShownError);
+            Assert.Equal("No se encontraron coincidencias del usuario", view.ShownError);
             Assert.Null(view.LoggedInPerson);
         }
 
@@ -48,14 +49,14 @@ namespace PharmacySystem.Tests.Presentation
 
             CreatePresenter(view, service).OnLogin();
 
-            Assert.Equal("No se econtraron coincidencias del usuario", view.ShownError);
+            Assert.Equal("No se encontraron coincidencias del usuario", view.ShownError);
             Assert.Null(view.LoggedInPerson);
         }
 
         [Fact]
         public void OnLogin_HashedPasswordMatches_LogsIn()
         {
-            var person = new Person { idPerson = 1, password = PasswordHasher.Hash("correct"), oPersonType = new TypePerson { idPersonType = 1 } };
+            var person = new Person { idPerson = 1, password = PasswordHasher.Hash("correct"), Estado = true, oPersonType = new TypePerson { idPersonType = 1 } };
             var view = new FakeLoginView { Document = "123", Password = "correct" };
             var service = new FakePersonService { GetByDocumentResult = person };
 
@@ -69,7 +70,7 @@ namespace PharmacySystem.Tests.Presentation
         [Fact]
         public void OnLogin_LegacyPlainTextPasswordMatches_LogsInAndMigratesToHash()
         {
-            var person = new Person { idPerson = 7, password = "plain-text", oPersonType = new TypePerson { idPersonType = 1 } };
+            var person = new Person { idPerson = 7, password = "plain-text", Estado = true, oPersonType = new TypePerson { idPersonType = 1 } };
             var view = new FakeLoginView { Document = "123", Password = "plain-text" };
             var service = new FakePersonService { GetByDocumentResult = person };
 
@@ -78,6 +79,31 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Same(person, view.LoggedInPerson);
             Assert.Equal(7, service.UpdatedPasswordForId);
             Assert.True(PasswordHasher.IsHashed(service.UpdatedPasswordHash));
+        }
+
+        [Fact]
+        public void OnLogin_DeactivatedPerson_IsRejectedEvenWithCorrectPassword()
+        {
+            var person = new Person { idPerson = 1, password = PasswordHasher.Hash("correct"), Estado = false, oPersonType = new TypePerson { idPersonType = 1 } };
+            var view = new FakeLoginView { Document = "123", Password = "correct" };
+            var service = new FakePersonService { GetByDocumentResult = person };
+
+            CreatePresenter(view, service).OnLogin();
+
+            Assert.Equal("No se encontraron coincidencias del usuario", view.ShownError);
+            Assert.Null(view.LoggedInPerson);
+        }
+
+        [Fact]
+        public void OnLogin_DatabaseUnavailable_ShowsConnectionErrorInsteadOfNoMatches()
+        {
+            var view = new FakeLoginView { Document = "123", Password = "x" };
+            var service = new FakePersonService { GetByDocumentThrows = new DataUnavailableException() };
+
+            CreatePresenter(view, service).OnLogin();
+
+            Assert.Equal(DataUnavailableException.DefaultMessage, view.ShownError);
+            Assert.Null(view.LoggedInPerson);
         }
 
         [Fact]

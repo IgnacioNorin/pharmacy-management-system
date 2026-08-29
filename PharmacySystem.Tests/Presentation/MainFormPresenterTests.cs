@@ -14,44 +14,89 @@ namespace PharmacySystem.Tests.Presentation
         private static MainFormPresenter CreatePresenter(FakeMainFormView view, FakeStoreService storeService, FakeNotificationConfigService notificationService)
             => new MainFormPresenter(view, storeService, notificationService);
 
+        private static CurrentUser User(string name, string roleDescription, params string[] permissions) =>
+            new CurrentUser(
+                new Person { name = name, oPersonType = new TypePerson { idPersonType = 1, description = roleDescription } },
+                permissions);
+
         [Fact]
-        public void OnLoad_SetsUserNameAndCurrency()
+        public void OnLoad_SetsUserNameAndRole()
         {
             var view = new FakeMainFormView();
             var storeService = new FakeStoreService { ListStoreResult = new Store { currencyCulture = "es-EC" } };
             var notificationService = new FakeNotificationConfigService();
-            var person = new Person { name = "Juan Pérez", oPersonType = new TypePerson { idPersonType = 1, description = "Administrador General" } };
 
-            CreatePresenter(view, storeService, notificationService).OnLoad(person);
+            CreatePresenter(view, storeService, notificationService)
+                .OnLoad(User("Juan Pérez", "Administrador General", "ventas.acceso"));
 
             Assert.Equal("Juan Pérez", view.UserName);
             Assert.Equal("Administrador General", view.UserRole);
         }
 
         [Fact]
-        public void OnLoad_CashierRole_HidesAdministrativeMenus()
+        public void OnLoad_CashierPermissions_ShowsOnlyTheGrantedSections()
         {
             var view = new FakeMainFormView();
-            var storeService = new FakeStoreService { ListStoreResult = new Store() };
-            var notificationService = new FakeNotificationConfigService();
-            var person = new Person { name = "Cajero", oPersonType = new TypePerson { idPersonType = 3 } };
+            var presenter = CreatePresenter(view, new FakeStoreService { ListStoreResult = new Store() }, new FakeNotificationConfigService());
 
-            CreatePresenter(view, storeService, notificationService).OnLoad(person);
+            // The seeded "Empleado" permission set.
+            presenter.OnLoad(User("Cajero", "Empleado",
+                "ventas.acceso", "clientes.acceso", "clientes.gestionar",
+                "alertas.acceso", "alertas.reconocer", "alertas.silenciar"));
 
-            Assert.False(view.AdministrativeMenusVisible);
+            var p = view.AppliedSidebarPermissions;
+            Assert.True(p.Sales);
+            Assert.True(p.Clients);
+            Assert.True(p.Alerts);
+            Assert.False(p.Purchases);
+            Assert.False(p.Suppliers);
+            Assert.False(p.Management);
+            Assert.False(p.Users);
+            Assert.False(p.Roles);
+            Assert.False(p.Reports);
         }
 
         [Fact]
-        public void OnLoad_NonCashierRole_ShowsAdministrativeMenus()
+        public void OnLoad_ManagementButton_ShowsIfAnyOfItsTabsIsAllowed()
         {
             var view = new FakeMainFormView();
-            var storeService = new FakeStoreService { ListStoreResult = new Store() };
-            var notificationService = new FakeNotificationConfigService();
-            var person = new Person { name = "Admin", oPersonType = new TypePerson { idPersonType = 1 } };
+            var presenter = CreatePresenter(view, new FakeStoreService { ListStoreResult = new Store() }, new FakeNotificationConfigService());
 
-            CreatePresenter(view, storeService, notificationService).OnLoad(person);
+            presenter.OnLoad(User("Encargado", "Custom", "categorias.acceso"));
 
-            Assert.True(view.AdministrativeMenusVisible);
+            Assert.True(view.AppliedSidebarPermissions.Management);
+        }
+
+        [Fact]
+        public void OnLoad_ReportsButton_FollowsReportesAcceso()
+        {
+            var view = new FakeMainFormView();
+            var presenter = CreatePresenter(view, new FakeStoreService { ListStoreResult = new Store() }, new FakeNotificationConfigService());
+
+            // A "reponedor" role: opens reports, but inside only sees purchases and products.
+            presenter.OnLoad(User("Reponedor", "Custom", "reportes.acceso", "reportes.compras", "reportes.productos"));
+            Assert.True(view.AppliedSidebarPermissions.Reports);
+
+            // Holding an inner report permission without reportes.acceso does not show the button.
+            var view2 = new FakeMainFormView();
+            CreatePresenter(view2, new FakeStoreService { ListStoreResult = new Store() }, new FakeNotificationConfigService())
+                .OnLoad(User("Sin acceso", "Custom", "reportes.compras"));
+            Assert.False(view2.AppliedSidebarPermissions.Reports);
+        }
+
+        [Fact]
+        public void OnLoad_FullPermissions_ShowsEverySection()
+        {
+            var view = new FakeMainFormView();
+            var presenter = CreatePresenter(view, new FakeStoreService { ListStoreResult = new Store() }, new FakeNotificationConfigService());
+
+            presenter.OnLoad(User("Admin", "Administrador General",
+                "ventas.acceso", "compras.acceso", "clientes.acceso", "proveedores.acceso",
+                "productos.acceso", "categorias.acceso", "tienda.acceso",
+                "usuarios.acceso", "roles.gestionar", "alertas.acceso", "reportes.acceso"));
+
+            var p = view.AppliedSidebarPermissions;
+            Assert.True(p.Sales && p.Purchases && p.Clients && p.Suppliers && p.Management && p.Users && p.Roles && p.Reports && p.Alerts);
         }
 
         // Fase 3: severity classification itself is tested at the Business layer

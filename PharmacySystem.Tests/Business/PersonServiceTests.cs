@@ -55,5 +55,19 @@ namespace PharmacySystem.Tests.Business
             Assert.True(PasswordHasher.IsHashed(repository.UpdatedWith.password));
             Assert.True(PasswordHasher.Verify("NewPassw0rd!", repository.UpdatedWith.password));
         }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public void Update_BlankPassword_PassesNullThroughToKeepCurrentOne(string blank)
+        {
+            var repository = new FakePersonRepository();
+            var service = new BusinessPersonService(repository);
+
+            service.Update(NewPerson(blank));
+
+            Assert.Null(repository.UpdatedWith.password);
+        }
     }
 }

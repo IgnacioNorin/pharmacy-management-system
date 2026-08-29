@@ -13,6 +13,7 @@ namespace PharmacySystem.Presentation
         string Description { get; }
         int SelectedCategoryId { get; }
         string SelectedCategoryText { get; }
+        bool TaxAffected { get; }
 
         List<string> Validate();
         bool ConfirmDelete();

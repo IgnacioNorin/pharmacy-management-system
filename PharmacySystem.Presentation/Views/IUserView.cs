@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
 {
@@ -17,6 +18,7 @@ namespace PharmacySystem.Presentation
         List<string> Validate();
         bool ConfirmDelete();
 
+        void LoadRoleOptions(IEnumerable<ComboBoxItem> options);
         void LoadUsers(IEnumerable<UserRow> users);
         void AddRow(UserRow row);
         void ReplaceRow(int index, UserRow row);

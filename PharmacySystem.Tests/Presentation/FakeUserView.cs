@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 
 namespace PharmacySystem.Tests.Presentation
@@ -22,6 +23,7 @@ namespace PharmacySystem.Tests.Presentation
         List<string> IUserView.Validate() => ValidationErrors;
         public bool ConfirmDelete() => ConfirmDeleteResult;
 
+        public List<ComboBoxItem> LoadedRoleOptions { get; private set; }
         public List<UserRow> LoadedUsers { get; private set; }
         public List<UserRow> AddedRows { get; } = new List<UserRow>();
         public List<(int Index, UserRow Row)> ReplacedRows { get; } = new List<(int, UserRow)>();
@@ -31,6 +33,7 @@ namespace PharmacySystem.Tests.Presentation
         public List<string> ShownValidationErrors { get; private set; }
         public int PasswordMismatchCount { get; private set; }
 
+        public void LoadRoleOptions(IEnumerable<ComboBoxItem> options) => LoadedRoleOptions = options.ToList();
         public void LoadUsers(IEnumerable<UserRow> users) => LoadedUsers = users.ToList();
         public void AddRow(UserRow row) => AddedRows.Add(row);
         public void ReplaceRow(int index, UserRow row) => ReplacedRows.Add((index, row));

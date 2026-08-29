@@ -8,7 +8,27 @@ namespace PharmacySystem.Tests.Presentation
     public class ClientPresenterTests
     {
         private static ClientPresenter CreatePresenter(FakeClientView view, FakePersonService service)
-            => new ClientPresenter(view, service);
+            => new ClientPresenter(view, service, TestUser.With("clientes.gestionar"));
+
+        [Fact]
+        public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotRegister()
+        {
+            var view = new FakeClientView { PersonId = 0, Document = "1", Name = "N", Address = "A", Phone = "9" };
+            new ClientPresenter(view, new FakePersonService(), TestUser.With()).OnSave();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Empty(view.AddedRows);
+        }
+
+        [Fact]
+        public void OnDelete_WithoutManagePermission_ShowsDeniedAndDoesNotRemove()
+        {
+            var view = new FakeClientView { SelectedIndex = 2, PersonId = 4 };
+            new ClientPresenter(view, new FakePersonService(), TestUser.With()).OnDelete();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Empty(view.RemovedIndexes);
+        }
 
         [Fact]
         public void OnLoad_OnlyIncludesClientRole()
@@ -45,7 +65,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnSave_NewClient_SetsClientRoleAndEmptyPassword()
         {
             var view = new FakeClientView { PersonId = 0, Document = "123", Name = "Test", Address = "Addr", Phone = "111" };
-            var service = new FakePersonService { RegisterResult = true };
+            var service = new FakePersonService { RegisterResult = 55 };
 
             CreatePresenter(view, service).OnSave();
 
@@ -54,19 +74,55 @@ namespace PharmacySystem.Tests.Presentation
             Assert.True(view.ClearFormCalled);
         }
 
-        // Locks in a real quirk: Register() only returns bool, never the new row's id, so the
-        // grid row added for a brand-new client keeps Id = 0 - same as the original frmClient.cs,
-        // which reused the still-"0" txtid.Text for the new row.
         [Fact]
-        public void OnSave_NewClient_Succeeds_AddedRowHasIdZero()
+        public void OnSave_NewClient_CarriesTheFiscalProfile()
+        {
+            var view = new FakeClientView
+            {
+                PersonId = 0, Document = "76.1-2", Name = "Contacto", Address = "Calle 1", Phone = "111",
+                BusinessName = "Ejemplo SpA", Activity = "Comercio", Commune = "Centro",
+                Email = "a@b.cl", IsCompany = true
+            };
+            var service = new FakePersonService { RegisterResult = 55 };
+
+            CreatePresenter(view, service).OnSave();
+
+            Assert.Equal("Ejemplo SpA", service.RegisteredWith.businessName);
+            Assert.Equal("Comercio", service.RegisteredWith.activity);
+            Assert.Equal("Centro", service.RegisteredWith.commune);
+            Assert.Equal("a@b.cl", service.RegisteredWith.email);
+            Assert.True(service.RegisteredWith.isCompany);
+        }
+
+        [Fact]
+        public void OnSave_IsCompanyWithoutBusinessNameOrActivity_ShowsErrorAndNeverCallsService()
+        {
+            var view = new FakeClientView
+            {
+                PersonId = 0, Document = "1", Name = "N", Address = "A", Phone = "9",
+                IsCompany = true, BusinessName = "  ", Activity = ""
+            };
+            var service = new FakePersonService { RegisterResult = 55 };
+
+            CreatePresenter(view, service).OnSave();
+
+            Assert.NotNull(view.ShownValidationErrors);
+            Assert.Contains(view.ShownValidationErrors, e => e.Contains("empresa"));
+            Assert.Null(service.RegisteredWith);
+        }
+
+        // Register() now returns the new id, so the row added to the grid carries it and can be
+        // re-selected / edited without registering a duplicate.
+        [Fact]
+        public void OnSave_NewClient_Succeeds_AddedRowGetsTheNewId()
         {
             var view = new FakeClientView { PersonId = 0, Document = "123", Name = "Test", Address = "Addr", Phone = "111" };
-            var service = new FakePersonService { RegisterResult = true };
+            var service = new FakePersonService { RegisterResult = 55 };
 
             CreatePresenter(view, service).OnSave();
 
             Assert.Single(view.AddedRows);
-            Assert.Equal(0, view.AddedRows[0].Id);
+            Assert.Equal(55, view.AddedRows[0].Id);
         }
 
         // Unlike SupplierPresenter (which returns silently on a failed Update), ClientPresenter's
@@ -76,7 +132,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnSave_RegisterFails_ShowsMessage()
         {
             var view = new FakeClientView { PersonId = 0, Document = "123", Name = "Test", Address = "Addr", Phone = "111" };
-            var service = new FakePersonService { RegisterResult = false };
+            var service = new FakePersonService { RegisterResult = 0 };
 
             CreatePresenter(view, service).OnSave();
 

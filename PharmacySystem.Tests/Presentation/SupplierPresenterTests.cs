@@ -12,7 +12,27 @@ namespace PharmacySystem.Tests.Presentation
     public class SupplierPresenterTests
     {
         private static SupplierPresenter CreatePresenter(FakeSupplierView view, FakeSupplierService service)
-            => new SupplierPresenter(view, service);
+            => new SupplierPresenter(view, service, TestUser.With("proveedores.gestionar"));
+
+        [Fact]
+        public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotRegister()
+        {
+            var view = new FakeSupplierView { SupplierId = 0, SelectedIndex = 0, RowCount = 0, Document = "1", CompanyName = "C", Email = "e@e.co", Phone = "9" };
+            new SupplierPresenter(view, new FakeSupplierService(), TestUser.With()).OnSave();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Empty(view.AddedRows);
+        }
+
+        [Fact]
+        public void OnDelete_WithoutManagePermission_ShowsDeniedAndDoesNotRemove()
+        {
+            var view = new FakeSupplierView { SelectedIndex = 2, SupplierId = 7 };
+            new SupplierPresenter(view, new FakeSupplierService(), TestUser.With()).OnDelete();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Empty(view.RemovedIndexes);
+        }
 
         [Fact]
         public void OnLoad_PopulatesViewFromService()
@@ -77,7 +97,7 @@ namespace PharmacySystem.Tests.Presentation
 
             CreatePresenter(view, service).OnSave();
 
-            Assert.Equal(new[] { "Ya existe un proveedor con esa CI/RUC" }, view.ShownMessages);
+            Assert.Equal(new[] { "Ya existe un proveedor con ese documento" }, view.ShownMessages);
             Assert.Empty(view.AddedRows);
             Assert.False(view.ClearFormCalled);
         }

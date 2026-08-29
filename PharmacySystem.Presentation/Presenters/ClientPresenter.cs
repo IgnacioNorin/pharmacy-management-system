@@ -9,21 +9,22 @@ namespace PharmacySystem.Presentation
     //  - OnSave shows "No se pudo guardar los cambios" on failure for BOTH register and update
     //    (unlike SupplierPresenter, where a failed Update returns silently - frmClient's
     //    btnSave_Click never returns early, it always falls through to the shared result check).
-    //  - A newly registered client's row gets Id = 0 in the grid, because
-    //    IPersonService.Register returns only a bool, never the new row's id - same as the
-    //    original, which reused the still-"0" txtid.Text for the new row.
     //  - OnDelete does nothing at all (no message) when nothing is selected, unlike
     //    SupplierPresenter's explicit "seleccione un proveedor".
     public class ClientPresenter
     {
         private readonly IClientView _view;
         private readonly IPersonService _service;
+        private readonly CurrentUser _currentUser;
 
-        public ClientPresenter(IClientView view, IPersonService service)
+        public ClientPresenter(IClientView view, IPersonService service, CurrentUser currentUser)
         {
             _view = view;
             _service = service;
+            _currentUser = currentUser;
         }
+
+        private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
 
         public void OnLoad()
         {
@@ -35,10 +36,22 @@ namespace PharmacySystem.Presentation
 
         public void OnSave()
         {
+            if (!Can("clientes.gestionar"))
+            {
+                _view.ShowMessage("No tiene permiso para crear o editar clientes.");
+                return;
+            }
+
             var errors = _view.Validate();
             if (errors.Count > 0)
             {
                 _view.ShowValidationErrors(errors);
+                return;
+            }
+
+            if (_view.IsCompany && (string.IsNullOrWhiteSpace(_view.BusinessName) || string.IsNullOrWhiteSpace(_view.Activity)))
+            {
+                _view.ShowValidationErrors(new[] { "Para una empresa, la razón social y el giro son obligatorios." });
                 return;
             }
 
@@ -49,6 +62,11 @@ namespace PharmacySystem.Presentation
                 name = _view.Name?.Trim(),
                 address = _view.Address?.Trim(),
                 phone = _view.Phone?.Trim(),
+                businessName = _view.BusinessName?.Trim(),
+                activity = _view.Activity?.Trim(),
+                commune = _view.Commune?.Trim(),
+                email = _view.Email?.Trim(),
+                isCompany = _view.IsCompany,
                 password = "",
                 oPersonType = new TypePerson { idPersonType = (int)PersonType.Cliente }
             };
@@ -56,9 +74,11 @@ namespace PharmacySystem.Presentation
             bool result;
             if (person.idPerson == 0)
             {
-                result = _service.Register(person);
+                int newId = _service.Register(person);
+                result = newId != 0;
                 if (result)
                 {
+                    person.idPerson = newId;
                     _view.AddRow(ClientRow.From(person));
                 }
             }
@@ -85,6 +105,12 @@ namespace PharmacySystem.Presentation
         {
             if (_view.SelectedIndex <= 0)
             {
+                return;
+            }
+
+            if (!Can("clientes.gestionar"))
+            {
+                _view.ShowMessage("No tiene permiso para eliminar clientes.");
                 return;
             }
 

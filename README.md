@@ -2,6 +2,10 @@
 
 Sistema de gestión integral para farmacias que incluye punto de venta (POS), control de inventario con alertas de stock y vencimiento, gestión de clientes, proveedores, usuarios con roles, y reportes.
 
+> 📋 **Documentación técnica en [`Docs/`](Docs/)**: catálogo de requisitos funcionales y no
+> funcionales, mapa de flujos, registro de defectos y hoja de ruta con opciones y
+> recomendaciones. Empezá por [Estado y hoja de ruta](Docs/05-Estado-y-roadmap.md).
+
 ## Características
 
 - **Punto de Venta (POS):** registro de ventas, carrito de compra y emisión de comprobante.
@@ -10,7 +14,7 @@ Sistema de gestión integral para farmacias que incluye punto de venta (POS), co
 - **Alertas de inventario:** detección de stock crítico/bajo y productos vencidos o por vencer, con severidad, centro de notificaciones, historial con trazabilidad (quién y cuándo se reconoció cada alerta) y opción de silenciar una alerta puntual.
 - **Clientes:** base de datos de clientes.
 - **Proveedores:** gestión de proveedores.
-- **Usuarios y roles:** Administrador General, Administrador, Empleado y Cliente (ver [Roles y usuario por defecto](#roles-y-usuario-por-defecto)).
+- **Usuarios y roles:** roles con permisos configurables por sección y acción, roles personalizados, y una pantalla de administración de roles (ver [Roles y usuario por defecto](#roles-y-usuario-por-defecto)).
 - **Reportes:** ventas, compras, inventario e historial de alertas, con exportación a Excel.
 - **Pantalla de inicio:** tablero con ventas del día, alertas abiertas y accesos rápidos.
 
@@ -56,7 +60,9 @@ Dentro de `Data`, `Business` y `Presentation`, los archivos están organizados e
    git clone https://github.com/IgnacioNorin/pharmacy-management-system.git
    ```
 
-2. Crear la base de datos ejecutando **`Database/PharmacyDB.sql`** contra la instancia de SQL Server (desde SSMS, Azure Data Studio, o `sqlcmd`). El script crea las tablas, índices, procedimientos almacenados, y siembra los datos iniciales: los 4 roles y una cuenta `Administrador General` por defecto (ver más abajo).
+2. Crear la base de datos ejecutando **`Database/PharmacyDB.sql`** contra la instancia de SQL Server (desde SSMS, Azure Data Studio, o `sqlcmd`). El script crea las tablas, índices, procedimientos almacenados, y siembra los datos iniciales: los 4 roles, una cuenta `Administrador General` por defecto (ver más abajo) y las filas de configuración de tienda y de alertas.
+
+   > Si ya hay una base `PharmacyDB` desplegada de una versión anterior, **no** volver a correr este script (contiene `DROP DATABASE`). Aplicar en su lugar los scripts incrementales de **`Database/Migrations/`** en orden — ver `Database/Migrations/README.md`.
 
 3. Abrir la solución en Visual Studio:
 
@@ -109,12 +115,29 @@ Desde línea de comandos, usando las herramientas de Visual Studio (no `dotnet t
 
 ## Roles y usuario por defecto
 
-| Rol | `person_type_id` | Acceso |
+| Rol | `person_type_id` | Acceso inicial |
 |---|---|---|
 | Administrador General | 1 | Acceso total, incluida la pestaña Tienda (nombre, datos fiscales y moneda). |
 | Administrador | 2 | Todo el sistema, excepto la pestaña Tienda. |
 | Empleado | 3 | Solo Clientes, Ventas y Alertas. |
 | Cliente | 4 | No puede iniciar sesión en la aplicación (rol de datos únicamente). |
+
+Los permisos de cada rol son **configurables**. Desde la pantalla
+**Roles y permisos** (barra lateral → Gestión, requiere el permiso
+`roles.gestionar`) se ven como un árbol: cada sección tiene su permiso de
+acceso y, debajo, los permisos internos (crear/editar/eliminar, editar la
+tienda, configurar alertas, etc.). Tildar un permiso interno marca también el
+acceso de su sección; destildar el acceso limpia los de adentro. Ahí también
+se crean roles nuevos. Los reportes van más fino: `reportes.acceso` abre la
+pantalla y adentro hay un permiso de ver y otro de exportar **por tipo**
+(ventas, compras, productos, historial de alertas), así un rol de reposición
+puede ver compras y productos sin ver ventas. Los cuatro roles de la
+tabla se pueden re-permisar pero no renombrar ni eliminar. La tabla de arriba es
+el acceso con el que quedan sembrados; se puede cambiar sin tocar código.
+
+Al eliminar un usuario que ya tiene ventas, compras o alertas reconocidas, se lo
+desactiva (`status = 0`) en vez de borrarlo; un usuario desactivado no puede
+iniciar sesión. Un rol con usuarios asignados tampoco se puede eliminar.
 
 El script de base de datos siembra una cuenta `Administrador General` por defecto:
 
@@ -124,6 +147,15 @@ Contraseña:  12345678
 ```
 
 ⚠️ **Cambiar esta contraseña antes de usar el sistema en producción.** La contraseña se almacena en texto plano solo hasta el primer inicio de sesión; en ese momento se re-hashea automáticamente (PBKDF2) y queda protegida.
+
+## Despliegue en un cliente
+
+`deploy/package.ps1` compila en Release y arma un paquete de distribución en
+`dist/` (binarios + scripts de base + plantilla de configuración). El
+procedimiento completo de instalación, actualización, backup y primer arranque
+está en **[DEPLOY.md](DEPLOY.md)**.
+
+El historial de cambios por versión está en **[CHANGELOG.md](CHANGELOG.md)**.
 
 ## Licencia
 

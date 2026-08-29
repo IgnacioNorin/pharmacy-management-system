@@ -13,6 +13,12 @@ namespace PharmacySystem.Presentation
         string Name { get; }
         string Address { get; }
         string Phone { get; }
+        // Fiscal profile, used when this client is the recipient of a Factura.
+        string BusinessName { get; }
+        string Activity { get; }
+        string Commune { get; }
+        string Email { get; }
+        bool IsCompany { get; }
 
         List<string> Validate();
         bool ConfirmDelete();

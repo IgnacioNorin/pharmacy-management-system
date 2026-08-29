@@ -36,7 +36,9 @@ namespace PharmacySystem
 
         public void LoginSucceeded(Person person)
         {
-            MainForm frm = new MainForm(person);
+            // Resolve the permission set from the user's role once, here, and hand it to MainForm.
+            CurrentUser session = CompositionRoot.CreateCurrentUser(person);
+            MainForm frm = new MainForm(session);
             frm.Show();
             this.Hide();
             frm.FormClosing += Frm_Closing;

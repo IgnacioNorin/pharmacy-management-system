@@ -23,7 +23,7 @@ namespace PharmacySystem.Presentation
 
             // Company header
             formatter.AddCenteredText(store.companyName.ToUpper());
-            formatter.AddCenteredText($"RUC: {store.document}");
+            formatter.AddCenteredText($"Documento: {store.document}");
             formatter.AddCenteredText(store.address.ToUpper());
             if (!string.IsNullOrEmpty(store.phone))
                 formatter.AddCenteredText($"Tel: {store.phone}");
@@ -37,7 +37,29 @@ namespace PharmacySystem.Presentation
             formatter.AddTwoColumns("Número:", sale.numberDocument);
             formatter.AddTwoColumns("Fecha:", date);
             formatter.AddTwoColumns("Hora:", time);
-            formatter.AddCenteredText("Cliente: Público General");
+            if (sale.referenceId.HasValue)
+            {
+                formatter.AddTwoColumns("Anula venta id:", sale.referenceId.Value.ToString());
+                if (!string.IsNullOrWhiteSpace(sale.referenceReason))
+                {
+                    formatter.AddTwoColumns("Motivo:", sale.referenceReason);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(sale.recipientTaxId))
+            {
+                formatter.AddCharacter("-");
+                formatter.AddCenteredText("RECEPTOR");
+                formatter.AddTwoColumns("RUT:", sale.recipientTaxId);
+                formatter.AddTwoColumns("Razón Social:", sale.recipientBusinessName ?? "");
+                formatter.AddTwoColumns("Giro:", sale.recipientActivity ?? "");
+                formatter.AddTwoColumns("Dirección:", sale.recipientAddress ?? "");
+                formatter.AddTwoColumns("Comuna:", sale.recipientCommune ?? "");
+            }
+            else
+            {
+                formatter.AddCenteredText("Cliente: Público General");
+            }
 
             formatter.AddCharacter("-");
 
@@ -81,6 +103,17 @@ namespace PharmacySystem.Presentation
             }
 
             formatter.AddCharacter("-");
+
+            // VAT breakdown (net + tax + exempt == totalPay)
+            formatter.AddTwoColumns("NETO:", CultureInfoHelper.FormatAsCurrency(sale.netAmount));
+            string ivaLabel = store.defaultTaxRate > 0
+                ? $"IVA ({store.defaultTaxRate:0.##}%):"
+                : "IVA:";
+            formatter.AddTwoColumns(ivaLabel, CultureInfoHelper.FormatAsCurrency(sale.taxAmount));
+            if (sale.exemptAmount > 0)
+            {
+                formatter.AddTwoColumns("EXENTO:", CultureInfoHelper.FormatAsCurrency(sale.exemptAmount));
+            }
 
             // Totals
             formatter.AddTwoColumns("TOTAL A PAGAR:", CultureInfoHelper.FormatAsCurrency(sale.totalPay));

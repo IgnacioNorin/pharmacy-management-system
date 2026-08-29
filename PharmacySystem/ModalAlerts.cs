@@ -173,9 +173,17 @@ namespace PharmacySystem
             }
         }
 
+        private static bool CanDo(string permission) => MainForm.Session?.Can(permission) ?? false;
+
         private void AcknowledgeRow(DataGridViewRow row)
         {
             if (_notificationService == null) return;
+
+            if (!CanDo("alertas.reconocer"))
+            {
+                MessageBox.Show("No tiene permiso para reconocer alertas.", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                return;
+            }
 
             int? historyId = ParseHistoryId(row);
             if (historyId == null) return;
@@ -204,6 +212,12 @@ namespace PharmacySystem
         private void ToggleMuteRow(DataGridViewRow row)
         {
             if (_notificationService == null) return;
+
+            if (!CanDo("alertas.silenciar"))
+            {
+                MessageBox.Show("No tiene permiso para silenciar alertas.", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                return;
+            }
 
             int? historyId = ParseHistoryId(row);
             if (historyId == null) return;

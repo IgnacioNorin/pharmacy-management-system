@@ -1,5 +1,6 @@
 using PharmacySystem.Business;
 using PharmacySystem.Data;
+using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 
 namespace PharmacySystem
@@ -22,12 +23,15 @@ namespace PharmacySystem
         private static readonly IStoreService _storeService = new StoreService(new StoreRepository(ConnectionFactory));
         private static readonly INotificationConfigService _notificationConfigService = new NotificationConfigService(new NotificationConfigRepository(ConnectionFactory), new ProductAlertHistoryRepository(ConnectionFactory));
         private static readonly IPurchaseService _purchaseService = new PurchaseService(new PurchaseRepository(ConnectionFactory));
-        private static readonly ISaleService _saleService = new SaleService(new SaleRepository(ConnectionFactory));
+        // LocalSequenceIssuer: receipts stay internal (numbered by the local sequence, no DTE).
+        // Replace with a provider-backed IFiscalDocumentIssuer to emit electronic documents.
+        private static readonly ISaleService _saleService = new SaleService(new SaleRepository(ConnectionFactory), new LocalSequenceIssuer());
+        private static readonly IPermissionService _permissionService = new PermissionService(new PermissionRepository(ConnectionFactory));
 
         #region Supplier
 
         public static SupplierPresenter CreateSupplierPresenter(ISupplierView view) =>
-            new SupplierPresenter(view, _supplierService);
+            new SupplierPresenter(view, _supplierService, MainForm.Session);
 
         public static SupplierPickerPresenter CreateSupplierPickerPresenter(ISupplierPickerView view) =>
             new SupplierPickerPresenter(view, _supplierService);
@@ -37,10 +41,10 @@ namespace PharmacySystem
         #region Person (client / user / login)
 
         public static ClientPresenter CreateClientPresenter(IClientView view) =>
-            new ClientPresenter(view, _personService);
+            new ClientPresenter(view, _personService, MainForm.Session);
 
         public static UserPresenter CreateUserPresenter(IUserView view) =>
-            new UserPresenter(view, _personService);
+            new UserPresenter(view, _personService, MainForm.Session, _permissionService);
 
         public static ClientPickerPresenter CreateClientPickerPresenter(IClientPickerView view) =>
             new ClientPickerPresenter(view, _personService);
@@ -56,20 +60,23 @@ namespace PharmacySystem
             new ProductPickerPresenter(view, _productService, origin);
 
         public static CategoryManagementPresenter CreateCategoryManagementPresenter(ICategoryManagementView view) =>
-            new CategoryManagementPresenter(view, _categoryService);
+            new CategoryManagementPresenter(view, _categoryService, MainForm.Session);
 
         public static ProductManagementPresenter CreateProductManagementPresenter(IProductManagementView view) =>
-            new ProductManagementPresenter(view, _productService, _categoryService);
+            new ProductManagementPresenter(view, _productService, _categoryService, MainForm.Session);
+
+        public static ProductPricePresenter CreateProductPricePresenter(IProductPriceView view) =>
+            new ProductPricePresenter(view, _productService, MainForm.Session);
 
         #endregion
 
         #region Store / Notifications
 
         public static StoreManagementPresenter CreateStoreManagementPresenter(IStoreManagementView view) =>
-            new StoreManagementPresenter(view, _storeService);
+            new StoreManagementPresenter(view, _storeService, MainForm.Session);
 
         public static NotificationConfigPresenter CreateNotificationConfigPresenter(INotificationConfigView view) =>
-            new NotificationConfigPresenter(view, _notificationConfigService);
+            new NotificationConfigPresenter(view, _notificationConfigService, MainForm.Session);
 
         public static MainFormPresenter CreateMainFormPresenter(IMainFormView view) =>
             new MainFormPresenter(view, _storeService, _notificationConfigService);
@@ -86,10 +93,13 @@ namespace PharmacySystem
             new PurchasePresenter(view, _purchaseService, _productService, idPerson);
 
         public static SalePresenter CreateSalePresenter(ISaleView view, int idPerson) =>
-            new SalePresenter(view, _saleService, _productService, idPerson);
+            new SalePresenter(view, _saleService, _productService, _storeService, idPerson);
+
+        public static CreditNotePresenter CreateCreditNotePresenter(ICreditNoteView view) =>
+            new CreditNotePresenter(view, _saleService, MainForm.Session, MainForm.oPerson?.idPerson ?? 0);
 
         public static ReportPresenter CreateReportPresenter(IReportView view) =>
-            new ReportPresenter(view, _supplierService, _categoryService, _saleService, _purchaseService, _productService, _notificationConfigService);
+            new ReportPresenter(view, _supplierService, _categoryService, _saleService, _purchaseService, _productService, _notificationConfigService, _personService, MainForm.Session);
 
         #endregion
 
@@ -97,6 +107,20 @@ namespace PharmacySystem
 
         public static HomePresenter CreateHomePresenter(IHomeView view) =>
             new HomePresenter(view, _saleService, _notificationConfigService);
+
+        #endregion
+
+        #region Permissions / session
+
+        // Resolves the logged-in user's permission set from their role. Built once, right after
+        // login, and handed to the screens that need to gate actions or hide UI.
+        public static CurrentUser CreateCurrentUser(Person person) =>
+            new CurrentUser(person, _permissionService.GetPermissionsForRole(person.oPersonType?.idPersonType ?? 0));
+
+        public static RolesPresenter CreateRolesPresenter(IRolesView view) =>
+            new RolesPresenter(view, _permissionService, MainForm.Session);
+
+        public static IPermissionService PermissionService => _permissionService;
 
         #endregion
     }
