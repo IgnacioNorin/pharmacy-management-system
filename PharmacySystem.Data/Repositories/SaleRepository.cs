@@ -5,6 +5,7 @@ using System.Linq;
 using Dapper;
 using PharmacySystem.Fiscal;
 using PharmacySystem.Helpers;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Data
@@ -168,6 +169,13 @@ namespace PharmacySystem.Data
                         objTransacion.Rollback();
                         return 0;
                     }
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    // Reaches here when the connection could not be opened at all: there is no
+                    // transaction to roll back, and the caller must not read this as "out of stock".
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {

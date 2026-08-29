@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using Xunit;
@@ -211,6 +212,22 @@ namespace PharmacySystem.Tests.Presentation
             presenter.OnFinishPurchase();
 
             Assert.Equal(new[] { "No se pudo registrar la compra" }, view.ShownMessages);
+            Assert.False(view.PurchaseCleared);
+        }
+
+        [Fact]
+        public void OnFinishPurchase_DatabaseUnavailable_ShowsConnectionErrorAndDoesNotClear()
+        {
+            var view = new FakePurchaseView();
+            var purchaseService = new FakePurchaseService { RegisterThrows = new DataUnavailableException() };
+            var presenter = CreatePresenter(view, purchaseService, new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "10.00");
+
+            view.DocumentNumber = "001";
+            view.SelectedSupplierId = 3;
+            presenter.OnFinishPurchase();
+
+            Assert.Equal(new[] { DataUnavailableException.DefaultMessage }, view.ShownMessages);
             Assert.False(view.PurchaseCleared);
         }
 

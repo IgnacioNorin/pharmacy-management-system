@@ -10,6 +10,7 @@ namespace PharmacySystem.Tests.Presentation
         public List<Sale> ListSaleResult { get; set; } = new List<Sale>();
         public List<SaleDetail> ListSaleDetailResult { get; set; } = new List<SaleDetail>();
         public int RegisterResult { get; set; } = 1;
+        public Exception RegisterThrows { get; set; }
         public List<SaleReportRow> ReportResult { get; set; } = new List<SaleReportRow>();
         public decimal SumTotalPayResult { get; set; }
         public Sale RegisteredWith { get; private set; }
@@ -25,6 +26,7 @@ namespace PharmacySystem.Tests.Presentation
         public int Register(Sale sale)
         {
             RegisteredWith = sale;
+            if (RegisterThrows != null) throw RegisterThrows;
             return RegisterResult;
         }
 

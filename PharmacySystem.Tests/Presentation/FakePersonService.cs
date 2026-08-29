@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using PharmacySystem.Business;
 using PharmacySystem.Model;
@@ -12,6 +13,7 @@ namespace PharmacySystem.Tests.Presentation
         public bool UpdatePasswordResult { get; set; } = true;
         public List<Person> ListResult { get; set; } = new List<Person>();
         public Person GetByDocumentResult { get; set; }
+        public Exception GetByDocumentThrows { get; set; }
 
         public Person RegisteredWith { get; private set; }
         public Person UpdatedWith { get; private set; }
@@ -37,6 +39,7 @@ namespace PharmacySystem.Tests.Presentation
         public Person GetByDocument(string document)
         {
             RequestedDocument = document;
+            if (GetByDocumentThrows != null) throw GetByDocumentThrows;
             return GetByDocumentResult;
         }
 

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using PharmacySystem.Business;
 using PharmacySystem.Helpers;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 using PharmacySystem.Validators;
 
@@ -262,67 +263,74 @@ namespace PharmacySystem.Presentation
 
             var details = new List<SaleDetail>();
 
-            foreach (SaleCartLine line in _cart)
+            try
             {
-                if (!_productService.Verify(line.ProductId))
+                foreach (SaleCartLine line in _cart)
                 {
-                    _view.ShowMessage("No se pudo registrar la venta\n Problema con producto");
-                    return;
+                    if (!_productService.Verify(line.ProductId))
+                    {
+                        _view.ShowMessage("No se pudo registrar la venta\n Problema con producto");
+                        return;
+                    }
+
+                    details.Add(new SaleDetail
+                    {
+                        oProduct = new Product { idProduct = line.ProductId },
+                        amount = (int)line.Quantity,
+                        salePrice = line.SalePrice,
+                        subtotal = line.SubTotal,
+                        taxAffected = line.TaxAffected
+                    });
                 }
 
-                details.Add(new SaleDetail
+                decimal taxRate = store?.defaultTaxRate ?? 19m;
+                TaxCalculator.Breakdown vat = TaxCalculator.Compute(
+                    _cart.Select(l => (l.SubTotal, l.TaxAffected)), taxRate);
+
+                Sale sale = new Sale
                 {
-                    oProduct = new Product { idProduct = line.ProductId },
-                    amount = (int)line.Quantity,
-                    salePrice = line.SalePrice,
-                    subtotal = line.SubTotal,
-                    taxAffected = line.TaxAffected
-                });
+                    typeDocument = _view.DocumentType,
+                    oPerson = new Person { idPerson = _idPerson },
+                    // On a Factura the fiscal identity lives in recipient_*; document_client /
+                    // name_client stay empty so the same data is not stored twice.
+                    documentClient = isFactura ? "" : _view.DocumentClient.Trim(),
+                    nameClient = isFactura ? "" : _view.NameClient.Trim(),
+                    recipientTaxId = isFactura ? (_view.RecipientTaxId ?? "").Trim() : null,
+                    recipientBusinessName = isFactura ? (_view.RecipientBusinessName ?? "").Trim() : null,
+                    recipientActivity = isFactura ? (_view.RecipientActivity ?? "").Trim() : null,
+                    recipientAddress = isFactura ? (_view.RecipientAddress ?? "").Trim() : null,
+                    recipientCommune = isFactura ? (_view.RecipientCommune ?? "").Trim() : null,
+                    totalPay = totalToPay,
+                    payWith = moneyToPay,
+                    change = changeMoney,
+                    netAmount = vat.Net,
+                    taxAmount = vat.Tax,
+                    exemptAmount = vat.Exempt,
+                    clientId = (_selectedClient != null && _selectedClient.Id > 0) ? _selectedClient.Id : (int?)null,
+                    oSaleDetail = details
+                };
+
+                int idSale = _saleService.Register(sale);
+
+                if (idSale != 0)
+                {
+                    _cart.Clear();
+                    _selectedClient = null;
+                    _view.ClearSale();
+                    _view.SaleRegistered(idSale);
+                    InventoryChangeNotifier.NotifyStockChanged();
+                }
+                else
+                {
+                    // Register returns 0 for any reason the sale could not be committed, including a
+                    // line whose stock ran out between adding it to the cart and finishing the sale
+                    // (the stock check is now inside Register's transaction).
+                    _view.ShowMessage("No se pudo registrar la venta.\nVerifique el stock disponible.");
+                }
             }
-
-            decimal taxRate = store?.defaultTaxRate ?? 19m;
-            TaxCalculator.Breakdown vat = TaxCalculator.Compute(
-                _cart.Select(l => (l.SubTotal, l.TaxAffected)), taxRate);
-
-            Sale sale = new Sale
+            catch (DataUnavailableException ex)
             {
-                typeDocument = _view.DocumentType,
-                oPerson = new Person { idPerson = _idPerson },
-                // On a Factura the fiscal identity lives in recipient_*; document_client /
-                // name_client stay empty so the same data is not stored twice.
-                documentClient = isFactura ? "" : _view.DocumentClient.Trim(),
-                nameClient = isFactura ? "" : _view.NameClient.Trim(),
-                recipientTaxId = isFactura ? (_view.RecipientTaxId ?? "").Trim() : null,
-                recipientBusinessName = isFactura ? (_view.RecipientBusinessName ?? "").Trim() : null,
-                recipientActivity = isFactura ? (_view.RecipientActivity ?? "").Trim() : null,
-                recipientAddress = isFactura ? (_view.RecipientAddress ?? "").Trim() : null,
-                recipientCommune = isFactura ? (_view.RecipientCommune ?? "").Trim() : null,
-                totalPay = totalToPay,
-                payWith = moneyToPay,
-                change = changeMoney,
-                netAmount = vat.Net,
-                taxAmount = vat.Tax,
-                exemptAmount = vat.Exempt,
-                clientId = (_selectedClient != null && _selectedClient.Id > 0) ? _selectedClient.Id : (int?)null,
-                oSaleDetail = details
-            };
-
-            int idSale = _saleService.Register(sale);
-
-            if (idSale != 0)
-            {
-                _cart.Clear();
-                _selectedClient = null;
-                _view.ClearSale();
-                _view.SaleRegistered(idSale);
-                InventoryChangeNotifier.NotifyStockChanged();
-            }
-            else
-            {
-                // Register returns 0 for any reason the sale could not be committed, including a
-                // line whose stock ran out between adding it to the cart and finishing the sale
-                // (the stock check is now inside Register's transaction).
-                _view.ShowMessage("No se pudo registrar la venta.\nVerifique el stock disponible.");
+                _view.ShowMessage(ex.Message);
             }
         }
     }

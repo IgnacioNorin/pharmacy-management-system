@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using PharmacySystem.Business;
 using PharmacySystem.Helpers;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
@@ -163,16 +164,23 @@ namespace PharmacySystem.Presentation
                 }).ToList()
             };
 
-            if (_purchaseService.Register(purchase))
+            try
             {
-                _cart.Clear();
-                _view.ClearPurchase();
-                _view.ShowMessage("La compra fue registrada");
-                InventoryChangeNotifier.NotifyStockChanged();
+                if (_purchaseService.Register(purchase))
+                {
+                    _cart.Clear();
+                    _view.ClearPurchase();
+                    _view.ShowMessage("La compra fue registrada");
+                    InventoryChangeNotifier.NotifyStockChanged();
+                }
+                else
+                {
+                    _view.ShowMessage("No se pudo registrar la compra");
+                }
             }
-            else
+            catch (DataUnavailableException ex)
             {
-                _view.ShowMessage("No se pudo registrar la compra");
+                _view.ShowMessage(ex.Message);
             }
         }
     }

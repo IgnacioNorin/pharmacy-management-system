@@ -1,4 +1,5 @@
 using PharmacySystem.Helpers;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using Xunit;
@@ -18,7 +19,7 @@ namespace PharmacySystem.Tests.Presentation
 
             CreatePresenter(view, service).OnLogin();
 
-            Assert.Equal("No se econtraron coincidencias del usuario", view.ShownError);
+            Assert.Equal("No se encontraron coincidencias del usuario", view.ShownError);
             Assert.Null(view.LoggedInPerson);
         }
 
@@ -33,7 +34,7 @@ namespace PharmacySystem.Tests.Presentation
 
             CreatePresenter(view, service).OnLogin();
 
-            Assert.Equal("No se econtraron coincidencias del usuario", view.ShownError);
+            Assert.Equal("No se encontraron coincidencias del usuario", view.ShownError);
             Assert.Null(view.LoggedInPerson);
         }
 
@@ -48,7 +49,7 @@ namespace PharmacySystem.Tests.Presentation
 
             CreatePresenter(view, service).OnLogin();
 
-            Assert.Equal("No se econtraron coincidencias del usuario", view.ShownError);
+            Assert.Equal("No se encontraron coincidencias del usuario", view.ShownError);
             Assert.Null(view.LoggedInPerson);
         }
 
@@ -89,7 +90,19 @@ namespace PharmacySystem.Tests.Presentation
 
             CreatePresenter(view, service).OnLogin();
 
-            Assert.Equal("No se econtraron coincidencias del usuario", view.ShownError);
+            Assert.Equal("No se encontraron coincidencias del usuario", view.ShownError);
+            Assert.Null(view.LoggedInPerson);
+        }
+
+        [Fact]
+        public void OnLogin_DatabaseUnavailable_ShowsConnectionErrorInsteadOfNoMatches()
+        {
+            var view = new FakeLoginView { Document = "123", Password = "x" };
+            var service = new FakePersonService { GetByDocumentThrows = new DataUnavailableException() };
+
+            CreatePresenter(view, service).OnLogin();
+
+            Assert.Equal(DataUnavailableException.DefaultMessage, view.ShownError);
             Assert.Null(view.LoggedInPerson);
         }
 
