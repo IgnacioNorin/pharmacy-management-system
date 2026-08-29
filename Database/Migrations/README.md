@@ -61,6 +61,7 @@ fijan al inicio; `sqlcmd` por defecto los deja en `OFF`).
 | `015_store_country_preset.sql` | 1.2.0 | 1.2.0 (`store.country_code`: preset de país; backfill a `CL` si la fila tiene la huella chilena) |
 | `016_neutral_default_currency.sql` | 1.2.0 | 1.2.0 (default de `store.currency_culture`: `es-EC` → `en-US`) |
 | `017_protect_roles_admin.sql` | 1.2.0 | 1.2.0 (no se puede quitar `roles.gestionar` del último rol que lo tiene, ni por `sp_set_role_permissions` ni al borrar el rol; `sp_set_role_permissions` gana `@result BIT OUTPUT`) |
+| `018_purchase_detail_expiry.sql` | 1.2.0 | 1.2.0 (`purchase_detail.date_expired`: guarda el vencimiento de cada lote comprado; el maestro `product.date_expired` solo se adelanta, nunca se atrasa, en la compra) |
 
 ## Si un paso falla por datos preexistentes
 

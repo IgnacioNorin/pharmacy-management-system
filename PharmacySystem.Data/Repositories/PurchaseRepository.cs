@@ -49,11 +49,16 @@ namespace PharmacySystem.Data
                         if (idPurchase != 0)
                         {
                             const string insertDetailQuery =
-                                "INSERT INTO purchase_detail(purchase_id, product_id, stock, purchase_price, sale_price, total_amount) " +
-                                "VALUES (@purchase_id, @product_id, @stock, @purchase_price, @sale_price, @total_amount)";
+                                "INSERT INTO purchase_detail(purchase_id, product_id, stock, purchase_price, sale_price, total_amount, date_expired) " +
+                                "VALUES (@purchase_id, @product_id, @stock, @purchase_price, @sale_price, @total_amount, @date_expired)";
 
+                            // The lot expiry is kept on the detail line above. On the product master
+                            // the date only moves EARLIER: a newer lot with a later expiry must not
+                            // switch off the alert for older stock still on the shelf.
                             const string updateProductQuery =
-                                "UPDATE product SET stock = (stock + @quantity), purchase_price = @purchase_price, sale_price = @sale_price, date_expired = @date_expired WHERE id = @product_id";
+                                "UPDATE product SET stock = (stock + @quantity), purchase_price = @purchase_price, sale_price = @sale_price, " +
+                                "date_expired = CASE WHEN date_expired IS NULL OR @date_expired < date_expired THEN @date_expired ELSE date_expired END " +
+                                "WHERE id = @product_id";
 
                             foreach (PurchaseDetail pd in purchase.oPurchaseDetail)
                             {
@@ -64,7 +69,8 @@ namespace PharmacySystem.Data
                                     stock = pd.quantity,
                                     purchase_price = pd.purchasePrice,
                                     sale_price = pd.salePrice,
-                                    total_amount = pd.total
+                                    total_amount = pd.total,
+                                    date_expired = pd.expirationDate
                                 }, objTransacion);
 
                                 oConnection.Execute(updateProductQuery, new

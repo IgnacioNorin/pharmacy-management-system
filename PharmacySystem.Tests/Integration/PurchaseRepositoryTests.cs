@@ -185,6 +185,108 @@ namespace PharmacySystem.Tests.Integration
             }
         }
 
+        // DEF-02 (option B): each purchase line keeps its own expiry in purchase_detail, and the
+        // product master's date_expired only moves EARLIER - a newer lot with a later expiry must
+        // not push it forward and switch off the alert for older stock still on the shelf.
+        [Fact]
+        public void Register_ProductExpiryOnlyMovesEarlier_AndLotExpiryIsKeptOnTheDetailLine()
+        {
+            string document = SqlTestHelper.NewTag();
+            PersonRepo.Register(new Person
+            {
+                document = document,
+                name = "Expiry tester",
+                address = "Address",
+                phone = "0999999999",
+                password = "Passw0rd!",
+                oPersonType = new TypePerson { idPersonType = PersonTypeId() }
+            });
+            Person person = PersonRepo.GetByDocument(document);
+
+            int supplierId = SupplierRepo.Register(new Supplier
+            {
+                document = SqlTestHelper.NewTag(),
+                companyName = "Expiry supplier",
+                email = "supplier@test.local",
+                phone = "0999999999"
+            });
+
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = ProductRepo.Register(new Product
+            {
+                code = SqlTestHelper.NewTag(),
+                name = "Expiry product",
+                description = "Expiry product",
+                oCategory = new Categories { IdCategory = categoryId }
+            });
+
+            var purchaseIds = new List<int>();
+            DateTime near = DateTime.Today.AddDays(30);
+            DateTime far = DateTime.Today.AddDays(365);
+            DateTime nearest = DateTime.Today.AddDays(10);
+            try
+            {
+                int RegisterLot(DateTime expiry)
+                {
+                    string doc = SqlTestHelper.NewTag();
+                    Assert.True(Repository.Register(new Purchase
+                    {
+                        oPerson = person,
+                        oSupplier = new Supplier { idSupplier = supplierId },
+                        totalAmount = 10m,
+                        documentType = "Factura",
+                        documentNumber = doc,
+                        oPurchaseDetail = new List<PurchaseDetail>
+                        {
+                            new PurchaseDetail { oProduct = new Product { idProduct = productId }, quantity = 1, expirationDate = expiry, purchasePrice = 3m, salePrice = 5m, total = 3m }
+                        }
+                    }));
+                    int id = SqlTestHelper.ExecuteScalarInt("SELECT id FROM purchase WHERE document_number = @doc", new SqlParameter("@doc", doc));
+                    purchaseIds.Add(id);
+                    return id;
+                }
+
+                int firstId = RegisterLot(near);
+                int daysAfterFirst = SqlTestHelper.ExecuteScalarInt(
+                    "SELECT DATEDIFF(DAY, CAST(@e AS date), CAST(date_expired AS date)) FROM product WHERE id = @id",
+                    new SqlParameter("@e", near), new SqlParameter("@id", productId));
+                Assert.Equal(0, daysAfterFirst);
+
+                // Later expiry: the product date must stay on the nearer 'near' lot.
+                RegisterLot(far);
+                int daysAfterFar = SqlTestHelper.ExecuteScalarInt(
+                    "SELECT DATEDIFF(DAY, CAST(@e AS date), CAST(date_expired AS date)) FROM product WHERE id = @id",
+                    new SqlParameter("@e", near), new SqlParameter("@id", productId));
+                Assert.Equal(0, daysAfterFar);
+
+                // Nearer expiry: the product date does move earlier.
+                RegisterLot(nearest);
+                int daysAfterNearest = SqlTestHelper.ExecuteScalarInt(
+                    "SELECT DATEDIFF(DAY, CAST(@e AS date), CAST(date_expired AS date)) FROM product WHERE id = @id",
+                    new SqlParameter("@e", nearest), new SqlParameter("@id", productId));
+                Assert.Equal(0, daysAfterNearest);
+
+                // Every lot kept its own expiry on the detail line.
+                int distinctLotExpiries = SqlTestHelper.ExecuteScalarInt(
+                    "SELECT COUNT(DISTINCT CAST(date_expired AS date)) FROM purchase_detail WHERE product_id = @id AND purchase_id IN (@a, @b, @c)",
+                    new SqlParameter("@id", productId),
+                    new SqlParameter("@a", firstId), new SqlParameter("@b", purchaseIds[1]), new SqlParameter("@c", purchaseIds[2]));
+                Assert.Equal(3, distinctLotExpiries);
+            }
+            finally
+            {
+                foreach (int id in purchaseIds)
+                {
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase_detail WHERE purchase_id = @id", new SqlParameter("@id", id));
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase WHERE id = @id", new SqlParameter("@id", id));
+                }
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM supplier WHERE id = @id", new SqlParameter("@id", supplierId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
+
         // Regression test: GetTotalAmount used to join purchase_detail, so a purchase with N
         // detail lines had its header total_amount summed N times. Here one purchase with a
         // header total of 100 and two detail lines must still total 100, not 200.

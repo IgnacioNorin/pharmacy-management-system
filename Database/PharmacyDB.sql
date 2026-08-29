@@ -244,6 +244,7 @@ CREATE TABLE [dbo].[purchase_detail](
     [purchase_price] [decimal](18, 2) NULL,
     [sale_price] [decimal](18, 2) NULL,
     [total_amount] [decimal](18, 2) NULL,
+    [date_expired] [datetime] NULL,
     [date_registered] [datetime] NULL,
     PRIMARY KEY CLUSTERED ([id] ASC)
 )
