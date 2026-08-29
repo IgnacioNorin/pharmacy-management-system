@@ -2,7 +2,62 @@
 
 El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
-## [1.2.0]
+## [1.3.0] - 2026-08-29
+
+### Agregado
+
+- **Pantalla de Precios (Gestión).** El precio de venta se fija en una pestaña
+  propia, gateada por `productos.editar_precios`: dos vistas —productos en stock
+  *por liberar* y productos *en comercialización* con costo, precio y margen %—,
+  un formulario para asignar o cambiar el precio (con motivo), y un panel con el
+  historial de precios del producto seleccionado.
+- **Estado de comercialización** (`product.is_released`). Un producto creado y
+  comprado tiene stock pero no se vende hasta que se lo **libera** desde la
+  pantalla de Precios. La venta solo ofrece productos liberados. Se puede
+  **retirar** un producto de la venta sin darlo de baja.
+- **Historial de precios** (`product_price_history`): una fila por cada
+  liberación, cambio de precio o retiro, con el costo del momento, el usuario y
+  un motivo.
+- **Costo promedio ponderado** (`product.average_cost`), recalculado en cada
+  compra. **Costo congelado por línea de venta** (`sale_detail.unit_cost`), para
+  que el margen de una venta pasada no cambie si el costo cambia después.
+- **Manejador global de excepciones** (`Program.cs` + `StartupError`): un error
+  no capturado ya no cierra la aplicación con el diálogo de .NET; un problema de
+  `ConnectionStrings.config` o de base de datos muestra un mensaje propio.
+- **`Database/create_app_login.sql`**: login `pharmacy_app` con privilegios
+  mínimos sobre `PharmacyDB` — la aplicación deja de necesitar `sa`.
+- **Documentación técnica en `Docs/`**: catálogo de requisitos funcionales y no
+  funcionales, mapa de flujos, registro de defectos y hoja de ruta.
+
+### Cambiado
+
+- **La compra ya no fija el precio de venta.** `frmPurchase` no pide "Precio
+  Venta"; `PurchaseRepository.Register` solo mueve stock y costo.
+- **La administración de roles no puede quedar inaccesible** (migración `017`):
+  no se puede quitar `roles.gestionar` del último rol que lo tiene, ni por
+  `sp_set_role_permissions` ni al borrar el rol.
+- **"Base de datos caída" deja de confundirse con "no hay datos"** en inicio de
+  sesión, venta y compra: esas rutas relanzan un error de conexión como
+  `DataUnavailableException` y muestran "No se pudo conectar con la base de
+  datos" en vez de "no se encontraron coincidencias" / "verifique el stock".
+- **El vencimiento de cada lote comprado se guarda** (`purchase_detail.date_expired`,
+  migración `018`); la fecha de vencimiento del producto **solo se adelanta** en
+  la compra, así un lote nuevo no apaga la alerta del stock viejo.
+- **No se puede registrar dos veces la misma factura de proveedor** (índice
+  único `UX_purchase_supplier_document`, migración `020`).
+
+### Corregido
+
+- El comprobante impreso y los reportes ya no arrastran el precio de venta desde
+  la compra.
+- Corrección de la errata "No se econtraron coincidencias" → "encontraron".
+
+### Migraciones
+
+- `017` a `021`. Además, ejecutar una vez `Database/create_app_login.sql` para
+  crear el login de la aplicación con privilegios mínimos.
+
+## [1.2.0] - 2026-08-29
 
 ### Agregado
 
