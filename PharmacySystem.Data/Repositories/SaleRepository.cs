@@ -22,7 +22,7 @@ namespace PharmacySystem.Data
         private const string SaleSelect =
             "SELECT id AS idSale, document_type AS typeDocument, document_number AS numberDocument, " +
             "document_client AS documentClient, name_client AS nameClient, total_amount AS totalPay, " +
-            "amount_received AS payWith, change_amount AS change, " +
+            "amount_received AS payWith, change_amount AS change, payment_method AS paymentMethod, " +
             "net_amount AS netAmount, tax_amount AS taxAmount, exempt_amount AS exemptAmount, " +
             "recipient_tax_id AS recipientTaxId, recipient_business_name AS recipientBusinessName, " +
             "recipient_activity AS recipientActivity, recipient_address AS recipientAddress, " +
@@ -116,8 +116,8 @@ namespace PharmacySystem.Data
                             "DECLARE @folio INT; " +
                             "IF @document_type = 'Factura' SET @folio = NEXT VALUE FOR dbo.seq_folio_factura; " +
                             "ELSE SET @folio = NEXT VALUE FOR dbo.seq_folio_boleta; " +
-                            "INSERT INTO sale(document_type, document_number, user_id, document_client, name_client, total_amount, amount_received, change_amount, net_amount, tax_amount, exempt_amount, recipient_tax_id, recipient_business_name, recipient_activity, recipient_address, recipient_commune, client_id) " +
-                            "VALUES (@document_type, RIGHT('000000' + CAST(@folio AS VARCHAR(20)), 6), @user_id, @document_client, @name_client, @total_amount, @amount_received, @change_amount, @net_amount, @tax_amount, @exempt_amount, @recipient_tax_id, @recipient_business_name, @recipient_activity, @recipient_address, @recipient_commune, @client_id); " +
+                            "INSERT INTO sale(document_type, document_number, user_id, document_client, name_client, total_amount, amount_received, change_amount, payment_method, net_amount, tax_amount, exempt_amount, recipient_tax_id, recipient_business_name, recipient_activity, recipient_address, recipient_commune, client_id) " +
+                            "VALUES (@document_type, RIGHT('000000' + CAST(@folio AS VARCHAR(20)), 6), @user_id, @document_client, @name_client, @total_amount, @amount_received, @change_amount, @payment_method, @net_amount, @tax_amount, @exempt_amount, @recipient_tax_id, @recipient_business_name, @recipient_activity, @recipient_address, @recipient_commune, @client_id); " +
                             "SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
                         int idSale = oConnection.ExecuteScalar<int>(insertSaleQuery, new
@@ -129,6 +129,7 @@ namespace PharmacySystem.Data
                             total_amount = obj.totalPay,
                             amount_received = obj.payWith,
                             change_amount = obj.change,
+                            payment_method = string.IsNullOrWhiteSpace(obj.paymentMethod) ? PaymentMethods.Default : obj.paymentMethod,
                             net_amount = obj.netAmount,
                             tax_amount = obj.taxAmount,
                             exempt_amount = obj.exemptAmount,
@@ -400,7 +401,8 @@ namespace PharmacySystem.Data
                         "COALESCE(NULLIF(s.recipient_tax_id, ''), s.document_client) AS ClientDocument, " +
                         "COALESCE(NULLIF(s.recipient_business_name, ''), s.name_client) AS ClientName, " +
                         "s.net_amount AS NetAmount, s.tax_amount AS TaxAmount, s.exempt_amount AS ExemptAmount, " +
-                        "s.total_amount AS TotalAmount, s.amount_received AS AmountReceived, s.change_amount AS ChangeAmount " +
+                        "s.total_amount AS TotalAmount, s.amount_received AS AmountReceived, s.change_amount AS ChangeAmount, " +
+                        "s.payment_method AS PaymentMethod " +
                         "FROM sale s " +
                         "INNER JOIN person p ON p.id = s.user_id " +
                         "WHERE s.date_registered >= @startDate AND s.date_registered < DATEADD(DAY, 1, @endDate) " +

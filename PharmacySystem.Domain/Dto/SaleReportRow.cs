@@ -21,5 +21,6 @@ namespace PharmacySystem.Model
         public decimal TotalAmount { get; set; }
         public decimal AmountReceived { get; set; }
         public decimal ChangeAmount { get; set; }
+        public string PaymentMethod { get; set; }
     }
 }

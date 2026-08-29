@@ -16,6 +16,7 @@ namespace PharmacySystem.Presentation
         string TotalPayText { get; }
         string ChangeText { get; }
         string DocumentType { get; }
+        string PaymentMethod { get; }
 
         // Recipient fiscal data, only read when DocumentType is a Factura.
         string RecipientTaxId { get; }
@@ -27,6 +28,7 @@ namespace PharmacySystem.Presentation
         void ShowMessage(string message);
 
         void SetDocumentTypeOptions(IReadOnlyList<string> options, string selected);
+        void SetPaymentMethodOptions(IReadOnlyList<string> options, string selected);
         void SetFacturaFieldsVisible(bool visible);
         void SetClient(string document, string name);
         void SetRecipient(string taxId, string businessName, string activity, string address, string commune);

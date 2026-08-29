@@ -273,6 +273,7 @@ CREATE TABLE [dbo].[sale](
     [client_id] [int] NULL,
     [reference_id] [int] NULL,
     [reference_reason] [varchar](255) NULL,
+    [payment_method] [varchar](20) NOT NULL CONSTRAINT [DF_sale_payment_method] DEFAULT ('Efectivo'),
     [fiscal_status] [varchar](20) NOT NULL CONSTRAINT [DF_sale_fiscal_status] DEFAULT ('interno'),
     [fiscal_track_id] [varchar](64) NULL,
     [fiscal_barcode] [varchar](512) NULL,

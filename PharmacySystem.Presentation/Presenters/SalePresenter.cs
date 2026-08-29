@@ -52,6 +52,7 @@ namespace PharmacySystem.Presentation
         {
             Store store = _storeService.ListStore();
             _view.SetDocumentTypeOptions(DocumentTypes.Selectable, store?.defaultDocumentType ?? DocumentTypes.Boleta);
+            _view.SetPaymentMethodOptions(PaymentMethods.Selectable, PaymentMethods.Default);
             _view.SetFacturaFieldsVisible(IsFactura());
         }
 
@@ -305,6 +306,7 @@ namespace PharmacySystem.Presentation
                     totalPay = totalToPay,
                     payWith = moneyToPay,
                     change = changeMoney,
+                    paymentMethod = string.IsNullOrWhiteSpace(_view.PaymentMethod) ? PaymentMethods.Default : _view.PaymentMethod.Trim(),
                     netAmount = vat.Net,
                     taxAmount = vat.Tax,
                     exemptAmount = vat.Exempt,

@@ -17,6 +17,8 @@ namespace PharmacySystem.Model
         public decimal totalPay { get; set; }
         public decimal payWith { get; set; }
         public decimal change { get; set; }
+        // How the sale was collected. See PaymentMethods.
+        public string paymentMethod { get; set; } = PaymentMethods.Default;
         // VAT breakdown of totalPay: netAmount + taxAmount + exemptAmount == totalPay.
         public decimal netAmount { get; set; }
         public decimal taxAmount { get; set; }
