@@ -19,6 +19,8 @@ namespace PharmacySystem.Model
         public DateTime expirationDate { get; set; }
         // true = the sale price is affected by VAT (the default); false = VAT-exempt item.
         public bool taxAffected { get; set; } = true;
+        // false = in stock but not for sale yet; true = released for sale from the Prices screen.
+        public bool isReleased { get; set; }
 
     }
 }

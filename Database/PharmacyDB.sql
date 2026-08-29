@@ -187,6 +187,7 @@ CREATE TABLE [dbo].[product](
     [stock] [int] NULL,
     [purchase_price] [decimal](18, 2) NULL,
     [sale_price] [decimal](18, 2) NULL,
+    [is_released] [bit] NOT NULL CONSTRAINT [DF_product_is_released] DEFAULT ((0)),
     [tax_affected] [bit] NOT NULL CONSTRAINT [DF_product_tax_affected] DEFAULT ((1)),
     [status] [int] NULL,
     [date_created] [datetime] NULL,
@@ -290,6 +291,25 @@ CREATE TABLE [dbo].[sale_detail](
     [date_registered] [datetime] NULL,
     PRIMARY KEY CLUSTERED ([id] ASC)
 )
+GO
+
+-- One row per deliberate price change on a product (release for sale, or a re-price),
+-- with the product cost at that moment, the user who did it and a free-text reason.
+CREATE TABLE [dbo].[product_price_history](
+    [id] [int] IDENTITY(1,1) NOT NULL,
+    [product_id] [int] NOT NULL,
+    [event_type] [varchar](20) NOT NULL CONSTRAINT [DF_product_price_history_event] DEFAULT ('cambio'),
+    [sale_price] [decimal](18, 2) NOT NULL,
+    [cost] [decimal](18, 2) NULL,
+    [changed_at] [datetime] NOT NULL CONSTRAINT [DF_product_price_history_changed_at] DEFAULT (getdate()),
+    [user_id] [int] NULL,
+    [reason] [nvarchar](255) NULL,
+    CONSTRAINT [PK_product_price_history] PRIMARY KEY CLUSTERED ([id] ASC),
+    CONSTRAINT [FK_product_price_history_product] FOREIGN KEY ([product_id]) REFERENCES [dbo].[product] ([id])
+)
+GO
+
+CREATE INDEX [IX_product_price_history_product] ON [dbo].[product_price_history] ([product_id], [changed_at])
 GO
 
 -- Fase 4 of the alerts rework (traceability): one row per open-or-resolved stock/expiration

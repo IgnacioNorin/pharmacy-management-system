@@ -33,7 +33,7 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void SetPrices_WritesBothColumns_AndListReflectsThem()
+        public void SetSalePrice_ReleasesTheProduct_WritesHistory_AndSaleListPicksItUp()
         {
             int categoryId = CreateCategory();
             int productId = 0;
@@ -42,18 +42,40 @@ namespace PharmacySystem.Tests.Integration
             {
                 productId = Repository.Register(NewProduct(categoryId));
 
-                Assert.True(Repository.SetPrices(productId, 12.34m, 56.78m));
+                // A brand-new product is not released, so it is not sellable.
+                Assert.DoesNotContain(Repository.ListSellable(), p => p.idProduct == productId);
+                Assert.False(Repository.List().Single(p => p.idProduct == productId).isReleased);
+
+                Assert.True(Repository.SetSalePrice(productId, 56.78m, "primera carga", null));
 
                 Product listed = Repository.List().Single(p => p.idProduct == productId);
-                Assert.Equal(12.34m, listed.purchasePrice);
                 Assert.Equal(56.78m, listed.salePrice);
+                Assert.True(listed.isReleased);
+                Assert.Contains(Repository.ListSellable(), p => p.idProduct == productId);
 
-                // A second call overwrites, and a non-existent id returns false without throwing.
-                Assert.True(Repository.SetPrices(productId, 1m, 2m));
-                Assert.False(Repository.SetPrices(-1, 1m, 2m));
+                // Re-price it.
+                Assert.True(Repository.SetSalePrice(productId, 60m, "ajuste", null));
+
+                var history = Repository.GetPriceHistory(productId);
+                Assert.Equal(2, history.Count);
+                Assert.Equal("cambio", history[0].EventType);       // newest first
+                Assert.Equal(60m, history[0].SalePrice);
+                Assert.Equal("liberacion", history[1].EventType);
+
+                // Withdraw from sale.
+                Assert.True(Repository.Unrelease(productId, "reformulacion", null));
+                Assert.False(Repository.List().Single(p => p.idProduct == productId).isReleased);
+                Assert.DoesNotContain(Repository.ListSellable(), p => p.idProduct == productId);
+                Assert.Equal(3, Repository.GetPriceHistory(productId).Count);
+                Assert.Equal("retiro", Repository.GetPriceHistory(productId)[0].EventType);
+
+                // Unreleasing again is a no-op.
+                Assert.False(Repository.Unrelease(productId, "otra vez", null));
+                Assert.False(Repository.SetSalePrice(-1, 1m, "x", null));
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_price_history WHERE product_id = @id", new SqlParameter("@id", productId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
             }

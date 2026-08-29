@@ -12,10 +12,5 @@ namespace PharmacySystem.Presentation
         public string Stock { get; set; }
         public string ExpirationDateText { get; set; }
         public bool TaxAffected { get; set; } = true;
-
-        // Formatted "0.00" strings, or null to leave the grid cell untouched (same convention as
-        // Stock / ExpirationDateText on an update).
-        public string PurchasePriceText { get; set; }
-        public string SalePriceText { get; set; }
     }
 }

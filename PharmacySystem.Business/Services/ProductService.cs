@@ -22,13 +22,21 @@ namespace PharmacySystem.Business
 
         public List<Product> List() => _repository.List();
 
+        public List<Product> ListSellable() => _repository.ListSellable();
+
         public bool Verify(int idProduct) => _repository.Verify(idProduct);
 
         public bool Delete(int idProduct) => _repository.Delete(idProduct);
 
         public List<ProductReportRow> Report(string categoryId) => _repository.Report(categoryId);
 
-        public bool SetPrices(int idProduct, decimal purchasePrice, decimal salePrice) =>
-            _repository.SetPrices(idProduct, purchasePrice, salePrice);
+        public bool SetSalePrice(int idProduct, decimal salePrice, string reason, int? userId) =>
+            _repository.SetSalePrice(idProduct, salePrice, reason, userId);
+
+        public bool Unrelease(int idProduct, string reason, int? userId) =>
+            _repository.Unrelease(idProduct, reason, userId);
+
+        public List<ProductPriceHistoryEntry> GetPriceHistory(int idProduct) =>
+            _repository.GetPriceHistory(idProduct);
     }
 }

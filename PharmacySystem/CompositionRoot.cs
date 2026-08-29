@@ -65,6 +65,9 @@ namespace PharmacySystem
         public static ProductManagementPresenter CreateProductManagementPresenter(IProductManagementView view) =>
             new ProductManagementPresenter(view, _productService, _categoryService, MainForm.Session);
 
+        public static ProductPricePresenter CreateProductPricePresenter(IProductPriceView view) =>
+            new ProductPricePresenter(view, _productService, MainForm.Session);
+
         #endregion
 
         #region Store / Notifications

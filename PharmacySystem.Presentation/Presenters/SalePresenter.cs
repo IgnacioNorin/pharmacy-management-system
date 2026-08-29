@@ -57,7 +57,9 @@ namespace PharmacySystem.Presentation
 
         public void OnProductCodeEntered(string code)
         {
-            Product product = _productService.List().FirstOrDefault(p => p.code == code);
+            // Only released products can be sold; an unreleased one (in stock but not priced) is
+            // invisible to the sale screen.
+            Product product = _productService.ListSellable().FirstOrDefault(p => p.code == code);
             if (product != null)
             {
                 _view.SetSelectedProduct(product.idProduct, product.code, product.name, product.stock, CultureInfoHelper.FormatAsCurrency(product.salePrice));
@@ -98,7 +100,7 @@ namespace PharmacySystem.Presentation
 
             decimal subTotal = _view.Amount * priceSale;
 
-            Product cartProduct = _productService.List().FirstOrDefault(p => p.idProduct == _view.SelectedProductId);
+            Product cartProduct = _productService.ListSellable().FirstOrDefault(p => p.idProduct == _view.SelectedProductId);
 
             var line = new SaleCartLine
             {

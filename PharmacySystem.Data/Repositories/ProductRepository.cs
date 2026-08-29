@@ -85,18 +85,42 @@ namespace PharmacySystem.Data
             }
         }
 
-        public bool SetPrices(int idProduct, decimal purchasePrice, decimal salePrice)
+        // Sets the sale price, releases the product for sale and records the change - all in one
+        // transaction. event_type is "liberacion" the first time (the product was not released),
+        // "cambio" afterwards. The cost snapshot is the product's current purchase_price.
+        public bool SetSalePrice(int idProduct, decimal salePrice, string reason, int? userId)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    int rows = oConnection.Execute(
-                        "UPDATE product SET purchase_price = @purchasePrice, sale_price = @salePrice " +
-                        "WHERE id = @idProduct",
-                        new { idProduct, purchasePrice, salePrice });
+                    oConnection.Open();
+                    using (SqlTransaction tx = oConnection.BeginTransaction())
+                    {
+                        ProductPriceSnapshot current = oConnection.QueryFirstOrDefault<ProductPriceSnapshot>(
+                            "SELECT is_released, purchase_price FROM product WHERE id = @idProduct",
+                            new { idProduct }, tx);
 
-                    return rows > 0;
+                        if (current == null)
+                        {
+                            tx.Rollback();
+                            return false;
+                        }
+
+                        oConnection.Execute(
+                            "UPDATE product SET sale_price = @salePrice, is_released = 1 WHERE id = @idProduct",
+                            new { idProduct, salePrice }, tx);
+
+                        string eventType = current.is_released ? "cambio" : "liberacion";
+
+                        oConnection.Execute(
+                            "INSERT INTO product_price_history(product_id, event_type, sale_price, cost, user_id, reason) " +
+                            "VALUES (@idProduct, @eventType, @salePrice, @cost, @userId, @reason)",
+                            new { idProduct, eventType, salePrice, cost = current.purchase_price, userId, reason }, tx);
+
+                        tx.Commit();
+                        return true;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -106,24 +130,92 @@ namespace PharmacySystem.Data
             }
         }
 
-        public List<Product> List()
+        public bool Unrelease(int idProduct, string reason, int? userId)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    // date_expired is left un-aliased to a matching name only when NULL - Dapper
-                    // skips the assignment for a DBNull cell rather than throwing, so a product
-                    // with no expiration date keeps expirationDate at its default(DateTime), the
-                    // same 01/01/0001 that Convert.ToDateTime(null) produced in the original code.
-                    const string sql =
-                        "SELECT p.id AS idProduct, p.code, p.name, p.description AS description, p.stock, " +
-                        "p.purchase_price AS purchasePrice, p.sale_price AS salePrice, p.tax_affected AS taxAffected, " +
-                        "p.date_expired AS expirationDate, " +
-                        "c.id AS IdCategory, c.description AS description " +
-                        "FROM product p INNER JOIN category c ON c.id = p.category_id " +
-                        "WHERE p.status = 1";
+                    oConnection.Open();
+                    using (SqlTransaction tx = oConnection.BeginTransaction())
+                    {
+                        int rows = oConnection.Execute(
+                            "UPDATE product SET is_released = 0 WHERE id = @idProduct AND is_released = 1",
+                            new { idProduct }, tx);
 
+                        if (rows == 0)
+                        {
+                            tx.Rollback();
+                            return false;
+                        }
+
+                        oConnection.Execute(
+                            "INSERT INTO product_price_history(product_id, event_type, sale_price, cost, user_id, reason) " +
+                            "SELECT id, 'retiro', ISNULL(sale_price, 0), purchase_price, @userId, @reason FROM product WHERE id = @idProduct",
+                            new { idProduct, userId, reason }, tx);
+
+                        tx.Commit();
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return false;
+                }
+            }
+        }
+
+        public List<ProductPriceHistoryEntry> GetPriceHistory(int idProduct)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    const string sql =
+                        "SELECT h.changed_at AS ChangedAt, h.event_type AS EventType, h.sale_price AS SalePrice, " +
+                        "h.cost AS Cost, pe.name AS UserName, h.reason AS Reason " +
+                        "FROM product_price_history h LEFT JOIN person pe ON pe.id = h.user_id " +
+                        "WHERE h.product_id = @idProduct ORDER BY h.changed_at DESC, h.id DESC";
+
+                    return oConnection.Query<ProductPriceHistoryEntry>(sql, new { idProduct }).ToList();
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return new List<ProductPriceHistoryEntry>();
+                }
+            }
+        }
+
+        // date_expired is left un-aliased to a matching name only when NULL - Dapper skips the
+        // assignment for a DBNull cell rather than throwing, so a product with no expiration date
+        // keeps expirationDate at its default(DateTime), the same 01/01/0001 that
+        // Convert.ToDateTime(null) produced in the original code.
+        private const string ProductSelect =
+            "SELECT p.id AS idProduct, p.code, p.name, p.description AS description, p.stock, " +
+            "p.purchase_price AS purchasePrice, p.sale_price AS salePrice, p.tax_affected AS taxAffected, " +
+            "p.is_released AS isReleased, p.date_expired AS expirationDate, " +
+            "c.id AS IdCategory, c.description AS description " +
+            "FROM product p INNER JOIN category c ON c.id = p.category_id " +
+            "WHERE p.status = 1";
+
+        private class ProductPriceSnapshot
+        {
+            public bool is_released { get; set; }
+            public decimal? purchase_price { get; set; }
+        }
+
+        public List<Product> List() => QueryProducts(ProductSelect);
+
+        public List<Product> ListSellable() => QueryProducts(ProductSelect + " AND p.is_released = 1");
+
+        private List<Product> QueryProducts(string sql)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
                     return oConnection.Query<Product, Categories, Product>(
                         sql,
                         (product, category) => { product.oCategory = category; return product; },
