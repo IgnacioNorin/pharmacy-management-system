@@ -17,6 +17,17 @@ namespace PharmacySystem.Tests.Integration
         private static void DeleteRoleRow(int id) =>
             SqlTestHelper.ExecuteNonQuery("DELETE FROM person_type WHERE id = @id", new SqlParameter("@id", id));
 
+        private static int RoleAdminPermissionId() =>
+            SqlTestHelper.ExecuteScalarInt("SELECT id FROM permission WHERE code = 'roles.gestionar'");
+
+        // Puts roles.gestionar back on role 1 if a test removed it. Used in finally blocks so the
+        // shipped seed is always intact afterwards, even if an assertion failed mid-test.
+        private static void RestoreRoleAdminOnAdministradorGeneral(int roleAdminPermissionId) =>
+            SqlTestHelper.ExecuteNonQuery(
+                "IF NOT EXISTS (SELECT 1 FROM role_permission WHERE person_type_id = 1 AND permission_id = @p) " +
+                "INSERT INTO role_permission (person_type_id, permission_id) VALUES (1, @p)",
+                new SqlParameter("@p", roleAdminPermissionId));
+
         [Fact]
         public void GetAll_ReturnsSeededCatalogueOrderedBySection()
         {
@@ -120,6 +131,77 @@ namespace PharmacySystem.Tests.Integration
             finally
             {
                 DeleteRoleRow(roleId);
+            }
+        }
+
+        [Fact]
+        public void GetRolesGranting_RolesGestionar_IncludesAdministradorGeneral()
+        {
+            var holders = Repository.GetRolesGranting("roles.gestionar");
+
+            Assert.Contains(1, holders);            // Administrador General
+            Assert.DoesNotContain(2, holders);      // Administrador does not administer roles
+        }
+
+        [Fact]
+        public void SetRolePermissions_DroppingRolesGestionarWhenAnotherRoleStillHasIt_Succeeds()
+        {
+            int roleAdminPerm = RoleAdminPermissionId();
+            int customRole = Repository.CreateRole("SecondAdmin_" + SqlTestHelper.NewTag());
+            try
+            {
+                Assert.True(Repository.SetRolePermissions(customRole, new[] { roleAdminPerm }));
+                // Role 1 keeps roles.gestionar in the seed, so the custom role is free to drop it.
+                Assert.True(Repository.SetRolePermissions(customRole, new int[0]));
+                Assert.Empty(Repository.GetPermissionIdsForRole(customRole));
+            }
+            finally
+            {
+                DeleteRoleRow(customRole);
+            }
+        }
+
+        [Fact]
+        public void SetRolePermissions_DroppingRolesGestionarFromTheLastRoleThatHasIt_IsRefused()
+        {
+            int roleAdminPerm = RoleAdminPermissionId();
+            int customRole = Repository.CreateRole("LastAdmin_" + SqlTestHelper.NewTag());
+            // Give the custom role roles.gestionar, then take it off the seed's role 1, so the
+            // custom role is momentarily the only holder. Role 1 is restored in the finally block.
+            Repository.SetRolePermissions(customRole, new[] { roleAdminPerm });
+            SqlTestHelper.ExecuteNonQuery(
+                "DELETE FROM role_permission WHERE person_type_id = 1 AND permission_id = @p",
+                new SqlParameter("@p", roleAdminPerm));
+            try
+            {
+                Assert.False(Repository.SetRolePermissions(customRole, new int[0]));
+                Assert.Contains(roleAdminPerm, Repository.GetPermissionIdsForRole(customRole));
+            }
+            finally
+            {
+                RestoreRoleAdminOnAdministradorGeneral(roleAdminPerm);
+                DeleteRoleRow(customRole);
+            }
+        }
+
+        [Fact]
+        public void DeleteRole_LastRoleThatHasRolesGestionar_IsRefused()
+        {
+            int roleAdminPerm = RoleAdminPermissionId();
+            int customRole = Repository.CreateRole("LastAdminDel_" + SqlTestHelper.NewTag());
+            Repository.SetRolePermissions(customRole, new[] { roleAdminPerm });
+            SqlTestHelper.ExecuteNonQuery(
+                "DELETE FROM role_permission WHERE person_type_id = 1 AND permission_id = @p",
+                new SqlParameter("@p", roleAdminPerm));
+            try
+            {
+                Assert.False(Repository.DeleteRole(customRole));
+                Assert.Contains(Repository.GetRoles(), r => r.idPersonType == customRole);
+            }
+            finally
+            {
+                RestoreRoleAdminOnAdministradorGeneral(roleAdminPerm);
+                DeleteRoleRow(customRole);
             }
         }
 

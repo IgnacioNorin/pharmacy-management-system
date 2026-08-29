@@ -10,6 +10,7 @@ namespace PharmacySystem.Tests.Presentation
         public List<Permission> Catalogue { get; set; } = new List<Permission>();
         public List<TypePerson> Roles { get; set; } = new List<TypePerson>();
         public Dictionary<int, List<int>> PermissionIdsByRole { get; } = new Dictionary<int, List<int>>();
+        public Dictionary<string, List<int>> RolesGrantingByCode { get; } = new Dictionary<string, List<int>>();
 
         public bool SaveRolePermissionsResult { get; set; } = true;
         public int CreateRoleResult { get; set; } = 100;
@@ -24,6 +25,9 @@ namespace PharmacySystem.Tests.Presentation
         public List<Permission> GetCatalogue() => Catalogue;
 
         public IReadOnlyCollection<string> GetPermissionsForRole(int personTypeId) => new HashSet<string>();
+
+        public IReadOnlyCollection<int> GetRolesGranting(string permissionCode) =>
+            RolesGrantingByCode.TryGetValue(permissionCode, out var ids) ? ids : new List<int>();
 
         public List<TypePerson> GetRoles() => Roles;
 

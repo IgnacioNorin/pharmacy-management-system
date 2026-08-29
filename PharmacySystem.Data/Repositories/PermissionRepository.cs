@@ -58,6 +58,27 @@ namespace PharmacySystem.Data
             }
         }
 
+        public List<int> GetRolesGranting(string permissionCode)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    return oConnection.Query<int>(
+                        "SELECT DISTINCT rp.person_type_id FROM role_permission rp " +
+                        "INNER JOIN permission p ON p.id = rp.permission_id " +
+                        "WHERE p.code = @permissionCode",
+                        new { permissionCode })
+                        .ToList();
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return new List<int>();
+                }
+            }
+        }
+
         public List<TypePerson> GetRoles()
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
@@ -104,11 +125,17 @@ namespace PharmacySystem.Data
                 {
                     string csv = string.Join(",", (permissionIds ?? Enumerable.Empty<int>()).Distinct());
 
-                    oConnection.Execute("sp_set_role_permissions",
-                        new { person_type_id = personTypeId, permission_ids = csv },
+                    var parameters = new DynamicParameters();
+                    parameters.Add("person_type_id", personTypeId);
+                    parameters.Add("permission_ids", csv);
+                    parameters.Add("result", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+
+                    oConnection.Execute("sp_set_role_permissions", parameters,
                         commandType: CommandType.StoredProcedure);
 
-                    return true;
+                    // false = the procedure refused the save (it would strip roles.gestionar from
+                    // the last role that has it).
+                    return parameters.Get<bool>("result");
                 }
                 catch (Exception ex)
                 {

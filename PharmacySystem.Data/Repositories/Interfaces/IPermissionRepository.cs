@@ -11,6 +11,9 @@ namespace PharmacySystem.Data
         // The permission codes granted by one role.
         List<string> GetCodesForRole(int personTypeId);
 
+        // Ids of the roles that currently grant the given permission code.
+        List<int> GetRolesGranting(string permissionCode);
+
         // --- roles admin (frmRoles) ---
 
         List<TypePerson> GetRoles();

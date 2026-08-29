@@ -19,6 +19,9 @@ namespace PharmacySystem.Business
         public IReadOnlyCollection<string> GetPermissionsForRole(int personTypeId) =>
             new HashSet<string>(_repository.GetCodesForRole(personTypeId), StringComparer.OrdinalIgnoreCase);
 
+        public IReadOnlyCollection<int> GetRolesGranting(string permissionCode) =>
+            _repository.GetRolesGranting(permissionCode);
+
         public List<TypePerson> GetRoles() => _repository.GetRoles();
 
         public List<int> GetPermissionIdsForRole(int personTypeId) => _repository.GetPermissionIdsForRole(personTypeId);

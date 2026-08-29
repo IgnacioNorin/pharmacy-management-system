@@ -10,6 +10,8 @@ namespace PharmacySystem.Presentation
     // roles. The four built-in roles (IsSystem) can be re-permissioned but not renamed or deleted.
     public class RolesPresenter
     {
+        private const string RoleAdminCode = "roles.gestionar";
+
         private readonly IRolesView _view;
         private readonly IPermissionService _service;
         private readonly CurrentUser _currentUser;
@@ -77,6 +79,13 @@ namespace PharmacySystem.Presentation
             // Store a consistent set: a checked permission always drags its ancestors in, so a
             // role can never end up with "ver ventas" but not "abrir reportes".
             var toSave = ExpandAncestors(_view.CheckedPermissionIds);
+
+            if (WouldOrphanRoleAdmin(roleId.Value, toSave))
+            {
+                _view.ShowMessage("No puede quitar la administracion de roles del unico rol que la tiene. " +
+                                  "Asigne ese permiso a otro rol antes de quitarlo de este.");
+                return;
+            }
 
             _view.ShowMessage(_service.SaveRolePermissions(roleId.Value, toSave)
                 ? "Permisos guardados."
@@ -199,6 +208,22 @@ namespace PharmacySystem.Presentation
         }
 
         private bool IsSystem(int roleId) => _roles.Any(r => r.idPersonType == roleId && r.IsSystem);
+
+        // True if saving this set would strip "roles.gestionar" from the last role that grants it,
+        // which would leave nobody able to reopen this screen. The stored procedure enforces the
+        // same rule; this is here so the user gets a precise message instead of a generic failure.
+        private bool WouldOrphanRoleAdmin(int roleId, IReadOnlyCollection<int> toSave)
+        {
+            Permission roleAdmin = _catalogue.FirstOrDefault(
+                p => string.Equals(p.Code, RoleAdminCode, StringComparison.OrdinalIgnoreCase));
+            if (roleAdmin == null || toSave.Contains(roleAdmin.Id))
+            {
+                return false;
+            }
+
+            var holders = _service.GetRolesGranting(RoleAdminCode);
+            return holders.Contains(roleId) && holders.Count <= 1;
+        }
 
         // Builds the permission forest under parentCode (null = section roots), preserving the
         // catalogue order the repository already returns.

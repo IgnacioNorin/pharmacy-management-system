@@ -35,6 +35,76 @@ namespace PharmacySystem.Tests.Presentation
             return (new RolesPresenter(view, service, TestUser.With("roles.gestionar")), view, service);
         }
 
+        // A catalogue that actually contains roles.gestionar (under usuarios.acceso), plus the two
+        // built-in admin roles, for the "don't lock yourself out" guard tests.
+        private const int UsuariosAccesoId = 9;
+        private const int RolesGestionarId = 10;
+
+        private static (RolesPresenter Presenter, FakeRolesView View, FakePermissionService Service) CreateWithRoleAdmin(
+            params int[] rolesThatGrantRoleAdmin)
+        {
+            var view = new FakeRolesView();
+            var service = new FakePermissionService
+            {
+                Catalogue = new List<Permission>
+                {
+                    new Permission { Id = 1, Code = "ventas.acceso", Section = "ventas", Description = "Vender", ParentCode = null },
+                    new Permission { Id = UsuariosAccesoId, Code = "usuarios.acceso", Section = "usuarios", Description = "Usuarios", ParentCode = null },
+                    new Permission { Id = RolesGestionarId, Code = "roles.gestionar", Section = "usuarios", Description = "Administrar roles", ParentCode = "usuarios.acceso" }
+                },
+                Roles = new List<TypePerson>
+                {
+                    new TypePerson { idPersonType = 1, description = "Administrador General", IsSystem = true },
+                    new TypePerson { idPersonType = 2, description = "Administrador", IsSystem = true }
+                }
+            };
+            service.RolesGrantingByCode["roles.gestionar"] = rolesThatGrantRoleAdmin.ToList();
+            return (new RolesPresenter(view, service, TestUser.With("roles.gestionar")), view, service);
+        }
+
+        [Fact]
+        public void OnSavePermissions_StrippingRolesGestionarFromItsOnlyHolder_IsBlocked()
+        {
+            var (presenter, view, service) = CreateWithRoleAdmin(1);
+            presenter.OnLoad();
+            view.SelectedRoleId = 1;
+            view.CheckedPermissionIds = new List<int> { UsuariosAccesoId }; // roles.gestionar unchecked
+
+            presenter.OnSavePermissions();
+
+            Assert.Null(service.SavedRolePermissions);
+            Assert.Contains("unico rol", view.ShownMessages.Single());
+        }
+
+        [Fact]
+        public void OnSavePermissions_StrippingRolesGestionarWhenAnotherRoleAlsoHasIt_IsAllowed()
+        {
+            var (presenter, view, service) = CreateWithRoleAdmin(1, 2);
+            presenter.OnLoad();
+            view.SelectedRoleId = 1;
+            view.CheckedPermissionIds = new List<int> { UsuariosAccesoId }; // roles.gestionar unchecked
+
+            presenter.OnSavePermissions();
+
+            Assert.Equal(new[] { UsuariosAccesoId }, service.SavedRolePermissions.Value.Ids);
+            Assert.Contains("guardados", view.ShownMessages.Single());
+        }
+
+        [Fact]
+        public void OnSavePermissions_KeepingRolesGestionarChecked_SavesEvenIfItIsTheOnlyHolder()
+        {
+            var (presenter, view, service) = CreateWithRoleAdmin(1);
+            presenter.OnLoad();
+            view.SelectedRoleId = 1;
+            view.CheckedPermissionIds = new List<int> { RolesGestionarId };
+
+            presenter.OnSavePermissions();
+
+            // usuarios.acceso (9) is pulled in as the ancestor of roles.gestionar (10).
+            Assert.Equal(new[] { UsuariosAccesoId, RolesGestionarId }, service.SavedRolePermissions.Value.Ids);
+            Assert.Contains("guardados", view.ShownMessages.Single());
+        }
+
         [Fact]
         public void OnLoad_LoadsRolesAndClearsPermissionPanel()
         {

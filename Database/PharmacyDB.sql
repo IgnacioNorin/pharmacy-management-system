@@ -701,18 +701,42 @@ GO
 
 CREATE PROCEDURE [dbo].[sp_set_role_permissions]
     @person_type_id INT,
-    @permission_ids VARCHAR(MAX)   -- comma-separated permission ids, may be empty
+    @permission_ids VARCHAR(MAX),   -- comma-separated permission ids, may be empty
+    @result BIT OUTPUT              -- 0 = refused (would orphan roles.gestionar) or error, 1 = saved
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET @result = 0;
+
+    DECLARE @role_admin_id INT = (SELECT id FROM permission WHERE code = 'roles.gestionar');
+
+    -- The valid, de-duplicated ids being requested.
+    DECLARE @incoming TABLE (id INT PRIMARY KEY);
+    INSERT INTO @incoming (id)
+    SELECT DISTINCT TRY_CONVERT(INT, value)
+    FROM STRING_SPLIT(ISNULL(@permission_ids, ''), ',')
+    WHERE TRY_CONVERT(INT, value) IN (SELECT id FROM permission);
+
+    -- Refuse to drop 'roles.gestionar' from the only role that still grants it: from the next
+    -- sign-in nobody could reopen frmRoles, with no way back from inside the app.
+    IF @role_admin_id IS NOT NULL
+       AND EXISTS (SELECT 1 FROM role_permission
+                   WHERE person_type_id = @person_type_id AND permission_id = @role_admin_id)
+       AND NOT EXISTS (SELECT 1 FROM @incoming WHERE id = @role_admin_id)
+       AND (SELECT COUNT(DISTINCT person_type_id)
+            FROM role_permission WHERE permission_id = @role_admin_id) <= 1
+    BEGIN
+        RETURN;   -- @result stays 0
+    END
+
     BEGIN TRANSACTION;
         DELETE FROM role_permission WHERE person_type_id = @person_type_id;
 
         INSERT INTO role_permission (person_type_id, permission_id)
-        SELECT DISTINCT @person_type_id, TRY_CONVERT(INT, value)
-        FROM STRING_SPLIT(ISNULL(@permission_ids, ''), ',')
-        WHERE TRY_CONVERT(INT, value) IN (SELECT id FROM permission);
+        SELECT @person_type_id, id FROM @incoming;
     COMMIT TRANSACTION;
+
+    SET @result = 1;
 END
 GO
 
@@ -753,11 +777,25 @@ GO
 
 CREATE PROCEDURE [dbo].[sp_delete_person_type]
     @id INT,
-    @result BIT OUTPUT            -- 0 if it is a system role or still has users assigned
+    @result BIT OUTPUT            -- 0 if it is a system role, still has users, or is the last roles.gestionar holder
 AS
 BEGIN
     SET NOCOUNT ON;
     SET @result = 0;
+
+    DECLARE @role_admin_id INT = (SELECT id FROM permission WHERE code = 'roles.gestionar');
+
+    -- Deleting a role cascades its role_permission rows. If this is the last role that grants
+    -- 'roles.gestionar', that would lock everyone out of frmRoles (same reason as sp_set_role_permissions).
+    IF @role_admin_id IS NOT NULL
+       AND EXISTS (SELECT 1 FROM role_permission
+                   WHERE person_type_id = @id AND permission_id = @role_admin_id)
+       AND (SELECT COUNT(DISTINCT person_type_id)
+            FROM role_permission WHERE permission_id = @role_admin_id) <= 1
+    BEGIN
+        RETURN;   -- @result stays 0
+    END
+
     IF EXISTS (SELECT 1 FROM person_type WHERE id = @id AND is_system = 0)
        AND NOT EXISTS (SELECT 1 FROM person WHERE person_type_id = @id)
     BEGIN

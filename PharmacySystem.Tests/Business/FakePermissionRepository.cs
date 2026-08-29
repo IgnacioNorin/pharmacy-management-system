@@ -8,6 +8,7 @@ namespace PharmacySystem.Tests.Business
     {
         public List<Permission> AllResult { get; set; } = new List<Permission>();
         public List<string> CodesForRoleResult { get; set; } = new List<string>();
+        public List<int> RolesGrantingResult { get; set; } = new List<int>();
         public List<TypePerson> RolesResult { get; set; } = new List<TypePerson>();
         public List<int> PermissionIdsForRoleResult { get; set; } = new List<int>();
         public bool SetRolePermissionsResult { get; set; } = true;
@@ -24,6 +25,8 @@ namespace PharmacySystem.Tests.Business
             RequestedRoleId = personTypeId;
             return CodesForRoleResult;
         }
+
+        public List<int> GetRolesGranting(string permissionCode) => RolesGrantingResult;
 
         public List<TypePerson> GetRoles() => RolesResult;
 
