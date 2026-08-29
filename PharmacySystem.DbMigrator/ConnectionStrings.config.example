@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Copy to ConnectionStrings.config (gitignored) next to the executable, or pass the
-     connection string as the first CLI argument / the PHARMACY_DB_CONNECTION env var. -->
+     connection string as the first CLI argument / the PHARMACY_DB_CONNECTION env var.
+
+     The migrator runs DDL (CREATE/ALTER TABLE, indexes, procedures), so it needs a
+     db_owner-on-PharmacyDB account (or sa) - used ONLY at deploy time. The application
+     itself must use the least-privilege login pharmacy_app (Database\create_app_login.sql),
+     never this one. -->
 <connectionStrings>
   <add name="connection"
-       connectionString="Server=localhost;database=PharmacyDB;User Id=sa;Password=CHANGE_ME;"
+       connectionString="Server=localhost;database=PharmacyDB;User Id=#DeployUser#;Password=#DeployPassword#;"
        providerName="System.Data.SqlClient" />
 </connectionStrings>

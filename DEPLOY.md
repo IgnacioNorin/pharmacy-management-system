@@ -43,6 +43,19 @@ No volver a correr `PharmacyDB.sql` (tiene `DROP DATABASE`). Aplicar los scripts
 de `Database\Migrations\` en orden — ver `Database\Migrations\README.md`.
 **Hacer backup completo antes.**
 
+### Usuario de la aplicación (privilegios mínimos)
+
+Después de crear la base, ejecutar **una vez** `Database\create_app_login.sql`
+como administrador de la instancia. Crea el login `pharmacy_app` con permisos
+solo sobre `PharmacyDB` (leer, escribir, ejecutar procedimientos y avanzar los
+correlativos) — **la aplicación nunca debe conectarse como `sa`**. Cambiar la
+contraseña del script antes de correrlo.
+
+El **migrador** (`PharmacySystem.DbMigrator`) sí necesita permisos de esquema
+(crea tablas, índices y procedimientos): usar una cuenta `db_owner` sobre
+`PharmacyDB` (o `sa`) solo en el momento del despliegue, no en la configuración
+de la aplicación.
+
 ## 3. Configuración de la aplicación
 
 1. Copiar la carpeta del paquete al equipo cliente (por ejemplo
@@ -54,12 +67,13 @@ de `Database\Migrations\` en orden — ver `Database\Migrations\README.md`.
    ```xml
    <connectionStrings>
      <add name="connection"
-          connectionString="Server=SERVIDOR;database=PharmacyDB;User Id=USUARIO;Password=CLAVE;"
+          connectionString="Server=SERVIDOR;database=PharmacyDB;User Id=pharmacy_app;Password=CLAVE;"
           providerName="System.Data.SqlClient"/>
    </connectionStrings>
    ```
 
-   Usar un usuario de SQL con permisos solo sobre `PharmacyDB` (no `sa`).
+   Usar el login `pharmacy_app` creado con `Database\create_app_login.sql`
+   (permisos solo sobre `PharmacyDB`). **Nunca `sa`.**
 
 ## 4. Primer arranque
 
