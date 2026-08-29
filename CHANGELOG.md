@@ -26,8 +26,6 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   `ConnectionStrings.config` o de base de datos muestra un mensaje propio.
 - **`Database/create_app_login.sql`**: login `pharmacy_app` con privilegios
   mínimos sobre `PharmacyDB` — la aplicación deja de necesitar `sa`.
-- **Documentación técnica en `Docs/`**: catálogo de requisitos funcionales y no
-  funcionales, mapa de flujos, registro de defectos y hoja de ruta.
 
 ### Cambiado
 
