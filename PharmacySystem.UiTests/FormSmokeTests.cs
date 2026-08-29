@@ -140,6 +140,7 @@ namespace PharmacySystem.UiTests
                 {
                     Assert.IsAssignableFrom<ICategoryManagementView>(form);
                     Assert.IsAssignableFrom<IProductManagementView>(form);
+                    Assert.IsAssignableFrom<IProductPriceView>(form);
                     Assert.IsAssignableFrom<IStoreManagementView>(form);
                 }
             });

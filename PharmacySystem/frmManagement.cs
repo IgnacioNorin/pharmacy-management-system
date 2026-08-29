@@ -1,3 +1,4 @@
+using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using PharmacySystem.Validators;
@@ -10,10 +11,11 @@ using Control = System.Windows.Forms.Control;
 
 namespace PharmacySystem
 {
-    public partial class frmManagement : Form, ICategoryManagementView, IProductManagementView, IStoreManagementView
+    public partial class frmManagement : Form, ICategoryManagementView, IProductManagementView, IProductPriceView, IStoreManagementView
     {
         private readonly CategoryManagementPresenter _categoryPresenter;
         private readonly ProductManagementPresenter _productPresenter;
+        private readonly ProductPricePresenter _productPricePresenter;
         private readonly StoreManagementPresenter _storePresenter;
         // True only while _storePresenter.OnLoad() runs, so populating the preset combo does not
         // fire OnCountryPresetChanged and overwrite the just-loaded saved values.
@@ -22,8 +24,10 @@ namespace PharmacySystem
         public frmManagement()
         {
             InitializeComponent();
+            BuildPricesTab();
             _categoryPresenter = CompositionRoot.CreateCategoryManagementPresenter(this);
             _productPresenter = CompositionRoot.CreateProductManagementPresenter(this);
+            _productPricePresenter = CompositionRoot.CreateProductPricePresenter(this);
             _storePresenter = CompositionRoot.CreateStoreManagementPresenter(this);
         }
 
@@ -191,6 +195,15 @@ namespace PharmacySystem
             else
             {
                 tabManagement.TabPages.Remove(tabProduct);
+            }
+
+            if (CanSee("productos.editar_precios"))
+            {
+                _productPricePresenter.OnLoad();
+            }
+            else
+            {
+                tabManagement.TabPages.Remove(_tabPrices);
             }
 
             if (CanSee("tienda.acceso"))
@@ -624,6 +637,173 @@ namespace PharmacySystem
             MessageBox.Show(string.Join("\n", errors), "Errores de Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
         private void btnSaveStore_Click(object sender, EventArgs e) => _storePresenter.OnSave();
+
+        #endregion
+
+        #region Prices tab (IProductPriceView)
+
+        // The Prices tab is built in code (not the Designer) to keep this large form's
+        // InitializeComponent untouched. It has two product grids - "to release" and
+        // "commercialized" - a small form to set a price, and the selected product's history.
+        private TabPage _tabPrices;
+        private DataGridView _dgvReleasable;
+        private DataGridView _dgvCommercialized;
+        private DataGridView _dgvPriceHistory;
+        private Label _lblSelectedProduct;
+        private TextBox _txtNewPrice;
+        private TextBox _txtPriceReason;
+        private int _priceSelectedId;
+
+        private void BuildPricesTab()
+        {
+            _tabPrices = new TabPage("Precios") { Name = "tabPrices", BackColor = Color.FromArgb(245, 246, 248) };
+
+            _dgvReleasable = BuildPriceGrid(new Point(6, 26), new Size(560, 210));
+            _dgvCommercialized = BuildPriceGrid(new Point(6, 276), new Size(560, 225));
+            _dgvReleasable.SelectionChanged += (s, e) => OnPriceRowSelected(_dgvReleasable);
+            _dgvCommercialized.SelectionChanged += (s, e) => OnPriceRowSelected(_dgvCommercialized);
+
+            _dgvPriceHistory = new DataGridView
+            {
+                Location = new Point(586, 210),
+                Size = new Size(645, 291),
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                ReadOnly = true,
+                RowHeadersVisible = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+            };
+            _dgvPriceHistory.Columns.Add("Fecha", "Fecha");
+            _dgvPriceHistory.Columns.Add("Evento", "Evento");
+            _dgvPriceHistory.Columns.Add("Precio", "Precio");
+            _dgvPriceHistory.Columns.Add("Costo", "Costo");
+            _dgvPriceHistory.Columns.Add("Usuario", "Usuario");
+            _dgvPriceHistory.Columns.Add("Motivo", "Motivo");
+
+            _lblSelectedProduct = new Label { Location = new Point(586, 6), AutoSize = true, Text = "Producto: (ninguno seleccionado)" };
+            var lblNewPrice = new Label { Location = new Point(586, 34), AutoSize = true, Text = "Nuevo precio de venta:" };
+            _txtNewPrice = new TextBox { Location = new Point(586, 52), Size = new Size(140, 21) };
+            _txtNewPrice.KeyPress += PriceEntry_KeyPress;
+            var lblReason = new Label { Location = new Point(586, 82), AutoSize = true, Text = "Motivo (opcional):" };
+            _txtPriceReason = new TextBox { Location = new Point(586, 100), Size = new Size(400, 21) };
+
+            var btnApply = new Button { Location = new Point(586, 134), Size = new Size(200, 28), Text = "Guardar precio / Liberar" };
+            btnApply.Click += (s, e) => _productPricePresenter.OnApplyPrice();
+            var btnUnrelease = new Button { Location = new Point(796, 134), Size = new Size(200, 28), Text = "Retirar de comercialización" };
+            btnUnrelease.Click += (s, e) => _productPricePresenter.OnUnrelease();
+
+            var lblRel = new Label { Location = new Point(6, 6), AutoSize = true, Text = "Por liberar (en stock, sin precio de venta)" };
+            var lblCom = new Label { Location = new Point(6, 256), AutoSize = true, Text = "En comercialización" };
+            var lblHist = new Label { Location = new Point(586, 188), AutoSize = true, Text = "Historial de precios del producto seleccionado" };
+
+            _tabPrices.Controls.AddRange(new Control[]
+            {
+                lblRel, _dgvReleasable, lblCom, _dgvCommercialized,
+                _lblSelectedProduct, lblNewPrice, _txtNewPrice, lblReason, _txtPriceReason,
+                btnApply, btnUnrelease, lblHist, _dgvPriceHistory
+            });
+
+            tabManagement.TabPages.Add(_tabPrices);
+        }
+
+        private static DataGridView BuildPriceGrid(Point location, Size size)
+        {
+            var grid = new DataGridView
+            {
+                Location = location,
+                Size = size,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                ReadOnly = true,
+                RowHeadersVisible = false,
+                MultiSelect = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+            };
+            grid.Columns.Add("Id", "Id");
+            grid.Columns.Add("Codigo", "Código");
+            grid.Columns.Add("Nombre", "Producto");
+            grid.Columns.Add("Stock", "Stock");
+            grid.Columns.Add("Costo", "Costo");
+            grid.Columns.Add("Precio", "Precio venta");
+            grid.Columns.Add("Margen", "Margen %");
+            grid.Columns.Add("IVA", "IVA");
+            grid.Columns["Id"].Visible = false;
+            grid.ClearSelection();
+            return grid;
+        }
+
+        private void OnPriceRowSelected(DataGridView grid)
+        {
+            if (_productPricePresenter == null || grid.CurrentRow == null || grid.CurrentRow.Cells["Id"].Value == null)
+            {
+                return;
+            }
+
+            _priceSelectedId = int.Parse(grid.CurrentRow.Cells["Id"].Value.ToString());
+            _lblSelectedProduct.Text = "Producto: " + grid.CurrentRow.Cells["Nombre"].Value + " (" + grid.CurrentRow.Cells["Codigo"].Value + ")";
+            _productPricePresenter.OnSelectProduct(_priceSelectedId);
+        }
+
+        private void PriceEntry_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (char.IsControl(e.KeyChar) || char.IsDigit(e.KeyChar))
+            {
+                return;
+            }
+
+            var box = (TextBox)sender;
+            bool dotAllowed = e.KeyChar == '.' && box.Text.Trim().Length > 0 && !box.Text.Contains(".");
+            e.Handled = !dotAllowed;
+        }
+
+        private static void FillPriceGrid(DataGridView grid, IEnumerable<ProductPriceRow> rows)
+        {
+            grid.Rows.Clear();
+            foreach (ProductPriceRow r in rows)
+            {
+                grid.Rows.Add(
+                    r.Id.ToString(),
+                    r.Code,
+                    r.Name,
+                    r.Stock.ToString(),
+                    CultureInfoHelper.FormatAsCurrency(r.Cost),
+                    r.SalePrice.HasValue ? CultureInfoHelper.FormatAsCurrency(r.SalePrice.Value) : "-",
+                    r.MarginPercent.HasValue ? r.MarginPercent.Value.ToString("0.0") + " %" : "-",
+                    r.TaxAffected ? "Sí" : "No");
+            }
+            grid.ClearSelection();
+        }
+
+        int IProductPriceView.SelectedProductId => _priceSelectedId;
+        string IProductPriceView.NewPriceText => _txtNewPrice.Text;
+        string IProductPriceView.Reason => _txtPriceReason.Text;
+
+        void IProductPriceView.LoadReleasable(IEnumerable<ProductPriceRow> rows) => FillPriceGrid(_dgvReleasable, rows);
+        void IProductPriceView.LoadCommercialized(IEnumerable<ProductPriceRow> rows) => FillPriceGrid(_dgvCommercialized, rows);
+
+        void IProductPriceView.LoadHistory(IEnumerable<ProductPriceHistoryRow> entries)
+        {
+            _dgvPriceHistory.Rows.Clear();
+            foreach (ProductPriceHistoryRow e in entries)
+            {
+                _dgvPriceHistory.Rows.Add(e.DateText, e.EventText, e.SalePriceText, e.CostText, e.UserName, e.Reason);
+            }
+            _dgvPriceHistory.ClearSelection();
+        }
+
+        void IProductPriceView.ClearEntry()
+        {
+            _txtNewPrice.Text = "";
+            _txtPriceReason.Text = "";
+        }
+
+        void IProductPriceView.ShowMessage(string message) =>
+            MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+        void IProductPriceView.ShowValidationErrors(IReadOnlyList<string> errors) =>
+            MessageBox.Show(string.Join("\n", errors), "Errores de Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
         #endregion
     }
