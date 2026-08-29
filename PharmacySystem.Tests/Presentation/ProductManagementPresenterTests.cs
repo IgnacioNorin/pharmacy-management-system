@@ -32,6 +32,137 @@ namespace PharmacySystem.Tests.Presentation
         private static ProductManagementPresenter CreatePresenter(FakeProductManagementView view, FakeProductService productService, FakeCategoryService categoryService)
             => new ProductManagementPresenter(view, productService, categoryService, TestUser.With("productos.gestionar", "productos.eliminar"));
 
+        private static ProductManagementPresenter CreatePresenterWithPricePermission(FakeProductManagementView view, FakeProductService productService)
+            => new ProductManagementPresenter(view, productService, new FakeCategoryService(),
+                TestUser.With("productos.gestionar", "productos.eliminar", "productos.editar_precios"));
+
+        [Fact]
+        public void OnLoad_ReportsPriceEditingEnabledFromThePermission()
+        {
+            var withPermission = new FakeProductManagementView();
+            CreatePresenterWithPricePermission(withPermission, new FakeProductService()).OnLoad();
+            Assert.True(withPermission.PriceEditingEnabled);
+
+            var withoutPermission = new FakeProductManagementView();
+            CreatePresenter(withoutPermission, new FakeProductService(), new FakeCategoryService()).OnLoad();
+            Assert.False(withoutPermission.PriceEditingEnabled);
+        }
+
+        [Fact]
+        public void OnSave_NewProduct_WithPricePermissionAndPrices_CallsSetPricesWithTheNewId()
+        {
+            var view = new FakeProductManagementView
+            {
+                ProductId = 0, Code = "P", Name = "N", Description = "D", SelectedCategoryId = 1,
+                PurchasePriceText = "10.50", SalePriceText = "18"
+            };
+            var productService = new FakeProductService { RegisterResult = 42 };
+
+            CreatePresenterWithPricePermission(view, productService).OnSave();
+
+            Assert.Equal((42, 10.50m, 18m), productService.SetPricesCall);
+            Assert.Equal("10.50", view.AddedRows[0].PurchasePriceText);
+            Assert.Equal("18.00", view.AddedRows[0].SalePriceText);
+        }
+
+        [Fact]
+        public void OnSave_NewProduct_WithPermissionButBlankPrices_DoesNotCallSetPrices()
+        {
+            var view = new FakeProductManagementView
+            {
+                ProductId = 0, Code = "P", Name = "N", Description = "D", SelectedCategoryId = 1,
+                PurchasePriceText = "", SalePriceText = ""
+            };
+            var productService = new FakeProductService { RegisterResult = 9 };
+
+            CreatePresenterWithPricePermission(view, productService).OnSave();
+
+            Assert.Null(productService.SetPricesCall);
+            Assert.Null(view.AddedRows[0].PurchasePriceText);
+        }
+
+        [Fact]
+        public void OnSave_WithoutPricePermission_IgnoresPriceFieldsEntirely()
+        {
+            var view = new FakeProductManagementView
+            {
+                ProductId = 0, Code = "P", Name = "N", Description = "D", SelectedCategoryId = 1,
+                PurchasePriceText = "10", SalePriceText = "20"
+            };
+            var productService = new FakeProductService { RegisterResult = 3 };
+
+            // No "productos.editar_precios" here.
+            CreatePresenter(view, productService, new FakeCategoryService()).OnSave();
+
+            Assert.Null(productService.SetPricesCall);
+            Assert.Null(view.AddedRows[0].SalePriceText);
+        }
+
+        [Fact]
+        public void OnSave_ExistingProduct_WithPermissionAndPrices_CallsSetPricesWithTheProductId()
+        {
+            var view = new FakeProductManagementView
+            {
+                ProductId = 7, SelectedIndex = 2, Code = "P", Name = "N", Description = "D", SelectedCategoryId = 1,
+                PurchasePriceText = "5", SalePriceText = "9.99"
+            };
+            var productService = new FakeProductService { UpdateResult = true };
+
+            CreatePresenterWithPricePermission(view, productService).OnSave();
+
+            Assert.Equal((7, 5m, 9.99m), productService.SetPricesCall);
+            Assert.Equal("9.99", view.ReplacedRows[0].Row.SalePriceText);
+        }
+
+        [Fact]
+        public void OnSave_InvalidPriceText_ShowsValidationErrorAndSavesNothing()
+        {
+            var view = new FakeProductManagementView
+            {
+                ProductId = 0, Code = "P", Name = "N", Description = "D", SelectedCategoryId = 1,
+                PurchasePriceText = "abc", SalePriceText = "10"
+            };
+            var productService = new FakeProductService { RegisterResult = 1 };
+
+            CreatePresenterWithPricePermission(view, productService).OnSave();
+
+            Assert.Contains(view.ShownValidationErrors, e => e.Contains("Precio de compra"));
+            Assert.Empty(view.AddedRows);
+            Assert.Null(productService.SetPricesCall);
+        }
+
+        [Fact]
+        public void OnSave_OnlyOnePriceGiven_IsRejected()
+        {
+            var view = new FakeProductManagementView
+            {
+                ProductId = 0, Code = "P", Name = "N", Description = "D", SelectedCategoryId = 1,
+                PurchasePriceText = "10", SalePriceText = ""
+            };
+            var productService = new FakeProductService { RegisterResult = 1 };
+
+            CreatePresenterWithPricePermission(view, productService).OnSave();
+
+            Assert.Contains(view.ShownValidationErrors, e => e.Contains("Precio de venta"));
+            Assert.Empty(view.AddedRows);
+        }
+
+        [Fact]
+        public void OnSave_NegativePrice_IsRejected()
+        {
+            var view = new FakeProductManagementView
+            {
+                ProductId = 0, Code = "P", Name = "N", Description = "D", SelectedCategoryId = 1,
+                PurchasePriceText = "-3", SalePriceText = "10"
+            };
+            var productService = new FakeProductService { RegisterResult = 1 };
+
+            CreatePresenterWithPricePermission(view, productService).OnSave();
+
+            Assert.Contains(view.ShownValidationErrors, e => e.Contains("Precio de compra"));
+            Assert.Empty(view.AddedRows);
+        }
+
         [Fact]
         public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotRegister()
         {

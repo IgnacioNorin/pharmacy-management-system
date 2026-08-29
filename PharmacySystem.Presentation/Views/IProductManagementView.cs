@@ -15,8 +15,16 @@ namespace PharmacySystem.Presentation
         string SelectedCategoryText { get; }
         bool TaxAffected { get; }
 
+        // Raw text of the two price fields. Only read when price editing is enabled for the role
+        // (productos.editar_precios); otherwise the fields are disabled and their content ignored.
+        string PurchasePriceText { get; }
+        string SalePriceText { get; }
+
         List<string> Validate();
         bool ConfirmDelete();
+
+        // Enables or disables the two price fields depending on whether the role may edit prices.
+        void SetPriceEditingEnabled(bool enabled);
 
         void LoadCategoryOptions(IEnumerable<ComboBoxItem> options);
         void LoadProducts(IEnumerable<ManagementProductRow> products);

@@ -12,6 +12,9 @@ namespace PharmacySystem.Tests.Presentation
         public bool DeleteResult { get; set; } = true;
         public List<Product> ListResult { get; set; } = new List<Product>();
         public List<ProductReportRow> ReportResult { get; set; } = new List<ProductReportRow>();
+        public bool SetPricesResult { get; set; } = true;
+
+        public (int Id, decimal Purchase, decimal Sale)? SetPricesCall { get; private set; }
 
         public int Register(Product obj) => RegisterResult;
         public bool Update(Product obj) => UpdateResult;
@@ -19,5 +22,11 @@ namespace PharmacySystem.Tests.Presentation
         public bool Verify(int idProduct) => VerifyResult;
         public bool Delete(int idProduct) => DeleteResult;
         public List<ProductReportRow> Report(string categoryId) => ReportResult;
+
+        public bool SetPrices(int idProduct, decimal purchasePrice, decimal salePrice)
+        {
+            SetPricesCall = (idProduct, purchasePrice, salePrice);
+            return SetPricesResult;
+        }
     }
 }

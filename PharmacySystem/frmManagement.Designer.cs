@@ -43,6 +43,10 @@
             this.btnclear = new System.Windows.Forms.Button();
             this.btnsearch = new System.Windows.Forms.Button();
             this.cbocategory = new System.Windows.Forms.ComboBox();
+            this.lblPurchasePriceProduct = new System.Windows.Forms.Label();
+            this.txtpurchasepriceproduct = new System.Windows.Forms.TextBox();
+            this.lblSalePriceProduct = new System.Windows.Forms.Label();
+            this.txtsalepriceproduct = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
             this.btnDeleteProduct = new System.Windows.Forms.Button();
@@ -139,6 +143,10 @@
             this.tabProduct.Controls.Add(this.btnsearch);
             this.tabProduct.Controls.Add(this.cbocategory);
             this.tabProduct.Controls.Add(this.chkTaxAffected);
+            this.tabProduct.Controls.Add(this.lblPurchasePriceProduct);
+            this.tabProduct.Controls.Add(this.txtpurchasepriceproduct);
+            this.tabProduct.Controls.Add(this.lblSalePriceProduct);
+            this.tabProduct.Controls.Add(this.txtsalepriceproduct);
             this.tabProduct.Controls.Add(this.label9);
             this.tabProduct.Controls.Add(this.label10);
             this.tabProduct.Controls.Add(this.btnDeleteProduct);
@@ -309,9 +317,49 @@
             this.chkTaxAffected.TabIndex = 42;
             this.chkTaxAffected.Text = "Afecto a IVA";
             this.chkTaxAffected.UseVisualStyleBackColor = true;
-            // 
+            //
+            // lblPurchasePriceProduct
+            //
+            this.lblPurchasePriceProduct.AutoSize = true;
+            this.lblPurchasePriceProduct.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
+            this.lblPurchasePriceProduct.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblPurchasePriceProduct.Location = new System.Drawing.Point(31, 322);
+            this.lblPurchasePriceProduct.Name = "lblPurchasePriceProduct";
+            this.lblPurchasePriceProduct.Size = new System.Drawing.Size(66, 15);
+            this.lblPurchasePriceProduct.TabIndex = 66;
+            this.lblPurchasePriceProduct.Text = "P. compra:";
+            //
+            // txtpurchasepriceproduct
+            //
+            this.txtpurchasepriceproduct.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtpurchasepriceproduct.Location = new System.Drawing.Point(34, 340);
+            this.txtpurchasepriceproduct.Name = "txtpurchasepriceproduct";
+            this.txtpurchasepriceproduct.Size = new System.Drawing.Size(110, 21);
+            this.txtpurchasepriceproduct.TabIndex = 43;
+            this.txtpurchasepriceproduct.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.PriceProduct_KeyPress);
+            //
+            // lblSalePriceProduct
+            //
+            this.lblSalePriceProduct.AutoSize = true;
+            this.lblSalePriceProduct.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
+            this.lblSalePriceProduct.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblSalePriceProduct.Location = new System.Drawing.Point(150, 322);
+            this.lblSalePriceProduct.Name = "lblSalePriceProduct";
+            this.lblSalePriceProduct.Size = new System.Drawing.Size(55, 15);
+            this.lblSalePriceProduct.TabIndex = 67;
+            this.lblSalePriceProduct.Text = "P. venta:";
+            //
+            // txtsalepriceproduct
+            //
+            this.txtsalepriceproduct.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtsalepriceproduct.Location = new System.Drawing.Point(168, 340);
+            this.txtsalepriceproduct.Name = "txtsalepriceproduct";
+            this.txtsalepriceproduct.Size = new System.Drawing.Size(110, 21);
+            this.txtsalepriceproduct.TabIndex = 44;
+            this.txtsalepriceproduct.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.PriceProduct_KeyPress);
+            //
             // label9
-            // 
+            //
             this.label9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label9.AutoSize = true;
             this.label9.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
@@ -340,7 +388,7 @@
             this.btnDeleteProduct.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnDeleteProduct.Image = global::PharmacySystem.Properties.Resources.delete32;
             this.btnDeleteProduct.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnDeleteProduct.Location = new System.Drawing.Point(34, 421);
+            this.btnDeleteProduct.Location = new System.Drawing.Point(34, 465);
             this.btnDeleteProduct.Name = "btnDeleteProduct";
             this.btnDeleteProduct.Size = new System.Drawing.Size(244, 38);
             this.btnDeleteProduct.TabIndex = 35;
@@ -356,7 +404,7 @@
             this.btnCleanProduct.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCleanProduct.Image = global::PharmacySystem.Properties.Resources.clear32;
             this.btnCleanProduct.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnCleanProduct.Location = new System.Drawing.Point(34, 377);
+            this.btnCleanProduct.Location = new System.Drawing.Point(34, 423);
             this.btnCleanProduct.Name = "btnCleanProduct";
             this.btnCleanProduct.Size = new System.Drawing.Size(244, 38);
             this.btnCleanProduct.TabIndex = 34;
@@ -372,7 +420,7 @@
             this.btnSaveProduct.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnSaveProduct.Image = global::PharmacySystem.Properties.Resources.save32;
             this.btnSaveProduct.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnSaveProduct.Location = new System.Drawing.Point(34, 333);
+            this.btnSaveProduct.Location = new System.Drawing.Point(34, 379);
             this.btnSaveProduct.Name = "btnSaveProduct";
             this.btnSaveProduct.Size = new System.Drawing.Size(244, 38);
             this.btnSaveProduct.TabIndex = 36;
@@ -1068,6 +1116,10 @@
         private System.Windows.Forms.TextBox txttaxrate;
         private System.Windows.Forms.Label lbltaxrate;
         private System.Windows.Forms.CheckBox chkTaxAffected;
+        private System.Windows.Forms.Label lblPurchasePriceProduct;
+        private System.Windows.Forms.TextBox txtpurchasepriceproduct;
+        private System.Windows.Forms.Label lblSalePriceProduct;
+        private System.Windows.Forms.TextBox txtsalepriceproduct;
         private System.Windows.Forms.ComboBox cbodefaultdoctype;
         private System.Windows.Forms.Label lbldefaultdoctype;
         private System.Windows.Forms.ComboBox cbocountrypreset;

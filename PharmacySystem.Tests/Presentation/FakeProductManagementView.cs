@@ -16,11 +16,16 @@ namespace PharmacySystem.Tests.Presentation
         public int SelectedCategoryId { get; set; }
         public string SelectedCategoryText { get; set; }
         public bool TaxAffected { get; set; } = true;
+        public string PurchasePriceText { get; set; } = "";
+        public string SalePriceText { get; set; } = "";
         public List<string> ValidationErrors { get; set; } = new List<string>();
         public bool ConfirmDeleteResult { get; set; } = true;
 
+        public bool? PriceEditingEnabled { get; private set; }
+
         List<string> IProductManagementView.Validate() => ValidationErrors;
         public bool ConfirmDelete() => ConfirmDeleteResult;
+        public void SetPriceEditingEnabled(bool enabled) => PriceEditingEnabled = enabled;
 
         public List<ComboBoxItem> LoadedCategoryOptions { get; private set; }
         public List<ManagementProductRow> LoadedProducts { get; private set; }

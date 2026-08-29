@@ -150,6 +150,8 @@ namespace PharmacySystem
             dgdataproduct.Columns.Add("Descripcion", "Descripción");
             dgdataproduct.Columns.Add("Categoria", "Categoria");
             dgdataproduct.Columns.Add("Stock", "Stock");
+            dgdataproduct.Columns.Add("PrecioCompra", "Precio Compra");
+            dgdataproduct.Columns.Add("PrecioVenta", "Precio Venta");
             dgdataproduct.Columns.Add("FechaVencimiento", "FechaVencimiento");
             dgdataproduct.Columns.Add("TaxAffected", "TaxAffected");
 
@@ -322,6 +324,17 @@ namespace PharmacySystem
         public int SelectedCategoryId => (int)((ComboBoxItem)cbocategory.SelectedItem).Value;
         public string SelectedCategoryText => ((ComboBoxItem)cbocategory.SelectedItem).Text;
         public bool TaxAffected => chkTaxAffected.Checked;
+        public string PurchasePriceText => txtpurchasepriceproduct.Text;
+        public string SalePriceText => txtsalepriceproduct.Text;
+
+        public void SetPriceEditingEnabled(bool enabled)
+        {
+            txtpurchasepriceproduct.Enabled = enabled;
+            txtsalepriceproduct.Enabled = enabled;
+            System.Drawing.Color back = enabled ? System.Drawing.SystemColors.Window : System.Drawing.SystemColors.Control;
+            txtpurchasepriceproduct.BackColor = back;
+            txtsalepriceproduct.BackColor = back;
+        }
 
         List<string> IProductManagementView.Validate() => ValidateForm();
 
@@ -381,6 +394,17 @@ namespace PharmacySystem
             gridRow.Cells["Categoria"].Value = row.CategoryText;
             gridRow.Cells["TaxAffected"].Value = row.TaxAffected.ToString();
 
+            // Prices are rewritten whenever the row carries them (null = leave the cell as-is),
+            // on both a new row and an update - unlike Stock/expiration, a price can change on edit.
+            if (row.PurchasePriceText != null)
+            {
+                gridRow.Cells["PrecioCompra"].Value = row.PurchasePriceText;
+            }
+            if (row.SalePriceText != null)
+            {
+                gridRow.Cells["PrecioVenta"].Value = row.SalePriceText;
+            }
+
             // On a new row the original always sets Stock ("0") and leaves FechaVencimiento
             // untouched (defaults to blank). On an update it rewrites neither cell.
             if (isNewRow)
@@ -401,6 +425,8 @@ namespace PharmacySystem
             txtcodeproduct.Text = "";
             txtnameproduct.Text = "";
             txtdescriptionproduct.Text = "";
+            txtpurchasepriceproduct.Text = "";
+            txtsalepriceproduct.Text = "";
             chkTaxAffected.Checked = true;
             if (cbocategory.SelectedValue != null)
             {
@@ -451,6 +477,8 @@ namespace PharmacySystem
                     txtcodeproduct.Text = dgdataproduct.Rows[index].Cells["Codigo"].Value.ToString();
                     txtnameproduct.Text = dgdataproduct.Rows[index].Cells["Nombre"].Value.ToString();
                     txtdescriptionproduct.Text = dgdataproduct.Rows[index].Cells["Descripcion"].Value.ToString();
+                    txtpurchasepriceproduct.Text = dgdataproduct.Rows[index].Cells["PrecioCompra"].Value?.ToString() ?? "";
+                    txtsalepriceproduct.Text = dgdataproduct.Rows[index].Cells["PrecioVenta"].Value?.ToString() ?? "";
                     chkTaxAffected.Checked =
                         !string.Equals(dgdataproduct.Rows[index].Cells["TaxAffected"].Value?.ToString(), "False", StringComparison.OrdinalIgnoreCase);
                     foreach (ComboBoxItem item in cbocategory.Items)
@@ -464,6 +492,21 @@ namespace PharmacySystem
                     }
                 }
             }
+        }
+
+        // Digits, control keys and a single leading-or-mid decimal point; same input policy as the
+        // purchase screen's price fields.
+        private void PriceProduct_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (char.IsControl(e.KeyChar) || char.IsDigit(e.KeyChar))
+            {
+                return;
+            }
+
+            var box = (TextBox)sender;
+            bool isDot = e.KeyChar == '.';
+            bool dotAllowed = isDot && box.Text.Trim().Length > 0 && !box.Text.Contains(".");
+            e.Handled = !dotAllowed;
         }
 
         private void btnDeleteProduct_Click(object sender, EventArgs e) => _productPresenter.OnDelete();

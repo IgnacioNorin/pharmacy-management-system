@@ -84,6 +84,27 @@ namespace PharmacySystem.Data
             }
         }
 
+        public bool SetPrices(int idProduct, decimal purchasePrice, decimal salePrice)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    int rows = oConnection.Execute(
+                        "UPDATE product SET purchase_price = @purchasePrice, sale_price = @salePrice " +
+                        "WHERE id = @idProduct",
+                        new { idProduct, purchasePrice, salePrice });
+
+                    return rows > 0;
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return false;
+                }
+            }
+        }
+
         public List<Product> List()
         {
             using (SqlConnection oConnection = _connectionFactory.Create())

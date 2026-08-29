@@ -33,6 +33,33 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
+        public void SetPrices_WritesBothColumns_AndListReflectsThem()
+        {
+            int categoryId = CreateCategory();
+            int productId = 0;
+
+            try
+            {
+                productId = Repository.Register(NewProduct(categoryId));
+
+                Assert.True(Repository.SetPrices(productId, 12.34m, 56.78m));
+
+                Product listed = Repository.List().Single(p => p.idProduct == productId);
+                Assert.Equal(12.34m, listed.purchasePrice);
+                Assert.Equal(56.78m, listed.salePrice);
+
+                // A second call overwrites, and a non-existent id returns false without throwing.
+                Assert.True(Repository.SetPrices(productId, 1m, 2m));
+                Assert.False(Repository.SetPrices(-1, 1m, 2m));
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+            }
+        }
+
+        [Fact]
         public void Register_New_IsListedAndVerifiable()
         {
             int categoryId = CreateCategory();

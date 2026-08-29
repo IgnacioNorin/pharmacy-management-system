@@ -11,5 +11,9 @@ namespace PharmacySystem.Business
         bool Verify(int idProduct);
         bool Delete(int idProduct);
         List<ProductReportRow> Report(string categoryId);
+
+        // Writes the two price fields for one product. Gated by productos.editar_precios in the
+        // presenter; Update never touches prices.
+        bool SetPrices(int idProduct, decimal purchasePrice, decimal salePrice);
     }
 }
