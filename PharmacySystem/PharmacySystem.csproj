@@ -228,6 +228,7 @@
     </Compile>
     <Compile Include="CompositionRoot.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="StartupError.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Validators\RuleValidation.cs" />
     <Compile Include="Validators\Validations.cs" />

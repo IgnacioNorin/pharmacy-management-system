@@ -29,6 +29,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- StartupErrorTests build ConfigurationErrorsException; not auto-referenced on SDK-style net48. -->
+    <Reference Include="System.Configuration" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="ConnectionStrings.config" CopyToOutputDirectory="PreserveNewest" Condition="Exists('ConnectionStrings.config')" />
     <None Include="ConnectionStrings.config.example" CopyToOutputDirectory="PreserveNewest" Condition="Exists('ConnectionStrings.config.example')" />
   </ItemGroup>
