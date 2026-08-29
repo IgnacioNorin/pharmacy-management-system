@@ -13,7 +13,6 @@ namespace PharmacySystem.Tests.Presentation
         public decimal Amount { get; set; } = 1;
         public DateTime ExpirationDate { get; set; } = DateTime.Today;
         public string PricePurchaseText { get; set; }
-        public string PriceSaleText { get; set; }
 
         public string DocumentNumber { get; set; }
         public string DocumentType { get; set; } = "Factura";

@@ -49,14 +49,17 @@ namespace PharmacySystem.Data
                         if (idPurchase != 0)
                         {
                             const string insertDetailQuery =
-                                "INSERT INTO purchase_detail(purchase_id, product_id, stock, purchase_price, sale_price, total_amount, date_expired) " +
-                                "VALUES (@purchase_id, @product_id, @stock, @purchase_price, @sale_price, @total_amount, @date_expired)";
+                                "INSERT INTO purchase_detail(purchase_id, product_id, stock, purchase_price, total_amount, date_expired) " +
+                                "VALUES (@purchase_id, @product_id, @stock, @purchase_price, @total_amount, @date_expired)";
 
-                            // The lot expiry is kept on the detail line above. On the product master
-                            // the date only moves EARLIER: a newer lot with a later expiry must not
-                            // switch off the alert for older stock still on the shelf.
+                            // A purchase only moves stock and cost. It never touches sale_price:
+                            // the sale price is set deliberately in the Prices screen, which also
+                            // releases the product for sale. The lot expiry is kept on the detail
+                            // line above; on the product master the date only moves EARLIER, so a
+                            // newer lot with a later expiry does not switch off the alert for older
+                            // stock still on the shelf.
                             const string updateProductQuery =
-                                "UPDATE product SET stock = (stock + @quantity), purchase_price = @purchase_price, sale_price = @sale_price, " +
+                                "UPDATE product SET stock = (stock + @quantity), purchase_price = @purchase_price, " +
                                 "date_expired = CASE WHEN date_expired IS NULL OR @date_expired < date_expired THEN @date_expired ELSE date_expired END " +
                                 "WHERE id = @product_id";
 
@@ -68,7 +71,6 @@ namespace PharmacySystem.Data
                                     product_id = pd.oProduct.idProduct,
                                     stock = pd.quantity,
                                     purchase_price = pd.purchasePrice,
-                                    sale_price = pd.salePrice,
                                     total_amount = pd.total,
                                     date_expired = pd.expirationDate
                                 }, objTransacion);
@@ -77,7 +79,6 @@ namespace PharmacySystem.Data
                                 {
                                     quantity = pd.quantity,
                                     purchase_price = pd.purchasePrice,
-                                    sale_price = pd.salePrice,
                                     date_expired = pd.expirationDate,
                                     product_id = pd.oProduct.idProduct
                                 }, objTransacion);
@@ -123,7 +124,7 @@ namespace PharmacySystem.Data
                     const string sql =
                         "SELECT pu.date_registered AS DateRegistered, su.document_number AS SupplierDocument, su.company_name AS CompanyName, " +
                         "pu.document_type AS DocumentType, pu.document_number AS DocumentNumber, pu.total_amount AS TotalAmount, " +
-                        "pr.name AS ProductName, pd.stock AS Quantity, pd.purchase_price AS PurchasePrice, pd.sale_price AS SalePrice " +
+                        "pr.name AS ProductName, pd.stock AS Quantity, pd.purchase_price AS PurchasePrice " +
                         "FROM purchase pu " +
                         "INNER JOIN supplier su ON su.id = pu.supplier_id " +
                         "INNER JOIN purchase_detail pd ON pd.purchase_id = pu.id " +

@@ -75,7 +75,6 @@ namespace PharmacySystem.Tests.Integration
                             quantity = 10,
                             expirationDate = DateTime.Today.AddYears(1),
                             purchasePrice = 3m,
-                            salePrice = 5m,
                             total = 30m
                         }
                     }
@@ -152,7 +151,6 @@ namespace PharmacySystem.Tests.Integration
                             quantity = 1,
                             expirationDate = DateTime.Today.AddYears(1),
                             purchasePrice = 42.50m,
-                            salePrice = 60m,
                             total = 42.50m
                         }
                     }
@@ -238,7 +236,7 @@ namespace PharmacySystem.Tests.Integration
                         documentNumber = doc,
                         oPurchaseDetail = new List<PurchaseDetail>
                         {
-                            new PurchaseDetail { oProduct = new Product { idProduct = productId }, quantity = 1, expirationDate = expiry, purchasePrice = 3m, salePrice = 5m, total = 3m }
+                            new PurchaseDetail { oProduct = new Product { idProduct = productId }, quantity = 1, expirationDate = expiry, purchasePrice = 3m, total = 3m }
                         }
                     }));
                     int id = SqlTestHelper.ExecuteScalarInt("SELECT id FROM purchase WHERE document_number = @doc", new SqlParameter("@doc", doc));
@@ -330,8 +328,8 @@ namespace PharmacySystem.Tests.Integration
                     documentNumber = documentNumber,
                     oPurchaseDetail = new List<PurchaseDetail>
                     {
-                        new PurchaseDetail { oProduct = new Product { idProduct = productA }, quantity = 1, expirationDate = DateTime.Today.AddYears(1), purchasePrice = 40m, salePrice = 55m, total = 40m },
-                        new PurchaseDetail { oProduct = new Product { idProduct = productB }, quantity = 1, expirationDate = DateTime.Today.AddYears(1), purchasePrice = 60m, salePrice = 80m, total = 60m }
+                        new PurchaseDetail { oProduct = new Product { idProduct = productA }, quantity = 1, expirationDate = DateTime.Today.AddYears(1), purchasePrice = 40m, total = 40m },
+                        new PurchaseDetail { oProduct = new Product { idProduct = productB }, quantity = 1, expirationDate = DateTime.Today.AddYears(1), purchasePrice = 60m, total = 60m }
                     }
                 }));
                 purchaseId = SqlTestHelper.ExecuteScalarInt("SELECT id FROM purchase WHERE document_number = @doc", new SqlParameter("@doc", documentNumber));

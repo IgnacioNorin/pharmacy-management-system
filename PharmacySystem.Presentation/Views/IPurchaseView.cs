@@ -11,7 +11,6 @@ namespace PharmacySystem.Presentation
         decimal Amount { get; }
         DateTime ExpirationDate { get; }
         string PricePurchaseText { get; }
-        string PriceSaleText { get; }
 
         string DocumentNumber { get; }
         string DocumentType { get; }

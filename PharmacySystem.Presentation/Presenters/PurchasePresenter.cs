@@ -63,7 +63,6 @@ namespace PharmacySystem.Presentation
             }
 
             decimal pricePurchase;
-            decimal priceSale;
             try
             {
                 pricePurchase = CultureInfoHelper.CultureInfoConverterStringToDecimal(_view.PricePurchaseText);
@@ -71,16 +70,6 @@ namespace PharmacySystem.Presentation
             catch
             {
                 _view.ShowMessage("Error al convertir el tipo de moneda - Precio Compra\nEjemplo Formato ##.##");
-                return;
-            }
-
-            try
-            {
-                priceSale = CultureInfoHelper.CultureInfoConverterStringToDecimal(_view.PriceSaleText);
-            }
-            catch
-            {
-                _view.ShowMessage("Error al convertir el tipo de moneda - Precio Venta\nEjemplo Formato ##.##");
                 return;
             }
 
@@ -100,7 +89,6 @@ namespace PharmacySystem.Presentation
                 Quantity = _view.Amount,
                 ExpirationDate = _view.ExpirationDate,
                 PurchasePrice = pricePurchase,
-                SalePrice = priceSale,
                 SubTotal = subTotal
             };
 
@@ -159,7 +147,6 @@ namespace PharmacySystem.Presentation
                     quantity = (int)l.Quantity,
                     expirationDate = l.ExpirationDate,
                     purchasePrice = l.PurchasePrice,
-                    salePrice = l.SalePrice,
                     total = l.SubTotal
                 }).ToList()
             };
