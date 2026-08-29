@@ -102,6 +102,35 @@ namespace PharmacySystem.Tests.Integration
             }
         }
 
+        [Fact]
+        public void GetSellableByCodeAndId_ReturnOnlyReleasedProducts()
+        {
+            int categoryId = CreateCategory();
+            string code = SqlTestHelper.NewTag();
+            int productId = 0;
+
+            try
+            {
+                productId = Repository.Register(NewProduct(categoryId, code));
+
+                // Not released yet -> not sellable, so the targeted lookups skip it.
+                Assert.Null(Repository.GetSellableByCode(code));
+                Assert.Null(Repository.GetSellableById(productId));
+
+                Assert.True(Repository.SetSalePrice(productId, 10m, "alta", null));
+
+                Assert.Equal(productId, Repository.GetSellableByCode(code).idProduct);
+                Assert.Equal(code, Repository.GetSellableById(productId).code);
+                Assert.Null(Repository.GetSellableByCode("no-such-code"));
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_price_history WHERE product_id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+            }
+        }
+
         // Regression test for the Dapper migration: List() used to build Product manually with
         // `expirationDate = Convert.ToDateTime(date)` where `date` was null for a NULL DB column,
         // and Convert.ToDateTime(null) returns default(DateTime) rather than throwing. Dapper must

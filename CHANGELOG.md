@@ -13,6 +13,18 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   de cliente de los reportes. Al editar un producto cuya categoría fue dada de
   baja, el combo ahora incluye esa categoría, así que no se reasigna en silencio.
 
+### Rendimiento
+
+- **Imprimir un comprobante** ya no carga todo el historial de ventas (dos
+  veces): `SaleRepository.GetById` / `GetDetailsBySaleId` traen solo esa venta.
+- **La pantalla de venta** deja de cargar el catálogo completo en cada escaneo y
+  en cada agregado al carrito: `ProductRepository.GetSellableByCode` /
+  `GetSellableById`.
+- **El selector de clientes, la pantalla de Clientes y el filtro de los
+  reportes** dejan de cargar todas las personas (usuarios y sus hashes
+  incluidos): `PersonRepository.ListClients` trae solo clientes activos, sin la
+  columna de contraseña.
+
 ## [1.3.0] - 2026-08-29
 
 ### Agregado

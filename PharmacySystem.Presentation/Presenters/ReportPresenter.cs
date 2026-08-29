@@ -60,8 +60,7 @@ namespace PharmacySystem.Presentation
             _view.LoadCategoryOptions(categoryOptions);
 
             var clientOptions = new List<ComboBoxItem> { new ComboBoxItem { Value = "0", Text = "Todos" } };
-            clientOptions.AddRange(_personService.List()
-                .Where(p => p.oPersonType != null && p.oPersonType.idPersonType == (int)PersonType.Cliente && p.Estado)
+            clientOptions.AddRange(_personService.ListClients()
                 .Select(p => new ComboBoxItem { Value = p.idPerson, Text = p.name }));
             _view.LoadSaleClientOptions(clientOptions);
         }

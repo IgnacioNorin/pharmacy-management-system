@@ -22,6 +22,8 @@ namespace PharmacySystem.Tests.Presentation
 
         public List<Sale> ListSale() => ListSaleResult;
         public List<SaleDetail> ListSaleDetail() => ListSaleDetailResult;
+        public Sale GetById(int saleId) => ListSaleResult.Find(s => s.idSale == saleId);
+        public List<SaleDetail> GetDetailsBySaleId(int saleId) => ListSaleDetailResult.FindAll(d => d.idSale == saleId);
 
         public int Register(Sale sale)
         {

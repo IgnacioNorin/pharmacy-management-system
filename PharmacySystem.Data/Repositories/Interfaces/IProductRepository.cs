@@ -10,6 +10,9 @@ namespace PharmacySystem.Data
         List<Product> List();
         // Only products released for sale (product.is_released = 1). Backs the sale screen.
         List<Product> ListSellable();
+        // One sellable product by code / id, for the sale screen's scan and add-to-cart steps.
+        Product GetSellableByCode(string code);
+        Product GetSellableById(int idProduct);
         bool Verify(int idProduct);
         bool Delete(int idProduct);
 

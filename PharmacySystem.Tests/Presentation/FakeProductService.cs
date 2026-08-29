@@ -26,6 +26,8 @@ namespace PharmacySystem.Tests.Presentation
         public bool Update(Product obj) => UpdateResult;
         public List<Product> List() => ListResult;
         public List<Product> ListSellable() => ListSellableResult ?? ListResult;
+        public Product GetSellableByCode(string code) => (ListSellableResult ?? ListResult).Find(p => p.code == code);
+        public Product GetSellableById(int idProduct) => (ListSellableResult ?? ListResult).Find(p => p.idProduct == idProduct);
         public bool Verify(int idProduct) => VerifyResult;
         public bool Delete(int idProduct) => DeleteResult;
         public List<ProductReportRow> Report(string categoryId) => ReportResult;
