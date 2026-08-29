@@ -38,8 +38,8 @@ namespace PharmacySystem.Tests.Presentation
             {
                 ListResult = new List<Person>
                 {
-                    new Person { idPerson = 1, name = "Client", oPersonType = new TypePerson { idPersonType = 4 } },
-                    new Person { idPerson = 2, name = "Employee", oPersonType = new TypePerson { idPersonType = 3 } }
+                    new Person { idPerson = 1, name = "Client", Estado = true, oPersonType = new TypePerson { idPersonType = 4 } },
+                    new Person { idPerson = 2, name = "Employee", Estado = true, oPersonType = new TypePerson { idPersonType = 3 } }
                 }
             };
 

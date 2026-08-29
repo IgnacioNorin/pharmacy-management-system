@@ -84,7 +84,7 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void Delete_RemovesRow()
+        public void Delete_NotReferencedByPurchases_HardDeletesRow()
         {
             int id = Repository.Register(NewSupplier());
 
@@ -92,6 +92,32 @@ namespace PharmacySystem.Tests.Integration
 
             Assert.True(result);
             Assert.Null(SqlTestHelper.ExecuteScalar("SELECT id FROM supplier WHERE id = @id", new SqlParameter("@id", id)));
+        }
+
+        [Fact]
+        public void Delete_ReferencedByAPurchase_SoftDeletesAndDropsFromTheList()
+        {
+            int id = Repository.Register(NewSupplier());
+            int personId = SqlTestHelper.ExecuteScalarInt("SELECT TOP 1 id FROM person");
+            string doc = SqlTestHelper.NewTag();
+            SqlTestHelper.ExecuteNonQuery(
+                "INSERT INTO purchase(person_id, supplier_id, total_amount, document_type, document_number) " +
+                "VALUES (@p, @s, 10, 'Factura', @d)",
+                new SqlParameter("@p", personId), new SqlParameter("@s", id), new SqlParameter("@d", doc));
+
+            try
+            {
+                bool result = Repository.Delete(id);
+
+                Assert.True(result);
+                Assert.Equal(0, SqlTestHelper.ExecuteScalarInt("SELECT status FROM supplier WHERE id = @id", new SqlParameter("@id", id)));
+                Assert.DoesNotContain(Repository.List(), s => s.idSupplier == id);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase WHERE document_number = @d", new SqlParameter("@d", doc));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM supplier WHERE id = @id", new SqlParameter("@id", id));
+            }
         }
     }
 }

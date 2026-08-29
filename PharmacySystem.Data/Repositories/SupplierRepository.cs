@@ -89,7 +89,8 @@ namespace PharmacySystem.Data
                 try
                 {
                     return oConnection.Query<Supplier>(
-                        "SELECT id AS idSupplier, document_number AS document, company_name AS companyName, email, phone FROM supplier")
+                        "SELECT id AS idSupplier, document_number AS document, company_name AS companyName, email, phone " +
+                        "FROM supplier WHERE ISNULL(status, 1) = 1")
                         .ToList();
                 }
                 catch (Exception ex)
@@ -106,8 +107,15 @@ namespace PharmacySystem.Data
             {
                 try
                 {
-                    oConnection.Execute("DELETE FROM supplier WHERE id = @id_supplier", new { id_supplier = idSupplier });
-                    return true;
+                    var parameters = new DynamicParameters();
+                    parameters.Add("id_supplier", idSupplier);
+                    parameters.Add("result", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+
+                    // sp_delete_supplier hard-deletes when unreferenced, otherwise soft-deletes
+                    // (status = 0) - same pattern as products, categories and persons.
+                    oConnection.Execute("sp_delete_supplier", parameters, commandType: CommandType.StoredProcedure);
+
+                    return parameters.Get<bool>("result");
                 }
                 catch (Exception ex)
                 {

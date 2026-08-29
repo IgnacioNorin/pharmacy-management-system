@@ -21,6 +21,8 @@ namespace PharmacySystem.Business
 
         public List<Categories> List() => _repository.List();
 
+        public List<Categories> ListForProductForm() => _repository.ListForProductForm();
+
         public bool Delete(int idCategory) => _repository.Delete(idCategory);
     }
 }

@@ -29,7 +29,7 @@ namespace PharmacySystem.Presentation
         public void OnLoad()
         {
             var clients = _service.List()
-                .Where(p => p.oPersonType.idPersonType == (int)PersonType.Cliente)
+                .Where(p => p.oPersonType.idPersonType == (int)PersonType.Cliente && p.Estado)
                 .Select(ClientRow.From);
             _view.LoadClients(clients);
         }

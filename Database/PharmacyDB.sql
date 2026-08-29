@@ -658,6 +658,27 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE [dbo].[sp_delete_supplier]
+    @id_supplier INT,
+    @result BIT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET @result = 0;
+    -- A supplier referenced by a purchase cannot be physically removed (FK), so deactivate it.
+    IF NOT EXISTS (SELECT 1 FROM purchase WHERE supplier_id = @id_supplier)
+    BEGIN
+        DELETE FROM supplier WHERE id = @id_supplier;
+        SET @result = 1;
+    END
+    ELSE
+    BEGIN
+        UPDATE supplier SET status = 0 WHERE id = @id_supplier;
+        SET @result = 1;
+    END
+END
+GO
+
 -- QUOTED_IDENTIFIER must be ON at CREATE time for any procedure that modifies a table backed by
 -- a filtered index (see ix_product_status_expired above) - SQL Server bakes that setting into the
 -- compiled procedure, so it does not matter what the caller's session has at execution time.

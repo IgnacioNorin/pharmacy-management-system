@@ -31,7 +31,9 @@ namespace PharmacySystem.Presentation
 
         public void OnLoad()
         {
-            var categoryOptions = _categoryService.List().Select(c => new ComboBoxItem { Value = c.IdCategory, Text = c.description });
+            // Includes the current category of every active product even if it was soft-deleted,
+            // so editing such a product does not silently reassign it (DEF-10).
+            var categoryOptions = _categoryService.ListForProductForm().Select(c => new ComboBoxItem { Value = c.IdCategory, Text = c.description });
             _view.LoadCategoryOptions(categoryOptions);
 
             var products = _productService.List().Select(ToRow);
