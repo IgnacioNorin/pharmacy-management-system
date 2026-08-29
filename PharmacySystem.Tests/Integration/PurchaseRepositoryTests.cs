@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using PharmacySystem.Data;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 using Xunit;
 
@@ -88,6 +89,82 @@ namespace PharmacySystem.Tests.Integration
 
                 int stock = SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId));
                 Assert.Equal(10, stock);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase_detail WHERE purchase_id = @id", new SqlParameter("@id", purchaseId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase WHERE id = @id", new SqlParameter("@id", purchaseId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM supplier WHERE id = @id", new SqlParameter("@id", supplierId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
+
+        [Fact]
+        public void Register_SameSupplierInvoiceTwice_IsRejected_AndStockIsNotDoubled()
+        {
+            string document = SqlTestHelper.NewTag();
+            PersonRepo.Register(new Person
+            {
+                document = document,
+                name = "Dup tester",
+                address = "Address",
+                phone = "0999999999",
+                password = "Passw0rd!",
+                oPersonType = new TypePerson { idPersonType = PersonTypeId() }
+            });
+            Person person = PersonRepo.GetByDocument(document);
+
+            int supplierId = SupplierRepo.Register(new Supplier
+            {
+                document = SqlTestHelper.NewTag(),
+                companyName = "Dup supplier",
+                email = "supplier@test.local",
+                phone = "0999999999"
+            });
+
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = ProductRepo.Register(new Product
+            {
+                code = SqlTestHelper.NewTag(),
+                name = "Dup product",
+                description = "Dup product",
+                oCategory = new Categories { IdCategory = categoryId }
+            });
+
+            string invoiceNumber = SqlTestHelper.NewTag();
+            int purchaseId = 0;
+            try
+            {
+                Purchase Build() => new Purchase
+                {
+                    oPerson = person,
+                    oSupplier = new Supplier { idSupplier = supplierId },
+                    totalAmount = 30m,
+                    documentType = "Factura",
+                    documentNumber = invoiceNumber,
+                    oPurchaseDetail = new List<PurchaseDetail>
+                    {
+                        new PurchaseDetail { oProduct = new Product { idProduct = productId }, quantity = 10, expirationDate = DateTime.Today.AddYears(1), purchasePrice = 3m, total = 30m }
+                    }
+                };
+
+                Assert.True(Repository.Register(Build()));
+                purchaseId = SqlTestHelper.ExecuteScalarInt("SELECT id FROM purchase WHERE document_number = @doc", new SqlParameter("@doc", invoiceNumber));
+
+                Assert.Throws<DuplicateInvoiceException>(() => Repository.Register(Build()));
+
+                int stock = SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                Assert.Equal(10, stock); // not 20
+                Assert.Equal(1, SqlTestHelper.ExecuteScalarInt("SELECT COUNT(*) FROM purchase WHERE document_number = @doc", new SqlParameter("@doc", invoiceNumber)));
+
+                // A different number for the same supplier is fine.
+                var other = Build();
+                other.documentNumber = SqlTestHelper.NewTag();
+                Assert.True(Repository.Register(other));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase_detail WHERE purchase_id IN (SELECT id FROM purchase WHERE document_number = @doc)", new SqlParameter("@doc", other.documentNumber));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase WHERE document_number = @doc", new SqlParameter("@doc", other.documentNumber));
             }
             finally
             {

@@ -496,6 +496,11 @@ CREATE INDEX [IX_purchase_supplier] ON [dbo].[purchase] ([supplier_id])
 GO
 CREATE INDEX [IX_purchase_date_registered] ON [dbo].[purchase] ([date_registered])
 GO
+-- One purchase per supplier invoice: a repeated (supplier, type, number) is rejected at the
+-- database and PurchaseRepository turns it into a "invoice already recorded" message.
+CREATE UNIQUE INDEX [UX_purchase_supplier_document] ON [dbo].[purchase] ([supplier_id], [document_type], [document_number])
+    WHERE [document_number] IS NOT NULL
+GO
 CREATE INDEX [IX_purchase_detail_purchase] ON [dbo].[purchase_detail] ([purchase_id])
 GO
 CREATE INDEX [IX_purchase_detail_product] ON [dbo].[purchase_detail] ([product_id])

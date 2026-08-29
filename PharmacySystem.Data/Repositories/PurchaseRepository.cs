@@ -93,12 +93,23 @@ namespace PharmacySystem.Data
                             return false;
                         }
                     }
+                    catch (SqlException ex) when (SqlErrorCodes.IsUniqueViolation(ex))
+                    {
+                        // UX_purchase_supplier_document: this supplier invoice is already recorded.
+                        Logger.LogError(ex);
+                        objTransacion.Rollback();
+                        throw new DuplicateInvoiceException(DuplicateInvoiceException.DefaultMessage, ex);
+                    }
                     catch (Exception e)
                     {
                         Logger.LogError(e);
                         objTransacion.Rollback();
                         return false;
                     }
+                }
+                catch (DuplicateInvoiceException)
+                {
+                    throw;
                 }
                 catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
                 {

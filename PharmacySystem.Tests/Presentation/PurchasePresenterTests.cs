@@ -202,6 +202,22 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
+        public void OnFinishPurchase_DuplicateInvoice_ShowsSpecificMessageAndDoesNotClear()
+        {
+            var view = new FakePurchaseView();
+            var purchaseService = new FakePurchaseService { RegisterThrows = new DuplicateInvoiceException() };
+            var presenter = CreatePresenter(view, purchaseService, new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "10.00");
+
+            view.DocumentNumber = "001";
+            view.SelectedSupplierId = 3;
+            presenter.OnFinishPurchase();
+
+            Assert.Equal(new[] { DuplicateInvoiceException.DefaultMessage }, view.ShownMessages);
+            Assert.False(view.PurchaseCleared);
+        }
+
+        [Fact]
         public void OnFinishPurchase_DatabaseUnavailable_ShowsConnectionErrorAndDoesNotClear()
         {
             var view = new FakePurchaseView();

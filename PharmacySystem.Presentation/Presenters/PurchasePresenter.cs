@@ -165,6 +165,10 @@ namespace PharmacySystem.Presentation
                     _view.ShowMessage("No se pudo registrar la compra");
                 }
             }
+            catch (DuplicateInvoiceException ex)
+            {
+                _view.ShowMessage(ex.Message);
+            }
             catch (DataUnavailableException ex)
             {
                 _view.ShowMessage(ex.Message);
