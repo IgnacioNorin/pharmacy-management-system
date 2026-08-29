@@ -2,10 +2,6 @@
 
 Sistema de gestión integral para farmacias que incluye punto de venta (POS), control de inventario con alertas de stock y vencimiento, gestión de clientes, proveedores, usuarios con roles, y reportes.
 
-> 📋 **Documentación técnica en [`Docs/`](Docs/)**: catálogo de requisitos funcionales y no
-> funcionales, mapa de flujos, registro de defectos y hoja de ruta con opciones y
-> recomendaciones. Empezá por [Estado y hoja de ruta](Docs/05-Estado-y-roadmap.md).
-
 ## Características
 
 - **Punto de Venta (POS):** registro de ventas, carrito de compra y emisión de comprobante.
