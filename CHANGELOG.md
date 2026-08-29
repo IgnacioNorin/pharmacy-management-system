@@ -2,6 +2,17 @@
 
 El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
+## [Sin publicar]
+
+### Cambiado
+
+- **Baja lógica coherente.** Un proveedor referenciado por compras se da de baja
+  lógicamente (`status = 0`) en vez de fallar con "revise los datos"
+  (`sp_delete_supplier`, migración `022`). Los clientes dados de baja dejan de
+  aparecer en la pantalla de Clientes, en el selector de la venta y en el filtro
+  de cliente de los reportes. Al editar un producto cuya categoría fue dada de
+  baja, el combo ahora incluye esa categoría, así que no se reasigna en silencio.
+
 ## [1.3.0] - 2026-08-29
 
 ### Agregado

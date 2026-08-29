@@ -80,8 +80,9 @@ namespace PharmacySystem.Tests.Presentation
             var f = Create();
             f.Persons.ListResult = new List<Person>
             {
-                new Person { idPerson = 7, name = "Clínica Andes", oPersonType = new TypePerson { idPersonType = 4 } }, // Cliente
-                new Person { idPerson = 8, name = "Empleado", oPersonType = new TypePerson { idPersonType = 3 } }
+                new Person { idPerson = 7, name = "Clínica Andes", Estado = true, oPersonType = new TypePerson { idPersonType = 4 } }, // Cliente
+                new Person { idPerson = 8, name = "Empleado", Estado = true, oPersonType = new TypePerson { idPersonType = 3 } },
+                new Person { idPerson = 9, name = "Cliente dado de baja", Estado = false, oPersonType = new TypePerson { idPersonType = 4 } }
             };
 
             f.Presenter.OnLoad();

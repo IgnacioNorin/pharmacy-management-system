@@ -65,6 +65,7 @@ fijan al inicio; `sqlcmd` por defecto los deja en `OFF`).
 | `019_price_management.sql` | 1.2.0 | 1.2.0 (`product.is_released`: estado de comercialización, backfill `= 1` si `sale_price > 0`; tabla `product_price_history` con costo, usuario y motivo por cada cambio de precio) |
 | `020_purchase_invoice_unique.sql` | 1.2.0 | 1.2.0 (índice único `UX_purchase_supplier_document` sobre `purchase(supplier_id, document_type, document_number)`: no se puede registrar dos veces la misma factura de un proveedor) |
 | `021_weighted_average_cost.sql` | 1.2.0 | 1.2.0 (`product.average_cost`: costo promedio ponderado recalculado en cada compra, backfill desde `purchase_price`; `sale_detail.unit_cost`: costo del producto congelado por línea al vender) |
+| `022_soft_delete_consistency.sql` | 1.2.0 | 1.2.0 (`sp_delete_supplier`: baja lógica del proveedor referenciado por compras, igual que productos/personas/categorías; backfill `status = 1` en `person`/`supplier`) |
 
 **No es una migración**, pero se ejecuta una vez después de crear la base:
 `Database\create_app_login.sql` crea el login `pharmacy_app` con privilegios

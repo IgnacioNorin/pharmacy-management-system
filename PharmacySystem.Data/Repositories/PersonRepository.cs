@@ -19,7 +19,7 @@ namespace PharmacySystem.Data
         private const string PersonWithTypeSelect =
             "SELECT p.id AS idPerson, p.document_number AS document, p.name, p.address, p.phone, " +
             "p.business_name AS businessName, p.activity, p.commune, p.email, p.is_company AS isCompany, " +
-            "p.password, p.status AS Estado, " +
+            "p.password, ISNULL(p.status, 1) AS Estado, " +
             "pt.id AS idPersonType, pt.description " +
             "FROM person p INNER JOIN person_type pt ON pt.id = p.person_type_id";
 

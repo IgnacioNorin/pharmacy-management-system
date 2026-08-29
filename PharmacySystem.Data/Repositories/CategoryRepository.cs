@@ -85,6 +85,29 @@ namespace PharmacySystem.Data
             }
         }
 
+        // Active categories PLUS any inactive category still assigned to an active product, so the
+        // combo on the product form always contains the current product's category. Without this,
+        // editing a product whose category was soft-deleted silently reassigns it (DEF-10).
+        public List<Categories> ListForProductForm()
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    return oConnection.Query<Categories>(
+                        "SELECT id AS IdCategory, description FROM category " +
+                        "WHERE status = 1 " +
+                        "   OR id IN (SELECT DISTINCT category_id FROM product WHERE status = 1 AND category_id IS NOT NULL)")
+                        .ToList();
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return new List<Categories>();
+                }
+            }
+        }
+
         public bool Delete(int idCategory)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())

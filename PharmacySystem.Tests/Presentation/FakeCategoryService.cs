@@ -10,10 +10,12 @@ namespace PharmacySystem.Tests.Presentation
         public bool UpdateResult { get; set; } = true;
         public bool DeleteResult { get; set; } = true;
         public List<Categories> ListResult { get; set; } = new List<Categories>();
+        public List<Categories> ListForProductFormResult { get; set; }
 
         public int Register(Categories obj) => RegisterResult;
         public bool Update(Categories obj) => UpdateResult;
         public List<Categories> List() => ListResult;
+        public List<Categories> ListForProductForm() => ListForProductFormResult ?? ListResult;
         public bool Delete(int idCategory) => DeleteResult;
     }
 }

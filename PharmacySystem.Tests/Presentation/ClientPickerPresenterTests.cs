@@ -22,8 +22,8 @@ namespace PharmacySystem.Tests.Presentation
             {
                 ListResult = new List<Person>
                 {
-                    new Person { idPerson = 1, name = "Client", oPersonType = new TypePerson { idPersonType = 4 } },
-                    new Person { idPerson = 2, name = "Employee", oPersonType = new TypePerson { idPersonType = 3 } }
+                    new Person { idPerson = 1, name = "Client", Estado = true, oPersonType = new TypePerson { idPersonType = 4 } },
+                    new Person { idPerson = 2, name = "Employee", Estado = true, oPersonType = new TypePerson { idPersonType = 3 } }
                 }
             };
 
@@ -31,6 +31,25 @@ namespace PharmacySystem.Tests.Presentation
 
             Assert.Single(view.Loaded);
             Assert.Equal("Client", view.Loaded[0].Name);
+        }
+
+        [Fact]
+        public void OnLoad_ExcludesDeactivatedClients()
+        {
+            var view = new FakeView();
+            var service = new FakePersonService
+            {
+                ListResult = new List<Person>
+                {
+                    new Person { idPerson = 1, name = "Activo", Estado = true, oPersonType = new TypePerson { idPersonType = 4 } },
+                    new Person { idPerson = 2, name = "Dado de baja", Estado = false, oPersonType = new TypePerson { idPersonType = 4 } }
+                }
+            };
+
+            new ClientPickerPresenter(view, service).OnLoad();
+
+            Assert.Single(view.Loaded);
+            Assert.Equal("Activo", view.Loaded[0].Name);
         }
     }
 }

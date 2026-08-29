@@ -119,6 +119,10 @@ namespace PharmacySystem.Tests.Integration
                 Assert.True(result);
                 Assert.Equal(0, SqlTestHelper.ExecuteScalarInt("SELECT status FROM category WHERE id = @id", new SqlParameter("@id", categoryId)));
                 Assert.DoesNotContain(Repository.List(), c => c.IdCategory == categoryId);
+
+                // ...but it must still show in the product-form combo, because an active product
+                // still points at it - otherwise editing that product silently reassigns it (DEF-10).
+                Assert.Contains(Repository.ListForProductForm(), c => c.IdCategory == categoryId);
             }
             finally
             {
