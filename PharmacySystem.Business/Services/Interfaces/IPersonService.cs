@@ -9,6 +9,7 @@ namespace PharmacySystem.Business
         int Register(Person person);
         bool Update(Person person);
         List<Person> List();
+        List<Person> ListClients();
         Person GetByDocument(string document);
         bool UpdatePassword(int idPerson, string hashedPassword);
         bool Delete(int idPerson);

@@ -210,7 +210,15 @@ namespace PharmacySystem.Data
 
         public List<Product> ListSellable() => QueryProducts(ProductSelect + " AND p.is_released = 1");
 
-        private List<Product> QueryProducts(string sql)
+        // One sellable product by code / id - the sale screen used to load the whole catalogue
+        // and filter in memory on every scan and every add-to-cart (RNF-REN-01 / DEF-13).
+        public Product GetSellableByCode(string code) =>
+            QueryProducts(ProductSelect + " AND p.is_released = 1 AND p.code = @code", new { code }).FirstOrDefault();
+
+        public Product GetSellableById(int idProduct) =>
+            QueryProducts(ProductSelect + " AND p.is_released = 1 AND p.id = @idProduct", new { idProduct }).FirstOrDefault();
+
+        private List<Product> QueryProducts(string sql, object param = null)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
@@ -219,6 +227,7 @@ namespace PharmacySystem.Data
                     return oConnection.Query<Product, Categories, Product>(
                         sql,
                         (product, category) => { product.oCategory = category; return product; },
+                        param,
                         splitOn: "IdCategory")
                         .ToList();
                 }

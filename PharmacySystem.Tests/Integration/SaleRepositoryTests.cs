@@ -87,6 +87,18 @@ namespace PharmacySystem.Tests.Integration
                 Assert.Contains(Repository.ListSale(), s => s.idSale == saleId && s.nameClient == "Walk-in client");
                 Assert.Contains(Repository.ListSaleDetail(), d => d.idSale == saleId && d.subtotal == 15m);
                 Assert.Equal(7, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId)));
+
+                // Targeted single-sale lookups (used by the ticket printer instead of loading the
+                // whole history - DEF-13).
+                Sale one = Repository.GetById(saleId);
+                Assert.NotNull(one);
+                Assert.Equal("Walk-in client", one.nameClient);
+                Assert.Null(Repository.GetById(-1));
+
+                var lines = Repository.GetDetailsBySaleId(saleId);
+                Assert.Single(lines);
+                Assert.Equal(15m, lines[0].subtotal);
+                Assert.Empty(Repository.GetDetailsBySaleId(-1));
             }
             finally
             {

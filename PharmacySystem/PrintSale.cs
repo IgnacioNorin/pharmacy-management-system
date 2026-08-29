@@ -35,8 +35,8 @@ namespace PharmacySystem
         private string GenerateFormattedPharmacyTicket()
         {
             Store store = _storeService.ListStore();
-            Sale sale = _saleService.ListSale().Where(v => v.idSale == _IdSale).FirstOrDefault();
-            List<SaleDetail> saleDetails = _saleService.ListSaleDetail().Where(dv => dv.idSale == _IdSale).ToList();
+            Sale sale = _saleService.GetById(_IdSale);
+            List<SaleDetail> saleDetails = _saleService.GetDetailsBySaleId(_IdSale);
 
             string ticketText = PharmacyTicketBuilder.Build(store, sale, saleDetails);
             Console.WriteLine(ticketText);
@@ -160,7 +160,7 @@ namespace PharmacySystem
             try
             {
                 Store store = _storeService.ListStore();
-                Sale sale = _saleService.ListSale().Where(v => v.idSale == _IdSale).FirstOrDefault();
+                Sale sale = _saleService.GetById(_IdSale);
 
                 if (sale == null)
                 {
@@ -170,7 +170,7 @@ namespace PharmacySystem
                     return;
                 }
 
-                List<SaleDetail> saleDetails = _saleService.ListSaleDetail().Where(dv => dv.idSale == _IdSale).ToList();
+                List<SaleDetail> saleDetails = _saleService.GetDetailsBySaleId(_IdSale);
 
                 if (saleDetails == null || !saleDetails.Any())
                 {

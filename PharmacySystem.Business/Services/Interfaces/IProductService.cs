@@ -9,6 +9,8 @@ namespace PharmacySystem.Business
         bool Update(Product obj);
         List<Product> List();
         List<Product> ListSellable();
+        Product GetSellableByCode(string code);
+        Product GetSellableById(int idProduct);
         bool Verify(int idProduct);
         bool Delete(int idProduct);
         List<ProductReportRow> Report(string categoryId);

@@ -9,6 +9,8 @@ namespace PharmacySystem.Data
     {
         List<Sale> ListSale();
         List<SaleDetail> ListSaleDetail();
+        Sale GetById(int saleId);
+        List<SaleDetail> GetDetailsBySaleId(int saleId);
         int Register(Sale sale);
         void SaveFiscalResult(int saleId, FiscalDocumentResult result);
         SaleLookup FindByDocument(string documentType, string documentNumber);

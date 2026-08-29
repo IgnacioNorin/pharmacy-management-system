@@ -119,6 +119,30 @@ namespace PharmacySystem.Data
             }
         }
 
+        // Active clients only, without the password column and without the person-type join - the
+        // client picker / screen / report filter used to load every person (users and their
+        // hashes included) and filter in memory (RNF-REN-01, DEF-08).
+        public List<Person> ListClients()
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    const string sql =
+                        "SELECT p.id AS idPerson, p.document_number AS document, p.name, p.address, p.phone, " +
+                        "p.business_name AS businessName, p.activity, p.commune, p.email, p.is_company AS isCompany " +
+                        "FROM person p WHERE p.person_type_id = 4 AND ISNULL(p.status, 1) = 1";
+
+                    return oConnection.Query<Person>(sql).ToList();
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return new List<Person>();
+                }
+            }
+        }
+
         public Person GetByDocument(string document)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())

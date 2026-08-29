@@ -1,4 +1,5 @@
 using System.Data.SqlClient;
+using System.Linq;
 using PharmacySystem.Data;
 using PharmacySystem.Model;
 using Xunit;
@@ -30,6 +31,38 @@ namespace PharmacySystem.Tests.Integration
                 password = password,
                 oPersonType = new TypePerson { idPersonType = PersonTypeId() }
             };
+        }
+
+        [Fact]
+        public void ListClients_OnlyActiveClients_WithoutPasswordOrUsers()
+        {
+            string clientDoc = SqlTestHelper.NewTag();
+            string userDoc = SqlTestHelper.NewTag();
+            int clientId = 0, userId = 0;
+            try
+            {
+                // A client (person_type_id = 4) and a non-client (whatever PersonTypeId() returns,
+                // which is a system role, not Cliente).
+                var client = NewPerson(clientDoc, "hash-should-not-come-back");
+                client.oPersonType = new TypePerson { idPersonType = 4 };
+                clientId = Repository.Register(client);
+                userId = Repository.Register(NewPerson(userDoc));
+
+                var clients = Repository.ListClients();
+                Person listed = clients.SingleOrDefault(p => p.idPerson == clientId);
+                Assert.NotNull(listed);
+                Assert.True(string.IsNullOrEmpty(listed.password)); // password column not selected
+                Assert.DoesNotContain(clients, p => p.idPerson == userId);
+
+                // Soft-deleting the client drops it from the list.
+                SqlTestHelper.ExecuteNonQuery("UPDATE person SET status = 0 WHERE id = @id", new SqlParameter("@id", clientId));
+                Assert.DoesNotContain(Repository.ListClients(), p => p.idPerson == clientId);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number IN (@a, @b)",
+                    new SqlParameter("@a", clientDoc), new SqlParameter("@b", userDoc));
+            }
         }
 
         [Fact]

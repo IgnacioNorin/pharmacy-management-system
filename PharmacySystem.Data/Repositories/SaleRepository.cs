@@ -19,24 +19,24 @@ namespace PharmacySystem.Data
             _connectionFactory = connectionFactory;
         }
 
+        private const string SaleSelect =
+            "SELECT id AS idSale, document_type AS typeDocument, document_number AS numberDocument, " +
+            "document_client AS documentClient, name_client AS nameClient, total_amount AS totalPay, " +
+            "amount_received AS payWith, change_amount AS change, " +
+            "net_amount AS netAmount, tax_amount AS taxAmount, exempt_amount AS exemptAmount, " +
+            "recipient_tax_id AS recipientTaxId, recipient_business_name AS recipientBusinessName, " +
+            "recipient_activity AS recipientActivity, recipient_address AS recipientAddress, " +
+            "recipient_commune AS recipientCommune, client_id AS clientId, reference_id AS referenceId, reference_reason AS referenceReason, " +
+            "fiscal_status AS fiscalStatus, fiscal_track_id AS fiscalTrackId, fiscal_barcode AS fiscalBarcode, " +
+            "date_registered AS registrationDate FROM sale";
+
         public List<Sale> ListSale()
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    const string sql =
-                        "SELECT id AS idSale, document_type AS typeDocument, document_number AS numberDocument, " +
-                        "document_client AS documentClient, name_client AS nameClient, total_amount AS totalPay, " +
-                        "amount_received AS payWith, change_amount AS change, " +
-                        "net_amount AS netAmount, tax_amount AS taxAmount, exempt_amount AS exemptAmount, " +
-                        "recipient_tax_id AS recipientTaxId, recipient_business_name AS recipientBusinessName, " +
-                        "recipient_activity AS recipientActivity, recipient_address AS recipientAddress, " +
-                        "recipient_commune AS recipientCommune, client_id AS clientId, reference_id AS referenceId, reference_reason AS referenceReason, " +
-                        "fiscal_status AS fiscalStatus, fiscal_track_id AS fiscalTrackId, fiscal_barcode AS fiscalBarcode, " +
-                        "date_registered AS registrationDate FROM sale";
-
-                    return oConnection.Query<Sale>(sql).ToList();
+                    return oConnection.Query<Sale>(SaleSelect).ToList();
                 }
                 catch (Exception ex)
                 {
@@ -46,23 +46,47 @@ namespace PharmacySystem.Data
             }
         }
 
-        public List<SaleDetail> ListSaleDetail()
+        // One sale by id. Used to print a ticket without loading the whole sale history (DEF-13).
+        public Sale GetById(int saleId)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    // Product's own column (name) is placed last so its region is contiguous for
-                    // Dapper's split-based multi-mapping - splitOn only supports a clean two-region
-                    // split, unlike the original column order (name sandwiched in the middle).
-                    const string sql =
-                        "SELECT sd.id AS idSaleDetail, sd.sale_id AS idSale, sd.stock AS amount, sd.sale_price AS salePrice, sd.subtotal AS subtotal, " +
-                        "p.name AS name " +
-                        "FROM sale_detail sd INNER JOIN product p ON p.id = sd.product_id";
+                    return oConnection.QueryFirstOrDefault<Sale>(SaleSelect + " WHERE id = @saleId", new { saleId });
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return null;
+                }
+            }
+        }
 
+        // Product's own column (name) is placed last so its region is contiguous for Dapper's
+        // split-based multi-mapping - splitOn only supports a clean two-region split, unlike the
+        // original column order (name sandwiched in the middle).
+        private const string SaleDetailSelect =
+            "SELECT sd.id AS idSaleDetail, sd.sale_id AS idSale, sd.stock AS amount, sd.sale_price AS salePrice, sd.subtotal AS subtotal, " +
+            "p.name AS name " +
+            "FROM sale_detail sd INNER JOIN product p ON p.id = sd.product_id";
+
+        public List<SaleDetail> ListSaleDetail() => QuerySaleDetails(SaleDetailSelect, null);
+
+        // Only the lines of one sale - for printing a ticket (DEF-13).
+        public List<SaleDetail> GetDetailsBySaleId(int saleId) =>
+            QuerySaleDetails(SaleDetailSelect + " WHERE sd.sale_id = @saleId", new { saleId });
+
+        private List<SaleDetail> QuerySaleDetails(string sql, object param)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
                     return oConnection.Query<SaleDetail, Product, SaleDetail>(
                         sql,
                         (detail, product) => { detail.oProduct = product; return detail; },
+                        param,
                         splitOn: "name")
                         .ToList();
                 }

@@ -28,9 +28,7 @@ namespace PharmacySystem.Presentation
 
         public void OnLoad()
         {
-            var clients = _service.List()
-                .Where(p => p.oPersonType.idPersonType == (int)PersonType.Cliente && p.Estado)
-                .Select(ClientRow.From);
+            var clients = _service.ListClients().Select(ClientRow.From);
             _view.LoadClients(clients);
         }
 
