@@ -54,6 +54,18 @@ namespace PharmacySystem.Tests.Presentation
             Assert.False(p.Users);
             Assert.False(p.Roles);
             Assert.False(p.Reports);
+            Assert.False(p.CashCount);
+        }
+
+        [Fact]
+        public void OnLoad_CajaAccesoPermission_ShowsTheCashCountButton()
+        {
+            var view = new FakeMainFormView();
+            var presenter = CreatePresenter(view, new FakeStoreService { ListStoreResult = new Store() }, new FakeNotificationConfigService());
+
+            presenter.OnLoad(User("Admin", "Administrador", "caja.acceso"));
+
+            Assert.True(view.AppliedSidebarPermissions.CashCount);
         }
 
         [Fact]

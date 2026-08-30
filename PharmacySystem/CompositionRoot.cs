@@ -27,6 +27,7 @@ namespace PharmacySystem
         // Replace with a provider-backed IFiscalDocumentIssuer to emit electronic documents.
         private static readonly ISaleService _saleService = new SaleService(new SaleRepository(ConnectionFactory), new LocalSequenceIssuer());
         private static readonly IPermissionService _permissionService = new PermissionService(new PermissionRepository(ConnectionFactory));
+        private static readonly ICashCountService _cashCountService = new CashCountService(new CashCountRepository(ConnectionFactory));
 
         #region Supplier
 
@@ -107,6 +108,13 @@ namespace PharmacySystem
 
         public static HomePresenter CreateHomePresenter(IHomeView view) =>
             new HomePresenter(view, _saleService, _notificationConfigService);
+
+        #endregion
+
+        #region Cash count
+
+        public static CashCountPresenter CreateCashCountPresenter(ICashCountView view) =>
+            new CashCountPresenter(view, _cashCountService, MainForm.Session);
 
         #endregion
 

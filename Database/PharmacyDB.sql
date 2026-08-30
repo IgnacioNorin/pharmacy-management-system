@@ -296,6 +296,35 @@ CREATE TABLE [dbo].[sale_detail](
 )
 GO
 
+-- Cash-drawer reconciliation ("arqueo de caja"): one header row per shift close, with a line
+-- per payment method holding the expected total (from sale.total_amount over the period) and
+-- what the cashier physically counted. Sales are never modified.
+CREATE TABLE [dbo].[cash_count](
+    [id] [int] IDENTITY(1,1) NOT NULL,
+    [period_start] [datetime] NOT NULL,
+    [period_end] [datetime] NOT NULL,
+    [user_id] [int] NULL,
+    [notes] [nvarchar](500) NULL,
+    [created_at] [datetime] NOT NULL CONSTRAINT [DF_cash_count_created_at] DEFAULT (GETDATE()),
+    CONSTRAINT [PK_cash_count] PRIMARY KEY CLUSTERED ([id] ASC),
+    CONSTRAINT [FK_cash_count_user] FOREIGN KEY ([user_id]) REFERENCES [dbo].[person] ([id])
+)
+GO
+
+CREATE TABLE [dbo].[cash_count_line](
+    [id] [int] IDENTITY(1,1) NOT NULL,
+    [cash_count_id] [int] NOT NULL,
+    [payment_method] [varchar](20) NOT NULL,
+    [expected_amount] [decimal](18, 2) NOT NULL,
+    [counted_amount] [decimal](18, 2) NOT NULL,
+    CONSTRAINT [PK_cash_count_line] PRIMARY KEY CLUSTERED ([id] ASC),
+    CONSTRAINT [FK_cash_count_line_header] FOREIGN KEY ([cash_count_id]) REFERENCES [dbo].[cash_count] ([id])
+)
+GO
+
+CREATE INDEX [IX_cash_count_line_header] ON [dbo].[cash_count_line] ([cash_count_id])
+GO
+
 -- One row per deliberate price change on a product (release for sale, or a re-price),
 -- with the product cost at that moment, the user who did it and a free-text reason.
 CREATE TABLE [dbo].[product_price_history](
@@ -560,7 +589,8 @@ INSERT INTO [dbo].[permission] (code, section, description, parent_code) VALUES
     ('alertas.acceso',          'alertas',     'Ver el centro de notificaciones',          NULL),
     ('alertas.reconocer',       'alertas',     'Reconocer alertas de inventario',          'alertas.acceso'),
     ('alertas.silenciar',       'alertas',     'Silenciar alertas puntuales',              'alertas.acceso'),
-    ('alertas.configurar',      'alertas',     'Cambiar los umbrales de alerta',           'alertas.acceso')
+    ('alertas.configurar',      'alertas',     'Cambiar los umbrales de alerta',           'alertas.acceso'),
+    ('caja.acceso',             'caja',        'Registrar el arqueo de caja',              NULL)
 GO
 
 -- Seed role_permission so the four built-in roles behave exactly as before this feature:

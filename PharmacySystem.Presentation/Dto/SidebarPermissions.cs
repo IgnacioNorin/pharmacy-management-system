@@ -13,6 +13,7 @@ namespace PharmacySystem.Presentation
         public bool Users { get; set; }
         public bool Roles { get; set; }
         public bool Reports { get; set; }
+        public bool CashCount { get; set; }
         public bool Alerts { get; set; }
     }
 }

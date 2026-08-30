@@ -6,6 +6,14 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 
 ### Agregado
 
+- **Arqueo de caja.** Nueva opción en la barra lateral (grupo Consulta), gateada
+  por el permiso `caja.acceso` (roles Administrador General y Administrador).
+  Muestra el período desde el último arqueo hasta ahora y, por cada forma de pago
+  (Efectivo / Tarjeta / Transferencia), el total esperado según el sistema y un
+  campo para el monto contado, con la diferencia por método y total. Se guarda un
+  registro en `cash_count` / `cash_count_line` (migración `024`); las ventas no se
+  modifican. Las notas de crédito, al tener monto negativo, se descuentan solas
+  del esperado.
 - **Forma de pago en la venta.** La pantalla de venta pide cómo se cobró
   (Efectivo / Tarjeta / Transferencia), un método por venta. Se guarda en
   `sale.payment_method` (migración `023`), sale en el comprobante y hay una
