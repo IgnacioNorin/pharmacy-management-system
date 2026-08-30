@@ -97,7 +97,7 @@ namespace PharmacySystem
             new SalePresenter(view, _saleService, _productService, _storeService, idPerson);
 
         public static CreditNotePresenter CreateCreditNotePresenter(ICreditNoteView view) =>
-            new CreditNotePresenter(view, _saleService, MainForm.Session, MainForm.oPerson?.idPerson ?? 0);
+            new CreditNotePresenter(view, _saleService, _storeService, MainForm.Session, MainForm.oPerson?.idPerson ?? 0);
 
         public static ReportPresenter CreateReportPresenter(IReportView view) =>
             new ReportPresenter(view, _supplierService, _categoryService, _saleService, _purchaseService, _productService, _notificationConfigService, _personService, MainForm.Session);

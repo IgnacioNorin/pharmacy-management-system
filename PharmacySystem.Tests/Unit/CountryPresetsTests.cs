@@ -47,5 +47,19 @@ namespace PharmacySystem.Tests.Unit
         {
             Assert.Equal(new[] { CountryPresets.Generic, CountryPresets.Chile }, CountryPresets.All);
         }
+
+        [Fact]
+        public void EveryPreset_ExposesItsSaleDocumentTypes()
+        {
+            foreach (var preset in CountryPresets.All)
+            {
+                Assert.NotNull(preset.SaleDocumentTypes);
+                Assert.NotEmpty(preset.SaleDocumentTypes);
+            }
+
+            // Both presets offer Boleta / Factura today; a real second country supplies its own.
+            Assert.Equal(new[] { "Boleta", "Factura" }, CountryPresets.Generic.SaleDocumentTypes);
+            Assert.Equal(new[] { "Boleta", "Factura" }, CountryPresets.Chile.SaleDocumentTypes);
+        }
     }
 }

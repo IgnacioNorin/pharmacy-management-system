@@ -20,13 +20,21 @@ namespace PharmacySystem.Model
         // (format only) or CountryPresets.ChileanRutScheme (modulo 11).
         public string RecipientDocumentScheme { get; }
 
-        public CountryPreset(string code, string displayName, decimal defaultTaxRate, string currencyCulture, string recipientDocumentScheme)
+        // Sale document types a cashier can pick under this preset, in display order. Both
+        // presets today offer Boleta / Factura; a real second country supplies its own list.
+        // Note: SaleRepository.Register still numbers folios as "Factura vs. everything else"
+        // (one sequence per branch) - a preset that adds a third type needs a matching folio
+        // sequence and a tweak there.
+        public IReadOnlyList<string> SaleDocumentTypes { get; }
+
+        public CountryPreset(string code, string displayName, decimal defaultTaxRate, string currencyCulture, string recipientDocumentScheme, IReadOnlyList<string> saleDocumentTypes)
         {
             Code = code ?? "";
             DisplayName = displayName;
             DefaultTaxRate = defaultTaxRate;
             CurrencyCulture = currencyCulture;
             RecipientDocumentScheme = recipientDocumentScheme;
+            SaleDocumentTypes = saleDocumentTypes ?? DocumentTypes.Selectable;
         }
 
         public bool IsGeneric => Code.Length == 0;
@@ -38,10 +46,10 @@ namespace PharmacySystem.Model
         public const string ChileanRutScheme = "chilean_rut";
 
         public static readonly CountryPreset Generic =
-            new CountryPreset("", "Genérico", 0m, "en-US", GenericScheme);
+            new CountryPreset("", "Genérico", 0m, "en-US", GenericScheme, DocumentTypes.Selectable);
 
         public static readonly CountryPreset Chile =
-            new CountryPreset("CL", "Chile", 19m, "es-CL", ChileanRutScheme);
+            new CountryPreset("CL", "Chile", 19m, "es-CL", ChileanRutScheme, DocumentTypes.Selectable);
 
         public static readonly IReadOnlyList<CountryPreset> All = new[] { Generic, Chile };
 

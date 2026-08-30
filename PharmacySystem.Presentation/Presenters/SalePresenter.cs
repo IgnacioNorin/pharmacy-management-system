@@ -51,7 +51,8 @@ namespace PharmacySystem.Presentation
         public void OnLoad()
         {
             Store store = _storeService.ListStore();
-            _view.SetDocumentTypeOptions(DocumentTypes.Selectable, store?.defaultDocumentType ?? DocumentTypes.Boleta);
+            var documentTypes = CountryPresets.ForCode(store?.countryCode).SaleDocumentTypes;
+            _view.SetDocumentTypeOptions(documentTypes, store?.defaultDocumentType ?? documentTypes[0]);
             _view.SetPaymentMethodOptions(PaymentMethods.Selectable, PaymentMethods.Default);
             _view.SetFacturaFieldsVisible(IsFactura());
         }
