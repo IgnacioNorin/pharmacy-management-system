@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using Dapper;
 using PharmacySystem.Helpers;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Data
@@ -36,6 +37,11 @@ namespace PharmacySystem.Data
                         "WHERE h.resolved_at IS NULL")
                         .ToList();
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -55,6 +61,11 @@ namespace PharmacySystem.Data
                         "VALUES (@productId, @alertType, @severity, @triggerValue, GETDATE()); " +
                         "SELECT CAST(SCOPE_IDENTITY() AS INT);",
                         new { productId, alertType, severity, triggerValue });
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
@@ -77,6 +88,11 @@ namespace PharmacySystem.Data
                         "UPDATE product_alert_history SET severity = @severity, trigger_value = @triggerValue, muted_at = NULL WHERE id = @historyId",
                         new { historyId, severity, triggerValue });
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -93,6 +109,11 @@ namespace PharmacySystem.Data
                     oConnection.Execute(
                         "UPDATE product_alert_history SET resolved_at = GETDATE() WHERE id = @historyId AND resolved_at IS NULL",
                         new { historyId });
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
@@ -111,6 +132,11 @@ namespace PharmacySystem.Data
                         "UPDATE product_alert_history SET acknowledged_by = @personId, acknowledged_at = GETDATE() WHERE id = @historyId",
                         new { historyId, personId });
                     return rows > 0;
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
@@ -131,6 +157,11 @@ namespace PharmacySystem.Data
                         new { historyId });
                     return rows > 0;
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -149,6 +180,11 @@ namespace PharmacySystem.Data
                         "UPDATE product_alert_history SET muted_at = NULL WHERE id = @historyId",
                         new { historyId });
                     return rows > 0;
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
@@ -173,6 +209,11 @@ namespace PharmacySystem.Data
                         "ORDER BY h.detected_at DESC",
                         new { startDate, endDate })
                         .ToList();
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {

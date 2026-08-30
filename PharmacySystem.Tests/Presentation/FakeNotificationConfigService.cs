@@ -1,4 +1,5 @@
 using PharmacySystem.Business;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ namespace PharmacySystem.Tests.Presentation
         public List<Product> ListExpirationDateResult { get; set; } = new List<Product>();
         public List<Product> ListStockResult { get; set; } = new List<Product>();
         public List<ProductAlert> GetActiveAlertsResult { get; set; } = new List<ProductAlert>();
+        public bool GetActiveAlertsThrows { get; set; }
 
         public int? RequestedDays { get; private set; }
         public int? RequestedCriticalStock { get; private set; }
@@ -31,7 +33,8 @@ namespace PharmacySystem.Tests.Presentation
         }
         public int ConfigDay() => ConfigDayResult;
         public int ConfigStock() => ConfigStockResult;
-        public List<ProductAlert> GetActiveAlerts() => GetActiveAlertsResult;
+        public List<ProductAlert> GetActiveAlerts() =>
+            GetActiveAlertsThrows ? throw new DataUnavailableException() : GetActiveAlertsResult;
 
         public bool ConfigUpdate(NotificationConfig obj)
         {

@@ -20,13 +20,15 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   aparecer en la pantalla de Clientes, en el selector de la venta y en el filtro
   de cliente de los reportes. Al editar un producto cuya categoría fue dada de
   baja, el combo ahora incluye esa categoría, así que no se reasigna en silencio.
-- **Base de datos caída en Productos, Clientes, Proveedores y Reportes.** Antes,
-  si SQL Server no respondía al abrir una de esas pantallas, la grilla quedaba
-  vacía sin ningún aviso. Ahora esos repositorios distinguen "no hay datos" de
-  "no hay base" y la aplicación muestra "No se pudo conectar con la base de
-  datos. Verifique que el servidor esté disponible e intente nuevamente." sin
-  cerrarse: la operación falló, pero se puede reintentar. (Antes solo estaba
-  cubierto el inicio de sesión, la venta y la compra.)
+- **Base de datos caída: aviso claro en vez de pantalla vacía.** Antes, si SQL
+  Server no respondía al abrir una grilla, esta quedaba vacía sin ningún aviso.
+  Ahora los repositorios distinguen "no hay datos" de "no hay base" y la
+  aplicación muestra "No se pudo conectar con la base de datos. Verifique que el
+  servidor esté disponible e intente nuevamente." sin cerrarse: la operación
+  falló, pero se puede reintentar. Cubre Productos, Clientes, Proveedores,
+  Reportes, Usuarios, Roles y Tienda. El ciclo de alertas en segundo plano
+  ignora el fallo y reintenta en el siguiente tick, sin abrir diálogos.
+  (Antes solo estaba cubierto el inicio de sesión, la venta y la compra.)
 
 ### Rendimiento
 

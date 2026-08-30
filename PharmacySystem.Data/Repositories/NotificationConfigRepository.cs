@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using Dapper;
 using PharmacySystem.Helpers;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Data
@@ -36,6 +37,11 @@ namespace PharmacySystem.Data
                         new { days })
                         .ToList();
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -57,6 +63,11 @@ namespace PharmacySystem.Data
                         new { criticalStock })
                         .ToList();
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -73,6 +84,11 @@ namespace PharmacySystem.Data
                 {
                     return oConnection.QueryFirstOrDefault<int>("SELECT notify_day FROM notification_settings WHERE id = 1");
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -88,6 +104,11 @@ namespace PharmacySystem.Data
                 try
                 {
                     return oConnection.QueryFirstOrDefault<int>("SELECT critical_stock FROM notification_settings WHERE id = 1");
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
@@ -111,6 +132,11 @@ namespace PharmacySystem.Data
                     oConnection.Execute("sp_update_notificacion_settings", parameters, commandType: CommandType.StoredProcedure);
 
                     return parameters.Get<bool>("result");
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
