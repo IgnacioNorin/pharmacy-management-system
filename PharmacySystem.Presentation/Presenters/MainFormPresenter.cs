@@ -41,6 +41,7 @@ namespace PharmacySystem.Presentation
                 Users      = user.Can("usuarios.acceso"),
                 Roles      = user.Can("roles.gestionar"),
                 Reports    = user.Can("reportes.acceso"),
+                CashCount  = user.Can("caja.acceso"),
                 Alerts     = user.Can("alertas.acceso")
             });
         }

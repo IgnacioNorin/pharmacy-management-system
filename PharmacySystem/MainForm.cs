@@ -25,7 +25,7 @@ namespace PharmacySystem
         private Button[] NavButtons => new[]
         {
             btnHome, btnSales, btnPurchases, btnManagement, btnSuppliers,
-            btnClients, btnUsers, btnRoles, btnReports, btnAlerts
+            btnClients, btnUsers, btnRoles, btnReports, btnCashCount, btnAlerts
         };
 
         public MainForm(CurrentUser session = null)
@@ -81,6 +81,7 @@ namespace PharmacySystem
             btnUsers.Visible = p.Users;
             btnRoles.Visible = p.Roles;
             btnReports.Visible = p.Reports;
+            btnCashCount.Visible = p.CashCount;
             btnAlerts.Visible = p.Alerts;
             if (!p.Alerts) lblAlertBadge.Visible = false;
 
@@ -109,8 +110,9 @@ namespace PharmacySystem
             y = PlaceItem(btnClients, y, itemGap);
             y = PlaceItem(btnUsers, y, itemGap);
             y = PlaceItem(btnRoles, y, itemGap);
-            y = PlaceGroupHeader(lblGroupConsulta, y, headerGapBefore, itemGap, btnReports, btnAlerts);
+            y = PlaceGroupHeader(lblGroupConsulta, y, headerGapBefore, itemGap, btnReports, btnCashCount, btnAlerts);
             y = PlaceItem(btnReports, y, itemGap);
+            y = PlaceItem(btnCashCount, y, itemGap);
             PlaceItem(btnAlerts, y, itemGap);
         }
 
@@ -281,6 +283,16 @@ namespace PharmacySystem
             frmReport childForm = new frmReport();
 
             ShowForm(childForm, sender);
+        }
+
+        private void btnCashCount_Click(object sender, EventArgs e)
+        {
+            if (!CanNavigate("caja.acceso")) return;
+
+            using (var modal = new ModalCashCount())
+            {
+                modal.ShowDialog(this);
+            }
         }
 
         // ShowForm already calls checkNotifications() for every navigation below - each handler

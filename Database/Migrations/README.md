@@ -67,6 +67,7 @@ fijan al inicio; `sqlcmd` por defecto los deja en `OFF`).
 | `021_weighted_average_cost.sql` | 1.2.0 | 1.2.0 (`product.average_cost`: costo promedio ponderado recalculado en cada compra, backfill desde `purchase_price`; `sale_detail.unit_cost`: costo del producto congelado por línea al vender) |
 | `022_soft_delete_consistency.sql` | 1.2.0 | 1.2.0 (`sp_delete_supplier`: baja lógica del proveedor referenciado por compras, igual que productos/personas/categorías; backfill `status = 1` en `person`/`supplier`) |
 | `023_sale_payment_method.sql` | 1.2.0 | 1.2.0 (`sale.payment_method`: forma de cobro de la venta — Efectivo/Tarjeta/Transferencia; las filas existentes quedan en `Efectivo`) |
+| `024_cash_count.sql` | 1.2.0 | 1.2.0 (arqueo de caja: tablas `cash_count` / `cash_count_line` con esperado vs. contado por forma de pago; permiso `caja.acceso` para los roles Administrador General y Administrador) |
 
 **No es una migración**, pero se ejecuta una vez después de crear la base:
 `Database\create_app_login.sql` crea el login `pharmacy_app` con privilegios

@@ -49,6 +49,7 @@ namespace PharmacySystem
             this.btnRoles = new System.Windows.Forms.Button();
             this.lblGroupConsulta = new System.Windows.Forms.Label();
             this.btnReports = new System.Windows.Forms.Button();
+            this.btnCashCount = new System.Windows.Forms.Button();
             this.btnAlerts = new System.Windows.Forms.Button();
             this.lblAlertBadge = new System.Windows.Forms.Label();
             this.pnlSidebarHeader = new System.Windows.Forms.Panel();
@@ -190,6 +191,7 @@ namespace PharmacySystem
             // whichever are hidden for the current user - not a fixed Designer layout, since which
             // items show depends on ApplySidebarPermissions.
             this.pnlSidebarItems.Controls.Add(this.btnAlerts);
+            this.pnlSidebarItems.Controls.Add(this.btnCashCount);
             this.pnlSidebarItems.Controls.Add(this.btnReports);
             this.pnlSidebarItems.Controls.Add(this.lblGroupConsulta);
             this.pnlSidebarItems.Controls.Add(this.btnRoles);
@@ -430,6 +432,26 @@ namespace PharmacySystem
             this.btnReports.UseVisualStyleBackColor = false;
             this.btnReports.Click += new System.EventHandler(this.btnReports_Click);
             //
+            // btnCashCount
+            //
+            this.btnCashCount.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(37)))), ((int)(((byte)(69)))));
+            this.btnCashCount.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnCashCount.FlatAppearance.BorderSize = 0;
+            this.btnCashCount.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCashCount.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
+            this.btnCashCount.ForeColor = System.Drawing.Color.White;
+            this.btnCashCount.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnCashCount.Location = new System.Drawing.Point(10, 490);
+            this.btnCashCount.Name = "btnCashCount";
+            this.btnCashCount.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
+            this.btnCashCount.Size = new System.Drawing.Size(190, 40);
+            this.btnCashCount.TabIndex = 11;
+            this.btnCashCount.Text = "        Arqueo de caja";
+            this.btnCashCount.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnCashCount.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
+            this.btnCashCount.UseVisualStyleBackColor = false;
+            this.btnCashCount.Click += new System.EventHandler(this.btnCashCount_Click);
+            //
             // btnAlerts
             //
             this.btnAlerts.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(37)))), ((int)(((byte)(69)))));
@@ -614,6 +636,7 @@ namespace PharmacySystem
         private System.Windows.Forms.Button btnRoles;
         private System.Windows.Forms.Label lblGroupConsulta;
         private System.Windows.Forms.Button btnReports;
+        private System.Windows.Forms.Button btnCashCount;
         private System.Windows.Forms.Button btnAlerts;
         private System.Windows.Forms.Label lblAlertBadge;
         private System.Windows.Forms.Panel pnlSidebarHeader;
