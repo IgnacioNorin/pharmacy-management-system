@@ -1,5 +1,4 @@
 using PharmacySystem.Business;
-using PharmacySystem.Helpers;
 using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 
@@ -12,21 +11,16 @@ namespace PharmacySystem.Presentation
     public class MainFormPresenter
     {
         private readonly IMainFormView _view;
-        private readonly IStoreService _storeService;
         private readonly INotificationConfigService _notificationService;
 
-        public MainFormPresenter(IMainFormView view, IStoreService storeService, INotificationConfigService notificationService)
+        public MainFormPresenter(IMainFormView view, INotificationConfigService notificationService)
         {
             _view = view;
-            _storeService = storeService;
             _notificationService = notificationService;
         }
 
         public void OnLoad(CurrentUser user)
         {
-            Store store = _storeService.ListStore();
-            CultureInfoHelper.SetCurrency(store?.currencyCulture);
-
             _view.SetUserName(user.Person.name, user.Person.oPersonType?.description);
 
             // Sidebar visibility is driven by permissions now, not by the role. Gestión is a

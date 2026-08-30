@@ -29,13 +29,14 @@ namespace PharmacySystem.Tests.Presentation
             new ReportColumn<Row>("Fecha", ReportValueType.Date, r => r.When)
         });
 
+        // CLP-only: currency amounts are whole pesos.
         private static ReportResult<Row> WithTotals() => new ReportResult<Row>(
             new List<Row>
             {
-                new Row { Name = "Uno", Amount = 10.5m, Quantity = 3, When = new DateTime(2026, 3, 17) },
-                new Row { Name = "Dos", Amount = 4.25m, Quantity = 2, When = new DateTime(2026, 3, 18) }
+                new Row { Name = "Uno", Amount = 12000m, Quantity = 3, When = new DateTime(2026, 3, 17) },
+                new Row { Name = "Dos", Amount = 4250m, Quantity = 2, When = new DateTime(2026, 3, 18) }
             },
-            new Row { Amount = 14.75m, Quantity = 5 });
+            new Row { Amount = 16250m, Quantity = 5 });
 
         private static byte[] Run(IReportExporter exporter, ReportResult<Row> result)
         {
@@ -62,11 +63,11 @@ namespace PharmacySystem.Tests.Presentation
             string[] lines = CsvLines(Run(new CsvReportExporter(), WithTotals()));
 
             Assert.Equal("Nombre" + sep + "Monto" + sep + "Cantidad" + sep + "Fecha", lines[0]);
-            Assert.Equal("Uno" + sep + 10.5m.ToString("0.00", CultureInfo.CurrentCulture) + sep + "3" + sep + "2026-03-17", lines[1]);
+            Assert.Equal("Uno" + sep + "12000" + sep + "3" + sep + "2026-03-17", lines[1]);
 
             string totals = lines.Last(l => l.Length > 0);
             Assert.StartsWith("Total:" + sep, totals);
-            Assert.Contains(14.75m.ToString("0.00", CultureInfo.CurrentCulture), totals);
+            Assert.Contains("16250", totals);
         }
 
         [Fact]
@@ -110,7 +111,7 @@ namespace PharmacySystem.Tests.Presentation
                 Assert.Equal("Nombre", ws.Cell(1, 1).GetString());
 
                 Assert.Equal(XLDataType.Number, ws.Cell(2, 2).DataType);
-                Assert.Equal(10.5, ws.Cell(2, 2).GetDouble(), 3);
+                Assert.Equal(12000, ws.Cell(2, 2).GetDouble(), 3);
 
                 Assert.Equal(XLDataType.Number, ws.Cell(2, 3).DataType);
                 Assert.Equal(3, (int)ws.Cell(2, 3).GetDouble());
@@ -121,7 +122,7 @@ namespace PharmacySystem.Tests.Presentation
                 IXLCell totalLabel = ws.Cell(4, 1);
                 Assert.Equal("Total:", totalLabel.GetString());
                 Assert.True(totalLabel.Style.Font.Bold);
-                Assert.Equal(14.75, ws.Cell(4, 2).GetDouble(), 3);
+                Assert.Equal(16250, ws.Cell(4, 2).GetDouble(), 3);
             }
         }
 

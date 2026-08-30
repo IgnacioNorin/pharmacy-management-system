@@ -216,8 +216,6 @@ CREATE TABLE [dbo].[store](
     [email] [varchar](120) NULL,
     [phone] [varchar](50) NULL,
     [address] [varchar](200) NULL,
-    [currency_culture] [varchar](10) NULL,
-    [country_code] [varchar](8) NULL,
     [default_tax_rate] [decimal](5, 2) NOT NULL CONSTRAINT [DF_store_default_tax_rate] DEFAULT ((19)),
     [default_document_type] [varchar](20) NOT NULL CONSTRAINT [DF_store_default_document_type] DEFAULT ('Boleta'),
     PRIMARY KEY CLUSTERED ([id] ASC),
@@ -456,8 +454,6 @@ ALTER TABLE [dbo].[supplier] ADD CONSTRAINT [DF__PROVEEDOR__Estad__4F7CD00D] DEF
 GO
 ALTER TABLE [dbo].[supplier] ADD CONSTRAINT [DF__PROVEEDOR__Fecha__5070F446] DEFAULT (getdate()) FOR [date_created]
 GO
-ALTER TABLE [dbo].[store] ADD CONSTRAINT [DF_store_currency_culture] DEFAULT ('en-US') FOR [currency_culture]
-GO
 
 -- FOREIGN KEYS
 ALTER TABLE [dbo].[person] WITH CHECK ADD CONSTRAINT [FK__PERSONA__IdTipoP__5812160E]
@@ -666,8 +662,8 @@ GO
 -- (sp_update_notificacion_settings only UPDATEs id = 1), and the alert queries read 0/0.
 IF NOT EXISTS (SELECT 1 FROM [dbo].[store] WHERE id = 1)
 BEGIN
-    INSERT INTO [dbo].[store] (id, document_store, company_name, email, phone, address, currency_culture, default_tax_rate, default_document_type)
-    VALUES (1, '', 'Mi Farmacia', '', '', '', 'en-US', 19, 'Boleta')
+    INSERT INTO [dbo].[store] (id, document_store, company_name, email, phone, address, default_tax_rate, default_document_type)
+    VALUES (1, '', 'Mi Farmacia', '', '', '', 19, 'Boleta')
 END
 GO
 IF NOT EXISTS (SELECT 1 FROM [dbo].[notification_settings] WHERE id = 1)

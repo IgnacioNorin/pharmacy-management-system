@@ -5,14 +5,10 @@ using Xunit;
 
 namespace PharmacySystem.Tests.Presentation
 {
-    // MainFormPresenter.OnLoad calls CultureInfoHelper.SetCurrency, which mutates a process-wide
-    // static field. Shares the "Database" collection with CultureInfoHelperTests for the same
-    // reason as ReportPresenterTests/StoreManagementPresenterTests.
-    [Collection("Database")]
     public class MainFormPresenterTests
     {
-        private static MainFormPresenter CreatePresenter(FakeMainFormView view, FakeStoreService storeService, FakeNotificationConfigService notificationService)
-            => new MainFormPresenter(view, storeService, notificationService);
+        private static MainFormPresenter CreatePresenter(FakeMainFormView view, FakeNotificationConfigService notificationService)
+            => new MainFormPresenter(view, notificationService);
 
         private static CurrentUser User(string name, string roleDescription, params string[] permissions) =>
             new CurrentUser(
@@ -23,10 +19,9 @@ namespace PharmacySystem.Tests.Presentation
         public void OnLoad_SetsUserNameAndRole()
         {
             var view = new FakeMainFormView();
-            var storeService = new FakeStoreService { ListStoreResult = new Store { currencyCulture = "es-EC" } };
             var notificationService = new FakeNotificationConfigService();
 
-            CreatePresenter(view, storeService, notificationService)
+            CreatePresenter(view, notificationService)
                 .OnLoad(User("Juan Pérez", "Administrador General", "ventas.acceso"));
 
             Assert.Equal("Juan Pérez", view.UserName);
@@ -37,7 +32,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnLoad_CashierPermissions_ShowsOnlyTheGrantedSections()
         {
             var view = new FakeMainFormView();
-            var presenter = CreatePresenter(view, new FakeStoreService { ListStoreResult = new Store() }, new FakeNotificationConfigService());
+            var presenter = CreatePresenter(view, new FakeNotificationConfigService());
 
             // The seeded "Empleado" permission set.
             presenter.OnLoad(User("Cajero", "Empleado",
@@ -61,7 +56,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnLoad_CajaAccesoPermission_ShowsTheCashCountButton()
         {
             var view = new FakeMainFormView();
-            var presenter = CreatePresenter(view, new FakeStoreService { ListStoreResult = new Store() }, new FakeNotificationConfigService());
+            var presenter = CreatePresenter(view, new FakeNotificationConfigService());
 
             presenter.OnLoad(User("Admin", "Administrador", "caja.acceso"));
 
@@ -72,7 +67,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnLoad_ManagementButton_ShowsIfAnyOfItsTabsIsAllowed()
         {
             var view = new FakeMainFormView();
-            var presenter = CreatePresenter(view, new FakeStoreService { ListStoreResult = new Store() }, new FakeNotificationConfigService());
+            var presenter = CreatePresenter(view, new FakeNotificationConfigService());
 
             presenter.OnLoad(User("Encargado", "Custom", "categorias.acceso"));
 
@@ -83,7 +78,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnLoad_ReportsButton_FollowsReportesAcceso()
         {
             var view = new FakeMainFormView();
-            var presenter = CreatePresenter(view, new FakeStoreService { ListStoreResult = new Store() }, new FakeNotificationConfigService());
+            var presenter = CreatePresenter(view, new FakeNotificationConfigService());
 
             // A "reponedor" role: opens reports, but inside only sees purchases and products.
             presenter.OnLoad(User("Reponedor", "Custom", "reportes.acceso", "reportes.compras", "reportes.productos"));
@@ -91,7 +86,7 @@ namespace PharmacySystem.Tests.Presentation
 
             // Holding an inner report permission without reportes.acceso does not show the button.
             var view2 = new FakeMainFormView();
-            CreatePresenter(view2, new FakeStoreService { ListStoreResult = new Store() }, new FakeNotificationConfigService())
+            CreatePresenter(view2, new FakeNotificationConfigService())
                 .OnLoad(User("Sin acceso", "Custom", "reportes.compras"));
             Assert.False(view2.AppliedSidebarPermissions.Reports);
         }
@@ -100,7 +95,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnLoad_FullPermissions_ShowsEverySection()
         {
             var view = new FakeMainFormView();
-            var presenter = CreatePresenter(view, new FakeStoreService { ListStoreResult = new Store() }, new FakeNotificationConfigService());
+            var presenter = CreatePresenter(view, new FakeNotificationConfigService());
 
             presenter.OnLoad(User("Admin", "Administrador General",
                 "ventas.acceso", "compras.acceso", "clientes.acceso", "proveedores.acceso",
@@ -121,7 +116,7 @@ namespace PharmacySystem.Tests.Presentation
             var view = new FakeMainFormView();
             var notificationService = new FakeNotificationConfigService { GetActiveAlertsResult = new List<ProductAlert>() };
 
-            CreatePresenter(view, new FakeStoreService(), notificationService).RefreshAlerts();
+            CreatePresenter(view, notificationService).RefreshAlerts();
 
             Assert.Empty(view.ShownAlerts);
         }
@@ -136,7 +131,7 @@ namespace PharmacySystem.Tests.Presentation
             };
             var notificationService = new FakeNotificationConfigService { GetActiveAlertsResult = alerts };
 
-            CreatePresenter(view, new FakeStoreService(), notificationService).RefreshAlerts();
+            CreatePresenter(view, notificationService).RefreshAlerts();
 
             Assert.Same(alerts[0], Assert.Single(view.ShownAlerts));
         }
@@ -150,7 +145,7 @@ namespace PharmacySystem.Tests.Presentation
             // Runs off the UI thread on a 5-minute timer: a transient outage must not propagate
             // (it would surface as an unobserved task exception) nor pop a dialog. The badge is
             // left untouched - ShowAlerts is never called - and the next tick retries.
-            CreatePresenter(view, new FakeStoreService(), notificationService).RefreshAlerts();
+            CreatePresenter(view, notificationService).RefreshAlerts();
 
             Assert.Null(view.ShownAlerts);
         }

@@ -1,68 +1,70 @@
 using System.Globalization;
-using System.Linq;
 using System.Threading;
 using PharmacySystem.Helpers;
 using Xunit;
 
 namespace PharmacySystem.Tests.Unit
 {
-    // SetCurrency mutates a process-wide static field (CultureInfoHelper._cultureInfo), and
-    // SaleServiceTests (in the "Database" collection) also calls FormatAsCurrency. Sharing that
-    // collection here serializes both against each other so a test that temporarily switches
-    // currency can never run concurrently with one that assumes the default is still active.
-    [Collection("Database")]
+    // The system is CLP-only: CultureInfoHelper has a fixed es-CL culture, no SetCurrency.
     public class CultureInfoHelperTests
     {
         [Fact]
         public void CultureInfoConverterDecimal_UsesInvariantDotSeparator()
         {
-            Assert.Equal("1234.50", CultureInfoHelper.CultureInfoConverterDecimal(1234.5m));
+            Assert.Equal("1234.5", CultureInfoHelper.CultureInfoConverterDecimal(1234.5m));
         }
 
         [Fact]
-        public void CultureInfoConverterStringToDecimal_DollarPrefixedValue_ParsesUsingTheActiveCurrencyCulture()
+        public void FormatAsCurrency_FormatsAsChileanPesos_NoDecimals_DotThousands()
         {
-            // "$1,234.50" is what FormatAsCurrency produces under the default (en-US) culture:
-            // "$" prefix, "," grouping, "." decimal - and it must parse straight back.
-            Assert.Equal(1234.50m, CultureInfoHelper.CultureInfoConverterStringToDecimal("$1,234.50"));
+            Assert.Equal("$2.000.000", CultureInfoHelper.FormatAsCurrency(2000000m));
+            Assert.Equal("$1.235", CultureInfoHelper.FormatAsCurrency(1235m));
+            Assert.Equal("$10", CultureInfoHelper.FormatAsCurrency(10m));
         }
 
         [Fact]
-        public void CultureInfoConverterStringToDecimal_PlainCommaDecimal_ParsesAsDecimalPoint()
+        public void FormatAsCurrency_RoundsToWholePesos()
         {
-            Assert.Equal(1234.50m, CultureInfoHelper.CultureInfoConverterStringToDecimal("1234,50"));
+            Assert.Equal("$1.235", CultureInfoHelper.FormatAsCurrency(1234.50m));
+            Assert.Equal("$1.234", CultureInfoHelper.FormatAsCurrency(1234.49m));
         }
 
         [Fact]
-        public void CultureInfoConverterStringToDecimal_PlainDotDecimal_ParsesAsTyped()
+        public void RoundMoney_RoundsHalfAwayFromZero()
         {
-            // Manually typed input follows the "##.##" hint shown to the user (no "$", no grouping).
-            Assert.Equal(12.50m, CultureInfoHelper.CultureInfoConverterStringToDecimal("12.50"));
+            Assert.Equal(1235m, CultureInfoHelper.RoundMoney(1234.5m));
+            Assert.Equal(-1235m, CultureInfoHelper.RoundMoney(-1234.5m));
+            Assert.Equal(1234m, CultureInfoHelper.RoundMoney(1234.4m));
         }
 
         [Theory]
-        [InlineData(9.99)]
-        [InlineData(999.99)]
-        [InlineData(1234.50)]      // regression: used to corrupt to 123450 or throw once >= 1000
-        [InlineData(12345.67)]
-        [InlineData(1000000.01)]
-        public void FormatAsCurrency_ThenConverterStringToDecimal_RoundTripsExactly(double amount)
+        [InlineData("$2.000.000", 2000000)]
+        [InlineData("2.000.000", 2000000)]
+        [InlineData("2000000", 2000000)]
+        [InlineData("1.235", 1235)]
+        [InlineData("1235", 1235)]
+        [InlineData("1234,50", 1235)]   // a lone comma = decimal point, then rounded to whole pesos
+        public void CultureInfoConverterStringToDecimal_ParsesPesoInput(string input, int expected)
         {
-            decimal original = (decimal)amount;
+            Assert.Equal(expected, CultureInfoHelper.CultureInfoConverterStringToDecimal(input));
+        }
 
-            string formatted = CultureInfoHelper.FormatAsCurrency(original);
+        [Theory]
+        [InlineData(2000000)]
+        [InlineData(999)]
+        [InlineData(1235)]
+        [InlineData(12345678)]
+        public void FormatAsCurrency_ThenParse_RoundTripsForWholePesos(int amount)
+        {
+            string formatted = CultureInfoHelper.FormatAsCurrency(amount);
             decimal parsedBack = CultureInfoHelper.CultureInfoConverterStringToDecimal(formatted);
 
-            Assert.Equal(original, parsedBack);
+            Assert.Equal((decimal)amount, parsedBack);
         }
 
         [Fact]
-        public void CultureInfoConverterStringToDecimal_RoundTrip_IsIndependentOfThreadCulture()
+        public void RoundTrip_IsIndependentOfThreadCulture()
         {
-            // The old implementation used Convert.ToDecimal(string), which reads the ambient
-            // thread culture; on an en-US machine it threw for totals >= 1000, and on an
-            // es-EC-like machine it silently returned a value 100x too large. The fix parses
-            // with explicit cultures, so the outcome must not depend on CurrentCulture.
             CultureInfo original = Thread.CurrentThread.CurrentCulture;
             try
             {
@@ -70,10 +72,10 @@ namespace PharmacySystem.Tests.Unit
                 {
                     Thread.CurrentThread.CurrentCulture = new CultureInfo(cultureName);
 
-                    string formatted = CultureInfoHelper.FormatAsCurrency(1234.50m);
+                    string formatted = CultureInfoHelper.FormatAsCurrency(1234m);
                     decimal parsedBack = CultureInfoHelper.CultureInfoConverterStringToDecimal(formatted);
 
-                    Assert.Equal(1234.50m, parsedBack);
+                    Assert.Equal(1234m, parsedBack);
                 }
             }
             finally
@@ -83,104 +85,9 @@ namespace PharmacySystem.Tests.Unit
         }
 
         [Fact]
-        public void FormatAsCurrency_IncludesDollarSign()
+        public void CustomCultureInfo_IsChileanPeso()
         {
-            string formatted = CultureInfoHelper.FormatAsCurrency(10m);
-
-            Assert.Contains("$", formatted);
-        }
-
-        [Fact]
-        public void CustomCultureInfo_ReturnsTheDefaultCultureWhenNothingWasSet()
-        {
-            Assert.Equal("en-US", CultureInfoHelper.CustomCultureInfo().Name);
-        }
-
-        [Fact]
-        public void SupportedCurrencies_AllEntriesResolveToConstructibleCultures()
-        {
-            Assert.NotEmpty(CultureInfoHelper.SupportedCurrencies);
-
-            foreach (var currency in CultureInfoHelper.SupportedCurrencies)
-            {
-                // Throws if the culture name is invalid; that alone is the assertion.
-                new CultureInfo((string)currency.Value);
-            }
-        }
-
-        [Fact]
-        public void SetCurrency_SupportedCultureName_ChangesActiveCurrency()
-        {
-            try
-            {
-                CultureInfoHelper.SetCurrency("es-CL");
-
-                Assert.Equal("es-CL", CultureInfoHelper.CustomCultureInfo().Name);
-            }
-            finally
-            {
-                CultureInfoHelper.SetCurrency("en-US");
-            }
-        }
-
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("not-a-culture")]
-        [InlineData("de-DE")]           // valid culture, but not in SupportedCurrencies
-        public void SetCurrency_UnsupportedOrInvalidName_FallsBackToDefault(string cultureName)
-        {
-            try
-            {
-                CultureInfoHelper.SetCurrency("es-CL");
-                CultureInfoHelper.SetCurrency(cultureName);
-
-                Assert.Equal("en-US", CultureInfoHelper.CustomCultureInfo().Name);
-            }
-            finally
-            {
-                CultureInfoHelper.SetCurrency("en-US");
-            }
-        }
-
-        [Fact]
-        public void FormatThenParse_RoundTrips_ForACurrencyWhoseSymbolIsNotDollar()
-        {
-            try
-            {
-                CultureInfoHelper.SetCurrency("es-PE"); // Sol peruano, symbol "S/"
-
-                string formatted = CultureInfoHelper.FormatAsCurrency(1234.50m);
-                Assert.DoesNotContain("$", formatted);
-
-                decimal parsedBack = CultureInfoHelper.CultureInfoConverterStringToDecimal(formatted);
-                Assert.Equal(1234.50m, parsedBack);
-            }
-            finally
-            {
-                CultureInfoHelper.SetCurrency("en-US");
-            }
-        }
-
-        [Fact]
-        public void SetCurrency_ChileanPeso_FormatsWithZeroDecimalsAndStillRoundTrips()
-        {
-            try
-            {
-                CultureInfoHelper.SetCurrency("es-CL");
-
-                // CLP has no minor currency unit, so FormatAsCurrency rounds to whole pesos -
-                // the round trip is only exact for whole-peso amounts, which is correct for CLP.
-                string formatted = CultureInfoHelper.FormatAsCurrency(1235m);
-                decimal parsedBack = CultureInfoHelper.CultureInfoConverterStringToDecimal(formatted);
-
-                Assert.DoesNotContain(",", formatted);
-                Assert.Equal(1235m, parsedBack);
-            }
-            finally
-            {
-                CultureInfoHelper.SetCurrency("en-US");
-            }
+            Assert.Equal("es-CL", CultureInfoHelper.CustomCultureInfo().Name);
         }
     }
 }

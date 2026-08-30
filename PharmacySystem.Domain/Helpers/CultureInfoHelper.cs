@@ -1,85 +1,82 @@
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Globalization;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text;
-using System.Threading.Tasks;
-using PharmacySystem.Model;
 
 namespace PharmacySystem.Helpers
 {
-    public  static class CultureInfoHelper
+    // The system operates in Chilean pesos (CLP) only - there is no configurable currency.
+    // CLP has no minor unit, so every amount is a whole number of pesos: FormatAsCurrency rounds
+    // and prints "$2.000.000" (es-CL: "$" symbol, "." thousands, no decimals), and RoundMoney is
+    // applied wherever the user types or the app computes an amount.
+    public static class CultureInfoHelper
     {
-        // Neutral fallback used only when no store currency is configured. A country preset
-        // (CountryPresets) is what normally sets the store's currency_culture.
-        private const string DefaultCurrencyCulture = "en-US";
+        private static readonly CultureInfo Clp = CultureInfo.GetCultureInfo("es-CL");
 
-        // Curated on purpose: an admin can only pick a culture .NET actually formats currency
-        // with correctly, instead of typing an arbitrary/invalid culture name into a setting.
-        public static readonly IReadOnlyList<ComboBoxItem> SupportedCurrencies = new List<ComboBoxItem>
-        {
-            new ComboBoxItem { Value = "en-US", Text = "Dólar estadounidense (USD)" },
-            new ComboBoxItem { Value = "es-CL", Text = "Peso chileno (CLP)" },
-            new ComboBoxItem { Value = "es-MX", Text = "Peso mexicano (MXN)" },
-            new ComboBoxItem { Value = "es-CO", Text = "Peso colombiano (COP)" },
-            new ComboBoxItem { Value = "es-PE", Text = "Sol peruano (PEN)" },
-            new ComboBoxItem { Value = "es-AR", Text = "Peso argentino (ARS)" },
-        };
-
-        private static CultureInfo _cultureInfo = new CultureInfo(DefaultCurrencyCulture);
+        // Whole pesos, rounded half-away-from-zero.
+        public static decimal RoundMoney(decimal value) => Math.Round(value, 0, MidpointRounding.AwayFromZero);
 
         public static string CultureInfoConverterDecimal(decimal value)
         {
-            return value.ToString("0.00",CultureInfo.InvariantCulture);
+            return value.ToString("0.##", CultureInfo.InvariantCulture);
         }
 
-        // FormatAsCurrency uses the active currency culture's own symbol / grouping / decimal
-        // separators, so a value it produced must be parsed back with that same culture - naively
-        // swapping "," for "." breaks as soon as a thousands separator is present (e.g. "$1.234,50"
-        // would become "1.234.50", either throwing or being misread as 123450 depending on the
-        // machine's culture). A formatted value is recognised by carrying the culture's currency
-        // symbol (not a hard-coded "$": es-PE is "S/", etc.). Manually typed input has no symbol
-        // and no thousands grouping, so a single "," there is just an alternate decimal separator
-        // for the "##.##" hint shown to the user.
+        // Parses a money value the user typed or that FormatAsCurrency produced, always rounding
+        // to whole pesos. Accepts "$2.000.000", "2.000.000", "2000000". A "," is a decimal point.
+        // A "." is the es-CL thousands separator when every group after the first has 3 digits
+        // (e.g. "2.000.000"); otherwise the last "." is treated as a decimal point ("10.00" = 10).
         public static decimal CultureInfoConverterStringToDecimal(string value)
         {
-            value = value.Trim();
+            value = (value ?? string.Empty).Trim();
 
-            string currencySymbol = _cultureInfo.NumberFormat.CurrencySymbol;
+            string currencySymbol = Clp.NumberFormat.CurrencySymbol;
             if (!string.IsNullOrEmpty(currencySymbol) && value.IndexOf(currencySymbol, StringComparison.Ordinal) >= 0)
             {
-                return decimal.Parse(value, NumberStyles.Currency, _cultureInfo);
+                return RoundMoney(decimal.Parse(value, NumberStyles.Currency, Clp));
             }
 
-            if (value.Contains(",") && !value.Contains("."))
+            bool negative = value.StartsWith("-");
+            if (negative) value = value.Substring(1).Trim();
+
+            string result;
+            if (value.IndexOf(',') >= 0)
             {
-                value = value.Replace(",", ".");
+                // A comma is unambiguously the decimal separator here; dots are grouping.
+                result = value.Replace(".", string.Empty).Replace(',', '.');
+            }
+            else if (value.IndexOf('.') >= 0)
+            {
+                string[] groups = value.Split('.');
+                bool allThousands = groups.Length > 1;
+                for (int i = 1; i < groups.Length && allThousands; i++)
+                {
+                    if (groups[i].Length != 3) allThousands = false;
+                }
+
+                if (allThousands)
+                {
+                    result = string.Concat(groups); // "2.000.000" -> "2000000"
+                }
+                else
+                {
+                    // Last dot is the decimal point: "10.00" -> "10.00", "1.234.5" -> "1234.5".
+                    string whole = string.Join(string.Empty, groups, 0, groups.Length - 1);
+                    result = whole + "." + groups[groups.Length - 1];
+                }
+            }
+            else
+            {
+                result = value;
             }
 
-            return decimal.Parse(value, NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
+            decimal parsed = decimal.Parse(result, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture);
+            return RoundMoney(negative ? -parsed : parsed);
         }
 
         public static string FormatAsCurrency(decimal value)
         {
-            return value.ToString("C", _cultureInfo);
+            return RoundMoney(value).ToString("C0", Clp);
         }
 
-        public static CultureInfo CustomCultureInfo()
-        {
-            return _cultureInfo;
-        }
-
-        // Only accepts a culture name from SupportedCurrencies; anything else (null, a typo, no
-        // store setting saved yet) falls back to the default so the app never ends up formatting
-        // money with an arbitrary, untested culture.
-        public static void SetCurrency(string cultureName)
-        {
-            ComboBoxItem match = SupportedCurrencies.FirstOrDefault(c => string.Equals((string)c.Value, cultureName, StringComparison.OrdinalIgnoreCase));
-
-            _cultureInfo = new CultureInfo(match != null ? (string)match.Value : DefaultCurrencyCulture);
-        }
-
+        // The CLP culture, for a grid column's DefaultCellStyle.FormatProvider.
+        public static CultureInfo CustomCultureInfo() => Clp;
     }
 }

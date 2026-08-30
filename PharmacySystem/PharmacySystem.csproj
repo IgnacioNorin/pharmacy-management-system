@@ -227,9 +227,15 @@
       <DependentUpon>frmHome.cs</DependentUpon>
     </Compile>
     <Compile Include="CompositionRoot.cs" />
-    <Compile Include="ModalCashCount.cs" />
-    <Compile Include="ModalProductLots.cs" />
-    <Compile Include="ModalSalePayments.cs" />
+    <Compile Include="ModalCashCount.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ModalProductLots.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ModalSalePayments.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="StartupError.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

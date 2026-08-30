@@ -9,17 +9,15 @@ namespace PharmacySystem.Presentation
     {
         private readonly ICreditNoteView _view;
         private readonly ISaleService _service;
-        private readonly IStoreService _storeService;
         private readonly CurrentUser _currentUser;
         private readonly int _currentPersonId;
 
         private int? _selectedSaleId;
 
-        public CreditNotePresenter(ICreditNoteView view, ISaleService service, IStoreService storeService, CurrentUser currentUser, int currentPersonId)
+        public CreditNotePresenter(ICreditNoteView view, ISaleService service, CurrentUser currentUser, int currentPersonId)
         {
             _view = view;
             _service = service;
-            _storeService = storeService;
             _currentUser = currentUser;
             _currentPersonId = currentPersonId;
         }
@@ -28,7 +26,7 @@ namespace PharmacySystem.Presentation
 
         public void OnLoad()
         {
-            _view.SetDocumentTypeOptions(CountryPresets.ForCode(_storeService.ListStore()?.countryCode).SaleDocumentTypes);
+            _view.SetDocumentTypeOptions(DocumentTypes.Selectable);
             _view.SetGenerateEnabled(false);
         }
 

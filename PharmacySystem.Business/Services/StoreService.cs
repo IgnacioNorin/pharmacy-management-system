@@ -22,16 +22,6 @@ namespace PharmacySystem.Business
 
         public bool HasOperationalData() => _repository.HasOperationalData();
 
-        public bool UpdateStore(Store obj)
-        {
-            Store currentStore = _repository.ListStore();
-            bool isChangingCurrency = !string.Equals(currentStore?.currencyCulture, obj.currencyCulture, StringComparison.OrdinalIgnoreCase);
-            if (isChangingCurrency && _repository.HasOperationalData())
-            {
-                return false;
-            }
-
-            return _repository.UpdateStoreRow(obj);
-        }
+        public bool UpdateStore(Store obj) => _repository.UpdateStoreRow(obj);
     }
 }

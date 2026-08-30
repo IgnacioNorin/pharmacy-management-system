@@ -25,8 +25,7 @@ namespace PharmacySystem.Data
                 {
                     Store row = oConnection.Query<Store>(
                         "SELECT document_store AS document, company_name AS companyName, email, phone, address, " +
-                        "currency_culture AS currencyCulture, country_code AS countryCode, default_tax_rate AS defaultTaxRate, " +
-                        "default_document_type AS defaultDocumentType " +
+                        "default_tax_rate AS defaultTaxRate, default_document_type AS defaultDocumentType " +
                         "FROM store WHERE id = 1")
                         .FirstOrDefault();
 
@@ -35,9 +34,8 @@ namespace PharmacySystem.Data
                         return new Store();
                     }
 
-                    // Non-currency fields match the original dr["x"].ToString() behavior, which
-                    // never returned null even for a NULL cell (DBNull.ToString() is ""). Only
-                    // currency_culture is treated as genuinely nullable, same as before.
+                    // A NULL cell must not surface as null (DBNull.ToString() was "" in the
+                    // original ADO.NET code).
                     row.document = row.document ?? "";
                     row.companyName = row.companyName ?? "";
                     row.email = row.email ?? "";
@@ -96,25 +94,23 @@ namespace PharmacySystem.Data
                         email = obj.email,
                         phone = obj.phone,
                         address = obj.address,
-                        currencyCulture = obj.currencyCulture,
-                        countryCode = string.IsNullOrWhiteSpace(obj.countryCode) ? null : obj.countryCode.Trim(),
                         defaultTaxRate = obj.defaultTaxRate,
                         defaultDocumentType = obj.defaultDocumentType
                     };
 
                     int affected = oConnection.Execute(
                         "UPDATE store SET document_store = @document, company_name = @companyName, email = @email, " +
-                        "phone = @phone, address = @address, currency_culture = @currencyCulture, country_code = @countryCode, " +
+                        "phone = @phone, address = @address, " +
                         "default_tax_rate = @defaultTaxRate, default_document_type = @defaultDocumentType WHERE id = 1",
                         parameters);
 
                     // Fresh database: the singleton row may not have been seeded yet. Insert it so
-                    // the store profile / currency is not silently dropped on a "successful" save.
+                    // the store profile is not silently dropped on a "successful" save.
                     if (affected == 0)
                     {
                         oConnection.Execute(
-                            "INSERT INTO store(id, document_store, company_name, email, phone, address, currency_culture, country_code, default_tax_rate, default_document_type) " +
-                            "VALUES (1, @document, @companyName, @email, @phone, @address, @currencyCulture, @countryCode, @defaultTaxRate, @defaultDocumentType)",
+                            "INSERT INTO store(id, document_store, company_name, email, phone, address, default_tax_rate, default_document_type) " +
+                            "VALUES (1, @document, @companyName, @email, @phone, @address, @defaultTaxRate, @defaultDocumentType)",
                             parameters);
                     }
 

@@ -52,14 +52,18 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 
 ### Cambiado
 
-- **Tipos de documento de venta por preset de país.** Las opciones de tipo de
-  documento en la venta, la nota de crédito y la configuración de tienda ahora
-  salen del preset de país (`CountryPreset.SaleDocumentTypes`) en vez de una lista
-  fija. Hoy los dos presets (Genérico y Chile) ofrecen Boleta/Factura, igual que
-  antes; queda el enganche listo para que un segundo país real aporte su propia
-  lista. Al cambiar el preset en Gestión de tienda, el combo de tipo de documento
-  se actualiza (conservando la opción elegida si el nuevo preset la incluye). La
-  numeración de folio sigue siendo "Factura vs. resto".
+- **El sistema maneja únicamente pesos chilenos (CLP).** Se quitó por completo la
+  moneda configurable y el preset de país. Todo el dinero —ventas, compras,
+  reportes, comprobantes, arqueo de caja, valorización de stock— se formatea como
+  CLP: símbolo `$`, punto de miles y **sin decimales** (`$2.000.000`), porque el
+  peso no tiene unidad menor. Cada monto que el usuario tipea o que el sistema
+  calcula se redondea al peso entero (medio hacia arriba). Se eliminaron las
+  columnas `store.currency_culture` y `store.country_code` (migración `028`) y los
+  combos de moneda y de preset de país de la pantalla de tienda. La validación del
+  RUT del receptor de factura queda fija (antes dependía del preset). La tasa de
+  IVA sigue siendo configurable en la pantalla de tienda (19 por defecto). Los
+  tipos de documento de venta quedan fijos en Boleta/Factura y la numeración de
+  folio sigue siendo "Factura vs. resto".
 - **Baja lógica coherente.** Un proveedor referenciado por compras se da de baja
   lógicamente (`status = 0`) en vez de fallar con "revise los datos"
   (`sp_delete_supplier`, migración `022`). Los clientes dados de baja dejan de
@@ -106,11 +110,10 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   revise los datos" sin más explicación. Migración `027`: `company_name` pasa a
   150, `address` a 200, `email` a 120; la validación de la pantalla acompaña esos
   límites.
-- **Guardado de tienda bloqueado en silencio por la moneda.** Con ventas o
-  compras registradas, el combo de moneda se deshabilita; al guardar, el
-  presenter leía igual ese combo y podía obtener un valor distinto al almacenado,
-  y la capa de negocio rechazaba el guardado como si se estuviera cambiando la
-  moneda. Ahora, con la moneda bloqueada, se reenvía el valor guardado.
+- **Montos en dólares en la compra y la venta.** Al tipear `2000000` el sistema
+  mostraba `200.000,00` (formato con dos decimales de otra cultura) en vez de
+  `$2.000.000`. Con el paso a CLP puro, el ingreso y la muestra de dinero usan
+  siempre el formato chileno de peso entero, sin decimales.
 
 ### Infraestructura
 

@@ -80,7 +80,7 @@ namespace PharmacySystem
             new NotificationConfigPresenter(view, _notificationConfigService, MainForm.Session);
 
         public static MainFormPresenter CreateMainFormPresenter(IMainFormView view) =>
-            new MainFormPresenter(view, _storeService, _notificationConfigService);
+            new MainFormPresenter(view, _notificationConfigService);
 
         // ModalAlerts isn't a Presenter/View screen (see its own comment) - it just needs the
         // service directly to acknowledge an alert.
@@ -97,7 +97,7 @@ namespace PharmacySystem
             new SalePresenter(view, _saleService, _productService, _storeService, idPerson);
 
         public static CreditNotePresenter CreateCreditNotePresenter(ICreditNoteView view) =>
-            new CreditNotePresenter(view, _saleService, _storeService, MainForm.Session, MainForm.oPerson?.idPerson ?? 0);
+            new CreditNotePresenter(view, _saleService, MainForm.Session, MainForm.oPerson?.idPerson ?? 0);
 
         public static ReportPresenter CreateReportPresenter(IReportView view) =>
             new ReportPresenter(view, _supplierService, _categoryService, _saleService, _purchaseService, _productService, _notificationConfigService, _personService, MainForm.Session);
