@@ -91,6 +91,32 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Empty(view.ErrorMessages);
         }
 
+        // Regression: with sales/purchases in the system the currency combo is disabled. On save
+        // the presenter must send the stored currency, not read the disabled combo - otherwise
+        // UpdateStore rejects it as a currency change and the save fails silently.
+        [Fact]
+        public void OnSave_CurrencyLocked_SendsTheStoredCurrency_NotTheCombo()
+        {
+            var view = new FakeStoreManagementView
+            {
+                Document = "1", CompanyName = "C", Email = "e@e.co", Phone = "9", Address = "A",
+                SelectedCurrency = "es-AR" // whatever the disabled combo happens to show
+            };
+            var service = new FakeStoreService
+            {
+                ListStoreResult = new Store { currencyCulture = "en-US", defaultTaxRate = 19m },
+                HasOperationalDataResult = true, // currency is locked
+                UpdateStoreResult = true
+            };
+            var presenter = CreatePresenter(view, service);
+            presenter.OnLoad();
+
+            presenter.OnSave();
+
+            Assert.Equal("en-US", service.UpdatedWith.currencyCulture);
+            Assert.Equal(new[] { "Se actualizaron los datos ingresados exitosamente" }, view.InfoMessages);
+        }
+
         [Fact]
         public void OnSave_Fails_ShowsErrorMessage()
         {

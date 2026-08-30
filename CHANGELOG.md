@@ -97,6 +97,21 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   (Proveedores), y la búsqueda también se pagina. Se dispara con Enter o el botón
   buscar, no al tipear.
 
+### Corregido
+
+- **No se podían guardar los datos de la tienda** cuando la razón social o la
+  dirección eran un poco largas. Las columnas de texto de `store` eran
+  `varchar(50)`: un valor más largo hacía fallar el `UPDATE` con "string would be
+  truncated", que la capa de datos convertía en un "No se pudo guardar los datos,
+  revise los datos" sin más explicación. Migración `027`: `company_name` pasa a
+  150, `address` a 200, `email` a 120; la validación de la pantalla acompaña esos
+  límites.
+- **Guardado de tienda bloqueado en silencio por la moneda.** Con ventas o
+  compras registradas, el combo de moneda se deshabilita; al guardar, el
+  presenter leía igual ese combo y podía obtener un valor distinto al almacenado,
+  y la capa de negocio rechazaba el guardado como si se estuviera cambiando la
+  moneda. Ahora, con la moneda bloqueada, se reenvía el valor guardado.
+
 ### Infraestructura
 
 - **Integración continua (GitHub Actions).** El flujo `.github/workflows/ci.yml`

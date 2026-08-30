@@ -212,10 +212,10 @@ GO
 CREATE TABLE [dbo].[store](
     [id] [int] NOT NULL,
     [document_store] [varchar](50) NULL,
-    [company_name] [varchar](50) NULL,
-    [email] [varchar](50) NULL,
+    [company_name] [varchar](150) NULL,
+    [email] [varchar](120) NULL,
     [phone] [varchar](50) NULL,
-    [address] [varchar](50) NULL,
+    [address] [varchar](200) NULL,
     [currency_culture] [varchar](10) NULL,
     [country_code] [varchar](8) NULL,
     [default_tax_rate] [decimal](5, 2) NOT NULL CONSTRAINT [DF_store_default_tax_rate] DEFAULT ((19)),

@@ -19,6 +19,13 @@ namespace PharmacySystem.Presentation
         private readonly IStoreService _service;
         private readonly CurrentUser _currentUser;
 
+        // The currency loaded from the store profile, and whether the combo is editable. Once the
+        // store has sales/purchases the currency is locked, so on save we send back the loaded
+        // value instead of reading the (disabled) combo - which could otherwise round-trip to a
+        // different string and make the business layer reject the save as "changing currency".
+        private string _loadedCurrency;
+        private bool _currencyEditable;
+
         public StoreManagementPresenter(IStoreManagementView view, IStoreService service, CurrentUser currentUser)
         {
             _view = view;
@@ -35,6 +42,8 @@ namespace PharmacySystem.Presentation
             _view.SetTaxRate(store.defaultTaxRate.ToString("0.##", CultureInfo.InvariantCulture));
             _view.LoadDocumentTypeOptions(CountryPresets.ForCode(store.countryCode).SaleDocumentTypes, store.defaultDocumentType);
 
+            _loadedCurrency = store.currencyCulture;
+
             var options = CultureInfoHelper.SupportedCurrencies;
             int currencyIndex = options.ToList()
                 .FindIndex(c => string.Equals((string)c.Value, store.currencyCulture, StringComparison.OrdinalIgnoreCase));
@@ -47,7 +56,8 @@ namespace PharmacySystem.Presentation
                 string.Equals((string)o.Value, store.countryCode ?? "", StringComparison.OrdinalIgnoreCase));
             _view.LoadCountryPresetOptions(presetOptions, presetIndex >= 0 ? presetIndex : 0);
 
-            _view.SetCurrencyEditable(!_service.HasOperationalData());
+            _currencyEditable = !_service.HasOperationalData();
+            _view.SetCurrencyEditable(_currencyEditable);
         }
 
         // A concrete preset (not "Genérico") pre-fills the VAT rate and currency; the admin can
@@ -92,7 +102,9 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            string selectedCurrency = _view.SelectedCurrency;
+            // When the currency is locked, keep the stored value: reading the disabled combo can
+            // return a different string and get the save rejected as a currency change.
+            string selectedCurrency = _currencyEditable ? _view.SelectedCurrency : _loadedCurrency;
 
             bool isSuccess = _service.UpdateStore(new Store
             {
