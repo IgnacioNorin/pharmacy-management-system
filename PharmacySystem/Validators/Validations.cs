@@ -29,9 +29,12 @@ namespace PharmacySystem.Validators
                     "No hay registros para seleccionar, creé uno")
             },
             {
+                // Phone-style field: digits plus the usual separators (+ - ( ) space), 6-20
+                // chars. Was int.TryParse, which rejected long or country-prefixed numbers even
+                // when they were all digits (DEF-41).
                 "OnlyNumbers", new RuleValidation(
-                    value => int.TryParse(value, out _),
-                    "Este campo solo debe contener números")
+                    value => Regex.IsMatch(value ?? "", @"^\+?[0-9()\-\s]{6,20}$"),
+                    "Teléfono inválido: use 6 a 20 dígitos (se admiten + - ( ) y espacios)")
             },
             {
                 "ValidateEmail", new RuleValidation(

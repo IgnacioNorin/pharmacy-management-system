@@ -59,12 +59,6 @@
     <StartupObject>PharmacySystem.Program</StartupObject>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>5626F3E65440E433073F2D95F972890C41BA46CB</ManifestCertificateThumbprint>
-  </PropertyGroup>
-  <PropertyGroup>
-    <ManifestKeyFile>ProyectoPuntoVenta_TemporaryKey.pfx</ManifestKeyFile>
-  </PropertyGroup>
-  <PropertyGroup>
     <GenerateManifests>true</GenerateManifests>
   </PropertyGroup>
   <PropertyGroup>
@@ -172,7 +166,6 @@
     <Compile Include="frmCreditNote.Designer.cs">
       <DependentUpon>frmCreditNote.cs</DependentUpon>
     </Compile>
-    <Compile Include="Helpers\RawPrinterHelper.cs" />
     <Compile Include="PrintSale.cs">
       <SubType>Form</SubType>
     </Compile>

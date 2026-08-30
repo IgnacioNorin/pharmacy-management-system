@@ -48,11 +48,13 @@ namespace PharmacySystem
                 _presenter.OnLoad(Session);
             }
 
-            timerNotification.Start();
             // Safety net only - a sale or purchase now triggers an immediate recheck via
             // InventoryChangeNotifier, so this just catches a product crossing its expiration
             // threshold purely because time passed, with nobody having sold or bought anything.
+            // Interval is set before Start so the first tick already uses the 5-minute value
+            // instead of the designer default (DEF-34).
             timerNotification.Interval = 300000; // 5 minutes
+            timerNotification.Start();
             lblAlertBadge.Visible = false;
             AddChangePasswordLink();
             LayoutSidebarItems();

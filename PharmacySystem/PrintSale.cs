@@ -42,8 +42,7 @@ namespace PharmacySystem
             }
             List<SaleDetail> saleDetails = _saleService.GetDetailsBySaleId(_IdSale);
 
-            string ticketText = PharmacyTicketBuilder.Build(store, sale, saleDetails);
-            Console.WriteLine(ticketText);
+            string ticketText = PharmacyTicketBuilder.Build(store, sale, saleDetails);
             return ticketText;
         }
         #endregion
@@ -70,7 +69,7 @@ namespace PharmacySystem
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error detecting thermal printer: {ex.Message}");
+                Logger.LogError(ex);
                 return false;
             }
         }
@@ -84,7 +83,7 @@ namespace PharmacySystem
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error checking print spooler: {ex.Message}");
+                Logger.LogError(ex);
                 return false;
             }
         }

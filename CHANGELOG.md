@@ -77,6 +77,24 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 - **La configuración de alertas rechaza valores sin sentido (DEF-19).** Los días
   para "por vencer" van de 1 a 3650 y el stock crítico de 0 a 100.000; un valor
   negativo o enorme desactivaba la alerta en silencio.
+- **Validación de teléfono (DEF-41).** Ya no rechaza números largos o con prefijo
+  de país; admite dígitos y los separadores habituales (`+ - ( )` y espacios),
+  de 6 a 20 caracteres.
+- **Limpieza (DEF-25/26/27/34/36/39).** Se eliminó código muerto
+  (`RawPrinterHelper`), la clave `.pfx` de firma (desactivada) del árbol de
+  trabajo y del `.csproj`; los errores de impresión se registran en `error.log`
+  en vez de `Console`; el temporizador de alertas fija su intervalo antes de
+  arrancar; editar un producto borrado por debajo ahora informa el fallo; y
+  agregar dos veces el mismo producto a una compra avisa en vez de no hacer nada.
+- **Reconocer una alerta ya no pisa a otro usuario (DEF-38).** Si dos personas
+  reconocen la misma alerta a la vez, solo el primero queda registrado; reconocer
+  una alerta ya resuelta no hace nada.
+- **La valorización del informe de productos excluye los dados de baja (DEF-40).**
+  Los productos descontinuados siguen apareciendo como filas, pero ya no cuentan
+  en los totales de valorización de inventario.
+- **La venta vuelve a Boleta al terminar (DEF-31).** Tras registrar una venta,
+  el tipo de documento se restablece a Boleta y el panel del receptor se oculta,
+  en vez de arrancar la siguiente venta en modo Factura con los datos anteriores.
 
 ## [1.4.0] - 2026-08-30
 

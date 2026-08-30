@@ -142,6 +142,40 @@ namespace PharmacySystem.Tests.Integration
             }
         }
 
+        // DEF-38: a second Acknowledge must not overwrite the first acker, and acknowledging an
+        // already-resolved alert is a no-op.
+        [Fact]
+        public void Acknowledge_SecondTime_IsANoOp_AndKeepsTheFirstAcker()
+        {
+            int categoryId = CreateCategory();
+            int productId = CreateProduct(categoryId);
+            int firstPerson = CreatePerson();
+            int secondPerson = CreatePerson();
+            int historyId = Repository.Insert(productId, AlertType.Stock, AlertSeverity.Critical, 0m);
+
+            try
+            {
+                Assert.True(Repository.Acknowledge(historyId, firstPerson));
+                Assert.False(Repository.Acknowledge(historyId, secondPerson));
+
+                var entry = Repository.GetHistory(DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1)).Single(h => h.Id == historyId);
+                Assert.Equal(firstPerson, entry.AcknowledgedBy);
+
+                Repository.Resolve(historyId);
+                int freshHistoryId = Repository.Insert(productId, AlertType.Stock, AlertSeverity.Critical, 0m);
+                SqlTestHelper.ExecuteNonQuery("UPDATE product_alert_history SET resolved_at = GETDATE() WHERE id = @id", new SqlParameter("@id", freshHistoryId));
+                Assert.False(Repository.Acknowledge(freshHistoryId, firstPerson));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_alert_history WHERE id = @id", new SqlParameter("@id", freshHistoryId));
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_alert_history WHERE id = @id", new SqlParameter("@id", historyId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE id IN (@a, @b)", new SqlParameter("@a", firstPerson), new SqlParameter("@b", secondPerson));
+            }
+        }
+
         [Fact]
         public void Mute_ThenUnmute_RoundTripsMutedAt()
         {

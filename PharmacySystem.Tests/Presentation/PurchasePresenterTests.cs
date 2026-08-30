@@ -105,7 +105,7 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void OnAddProduct_ProductAlreadyInCart_DoesNothingSilently()
+        public void OnAddProduct_ProductAlreadyInCart_ShowsMessageAndDoesNotAddASecondLine()
         {
             var view = new FakePurchaseView();
             var presenter = CreatePresenter(view, new FakePurchaseService(), new FakeProductService());
@@ -116,7 +116,7 @@ namespace PharmacySystem.Tests.Presentation
             presenter.OnAddProduct();
 
             Assert.Single(view.RenderedCartLines); // unchanged - no second line rendered
-            Assert.Empty(view.ShownMessages);
+            Assert.Contains(view.ShownMessages, m => m.Contains("ya está en la compra"));
         }
 
         [Fact]

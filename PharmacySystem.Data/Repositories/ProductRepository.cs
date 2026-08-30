@@ -66,7 +66,7 @@ namespace PharmacySystem.Data
                         "UPDATE product SET code = @code, name = @name, description = @description, " +
                         "category_id = @category_id, tax_affected = @tax_affected WHERE id = @id_product;";
 
-                    oConnection.Execute(sql, new
+                    int affected = oConnection.Execute(sql, new
                     {
                         id_product = obj.idProduct,
                         code = obj.code,
@@ -76,7 +76,8 @@ namespace PharmacySystem.Data
                         tax_affected = obj.taxAffected
                     });
 
-                    return true;
+                    // 0 rows: the product was deleted underneath - report the failure (DEF-39).
+                    return affected > 0;
                 }
                 catch (Exception ex) when (SqlErrorCodes.IsUniqueViolation(ex))
                 {
@@ -421,6 +422,7 @@ namespace PharmacySystem.Data
                         "SELECT p.date_created AS DateCreated, p.code AS Code, p.name AS Name, p.description AS Description, " +
                         "c.description AS CategoryDescription, p.stock AS Stock, p.purchase_price AS PurchasePrice, " +
                         "p.sale_price AS SalePrice, p.date_expired AS DateExpired, s.name AS StatusName, " +
+                        "CAST(CASE WHEN p.status = 1 THEN 1 ELSE 0 END AS bit) AS Active, " +
                         // Stock valued at each lot's own cost; if the product has no lots, fall back
                         // to its stock at the weighted-average (or last purchase) cost.
                         "ISNULL(lot.lot_value, ISNULL(p.stock, 0) * ISNULL(p.average_cost, p.purchase_price)) AS StockCostValue " +
