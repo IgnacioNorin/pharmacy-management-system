@@ -3,6 +3,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using Dapper;
 using PharmacySystem.Helpers;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Data
@@ -44,6 +45,11 @@ namespace PharmacySystem.Data
                     row.address = row.address ?? "";
                     return row;
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -60,6 +66,11 @@ namespace PharmacySystem.Data
                 {
                     return oConnection.ExecuteScalar<int>(
                         "SELECT CASE WHEN EXISTS (SELECT 1 FROM sale) OR EXISTS (SELECT 1 FROM purchase) THEN 1 ELSE 0 END") == 1;
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
@@ -108,6 +119,11 @@ namespace PharmacySystem.Data
                     }
 
                     return true;
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {

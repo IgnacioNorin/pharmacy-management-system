@@ -1,5 +1,6 @@
 using PharmacySystem.Business;
 using PharmacySystem.Helpers;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
@@ -46,7 +47,17 @@ namespace PharmacySystem.Presentation
 
         public void RefreshAlerts()
         {
-            _view.ShowAlerts(_notificationService.GetActiveAlerts());
+            try
+            {
+                _view.ShowAlerts(_notificationService.GetActiveAlerts());
+            }
+            catch (DataUnavailableException)
+            {
+                // Runs on the 5-minute timer and on every navigation, off the UI thread. A brief
+                // database outage must not pop a dialog on a background tick or bubble up as an
+                // unobserved task exception - the badge keeps its last value and the next tick
+                // retries. The repository already logged the underlying error.
+            }
         }
     }
 }

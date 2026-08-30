@@ -128,5 +128,19 @@ namespace PharmacySystem.Tests.Presentation
 
             Assert.Same(alerts[0], Assert.Single(view.ShownAlerts));
         }
+
+        [Fact]
+        public void RefreshAlerts_DatabaseUnavailable_IsSwallowed()
+        {
+            var view = new FakeMainFormView();
+            var notificationService = new FakeNotificationConfigService { GetActiveAlertsThrows = true };
+
+            // Runs off the UI thread on a 5-minute timer: a transient outage must not propagate
+            // (it would surface as an unobserved task exception) nor pop a dialog. The badge is
+            // left untouched - ShowAlerts is never called - and the next tick retries.
+            CreatePresenter(view, new FakeStoreService(), notificationService).RefreshAlerts();
+
+            Assert.Null(view.ShownAlerts);
+        }
     }
 }

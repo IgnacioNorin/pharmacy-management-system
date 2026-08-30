@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using Dapper;
 using PharmacySystem.Helpers;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Data
@@ -29,6 +30,11 @@ namespace PharmacySystem.Data
                         "FROM permission ORDER BY section, code")
                         .ToList();
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -49,6 +55,11 @@ namespace PharmacySystem.Data
                         "WHERE rp.person_type_id = @personTypeId",
                         new { personTypeId })
                         .ToList();
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
@@ -71,6 +82,11 @@ namespace PharmacySystem.Data
                         new { permissionCode })
                         .ToList();
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -90,6 +106,11 @@ namespace PharmacySystem.Data
                         "FROM person_type ORDER BY id")
                         .ToList();
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -108,6 +129,11 @@ namespace PharmacySystem.Data
                         "SELECT permission_id FROM role_permission WHERE person_type_id = @personTypeId",
                         new { personTypeId })
                         .ToList();
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
@@ -137,6 +163,11 @@ namespace PharmacySystem.Data
                     // the last role that has it).
                     return parameters.Get<bool>("result");
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -158,6 +189,11 @@ namespace PharmacySystem.Data
                     oConnection.Execute("sp_create_person_type", parameters, commandType: CommandType.StoredProcedure);
 
                     return parameters.Get<int>("result");
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
@@ -194,6 +230,11 @@ namespace PharmacySystem.Data
                     oConnection.Execute(procName, parameters, commandType: CommandType.StoredProcedure);
 
                     return parameters.Get<bool>("result");
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
