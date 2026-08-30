@@ -60,6 +60,14 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
     no cierra la operación).
   - Imprimir un comprobante con la ficha de tienda a medio completar ya no lanza
     una referencia nula: los campos faltantes salen vacíos.
+- **El comprobante impreso en impresora normal ahora trae los datos fiscales
+  (DEF-11).** El comprobante HTML (la ruta por defecto) incluye el bloque
+  RECEPTOR de la factura (RUT, razón social, giro, dirección, comuna) y el
+  desglose Neto / IVA / Exento, igual que el de impresora térmica. Una nota de
+  crédito muestra la venta que anula.
+- **El comprobante HTML escapa el contenido (DEF-12).** Los nombres de empresa,
+  producto y receptor se codifican antes de insertarse en la plantilla, así que
+  un producto llamado `Vitamina C & D` o con `<` ya no rompe el diseño.
 
 ## [1.4.0] - 2026-08-30
 
