@@ -119,5 +119,37 @@ namespace PharmacySystem.Tests.Integration
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM supplier WHERE id = @id", new SqlParameter("@id", id));
             }
         }
+
+        [Fact]
+        public void ListPaged_SlicesTheResult_ReportsTheTotal_AndFiltersBySearch()
+        {
+            string tag = SqlTestHelper.NewTag();
+            var ids = new System.Collections.Generic.List<int>();
+
+            try
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    var s = NewSupplier();
+                    s.companyName = tag + " co " + i;
+                    ids.Add(Repository.Register(s));
+                }
+
+                PagedResult<Supplier> page1 = Repository.ListPaged(1, 2, tag);
+                Assert.Equal(5, page1.TotalCount);
+                Assert.Equal(2, page1.Items.Count);
+                Assert.Equal(3, page1.TotalPages);
+
+                Assert.Single(Repository.ListPaged(3, 2, tag).Items);
+                Assert.Equal(0, Repository.ListPaged(1, 10, "missing-" + tag).TotalCount);
+            }
+            finally
+            {
+                foreach (int id in ids)
+                {
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM supplier WHERE id = @id", new SqlParameter("@id", id));
+                }
+            }
+        }
     }
 }

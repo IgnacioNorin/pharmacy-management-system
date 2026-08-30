@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Threading;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
@@ -13,6 +14,10 @@ namespace PharmacySystem.Tests.Presentation
     // to decide whether to blank it out - preserved verbatim from the original frmManagement.cs.
     // Pin the thread culture to Invariant (slash-separated, matching that hardcoded literal) so
     // these tests aren't at the mercy of whatever culture the machine running them defaults to.
+    //
+    // The grid is server-paged: OnLoad / OnSearch / the page-navigation methods all call
+    // IProductService.ListPaged and repaint the whole grid, and a successful save or delete
+    // reloads the current page.
     public class ProductManagementPresenterTests
     {
         private static void WithInvariantCulture(Action action)
@@ -32,28 +37,41 @@ namespace PharmacySystem.Tests.Presentation
         private static ProductManagementPresenter CreatePresenter(FakeProductManagementView view, FakeProductService productService, FakeCategoryService categoryService)
             => new ProductManagementPresenter(view, productService, categoryService, TestUser.With("productos.gestionar", "productos.eliminar"));
 
+        private static Product Prod(int id, string code, string name, string description = "") => new Product
+        {
+            idProduct = id,
+            code = code,
+            name = name,
+            description = description,
+            oCategory = new Categories { IdCategory = 1, description = "Cat" },
+            stock = 1
+        };
+
+        private static List<Product> ManyProducts(int count) =>
+            Enumerable.Range(1, count).Select(i => Prod(i, "P" + i, "Producto " + i)).ToList();
+
         [Fact]
-        public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotRegister()
+        public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotTouchTheGrid()
         {
             var view = new FakeProductManagementView { ProductId = 0, Code = "P", Name = "N", Description = "D", SelectedCategoryId = 1 };
             new ProductManagementPresenter(view, new FakeProductService(), new FakeCategoryService(), TestUser.With()).OnSave();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
-            Assert.Empty(view.AddedRows);
+            Assert.Equal(0, view.LoadProductsCallCount);
         }
 
         [Fact]
-        public void OnDelete_WithoutDeletePermission_ShowsDeniedAndDoesNotRemove()
+        public void OnDelete_WithoutDeletePermission_ShowsDeniedAndDoesNotTouchTheGrid()
         {
             var view = new FakeProductManagementView { SelectedIndex = 2, ProductId = 5 };
             new ProductManagementPresenter(view, new FakeProductService(), new FakeCategoryService(), TestUser.With("productos.gestionar")).OnDelete();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
-            Assert.Empty(view.RemovedIndexes);
+            Assert.Equal(0, view.LoadProductsCallCount);
         }
 
         [Fact]
-        public void OnLoad_PopulatesCategoryOptionsAndProducts()
+        public void OnLoad_PopulatesCategoryOptionsAndFirstPage()
         {
             var view = new FakeProductManagementView();
             var productService = new FakeProductService
@@ -79,6 +97,9 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Single(view.LoadedProducts);
             Assert.Equal("Paracetamol", view.LoadedProducts[0].Name);
             Assert.Equal("01/01/2027", view.LoadedProducts[0].ExpirationDateText);
+            Assert.Equal((1, 1, 1), view.LastPageInfo);
+            Assert.Equal(1, productService.LastPagedCall?.Page);
+            Assert.Equal("", productService.LastPagedCall?.Search);
         }
 
         [Fact]
@@ -97,64 +118,95 @@ namespace PharmacySystem.Tests.Presentation
                     }
                 }
             };
-            var categoryService = new FakeCategoryService();
 
-            WithInvariantCulture(() => CreatePresenter(view, productService, categoryService).OnLoad());
+            WithInvariantCulture(() => CreatePresenter(view, productService, new FakeCategoryService()).OnLoad());
 
             Assert.Equal("", view.LoadedProducts[0].ExpirationDateText);
+        }
+
+        [Fact]
+        public void OnLoad_MoreThanOnePage_ReportsTotalsAndOnlyReturnsTheFirstPage()
+        {
+            var view = new FakeProductManagementView();
+            var productService = new FakeProductService { ListResult = ManyProducts(120) };
+
+            CreatePresenter(view, productService, new FakeCategoryService()).OnLoad();
+
+            Assert.Equal(50, view.LoadedProducts.Count);
+            Assert.Equal((1, 3, 120), view.LastPageInfo); // page 1 of 3, 120 rows
+        }
+
+        [Fact]
+        public void OnNextPage_ThenOnPreviousPage_MoveOnePageAtATime_AndClampAtTheEnds()
+        {
+            var view = new FakeProductManagementView();
+            var productService = new FakeProductService { ListResult = ManyProducts(120) };
+            var presenter = CreatePresenter(view, productService, new FakeCategoryService());
+            presenter.OnLoad();
+
+            presenter.OnNextPage();
+            Assert.Equal(2, view.LastPageInfo?.CurrentPage);
+
+            presenter.OnNextPage();
+            Assert.Equal(3, view.LastPageInfo?.CurrentPage);
+
+            presenter.OnNextPage(); // already on the last page
+            Assert.Equal(3, view.LastPageInfo?.CurrentPage);
+
+            presenter.OnFirstPage();
+            Assert.Equal(1, view.LastPageInfo?.CurrentPage);
+
+            presenter.OnPreviousPage(); // already on the first page
+            Assert.Equal(1, view.LastPageInfo?.CurrentPage);
+        }
+
+        [Fact]
+        public void OnSearch_QueriesWithTheTermAndResetsToPageOne()
+        {
+            var view = new FakeProductManagementView();
+            var productService = new FakeProductService
+            {
+                ListResult = ManyProducts(120).Concat(new[] { Prod(999, "ASPIRINA", "Aspirina") }).ToList()
+            };
+            var presenter = CreatePresenter(view, productService, new FakeCategoryService());
+            presenter.OnLoad();
+            presenter.OnNextPage(); // now on page 2
+
+            view.SearchText = "Aspirina";
+            presenter.OnSearch();
+
+            Assert.Equal("Aspirina", productService.LastPagedCall?.Search);
+            Assert.Equal(1, productService.LastPagedCall?.Page);
+            Assert.Single(view.LoadedProducts);
+            Assert.Equal((1, 1, 1), view.LastPageInfo);
         }
 
         [Fact]
         public void OnSave_ValidationErrors_ShowsThemAndNeverCallsService()
         {
             var view = new FakeProductManagementView { ValidationErrors = new List<string> { "El código es requerido" } };
-            var productService = new FakeProductService();
-            var categoryService = new FakeCategoryService();
 
-            CreatePresenter(view, productService, categoryService).OnSave();
+            CreatePresenter(view, new FakeProductService(), new FakeCategoryService()).OnSave();
 
             Assert.Equal(new List<string> { "El código es requerido" }, view.ShownValidationErrors);
-            Assert.Empty(view.AddedRows);
+            Assert.Equal(0, view.LoadProductsCallCount);
         }
 
         [Fact]
-        public void OnSave_NewProduct_Succeeds_AddsRowAndClearsForm()
+        public void OnSave_NewProduct_Succeeds_ReloadsThePageAndClearsForm()
         {
             var view = new FakeProductManagementView
             {
-                ProductId = 0,
-                Code = "P2",
-                Name = "Ibuprofeno",
-                Description = "Antiinflamatorio",
-                SelectedCategoryId = 2,
-                SelectedCategoryText = "Antiinflamatorios"
+                ProductId = 0, Code = "P2", Name = "Ibuprofeno", Description = "Antiinflamatorio",
+                SelectedCategoryId = 2, SelectedCategoryText = "Antiinflamatorios"
             };
-            var productService = new FakeProductService { RegisterResult = 7 };
-            var categoryService = new FakeCategoryService();
-
-            CreatePresenter(view, productService, categoryService).OnSave();
-
-            Assert.Single(view.AddedRows);
-            Assert.Equal(7, view.AddedRows[0].Id);
-            Assert.Equal("0", view.AddedRows[0].Stock);
-            Assert.True(view.AddedRows[0].TaxAffected); // default from the view
-            Assert.True(view.ClearFormCalled);
-        }
-
-        [Fact]
-        public void OnSave_NewExemptProduct_CarriesTheFlagToTheRow()
-        {
-            var view = new FakeProductManagementView
-            {
-                ProductId = 0, Code = "EX1", Name = "Libro", Description = "Exento",
-                SelectedCategoryId = 1, SelectedCategoryText = "Varios",
-                TaxAffected = false
-            };
-            var productService = new FakeProductService { RegisterResult = 8 };
+            var productService = new FakeProductService { RegisterResult = 7, ListResult = ManyProducts(3) };
 
             CreatePresenter(view, productService, new FakeCategoryService()).OnSave();
 
-            Assert.False(view.AddedRows[0].TaxAffected);
+            Assert.True(view.ClearFormCalled);
+            Assert.Equal(1, view.LoadProductsCallCount);
+            Assert.Equal(3, view.LoadedProducts.Count);
         }
 
         [Fact]
@@ -162,11 +214,10 @@ namespace PharmacySystem.Tests.Presentation
         {
             var view = new FakeProductManagementView { ProductId = 0 };
             var productService = new FakeProductService { RegisterResult = 0 };
-            var categoryService = new FakeCategoryService();
 
-            CreatePresenter(view, productService, categoryService).OnSave();
+            CreatePresenter(view, productService, new FakeCategoryService()).OnSave();
 
-            Assert.Empty(view.AddedRows);
+            Assert.Equal(0, view.LoadProductsCallCount);
             Assert.False(view.ClearFormCalled);
             Assert.Empty(view.ShownMessages);
         }
@@ -176,28 +227,23 @@ namespace PharmacySystem.Tests.Presentation
         {
             var view = new FakeProductManagementView { ProductId = 4, SelectedIndex = 1 };
             var productService = new FakeProductService { UpdateResult = false };
-            var categoryService = new FakeCategoryService();
 
-            CreatePresenter(view, productService, categoryService).OnSave();
+            CreatePresenter(view, productService, new FakeCategoryService()).OnSave();
 
-            Assert.Empty(view.ReplacedRows);
+            Assert.Equal(0, view.LoadProductsCallCount);
             Assert.False(view.ClearFormCalled);
             Assert.Empty(view.ShownMessages);
         }
 
         [Fact]
-        public void OnSave_ExistingProduct_UpdateSucceeds_ReplacesRowWithoutStockAndClearsForm()
+        public void OnSave_ExistingProduct_UpdateSucceeds_ReloadsThePageAndClearsForm()
         {
             var view = new FakeProductManagementView { ProductId = 4, SelectedIndex = 2, Name = "Actualizado" };
-            var productService = new FakeProductService { UpdateResult = true };
-            var categoryService = new FakeCategoryService();
+            var productService = new FakeProductService { UpdateResult = true, ListResult = ManyProducts(2) };
 
-            CreatePresenter(view, productService, categoryService).OnSave();
+            CreatePresenter(view, productService, new FakeCategoryService()).OnSave();
 
-            Assert.Single(view.ReplacedRows);
-            Assert.Equal(1, view.ReplacedRows[0].Index); // SelectedIndex (1-based) - 1
-            Assert.Null(view.ReplacedRows[0].Row.Stock);
-            Assert.Null(view.ReplacedRows[0].Row.ExpirationDateText);
+            Assert.Equal(1, view.LoadProductsCallCount);
             Assert.True(view.ClearFormCalled);
         }
 
@@ -205,38 +251,52 @@ namespace PharmacySystem.Tests.Presentation
         public void OnDelete_NoSelection_NeverCallsService()
         {
             var view = new FakeProductManagementView { SelectedIndex = 0 };
-            var productService = new FakeProductService();
-            var categoryService = new FakeCategoryService();
 
-            CreatePresenter(view, productService, categoryService).OnDelete();
+            CreatePresenter(view, new FakeProductService(), new FakeCategoryService()).OnDelete();
 
-            Assert.Empty(view.RemovedIndexes);
+            Assert.Equal(0, view.LoadProductsCallCount);
         }
 
         [Fact]
-        public void OnDelete_ServiceFails_ShowsMessageAndDoesNotRemoveRow()
+        public void OnDelete_ServiceFails_ShowsMessageAndDoesNotReload()
         {
             var view = new FakeProductManagementView { SelectedIndex = 1 };
             var productService = new FakeProductService { DeleteResult = false };
-            var categoryService = new FakeCategoryService();
 
-            CreatePresenter(view, productService, categoryService).OnDelete();
+            CreatePresenter(view, productService, new FakeCategoryService()).OnDelete();
 
             Assert.Equal(new[] { "No se pudo eliminar el registro\nRevise los datos" }, view.ShownMessages);
-            Assert.Empty(view.RemovedIndexes);
+            Assert.Equal(0, view.LoadProductsCallCount);
         }
 
         [Fact]
-        public void OnDelete_Succeeds_RemovesRowAndClearsForm()
+        public void OnDelete_Succeeds_ReloadsThePageAndClearsForm()
         {
             var view = new FakeProductManagementView { SelectedIndex = 3 };
-            var productService = new FakeProductService { DeleteResult = true };
-            var categoryService = new FakeCategoryService();
+            var productService = new FakeProductService { DeleteResult = true, ListResult = ManyProducts(4) };
 
-            CreatePresenter(view, productService, categoryService).OnDelete();
+            CreatePresenter(view, productService, new FakeCategoryService()).OnDelete();
 
-            Assert.Equal(new[] { 2 }, view.RemovedIndexes); // SelectedIndex (1-based) - 1
+            Assert.Equal(1, view.LoadProductsCallCount);
             Assert.True(view.ClearFormCalled);
+        }
+
+        [Fact]
+        public void OnDelete_LastRowOfLastPage_FallsBackToTheNewLastPage()
+        {
+            var view = new FakeProductManagementView();
+            var productService = new FakeProductService { DeleteResult = true, ListResult = ManyProducts(51) };
+            var presenter = CreatePresenter(view, productService, new FakeCategoryService());
+            presenter.OnLoad();     // page 1 of 2 (50 + 1)
+            presenter.OnNextPage(); // page 2 of 2, a single row
+            Assert.Equal(2, view.LastPageInfo?.CurrentPage);
+
+            productService.ListResult = ManyProducts(50); // that row is gone
+            view.SelectedIndex = 1;
+            presenter.OnDelete();
+
+            Assert.Equal(1, view.LastPageInfo?.CurrentPage); // page 2 no longer exists
+            Assert.Equal((1, 1, 50), view.LastPageInfo);
         }
     }
 }

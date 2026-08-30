@@ -14,6 +14,7 @@ namespace PharmacySystem
         public frmClient()
         {
             InitializeComponent();
+            BuildClientPager();
             _presenter = CompositionRoot.CreateClientPresenter(this);
         }
 
@@ -55,21 +56,25 @@ namespace PharmacySystem
 
         public void LoadClients(IEnumerable<ClientRow> clients)
         {
+            dgdata.Rows.Clear();
             foreach (ClientRow row in clients)
             {
-                AddRow(row);
+                int rowId = dgdata.Rows.Add();
+                WriteRow(dgdata.Rows[rowId], row);
             }
         }
 
-        public void AddRow(ClientRow row)
+        public void SetPageInfo(int currentPage, int totalPages, int totalCount)
         {
-            int rowId = dgdata.Rows.Add();
-            WriteRow(dgdata.Rows[rowId], row);
+            lblClientPage.Text = totalCount == 0
+                ? "Sin resultados"
+                : $"Página {currentPage} de {totalPages}  ·  {totalCount} cliente(s)";
+
+            btnClientFirst.Enabled = btnClientPrev.Enabled = currentPage > 1;
+            btnClientNext.Enabled = btnClientLast.Enabled = currentPage < totalPages;
         }
 
-        public void ReplaceRow(int index, ClientRow row) => WriteRow(dgdata.Rows[index], row);
-
-        public void RemoveRow(int index) => dgdata.Rows.RemoveAt(index);
+        public string SearchText => txtsearch.Text;
 
         public void ClearForm() => Clean();
 
@@ -251,26 +256,62 @@ namespace PharmacySystem
             _presenter.OnDelete();
         }
 
-        private void btnsearch_Click(object sender, EventArgs e)
-        {
-            string columnFilter = ((PharmacySystem.Model.ComboBoxItem)cbosearch.SelectedItem).Value.ToString();
-
-            if (dgdata.Rows.Count > 0) {
-                foreach (DataGridViewRow row in dgdata.Rows)
-                {
-                    string cellValue = (row.Cells[columnFilter].Value?.ToString() ?? "").Trim();
-                    row.Visible = cellValue.Contains(txtsearch.Text.Trim());
-                }
-            }
-        }
+        private void btnsearch_Click(object sender, EventArgs e) => _presenter.OnSearch();
 
         private void btnClear_Click(object sender, EventArgs e)
         {
             txtsearch.Text = "";
-            foreach (DataGridViewRow row in dgdata.Rows)
-            {
-                row.Visible = true;
-            }
+            _presenter.OnSearch();
         }
+
+        // The Clientes grid is server-paged (ClientPresenter). Built in code to leave the
+        // Designer untouched; the search box now runs a server-side query. The "buscar por"
+        // column selector no longer applies - the term matches name, document, business name
+        // and email at once.
+        private Button btnClientFirst;
+        private Button btnClientPrev;
+        private Button btnClientNext;
+        private Button btnClientLast;
+        private Label lblClientPage;
+
+        private void BuildClientPager()
+        {
+            int top = dgdata.Bottom + 8;
+            int left = dgdata.Left;
+
+            btnClientFirst = MakePagerButton("|<", left, top);
+            btnClientPrev = MakePagerButton("<", left + 44, top);
+            btnClientNext = MakePagerButton(">", left + 88, top);
+            btnClientLast = MakePagerButton(">|", left + 132, top);
+
+            lblClientPage = new Label
+            {
+                AutoSize = true,
+                Location = new Point(left + 188, top + 6),
+                Text = string.Empty
+            };
+
+            btnClientFirst.Click += (s, e) => _presenter.OnFirstPage();
+            btnClientPrev.Click += (s, e) => _presenter.OnPreviousPage();
+            btnClientNext.Click += (s, e) => _presenter.OnNextPage();
+            btnClientLast.Click += (s, e) => _presenter.OnLastPage();
+
+            Control host = dgdata.Parent ?? this;
+            host.Controls.Add(btnClientFirst);
+            host.Controls.Add(btnClientPrev);
+            host.Controls.Add(btnClientNext);
+            host.Controls.Add(btnClientLast);
+            host.Controls.Add(lblClientPage);
+        }
+
+        private static Button MakePagerButton(string text, int x, int y) => new Button
+        {
+            Text = text,
+            Location = new Point(x, y),
+            Size = new Size(40, 25),
+            FlatStyle = FlatStyle.Flat,
+            BackColor = Color.WhiteSmoke,
+            Cursor = Cursors.Hand
+        };
     }
 }

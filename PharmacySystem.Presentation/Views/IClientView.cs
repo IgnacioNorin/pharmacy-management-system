@@ -20,13 +20,16 @@ namespace PharmacySystem.Presentation
         string Email { get; }
         bool IsCompany { get; }
 
+        // Free-text term for the server-side search (matches name / document / business name / email).
+        string SearchText { get; }
+
         List<string> Validate();
         bool ConfirmDelete();
 
+        // Replaces the whole grid with one page of rows.
         void LoadClients(IEnumerable<ClientRow> clients);
-        void AddRow(ClientRow row);
-        void ReplaceRow(int index, ClientRow row);
-        void RemoveRow(int index);
+        // Updates the pager: current page, total pages and total row count.
+        void SetPageInfo(int currentPage, int totalPages, int totalCount);
         void ClearForm();
         void ShowMessage(string message);
         void ShowValidationErrors(IReadOnlyList<string> errors);

@@ -8,6 +8,7 @@ namespace PharmacySystem.Business
         int Register(Product obj);
         bool Update(Product obj);
         List<Product> List();
+        PagedResult<Product> ListPaged(int pageNumber, int pageSize, string search);
         List<Product> ListSellable();
         Product GetSellableByCode(string code);
         Product GetSellableById(int idProduct);

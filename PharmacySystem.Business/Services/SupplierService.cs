@@ -24,6 +24,9 @@ namespace PharmacySystem.Business
 
         public List<Supplier> List() => _repository.List();
 
+        public PagedResult<Supplier> ListPaged(int pageNumber, int pageSize, string search) =>
+            _repository.ListPaged(pageNumber, pageSize, search);
+
         public bool Delete(int idSupplier) => _repository.Delete(idSupplier);
     }
 }

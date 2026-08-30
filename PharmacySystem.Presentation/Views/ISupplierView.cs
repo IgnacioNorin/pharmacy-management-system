@@ -18,6 +18,9 @@ namespace PharmacySystem.Presentation
         string Email { get; }
         string Phone { get; }
 
+        // Free-text term for the server-side search (matches company name / document / email).
+        string SearchText { get; }
+
         // Field-level validation stays view-side for this pilot: it already runs against the
         // same Validations.rules table used everywhere else in the app, keyed by control. Moving
         // that keying to plain strings is a separate, larger change and isn't needed to prove
@@ -27,10 +30,10 @@ namespace PharmacySystem.Presentation
         bool ConfirmDelete();
 
         // Outputs the presenter drives.
+        // Replaces the whole grid with one page of rows.
         void LoadSuppliers(IEnumerable<SupplierRow> suppliers);
-        void AddRow(SupplierRow row);
-        void ReplaceRow(int index, SupplierRow row);
-        void RemoveRow(int index);
+        // Updates the pager: current page, total pages and total row count.
+        void SetPageInfo(int currentPage, int totalPages, int totalCount);
         void ClearForm();
         void ShowMessage(string message);
 

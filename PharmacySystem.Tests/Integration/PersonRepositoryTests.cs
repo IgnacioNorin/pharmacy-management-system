@@ -298,5 +298,41 @@ namespace PharmacySystem.Tests.Integration
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @d", new SqlParameter("@d", document));
             }
         }
+
+        [Fact]
+        public void ListClientsPaged_SlicesTheResult_ReportsTheTotal_AndFiltersBySearch()
+        {
+            string tag = SqlTestHelper.NewTag();
+            var docs = new System.Collections.Generic.List<string>();
+
+            try
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    string doc = SqlTestHelper.NewTag();
+                    docs.Add(doc);
+                    var client = NewPerson(doc, "hash");
+                    client.name = tag + " client " + i;
+                    client.oPersonType = new TypePerson { idPersonType = 4 };
+                    Repository.Register(client);
+                }
+
+                PagedResult<Person> page1 = Repository.ListClientsPaged(1, 4, tag);
+                Assert.Equal(6, page1.TotalCount);
+                Assert.Equal(4, page1.Items.Count);
+                Assert.Equal(2, page1.TotalPages);
+                Assert.All(page1.Items, p => Assert.True(string.IsNullOrEmpty(p.password)));
+
+                Assert.Equal(2, Repository.ListClientsPaged(2, 4, tag).Items.Count);
+                Assert.Equal(0, Repository.ListClientsPaged(1, 10, "absent-" + tag).TotalCount);
+            }
+            finally
+            {
+                foreach (string doc in docs)
+                {
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @d", new SqlParameter("@d", doc));
+                }
+            }
+        }
     }
 }

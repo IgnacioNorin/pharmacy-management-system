@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using PharmacySystem.Business;
@@ -7,9 +8,12 @@ using PharmacySystem.Model;
 namespace PharmacySystem.Presentation
 {
     // Ported from frmManagement.cs's Product region. Both Register and Update return silently
-    // on failure (`if (!result) return;` inside each branch), same shape as SupplierPresenter -
-    // the trailing `if (result) CleanProduct(); else MessageBox.Show(...)` is dead code in the
-    // original for the same reason it was in frmSupplier.cs, and stays dead here too.
+    // on failure (`if (!result) return;` inside each branch), same shape as SupplierPresenter.
+    //
+    // The grid is server-paged: ListPaged returns one PageSize slice plus the total count, and
+    // the free-text search is a WHERE clause, not an in-memory row filter. After any successful
+    // create / edit / delete the current page is reloaded so the count and the row membership
+    // stay correct.
     //
     // This screen never touches prices or the release state. The purchase flow moves stock and
     // cost; the Prices screen (ProductPricePresenter) sets the sale price and releases the
@@ -20,6 +24,12 @@ namespace PharmacySystem.Presentation
         private readonly IProductService _productService;
         private readonly ICategoryService _categoryService;
         private readonly CurrentUser _currentUser;
+
+        private const int PageSize = PagedResult<Product>.DefaultPageSize;
+
+        private int _page = 1;
+        private int _totalPages = 1;
+        private string _search = string.Empty;
 
         public ProductManagementPresenter(IProductManagementView view, IProductService productService, ICategoryService categoryService, CurrentUser currentUser)
         {
@@ -36,8 +46,41 @@ namespace PharmacySystem.Presentation
             var categoryOptions = _categoryService.ListForProductForm().Select(c => new ComboBoxItem { Value = c.IdCategory, Text = c.description });
             _view.LoadCategoryOptions(categoryOptions);
 
-            var products = _productService.List().Select(ToRow);
-            _view.LoadProducts(products);
+            LoadPage(1);
+        }
+
+        public void OnSearch()
+        {
+            _search = _view.SearchText?.Trim() ?? string.Empty;
+            LoadPage(1);
+        }
+
+        public void OnFirstPage() => LoadPage(1);
+
+        public void OnPreviousPage() => LoadPage(_page - 1);
+
+        public void OnNextPage() => LoadPage(_page + 1);
+
+        public void OnLastPage() => LoadPage(_totalPages);
+
+        private void LoadPage(int requestedPage)
+        {
+            int page = requestedPage < 1 ? 1 : requestedPage;
+
+            PagedResult<Product> result = _productService.ListPaged(page, PageSize, _search);
+
+            // A shrinking list (e.g. the last row of the last page was just deleted) can leave the
+            // requested page past the end - fall back to the new last page once.
+            if (result.TotalCount > 0 && page > result.TotalPages)
+            {
+                result = _productService.ListPaged(result.TotalPages, PageSize, _search);
+            }
+
+            _totalPages = result.TotalPages;
+            _page = result.TotalPages == 0 ? 1 : Math.Min(Math.Max(result.PageNumber, 1), result.TotalPages);
+
+            _view.LoadProducts(result.Items.Select(ToRow));
+            _view.SetPageInfo(_page, _totalPages, result.TotalCount);
         }
 
         public void OnSave()
@@ -67,22 +110,10 @@ namespace PharmacySystem.Presentation
 
             if (product.idProduct == 0)
             {
-                int id = _productService.Register(product);
-                if (id == 0)
+                if (_productService.Register(product) == 0)
                 {
                     return;
                 }
-
-                _view.AddRow(new ManagementProductRow
-                {
-                    Id = id,
-                    Code = product.code,
-                    Name = product.name,
-                    Description = product.description,
-                    CategoryText = _view.SelectedCategoryText,
-                    TaxAffected = product.taxAffected,
-                    Stock = "0"
-                });
             }
             else
             {
@@ -90,23 +121,10 @@ namespace PharmacySystem.Presentation
                 {
                     return;
                 }
-
-                _view.ReplaceRow(_view.SelectedIndex - 1, new ManagementProductRow
-                {
-                    Id = product.idProduct,
-                    Code = product.code,
-                    Name = product.name,
-                    Description = product.description,
-                    CategoryText = _view.SelectedCategoryText,
-                    TaxAffected = product.taxAffected,
-                    // Stock/expiration aren't touched on update, same as the original, which
-                    // never rewrote those two grid cells in the else branch.
-                    Stock = null,
-                    ExpirationDateText = null
-                });
             }
 
             _view.ClearForm();
+            LoadPage(_page);
         }
 
         public void OnDelete()
@@ -133,8 +151,8 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            _view.RemoveRow(_view.SelectedIndex - 1);
             _view.ClearForm();
+            LoadPage(_page);
         }
 
         private bool Can(string permission) => _currentUser?.Can(permission) ?? false;

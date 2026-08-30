@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using PharmacySystem.Business;
 using PharmacySystem.Model;
@@ -7,15 +8,22 @@ namespace PharmacySystem.Presentation
     // Ported from frmClient.cs. Preserves two real quirks from the original rather than fixing
     // them in passing:
     //  - OnSave shows "No se pudo guardar los cambios" on failure for BOTH register and update
-    //    (unlike SupplierPresenter, where a failed Update returns silently - frmClient's
-    //    btnSave_Click never returns early, it always falls through to the shared result check).
-    //  - OnDelete does nothing at all (no message) when nothing is selected, unlike
-    //    SupplierPresenter's explicit "seleccione un proveedor".
+    //    (unlike SupplierPresenter, where a failed Update returns silently).
+    //  - OnDelete does nothing at all (no message) when nothing is selected.
+    //
+    // The grid is server-paged: ListClientsPaged returns one page plus the total count, the
+    // search box is a WHERE clause, and a successful save or delete reloads the current page.
     public class ClientPresenter
     {
         private readonly IClientView _view;
         private readonly IPersonService _service;
         private readonly CurrentUser _currentUser;
+
+        private const int PageSize = PagedResult<Person>.DefaultPageSize;
+
+        private int _page = 1;
+        private int _totalPages = 1;
+        private string _search = string.Empty;
 
         public ClientPresenter(IClientView view, IPersonService service, CurrentUser currentUser)
         {
@@ -26,10 +34,38 @@ namespace PharmacySystem.Presentation
 
         private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
 
-        public void OnLoad()
+        public void OnLoad() => LoadPage(1);
+
+        public void OnSearch()
         {
-            var clients = _service.ListClients().Select(ClientRow.From);
-            _view.LoadClients(clients);
+            _search = _view.SearchText?.Trim() ?? string.Empty;
+            LoadPage(1);
+        }
+
+        public void OnFirstPage() => LoadPage(1);
+
+        public void OnPreviousPage() => LoadPage(_page - 1);
+
+        public void OnNextPage() => LoadPage(_page + 1);
+
+        public void OnLastPage() => LoadPage(_totalPages);
+
+        private void LoadPage(int requestedPage)
+        {
+            int page = requestedPage < 1 ? 1 : requestedPage;
+
+            PagedResult<Person> result = _service.ListClientsPaged(page, PageSize, _search);
+
+            if (result.TotalCount > 0 && page > result.TotalPages)
+            {
+                result = _service.ListClientsPaged(result.TotalPages, PageSize, _search);
+            }
+
+            _totalPages = result.TotalPages;
+            _page = result.TotalPages == 0 ? 1 : Math.Min(Math.Max(result.PageNumber, 1), result.TotalPages);
+
+            _view.LoadClients(result.Items.Select(ClientRow.From));
+            _view.SetPageInfo(_page, _totalPages, result.TotalCount);
         }
 
         public void OnSave()
@@ -69,29 +105,14 @@ namespace PharmacySystem.Presentation
                 oPersonType = new TypePerson { idPersonType = (int)PersonType.Cliente }
             };
 
-            bool result;
-            if (person.idPerson == 0)
-            {
-                int newId = _service.Register(person);
-                result = newId != 0;
-                if (result)
-                {
-                    person.idPerson = newId;
-                    _view.AddRow(ClientRow.From(person));
-                }
-            }
-            else
-            {
-                result = _service.Update(person);
-                if (result)
-                {
-                    _view.ReplaceRow(_view.SelectedIndex - 1, ClientRow.From(person));
-                }
-            }
+            bool result = person.idPerson == 0
+                ? _service.Register(person) != 0
+                : _service.Update(person);
 
             if (result)
             {
                 _view.ClearForm();
+                LoadPage(_page);
             }
             else
             {
@@ -119,8 +140,8 @@ namespace PharmacySystem.Presentation
 
             if (_service.Delete(_view.PersonId))
             {
-                _view.RemoveRow(_view.SelectedIndex - 1);
                 _view.ClearForm();
+                LoadPage(_page);
             }
             else
             {

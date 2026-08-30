@@ -21,7 +21,7 @@ namespace PharmacySystem.Tests.Presentation
             new SupplierPresenter(view, new FakeSupplierService(), TestUser.With()).OnSave();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
-            Assert.Empty(view.AddedRows);
+            Assert.Equal(0, view.LoadSuppliersCallCount);
         }
 
         [Fact]
@@ -31,7 +31,7 @@ namespace PharmacySystem.Tests.Presentation
             new SupplierPresenter(view, new FakeSupplierService(), TestUser.With()).OnDelete();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
-            Assert.Empty(view.RemovedIndexes);
+            Assert.Equal(0, view.LoadSuppliersCallCount);
         }
 
         [Fact]
@@ -48,9 +48,9 @@ namespace PharmacySystem.Tests.Presentation
 
             CreatePresenter(view, service).OnLoad();
 
-            Assert.True(service.ListCalled);
             Assert.Single(view.LoadedSuppliers);
             Assert.Equal("Acme", view.LoadedSuppliers[0].CompanyName);
+            Assert.Equal((1, 1, 1), view.LastPageInfo);
         }
 
         [Fact]
@@ -83,9 +83,8 @@ namespace PharmacySystem.Tests.Presentation
             CreatePresenter(view, service).OnSave();
 
             Assert.Equal("0102030405", service.RegisteredWith.document); // trimmed before hitting the service
-            Assert.Single(view.AddedRows);
-            Assert.Equal(42, view.AddedRows[0].Id);
             Assert.True(view.ClearFormCalled);
+            Assert.Equal(1, view.LoadSuppliersCallCount);
             Assert.Empty(view.ShownMessages);
         }
 
@@ -98,21 +97,20 @@ namespace PharmacySystem.Tests.Presentation
             CreatePresenter(view, service).OnSave();
 
             Assert.Equal(new[] { "Ya existe un proveedor con ese documento" }, view.ShownMessages);
-            Assert.Empty(view.AddedRows);
+            Assert.Equal(0, view.LoadSuppliersCallCount);
             Assert.False(view.ClearFormCalled);
         }
 
         [Fact]
-        public void OnSave_ExistingSupplier_UpdateSucceeds_ReplacesRowAndClearsForm()
+        public void OnSave_ExistingSupplier_UpdateSucceeds_ReloadsPageAndClearsForm()
         {
             var view = new FakeSupplierView { SupplierId = 7, SelectedIndex = 2, RowCount = 5, CompanyName = "Updated" };
             var service = new FakeSupplierService { UpdateResult = true };
 
             CreatePresenter(view, service).OnSave();
 
-            Assert.Single(view.ReplacedRows);
-            Assert.Equal(1, view.ReplacedRows[0].Index); // SelectedIndex (1-based) - 1
-            Assert.Equal("Updated", view.ReplacedRows[0].Row.CompanyName);
+            Assert.Equal("Updated", service.UpdatedWith.companyName);
+            Assert.Equal(1, view.LoadSuppliersCallCount);
             Assert.True(view.ClearFormCalled);
         }
 
@@ -127,7 +125,7 @@ namespace PharmacySystem.Tests.Presentation
 
             CreatePresenter(view, service).OnSave();
 
-            Assert.Empty(view.ReplacedRows);
+            Assert.Equal(0, view.LoadSuppliersCallCount);
             Assert.False(view.ClearFormCalled);
             Assert.Empty(view.ShownMessages);
         }
@@ -165,11 +163,11 @@ namespace PharmacySystem.Tests.Presentation
             CreatePresenter(view, service).OnDelete();
 
             Assert.Equal(new[] { "No se pudo eliminar el registro\nRevise los datos" }, view.ShownMessages);
-            Assert.Empty(view.RemovedIndexes);
+            Assert.Equal(0, view.LoadSuppliersCallCount);
         }
 
         [Fact]
-        public void OnDelete_Succeeds_RemovesRowAndClearsForm()
+        public void OnDelete_Succeeds_ReloadsPageAndClearsForm()
         {
             var view = new FakeSupplierView { SelectedIndex = 3, SupplierId = 9 };
             var service = new FakeSupplierService { DeleteResult = true };
@@ -177,8 +175,52 @@ namespace PharmacySystem.Tests.Presentation
             CreatePresenter(view, service).OnDelete();
 
             Assert.Equal(9, service.DeletedId);
-            Assert.Equal(new[] { 2 }, view.RemovedIndexes); // SelectedIndex (1-based) - 1
+            Assert.Equal(1, view.LoadSuppliersCallCount);
             Assert.True(view.ClearFormCalled);
+        }
+
+        [Fact]
+        public void OnSearch_QueriesWithTheTermAndResetsToPageOne()
+        {
+            var view = new FakeSupplierView();
+            var service = new FakeSupplierService
+            {
+                ListResult = new List<Supplier>
+                {
+                    new Supplier { idSupplier = 1, companyName = "Acme" },
+                    new Supplier { idSupplier = 2, companyName = "Globex" }
+                }
+            };
+            var presenter = CreatePresenter(view, service);
+            presenter.OnLoad();
+
+            view.SearchText = "Globex";
+            presenter.OnSearch();
+
+            Assert.Equal("Globex", service.LastPagedCall?.Search);
+            Assert.Equal(1, service.LastPagedCall?.Page);
+            Assert.Single(view.LoadedSuppliers);
+            Assert.Equal("Globex", view.LoadedSuppliers[0].CompanyName);
+        }
+
+        [Fact]
+        public void OnNextPage_ThenPrevious_MoveOnePageAndClampAtEnds()
+        {
+            var view = new FakeSupplierView();
+            var many = new List<Supplier>();
+            for (int i = 1; i <= 60; i++) many.Add(new Supplier { idSupplier = i, companyName = "S" + i.ToString("D2") });
+            var service = new FakeSupplierService { ListResult = many };
+            var presenter = CreatePresenter(view, service);
+            presenter.OnLoad();
+
+            presenter.OnNextPage();
+            Assert.Equal(2, view.LastPageInfo?.CurrentPage);
+
+            presenter.OnNextPage(); // already last
+            Assert.Equal(2, view.LastPageInfo?.CurrentPage);
+
+            presenter.OnPreviousPage();
+            Assert.Equal(1, view.LastPageInfo?.CurrentPage);
         }
     }
 }
