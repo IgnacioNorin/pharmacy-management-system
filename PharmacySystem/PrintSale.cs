@@ -186,39 +186,11 @@ namespace PharmacySystem
                     return;
                 }
 
-                // Load HTML ticket template. Every store field is a nullable column: a store
-                // profile that has not been filled in must still print, not throw (DEF-24).
-                string ticketText = Properties.Resources.Ticket.ToString();
-                ticketText = ticketText.Replace("¡nombreempresa!", (store?.companyName ?? "").ToUpper());
-                ticketText = ticketText.Replace("¡documentoempresa!", store?.document ?? "");
-                ticketText = ticketText.Replace("¡correoempresa!", store?.email ?? "");
-                ticketText = ticketText.Replace("!telefonoempresa¡", store?.phone ?? "");
-
-                ticketText = ticketText.Replace("¡tipodocumento!", sale.typeDocument ?? "");
-                ticketText = ticketText.Replace("¡numerodocumento!", sale.numberDocument ?? "");
-                ticketText = ticketText.Replace("¡fechaventa!", sale.registrationDate.ToString());
-
-                StringBuilder tableRows = new StringBuilder();
-                foreach (SaleDetail detail in saleDetails)
-                {
-                    tableRows.AppendLine("<tr>");
-                    tableRows.AppendLine("<td width=\"20\">" + detail.amount + "</td>");
-                    tableRows.AppendLine("<td width=\"180\">" + (detail.oProduct?.name ?? "") + "</td>");
-                    tableRows.AppendLine("<td style=\"font-size:14px\">" + CultureInfoHelper.FormatAsCurrency(detail.salePrice) + "</td>");
-                    tableRows.AppendLine("<td style=\"font-size:14px\">" + CultureInfoHelper.FormatAsCurrency(detail.subtotal) + "</td>");
-                    tableRows.AppendLine("</tr>");
-                }
-                ticketText = ticketText.Replace("¡detalleventa!", tableRows.ToString());
-
-                ticketText = ticketText.Replace("¡totalpagar!", CultureInfoHelper.FormatAsCurrency(sale.totalPay));
-                string formaPago = (sale.payments != null && sale.payments.Count > 0)
-                    ? (sale.payments.Count > 1
-                        ? "Mixto (" + string.Join(", ", sale.payments.Select(p => p.paymentMethod + " " + CultureInfoHelper.FormatAsCurrency(p.amount))) + ")"
-                        : sale.payments[0].paymentMethod)
-                    : (string.IsNullOrWhiteSpace(sale.paymentMethod) ? PaymentMethods.Default : sale.paymentMethod);
-                ticketText = ticketText.Replace("¡formapago!", formaPago);
-                ticketText = ticketText.Replace("¡pagocon!", CultureInfoHelper.FormatAsCurrency(sale.payWith));
-                ticketText = ticketText.Replace("¡cambio!", CultureInfoHelper.FormatAsCurrency(sale.change));
+                // The HTML fill (RECEPTOR block + NETO/IVA/EXENTO breakdown, HTML-encoded) lives
+                // in HtmlTicketBuilder so this normal-printer receipt cannot drift from the
+                // thermal one (PharmacyTicketBuilder). DEF-11 / DEF-12.
+                string ticketText = HtmlTicketBuilder.Build(
+                    Properties.Resources.Ticket.ToString(), store, sale, saleDetails);
 
                 BrowserPrintSale.DocumentText = ticketText;
             }
