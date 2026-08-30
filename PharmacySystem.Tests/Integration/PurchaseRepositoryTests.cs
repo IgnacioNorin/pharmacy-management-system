@@ -90,9 +90,17 @@ namespace PharmacySystem.Tests.Integration
 
                 int stock = SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId));
                 Assert.Equal(10, stock);
+
+                // The purchase line also created a lot with its own quantity, expiry and cost.
+                var lots = ProductRepo.GetLots(productId);
+                Assert.Single(lots);
+                Assert.Equal(10, lots[0].quantity);
+                Assert.Equal(3m, lots[0].unitCost);
+                Assert.Equal(DateTime.Today.AddYears(1), lots[0].dateExpired);
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_lot WHERE purchase_detail_id IN (SELECT id FROM purchase_detail WHERE purchase_id = @id)", new SqlParameter("@id", purchaseId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase_detail WHERE purchase_id = @id", new SqlParameter("@id", purchaseId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase WHERE id = @id", new SqlParameter("@id", purchaseId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
@@ -169,6 +177,7 @@ namespace PharmacySystem.Tests.Integration
             {
                 foreach (int id in purchaseIds)
                 {
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM product_lot WHERE purchase_detail_id IN (SELECT id FROM purchase_detail WHERE purchase_id = @id)", new SqlParameter("@id", id));
                     SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase_detail WHERE purchase_id = @id", new SqlParameter("@id", id));
                     SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase WHERE id = @id", new SqlParameter("@id", id));
                 }
@@ -241,11 +250,13 @@ namespace PharmacySystem.Tests.Integration
                 var other = Build();
                 other.documentNumber = SqlTestHelper.NewTag();
                 Assert.True(Repository.Register(other));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_lot WHERE purchase_detail_id IN (SELECT id FROM purchase_detail WHERE purchase_id IN (SELECT id FROM purchase WHERE document_number = @doc))", new SqlParameter("@doc", other.documentNumber));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase_detail WHERE purchase_id IN (SELECT id FROM purchase WHERE document_number = @doc)", new SqlParameter("@doc", other.documentNumber));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase WHERE document_number = @doc", new SqlParameter("@doc", other.documentNumber));
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_lot WHERE purchase_detail_id IN (SELECT id FROM purchase_detail WHERE purchase_id = @id)", new SqlParameter("@id", purchaseId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase_detail WHERE purchase_id = @id", new SqlParameter("@id", purchaseId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase WHERE id = @id", new SqlParameter("@id", purchaseId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
@@ -329,6 +340,7 @@ namespace PharmacySystem.Tests.Integration
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_lot WHERE purchase_detail_id IN (SELECT id FROM purchase_detail WHERE purchase_id = @id)", new SqlParameter("@id", purchaseId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase_detail WHERE purchase_id = @id", new SqlParameter("@id", purchaseId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase WHERE id = @id", new SqlParameter("@id", purchaseId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
@@ -430,6 +442,7 @@ namespace PharmacySystem.Tests.Integration
             {
                 foreach (int id in purchaseIds)
                 {
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM product_lot WHERE purchase_detail_id IN (SELECT id FROM purchase_detail WHERE purchase_id = @id)", new SqlParameter("@id", id));
                     SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase_detail WHERE purchase_id = @id", new SqlParameter("@id", id));
                     SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase WHERE id = @id", new SqlParameter("@id", id));
                 }
@@ -499,6 +512,7 @@ namespace PharmacySystem.Tests.Integration
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_lot WHERE purchase_detail_id IN (SELECT id FROM purchase_detail WHERE purchase_id = @id)", new SqlParameter("@id", purchaseId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase_detail WHERE purchase_id = @id", new SqlParameter("@id", purchaseId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM purchase WHERE id = @id", new SqlParameter("@id", purchaseId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id IN (@a, @b)", new SqlParameter("@a", productA), new SqlParameter("@b", productB));

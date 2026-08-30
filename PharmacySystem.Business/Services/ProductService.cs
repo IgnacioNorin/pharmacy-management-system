@@ -22,6 +22,8 @@ namespace PharmacySystem.Business
 
         public List<Product> List() => _repository.List();
 
+        public List<ProductLot> GetLots(int idProduct) => _repository.GetLots(idProduct);
+
         public PagedResult<Product> ListPaged(int pageNumber, int pageSize, string search) =>
             _repository.ListPaged(pageNumber, pageSize, search);
 

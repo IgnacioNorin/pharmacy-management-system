@@ -29,6 +29,8 @@ namespace PharmacySystem.Tests.Presentation
         public int Register(Product obj) => RegisterResult;
         public bool Update(Product obj) => UpdateResult;
         public List<Product> List() => ListResult;
+        public List<ProductLot> GetLotsResult { get; set; } = new List<ProductLot>();
+        public List<ProductLot> GetLots(int idProduct) => GetLotsResult;
 
         // Pages over ListResult in memory, applying the same code/name/description text match
         // the real query does, so a test only needs to populate ListResult.

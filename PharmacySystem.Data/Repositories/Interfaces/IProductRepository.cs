@@ -8,6 +8,8 @@ namespace PharmacySystem.Data
         int Register(Product obj);
         bool Update(Product obj);
         List<Product> List();
+        // The lots of one product (quantity > 0), earliest expiry first.
+        List<ProductLot> GetLots(int idProduct);
         // One page of active products, filtered by a free-text term over code / name / description.
         PagedResult<Product> ListPaged(int pageNumber, int pageSize, string search);
         // Only products released for sale (product.is_released = 1). Backs the sale screen.
