@@ -136,13 +136,18 @@ namespace PharmacySystem.Presentation
 
         // The totals row reinterprets the price columns as inventory valuation: total units,
         // value at last purchase price, lot-accurate value at cost, and value at sale price.
-        private static ProductReportRow ProductTotals(List<ProductReportRow> rows) => new ProductReportRow
+        // Delisted products still show as rows but do not count toward the valuation (DEF-40).
+        private static ProductReportRow ProductTotals(List<ProductReportRow> rows)
         {
-            Stock = rows.Sum(r => r.Stock),
-            PurchasePrice = rows.Sum(r => r.Stock * r.PurchasePrice),
-            StockCostValue = rows.Sum(r => r.StockCostValue),
-            SalePrice = rows.Sum(r => r.Stock * r.SalePrice)
-        };
+            var active = rows.Where(r => r.Active).ToList();
+            return new ProductReportRow
+            {
+                Stock = active.Sum(r => r.Stock),
+                PurchasePrice = active.Sum(r => r.Stock * r.PurchasePrice),
+                StockCostValue = active.Sum(r => r.StockCostValue),
+                SalePrice = active.Sum(r => r.Stock * r.SalePrice)
+            };
+        }
 
         private static readonly ReportDefinition<SaleReportRow> SaleDefinition = new ReportDefinition<SaleReportRow>(new[]
         {

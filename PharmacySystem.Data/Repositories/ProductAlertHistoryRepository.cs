@@ -128,8 +128,12 @@ namespace PharmacySystem.Data
             {
                 try
                 {
+                    // Guard against two users acknowledging the same alert at once: only the
+                    // first write lands, and it does not overwrite an alert that already
+                    // resolved on its own (DEF-38).
                     int rows = oConnection.Execute(
-                        "UPDATE product_alert_history SET acknowledged_by = @personId, acknowledged_at = GETDATE() WHERE id = @historyId",
+                        "UPDATE product_alert_history SET acknowledged_by = @personId, acknowledged_at = GETDATE() " +
+                        "WHERE id = @historyId AND acknowledged_at IS NULL AND resolved_at IS NULL",
                         new { historyId, personId });
                     return rows > 0;
                 }

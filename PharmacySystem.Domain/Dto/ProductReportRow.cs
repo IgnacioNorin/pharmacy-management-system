@@ -17,5 +17,8 @@ namespace PharmacySystem.Model
         public decimal StockCostValue { get; set; }
         public DateTime DateExpired { get; set; }
         public string StatusName { get; set; }
+        // product.status = 1. Delisted products still appear in the report, but the totals row
+        // (inventory valuation) only counts active ones (DEF-40).
+        public bool Active { get; set; }
     }
 }

@@ -206,6 +206,17 @@ namespace PharmacySystem
             txtpaywith.Text = "0";
             txtchange.Text = "0";
             dgdata.Rows.Clear();
+
+            // Back to Boleta and hide the recipient panel: otherwise the next sale silently
+            // starts in Factura mode with the previous receptor still on screen (DEF-31).
+            if (cbodocumenttype.Items.Count > 0 && cbodocumenttype.SelectedIndex != 0)
+            {
+                cbodocumenttype.SelectedIndex = 0; // fires OnDocumentTypeChanged -> hides pnlFactura
+            }
+            else
+            {
+                pnlFactura.Visible = false;
+            }
         }
 
         private void txtPayWith_KeyPress(object sender, KeyPressEventArgs e)
