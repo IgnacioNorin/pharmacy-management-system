@@ -765,6 +765,53 @@ namespace PharmacySystem.Tests.Integration
             }
         }
 
+        // DEF-18: RIGHT('000000' + folio, 6) truncated the number past 999.999, colliding with
+        // UX_sale_document_number. Registering a boleta with the sequence already past a million
+        // must keep every digit.
+        [Fact]
+        public void RegisterSale_FolioPastAMillion_KeepsEveryDigit()
+        {
+            Person person = CreatePerson(out string document);
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = CreateProductWithStock(categoryId, 10);
+
+            long originalNext = (long)SqlTestHelper.ExecuteScalar(
+                "SELECT CAST(current_value AS bigint) + 1 FROM sys.sequences WHERE name = 'seq_folio_boleta'");
+            SqlTestHelper.ExecuteNonQuery("ALTER SEQUENCE dbo.seq_folio_boleta RESTART WITH 1000000");
+
+            int saleId = 0;
+            try
+            {
+                saleId = Repository.Register(new Sale
+                {
+                    typeDocument = "Boleta",
+                    oPerson = person,
+                    documentClient = "9999999999",
+                    nameClient = "Walk-in",
+                    totalPay = 5m, payWith = 5m, change = 0m,
+                    oSaleDetail = new List<SaleDetail>
+                    {
+                        new SaleDetail { oProduct = new Product { idProduct = productId }, amount = 1, salePrice = 5m, subtotal = 5m }
+                    }
+                });
+
+                Assert.True(saleId > 0);
+                Assert.Equal("1000000", (string)SqlTestHelper.ExecuteScalar(
+                    "SELECT document_number FROM sale WHERE id = @id", new SqlParameter("@id", saleId)));
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("ALTER SEQUENCE dbo.seq_folio_boleta RESTART WITH " + originalNext);
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id = @id", new SqlParameter("@id", saleId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_lot WHERE product_id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
+
         [Fact]
         public void SaveFiscalResult_WithDocumentNumber_OverridesTheFolio()
         {

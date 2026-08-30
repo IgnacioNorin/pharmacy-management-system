@@ -9,6 +9,10 @@ namespace PharmacySystem.Presentation
     // message it can show - is unchanged.
     public class NotificationConfigPresenter
     {
+        public const int MinDays = 1;
+        public const int MaxDays = 3650;          // ~10 years
+        public const int MaxCriticalStock = 100000;
+
         private readonly INotificationConfigView _view;
         private readonly INotificationConfigService _service;
         private readonly CurrentUser _currentUser;
@@ -59,10 +63,21 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
+            int days = int.Parse(daysText.Trim());
+            int criticalStock = int.Parse(stockText.Trim());
+
+            // Bounds (DEF-19): a negative or huge threshold silently breaks the alert - a
+            // negative one never fires, a huge one flags the whole catalogue. Days: 1 to 10 years.
+            if (days < MinDays || days > MaxDays || criticalStock < 0 || criticalStock > MaxCriticalStock)
+            {
+                _view.ShowInvalidValueError();
+                return;
+            }
+
             NotificationConfig config = new NotificationConfig
             {
-                days = int.Parse(daysText.Trim()),
-                criticalStock = int.Parse(stockText.Trim())
+                days = days,
+                criticalStock = criticalStock
             };
 
             if (_service.ConfigUpdate(config))

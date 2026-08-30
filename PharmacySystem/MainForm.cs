@@ -241,6 +241,10 @@ namespace PharmacySystem
                     childForm.ShowProductByCode(modal.SelectedProductCode);
                 }
             }
+
+            // Acknowledging or muting inside the center changes what should count toward the
+            // badge; re-fetch now instead of waiting for the 5-minute tick (DEF-16).
+            checkNotifications();
         }
 
         private void btnHome_Click(object sender, EventArgs e) => OpenHome();

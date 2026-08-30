@@ -68,6 +68,15 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 - **El comprobante HTML escapa el contenido (DEF-12).** Los nombres de empresa,
   producto y receptor se codifican antes de insertarse en la plantilla, así que
   un producto llamado `Vitamina C & D` o con `<` ya no rompe el diseño.
+- **El globo de alertas se actualiza al cerrar el centro de notificaciones
+  (DEF-16).** Reconocer o silenciar una alerta ahora refresca el contador de
+  inmediato, en vez de esperar al siguiente chequeo automático.
+- **La numeración de comprobantes ya no se corta pasado el 999.999 (DEF-18).**
+  Un folio de siete o más dígitos se guarda completo, sin colisionar con el
+  índice único.
+- **La configuración de alertas rechaza valores sin sentido (DEF-19).** Los días
+  para "por vencer" van de 1 a 3650 y el stock crítico de 0 a 100.000; un valor
+  negativo o enorme desactivaba la alerta en silencio.
 
 ## [1.4.0] - 2026-08-30
 

@@ -73,6 +73,39 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Null(f.Service.UpdatedWith);
         }
 
+        [Theory]
+        [InlineData("0", "5")]       // days must be at least 1
+        [InlineData("4000", "5")]    // days over ~10 years
+        [InlineData("10", "-1")]     // a negative threshold never fires
+        [InlineData("10", "999999")] // a huge threshold flags the whole catalogue
+        public void OnSave_OutOfRangeValue_ShowsInvalidValueError_AndDoesNotSave(string days, string stock)
+        {
+            var f = Create();
+            f.View.DaysText = days;
+            f.View.StockText = stock;
+
+            f.Presenter.OnSave();
+
+            Assert.Equal(1, f.View.InvalidValueErrorCount);
+            Assert.Null(f.Service.UpdatedWith);
+        }
+
+        [Theory]
+        [InlineData("1", "0")]                 // lower bounds
+        [InlineData("3650", "100000")]         // upper bounds
+        public void OnSave_ValuesAtTheBounds_AreAccepted(string days, string stock)
+        {
+            var f = Create();
+            f.View.DaysText = days;
+            f.View.StockText = stock;
+            f.Service.ConfigUpdateResult = true;
+
+            f.Presenter.OnSave();
+
+            Assert.NotNull(f.Service.UpdatedWith);
+            Assert.Equal(1, f.View.SaveSucceededCount);
+        }
+
         [Fact]
         public void OnSave_ValidValues_UpdatesAndShowsSuccess()
         {
