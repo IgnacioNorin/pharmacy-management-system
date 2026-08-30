@@ -104,6 +104,7 @@ namespace PharmacySystem.Tests.Integration
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
@@ -149,6 +150,7 @@ namespace PharmacySystem.Tests.Integration
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
@@ -197,6 +199,7 @@ namespace PharmacySystem.Tests.Integration
             {
                 foreach (int id in saleIds)
                 {
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id = @id", new SqlParameter("@id", id));
                     SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", id));
                     SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", id));
                 }
@@ -250,6 +253,7 @@ namespace PharmacySystem.Tests.Integration
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id IN (@a, @b)", new SqlParameter("@a", originalId), new SqlParameter("@b", ncId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id IN (@a, @b)", new SqlParameter("@a", originalId), new SqlParameter("@b", ncId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", ncId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", originalId));
@@ -300,6 +304,7 @@ namespace PharmacySystem.Tests.Integration
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id IN (@a, @b)", new SqlParameter("@a", originalId), new SqlParameter("@b", ncId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id IN (@a, @b)", new SqlParameter("@a", originalId), new SqlParameter("@b", ncId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", ncId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", originalId));
@@ -343,6 +348,7 @@ namespace PharmacySystem.Tests.Integration
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
@@ -395,6 +401,7 @@ namespace PharmacySystem.Tests.Integration
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
@@ -488,6 +495,7 @@ namespace PharmacySystem.Tests.Integration
             {
                 foreach (int id in saleIds)
                 {
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id = @id", new SqlParameter("@id", id));
                     SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", id));
                     SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", id));
                 }
@@ -574,6 +582,7 @@ namespace PharmacySystem.Tests.Integration
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
@@ -610,6 +619,7 @@ namespace PharmacySystem.Tests.Integration
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
@@ -658,6 +668,7 @@ namespace PharmacySystem.Tests.Integration
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
@@ -700,6 +711,7 @@ namespace PharmacySystem.Tests.Integration
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
@@ -742,6 +754,7 @@ namespace PharmacySystem.Tests.Integration
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
@@ -785,6 +798,7 @@ namespace PharmacySystem.Tests.Integration
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
@@ -829,6 +843,7 @@ namespace PharmacySystem.Tests.Integration
             }
             finally
             {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
@@ -878,6 +893,7 @@ namespace PharmacySystem.Tests.Integration
             {
                 foreach (int id in saleIds)
                 {
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id = @id", new SqlParameter("@id", id));
                     SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", id));
                     SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", id));
                 }

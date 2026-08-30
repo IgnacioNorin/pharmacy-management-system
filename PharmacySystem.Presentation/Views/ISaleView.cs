@@ -16,6 +16,7 @@ namespace PharmacySystem.Presentation
         string TotalPayText { get; }
         string ChangeText { get; }
         string DocumentType { get; }
+        // The single payment method combo - used when the sale is not split ("pago mixto").
         string PaymentMethod { get; }
 
         // Recipient fiscal data, only read when DocumentType is a Factura.
@@ -29,6 +30,13 @@ namespace PharmacySystem.Presentation
 
         void SetDocumentTypeOptions(IReadOnlyList<string> options, string selected);
         void SetPaymentMethodOptions(IReadOnlyList<string> options, string selected);
+
+        // Opens the "pago mixto" dialog for the given total, seeded with the current split (may
+        // be null). Returns the entered split - which must sum to total - or null if cancelled.
+        IReadOnlyList<SalePaymentEntry> PromptPaymentSplit(decimal total, IReadOnlyList<SalePaymentEntry> current, IReadOnlyList<string> methods);
+        // Reflects the current split: null / empty re-enables the single method combo; a list
+        // shows the sale is paid with several methods ("Mixto").
+        void ShowPaymentSplit(IReadOnlyList<SalePaymentEntry> split);
         void SetFacturaFieldsVisible(bool visible);
         void SetClient(string document, string name);
         void SetRecipient(string taxId, string businessName, string activity, string address, string commune);

@@ -35,7 +35,11 @@ namespace PharmacySystem.Tests.Integration
             finally
             {
                 SqlTestHelper.ExecuteNonQuery(
-                    "DELETE FROM sale WHERE date_registered >= @a AND date_registered < @b OR date_registered = @c",
+                    "DELETE sp FROM sale_payment sp INNER JOIN sale s ON s.id = sp.sale_id " +
+                    "WHERE (s.date_registered >= @a AND s.date_registered < @b) OR s.date_registered = @c",
+                    new SqlParameter("@a", start), new SqlParameter("@b", end), new SqlParameter("@c", outside));
+                SqlTestHelper.ExecuteNonQuery(
+                    "DELETE FROM sale WHERE (date_registered >= @a AND date_registered < @b) OR date_registered = @c",
                     new SqlParameter("@a", start), new SqlParameter("@b", end), new SqlParameter("@c", outside));
             }
         }
@@ -85,7 +89,8 @@ namespace PharmacySystem.Tests.Integration
         {
             SqlTestHelper.ExecuteNonQuery(
                 "INSERT INTO sale(total_amount, amount_received, payment_method, date_registered) " +
-                "VALUES (@t, @t, @m, @d)",
+                "VALUES (@t, @t, @m, @d); " +
+                "INSERT INTO sale_payment(sale_id, payment_method, amount) VALUES (SCOPE_IDENTITY(), @m, @t);",
                 new SqlParameter("@t", total), new SqlParameter("@m", method), new SqlParameter("@d", when));
         }
     }

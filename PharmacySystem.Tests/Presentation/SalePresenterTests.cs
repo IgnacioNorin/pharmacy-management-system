@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
@@ -386,16 +387,35 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void OnFinishSale_NoPayment_ShowsMessage()
+        public void OnFinishSale_CashSaleWithoutTenderedAmount_ShowsMessage()
         {
-            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan", PaymentMethod = "Efectivo" };
             var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
             AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
 
+            view.TotalPayText = "10.00";
             view.PayWithText = "0";
             presenter.OnFinishSale();
 
-            Assert.Equal(new[] { "Debe ingresar con cuanto paga el cliente" }, view.ShownMessages);
+            Assert.Equal(new[] { "Debe ingresar con cuánto paga el cliente en efectivo" }, view.ShownMessages);
+        }
+
+        [Fact]
+        public void OnFinishSale_CardOnlySale_DoesNotRequireATenderedCashAmount()
+        {
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan", PaymentMethod = "Tarjeta" };
+            var saleService = new FakeSaleService { RegisterResult = 1 };
+            var presenter = CreatePresenter(view, saleService, new FakeProductService { VerifyResult = true });
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            view.TotalPayText = "10.00";
+            view.PayWithText = "0"; // no cash tendered - and that is fine for a card sale
+            presenter.OnFinishSale();
+
+            Assert.NotNull(saleService.RegisteredWith);
+            Assert.Equal("Tarjeta", saleService.RegisteredWith.paymentMethod);
+            Assert.Equal(0m, saleService.RegisteredWith.payWith);
+            Assert.Equal(10m, saleService.RegisteredWith.payments.Single().amount);
         }
 
         [Fact]
@@ -657,6 +677,88 @@ namespace PharmacySystem.Tests.Presentation
             presenter.OnFinishSale();
 
             Assert.Equal(new[] { "Debe ingresar un producto como minimo\npara registrar una venta" }, view.ShownMessages);
+        }
+
+        // --- Pago mixto ---
+
+        [Fact]
+        public void OnSplitPaymentRequested_PromptsWithTheCartTotalAndKeepsTheResult()
+        {
+            var view = new FakeSaleView
+            {
+                PaymentSplitToReturn = new[] { new SalePaymentEntry("Efectivo", 6m), new SalePaymentEntry("Tarjeta", 4m) }
+            };
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnSplitPaymentRequested();
+
+            Assert.Equal(10m, view.PromptPaymentSplitArgs?.Total);
+            Assert.Equal(2, view.ShownPaymentSplit.Count);
+        }
+
+        [Fact]
+        public void OnSplitPaymentRequested_Cancelled_LeavesNoSplit()
+        {
+            var view = new FakeSaleView { PaymentSplitToReturn = null }; // dialog cancelled
+            var presenter = CreatePresenter(view, new FakeSaleService(), new FakeProductService());
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnSplitPaymentRequested();
+
+            Assert.Null(view.ShownPaymentSplit);
+        }
+
+        [Fact]
+        public void OnFinishSale_WithAValidSplit_RegistersEachPaymentAndTheCashPortionDrivesTheChange()
+        {
+            var view = new FakeSaleView
+            {
+                DocumentClient = "123", NameClient = "Juan",
+                PaymentSplitToReturn = new[] { new SalePaymentEntry("Efectivo", 6m), new SalePaymentEntry("Tarjeta", 4m) }
+            };
+            var saleService = new FakeSaleService { RegisterResult = 1 };
+            var presenter = CreatePresenter(view, saleService, new FakeProductService { VerifyResult = true });
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+            view.TotalPayText = "10.00";
+            presenter.OnSplitPaymentRequested();
+
+            view.PayWithText = "10.00"; // customer hands 10 in cash for the 6 cash portion
+            presenter.OnFinishSale();
+
+            Sale sale = saleService.RegisteredWith;
+            Assert.NotNull(sale);
+            Assert.Equal(2, sale.payments.Count);
+            Assert.Equal(6m, sale.payments.Single(p => p.paymentMethod == "Efectivo").amount);
+            Assert.Equal(4m, sale.payments.Single(p => p.paymentMethod == "Tarjeta").amount);
+            Assert.Equal("Efectivo", sale.paymentMethod);   // primary = largest amount
+            Assert.Equal(10m, sale.payWith);
+            Assert.Equal(4m, sale.change);                  // 10 tendered - 6 cash portion
+        }
+
+        [Fact]
+        public void OnFinishSale_AfterTheCartChanges_TheStaleSplitIsDroppedAndTheComboIsUsed()
+        {
+            var view = new FakeSaleView
+            {
+                DocumentClient = "123", NameClient = "Juan", PaymentMethod = "Tarjeta",
+                PaymentSplitToReturn = new[] { new SalePaymentEntry("Efectivo", 6m), new SalePaymentEntry("Tarjeta", 4m) }
+            };
+            var saleService = new FakeSaleService { RegisterResult = 1 };
+            var presenter = CreatePresenter(view, saleService, new FakeProductService { VerifyResult = true });
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+            view.TotalPayText = "10.00";
+            presenter.OnSplitPaymentRequested();
+
+            // Another product goes in - the split was for the old total, so it must be dropped.
+            AddLine(presenter, view, productId: 2, amount: 1, priceSaleText: "5.00");
+            view.TotalPayText = "15.00";
+            presenter.OnFinishSale();
+
+            Sale sale = saleService.RegisteredWith;
+            Assert.Single(sale.payments);
+            Assert.Equal("Tarjeta", sale.payments[0].paymentMethod);
+            Assert.Equal(15m, sale.payments[0].amount);
         }
     }
 }

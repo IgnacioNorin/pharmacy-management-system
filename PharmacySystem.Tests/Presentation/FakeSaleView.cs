@@ -43,6 +43,24 @@ namespace PharmacySystem.Tests.Presentation
             PaymentMethod = selected;
         }
 
+        // Set this to the split the "pago mixto" dialog should return; null = the cashier cancels.
+        public IReadOnlyList<SalePaymentEntry> PaymentSplitToReturn { get; set; }
+        public (decimal Total, IReadOnlyList<SalePaymentEntry> Current)? PromptPaymentSplitArgs { get; private set; }
+        public IReadOnlyList<SalePaymentEntry> ShownPaymentSplit { get; private set; }
+        public int ShowPaymentSplitCallCount { get; private set; }
+
+        public IReadOnlyList<SalePaymentEntry> PromptPaymentSplit(decimal total, IReadOnlyList<SalePaymentEntry> current, IReadOnlyList<string> methods)
+        {
+            PromptPaymentSplitArgs = (total, current);
+            return PaymentSplitToReturn;
+        }
+
+        public void ShowPaymentSplit(IReadOnlyList<SalePaymentEntry> split)
+        {
+            ShownPaymentSplit = split;
+            ShowPaymentSplitCallCount++;
+        }
+
         public bool? FacturaFieldsVisible { get; private set; }
         public void SetFacturaFieldsVisible(bool visible) => FacturaFieldsVisible = visible;
 

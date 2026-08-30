@@ -63,6 +63,25 @@ namespace PharmacySystem.Data
             }
         }
 
+        // Payment breakdown of one sale - for printing a ticket and rebuilding a Sale.
+        public List<SalePayment> GetPaymentsBySaleId(int saleId)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    return oConnection.Query<SalePayment>(
+                        "SELECT payment_method AS paymentMethod, amount AS amount FROM sale_payment WHERE sale_id = @saleId ORDER BY id",
+                        new { saleId }).ToList();
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return new List<SalePayment>();
+                }
+            }
+        }
+
         // Product's own column (name) is placed last so its region is contiguous for Dapper's
         // split-based multi-mapping - splitOn only supports a clean two-region split, unlike the
         // original column order (name sandwiched in the middle).
@@ -109,6 +128,20 @@ namespace PharmacySystem.Data
 
                     try
                     {
+                        // Payment breakdown: use what the caller sent, or synthesize a single
+                        // line from paymentMethod + the total for a plain single-method sale.
+                        List<SalePayment> payments = (obj.payments != null && obj.payments.Count > 0)
+                            ? obj.payments
+                            : new List<SalePayment>
+                              {
+                                  new SalePayment
+                                  {
+                                      paymentMethod = string.IsNullOrWhiteSpace(obj.paymentMethod) ? PaymentMethods.Default : obj.paymentMethod,
+                                      amount = obj.totalPay
+                                  }
+                              };
+                        string primaryMethod = payments.OrderByDescending(p => p.amount).First().paymentMethod;
+
                         // Receipt number comes from a sequence, generated inside the transaction
                         // so it is concurrency-safe (the old RIGHT(..., COUNT(*) + 1) handed the
                         // same number to two simultaneous sales).
@@ -129,7 +162,7 @@ namespace PharmacySystem.Data
                             total_amount = obj.totalPay,
                             amount_received = obj.payWith,
                             change_amount = obj.change,
-                            payment_method = string.IsNullOrWhiteSpace(obj.paymentMethod) ? PaymentMethods.Default : obj.paymentMethod,
+                            payment_method = primaryMethod,
                             net_amount = obj.netAmount,
                             tax_amount = obj.taxAmount,
                             exempt_amount = obj.exemptAmount,
@@ -143,6 +176,18 @@ namespace PharmacySystem.Data
 
                         if (idSale != 0)
                         {
+                            const string insertPaymentQuery =
+                                "INSERT INTO sale_payment(sale_id, payment_method, amount) VALUES (@sale_id, @payment_method, @amount)";
+                            foreach (SalePayment p in payments)
+                            {
+                                oConnection.Execute(insertPaymentQuery, new
+                                {
+                                    sale_id = idSale,
+                                    payment_method = p.paymentMethod,
+                                    amount = p.amount
+                                }, objTransacion);
+                            }
+
                             const string subtractStockQuery =
                                 "UPDATE product SET stock = stock - @amount WHERE id = @product_id AND stock >= @amount";
 
@@ -354,6 +399,13 @@ namespace PharmacySystem.Data
                         reason = reason
                     }, tx);
 
+                    // Mirror the original sale's payment breakdown, negated, so the arqueo
+                    // reduces each method's expected cash by what was refunded on it.
+                    oConnection.Execute(
+                        "INSERT INTO sale_payment(sale_id, payment_method, amount) " +
+                        "SELECT @nc_id, payment_method, -amount FROM sale_payment WHERE sale_id = @original_id",
+                        new { nc_id = ncId, original_id = originalSaleId }, tx);
+
                     var lines = oConnection.Query<OriginalDetailRow>(
                         "SELECT product_id AS ProductId, stock AS Amount, sale_price AS SalePrice, subtotal AS Subtotal, tax_affected AS TaxAffected " +
                         "FROM sale_detail WHERE sale_id = @id", new { id = originalSaleId }, tx);
@@ -402,7 +454,8 @@ namespace PharmacySystem.Data
                         "COALESCE(NULLIF(s.recipient_business_name, ''), s.name_client) AS ClientName, " +
                         "s.net_amount AS NetAmount, s.tax_amount AS TaxAmount, s.exempt_amount AS ExemptAmount, " +
                         "s.total_amount AS TotalAmount, s.amount_received AS AmountReceived, s.change_amount AS ChangeAmount, " +
-                        "s.payment_method AS PaymentMethod " +
+                        "CASE WHEN (SELECT COUNT(*) FROM sale_payment sp WHERE sp.sale_id = s.id) > 1 " +
+                        "THEN 'Mixto' ELSE s.payment_method END AS PaymentMethod " +
                         "FROM sale s " +
                         "INNER JOIN person p ON p.id = s.user_id " +
                         "WHERE s.date_registered >= @startDate AND s.date_registered < DATEADD(DAY, 1, @endDate) " +

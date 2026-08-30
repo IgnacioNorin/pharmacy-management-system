@@ -296,8 +296,24 @@ CREATE TABLE [dbo].[sale_detail](
 )
 GO
 
+-- Payment breakdown of a sale: one row per method it was collected with (part cash, part
+-- card, ...). sale.payment_method keeps the "primary" method (largest amount) for the report
+-- column; the real split lives here. Credit notes carry negated rows mirroring the original.
+CREATE TABLE [dbo].[sale_payment](
+    [id] [int] IDENTITY(1,1) NOT NULL,
+    [sale_id] [int] NOT NULL,
+    [payment_method] [varchar](20) NOT NULL,
+    [amount] [decimal](18, 2) NOT NULL,
+    CONSTRAINT [PK_sale_payment] PRIMARY KEY CLUSTERED ([id] ASC),
+    CONSTRAINT [FK_sale_payment_sale] FOREIGN KEY ([sale_id]) REFERENCES [dbo].[sale] ([id])
+)
+GO
+
+CREATE INDEX [IX_sale_payment_sale] ON [dbo].[sale_payment] ([sale_id])
+GO
+
 -- Cash-drawer reconciliation ("arqueo de caja"): one header row per shift close, with a line
--- per payment method holding the expected total (from sale.total_amount over the period) and
+-- per payment method holding the expected total (from sale_payment over the period) and
 -- what the cashier physically counted. Sales are never modified.
 CREATE TABLE [dbo].[cash_count](
     [id] [int] IDENTITY(1,1) NOT NULL,

@@ -66,11 +66,14 @@ namespace PharmacySystem.Data
             {
                 try
                 {
+                    // Sum the real per-method breakdown (sale_payment), not sale.total_amount by
+                    // the primary method - a mixed sale must credit each method its own share,
+                    // and a credit note's negated rows net out here.
                     const string sql =
-                        "SELECT payment_method AS paymentMethod, ISNULL(SUM(total_amount), 0) AS expectedAmount " +
-                        "FROM sale " +
-                        "WHERE date_registered >= @start AND date_registered < @end " +
-                        "GROUP BY payment_method";
+                        "SELECT sp.payment_method AS paymentMethod, ISNULL(SUM(sp.amount), 0) AS expectedAmount " +
+                        "FROM sale s INNER JOIN sale_payment sp ON sp.sale_id = s.id " +
+                        "WHERE s.date_registered >= @start AND s.date_registered < @end " +
+                        "GROUP BY sp.payment_method";
 
                     return oConnection.Query<CashCountLine>(sql, new { start, end }).ToList();
                 }

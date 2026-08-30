@@ -6,6 +6,17 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 
 ### Agregado
 
+- **Pago mixto en la venta.** Una venta se puede cobrar con más de una forma de
+  pago (por ejemplo, parte efectivo y parte tarjeta). Botón "Pago mixto…" junto
+  al combo de forma de pago: abre un diálogo con un monto por método que debe
+  sumar el total. El desglose se guarda en la tabla `sale_payment` (migración
+  `025`); `sale.payment_method` pasa a ser el método "principal" (el de mayor
+  monto). El comprobante lista cada forma de pago con su monto y solo muestra
+  "PAGO CON" / "CAMBIO" cuando hubo efectivo. Una venta 100% con tarjeta o
+  transferencia ya no exige ingresar "pagó con". El reporte de ventas muestra
+  "Mixto" en esos casos. Las notas de crédito reparten el reintegro entre las
+  mismas formas de pago de la venta original, así que el arqueo de caja descuenta
+  de cada método lo que corresponde.
 - **Arqueo de caja.** Nueva opción en la barra lateral (grupo Consulta), gateada
   por el permiso `caja.acceso` (roles Administrador General y Administrador).
   Muestra el período desde el último arqueo hasta ahora y, por cada forma de pago

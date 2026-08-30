@@ -4,6 +4,7 @@ using PharmacySystem.Presentation;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace PharmacySystem
@@ -15,6 +16,8 @@ namespace PharmacySystem
         // Built in code so the large frmSale Designer stays untouched. Sits between the "Cambio"
         // field and the "Terminar Venta" button.
         private System.Windows.Forms.ComboBox cbopaymentmethod;
+        private System.Windows.Forms.Button btnMixedPayment;
+        private System.Windows.Forms.Label lblMixedPayment;
 
         public frmSale(int idperson = 0)
         {
@@ -39,8 +42,30 @@ namespace PharmacySystem
                 DisplayMember = "Text",
                 ValueMember = "Value"
             };
+
+            btnMixedPayment = new System.Windows.Forms.Button
+            {
+                Text = "Pago mixto…",
+                Location = new System.Drawing.Point(795, 538),
+                Size = new System.Drawing.Size(150, 25),
+                FlatStyle = System.Windows.Forms.FlatStyle.Flat,
+                BackColor = System.Drawing.Color.WhiteSmoke,
+                Cursor = System.Windows.Forms.Cursors.Hand
+            };
+            btnMixedPayment.Click += (s, e) => _presenter.OnSplitPaymentRequested();
+
+            lblMixedPayment = new System.Windows.Forms.Label
+            {
+                Location = new System.Drawing.Point(795, 566),
+                Size = new System.Drawing.Size(220, 32),
+                ForeColor = System.Drawing.Color.FromArgb(11, 37, 69),
+                Visible = false
+            };
+
             Controls.Add(lbl);
             Controls.Add(cbopaymentmethod);
+            Controls.Add(btnMixedPayment);
+            Controls.Add(lblMixedPayment);
         }
 
         private void frmSale_Load(object sender, EventArgs e)
@@ -270,6 +295,26 @@ namespace PharmacySystem
 
         public void SetPaymentMethodOptions(IReadOnlyList<string> options, string selected) =>
             FillOptionCombo(cbopaymentmethod, options, selected);
+
+        IReadOnlyList<SalePaymentEntry> ISaleView.PromptPaymentSplit(decimal total, IReadOnlyList<SalePaymentEntry> current, IReadOnlyList<string> methods)
+        {
+            using (var modal = new ModalSalePayments(total, current, methods))
+            {
+                return modal.ShowDialog(this) == DialogResult.OK ? modal.Result : null;
+            }
+        }
+
+        public void ShowPaymentSplit(IReadOnlyList<SalePaymentEntry> split)
+        {
+            bool mixed = split != null && split.Count > 1;
+            cbopaymentmethod.Enabled = !mixed;
+            btnMixedPayment.Text = mixed ? "Editar pago mixto…" : "Pago mixto…";
+            lblMixedPayment.Visible = mixed;
+            lblMixedPayment.Text = mixed
+                ? "Pago mixto: " + string.Join("  +  ",
+                      split.Select(s => s.Method + " " + CultureInfoHelper.FormatAsCurrency(s.Amount)))
+                : "";
+        }
 
         private static void FillOptionCombo(ComboBox combo, IReadOnlyList<string> options, string selected)
         {

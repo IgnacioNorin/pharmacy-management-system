@@ -31,6 +31,7 @@ namespace PharmacySystem.Tests.Business
         public List<SaleDetail> ListSaleDetail() => new List<SaleDetail>();
         public Sale GetById(int saleId) => null;
         public List<SaleDetail> GetDetailsBySaleId(int saleId) => new List<SaleDetail>();
+        public List<SalePayment> GetPaymentsBySaleId(int saleId) => new List<SalePayment>();
         public SaleLookup FindByDocument(string documentType, string documentNumber) => null;
         public CreditNoteResult CreateCreditNote(int originalSaleId, int userId, string reason) => CreditNoteResult.Ok;
         public List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate, int clientId) => new List<SaleReportRow>();

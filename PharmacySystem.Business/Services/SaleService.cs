@@ -27,6 +27,8 @@ namespace PharmacySystem.Business
 
         public List<SaleDetail> GetDetailsBySaleId(int saleId) => _repository.GetDetailsBySaleId(saleId);
 
+        public List<SalePayment> GetPaymentsBySaleId(int saleId) => _repository.GetPaymentsBySaleId(saleId);
+
         public int Register(Sale sale)
         {
             int id = _repository.Register(sale);

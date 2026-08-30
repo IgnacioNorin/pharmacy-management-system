@@ -38,6 +38,10 @@ namespace PharmacySystem.Presentation
         private readonly List<SaleCartLine> _cart = new List<SaleCartLine>();
         // The client picked from ModalPerson, or null for a walk-in / consumidor final.
         private ClientRow _selectedClient;
+        // The "pago mixto" split the cashier entered, and the cart total it was entered for.
+        // Cleared whenever the cart changes so it can never be applied to a different total.
+        private List<SalePaymentEntry> _paymentSplit;
+        private decimal _paymentSplitTotal;
 
         public SalePresenter(ISaleView view, ISaleService saleService, IProductService productService, IStoreService storeService, int idPerson)
         {
@@ -131,6 +135,31 @@ namespace PharmacySystem.Presentation
         {
             decimal total = _cart.Sum(l => l.SubTotal);
             _view.SetTotalText(CultureInfoHelper.FormatAsCurrency(total));
+
+            // The split was for the previous total - drop it and fall back to the single combo.
+            _paymentSplit = null;
+            _view.ShowPaymentSplit(null);
+        }
+
+        // Opens the "pago mixto" dialog and keeps the resulting split for the current total.
+        public void OnSplitPaymentRequested()
+        {
+            decimal total = _cart.Sum(l => l.SubTotal);
+            if (total <= 0m)
+            {
+                _view.ShowMessage("Agregue productos antes de dividir el pago.");
+                return;
+            }
+
+            IReadOnlyList<SalePaymentEntry> result = _view.PromptPaymentSplit(total, _paymentSplit, PaymentMethods.Selectable);
+            if (result == null)
+            {
+                return;
+            }
+
+            _paymentSplit = result.ToList();
+            _paymentSplitTotal = total;
+            _view.ShowPaymentSplit(_paymentSplit);
         }
 
         public void OnCalculateChangeRequested()
@@ -243,26 +272,78 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            if (_view.PayWithText.Trim() == "0")
+            decimal totalToPay;
+            try
             {
-                _view.ShowMessage("Debe ingresar con cuanto paga el cliente");
+                totalToPay = CultureInfoHelper.CultureInfoConverterStringToDecimal(_view.TotalPayText);
+            }
+            catch
+            {
+                _view.ShowMessage("Error al convertir el total de la venta.");
                 return;
             }
 
-            if (!CalculateChange())
+            if (totalToPay <= 0m)
             {
-                _view.ShowMessage("Error al convertir el tipo de moneda - Paga con\nEjemplo Formato ##.##");
+                _view.ShowMessage("El total de la venta debe ser mayor a cero.");
                 return;
             }
 
-            decimal moneyToPay = CultureInfoHelper.CultureInfoConverterStringToDecimal(_view.PayWithText);
-            decimal totalToPay = CultureInfoHelper.CultureInfoConverterStringToDecimal(_view.TotalPayText);
-            decimal changeMoney = CultureInfoHelper.CultureInfoConverterStringToDecimal(_view.ChangeText);
-
-            if (totalToPay > moneyToPay)
+            // Payment breakdown: the "pago mixto" split when it matches this exact total,
+            // otherwise a single line for the method in the combo.
+            List<SalePayment> payments;
+            if (_paymentSplit != null && _paymentSplit.Count > 0 && _paymentSplitTotal == totalToPay)
             {
-                _view.ShowMessage("Falta dinero para pagar");
-                return;
+                payments = _paymentSplit
+                    .Select(e => new SalePayment { paymentMethod = e.Method, amount = e.Amount })
+                    .ToList();
+            }
+            else
+            {
+                string singleMethod = string.IsNullOrWhiteSpace(_view.PaymentMethod) ? PaymentMethods.Default : _view.PaymentMethod.Trim();
+                payments = new List<SalePayment> { new SalePayment { paymentMethod = singleMethod, amount = totalToPay } };
+            }
+
+            decimal cashPortion = payments
+                .Where(p => string.Equals(p.paymentMethod, PaymentMethods.Efectivo, System.StringComparison.OrdinalIgnoreCase))
+                .Sum(p => p.amount);
+
+            decimal moneyToPay;   // amount_received
+            decimal changeMoney;  // change_amount
+
+            if (cashPortion > 0m)
+            {
+                if (string.IsNullOrWhiteSpace(_view.PayWithText) || _view.PayWithText.Trim() == "0")
+                {
+                    _view.ShowMessage("Debe ingresar con cuánto paga el cliente en efectivo");
+                    return;
+                }
+
+                try
+                {
+                    moneyToPay = CultureInfoHelper.CultureInfoConverterStringToDecimal(_view.PayWithText);
+                }
+                catch
+                {
+                    _view.ShowMessage("Error al convertir el tipo de moneda - Paga con\nEjemplo Formato ##.##");
+                    return;
+                }
+
+                if (moneyToPay < cashPortion)
+                {
+                    _view.ShowMessage("Falta dinero para pagar");
+                    return;
+                }
+
+                changeMoney = moneyToPay - cashPortion;
+                _view.SetChangeText(CultureInfoHelper.FormatAsCurrency(changeMoney));
+            }
+            else
+            {
+                // Fully card / transfer: nothing tendered in cash, no change.
+                moneyToPay = 0m;
+                changeMoney = 0m;
+                _view.SetChangeText(CultureInfoHelper.FormatAsCurrency(0));
             }
 
             var details = new List<SaleDetail>();
@@ -307,7 +388,8 @@ namespace PharmacySystem.Presentation
                     totalPay = totalToPay,
                     payWith = moneyToPay,
                     change = changeMoney,
-                    paymentMethod = string.IsNullOrWhiteSpace(_view.PaymentMethod) ? PaymentMethods.Default : _view.PaymentMethod.Trim(),
+                    paymentMethod = payments.OrderByDescending(p => p.amount).First().paymentMethod,
+                    payments = payments,
                     netAmount = vat.Net,
                     taxAmount = vat.Tax,
                     exemptAmount = vat.Exempt,
