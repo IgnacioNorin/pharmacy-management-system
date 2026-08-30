@@ -22,6 +22,14 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 
 ### Cambiado
 
+- **Tipos de documento de venta por preset de país.** Las opciones de tipo de
+  documento en la venta, la nota de crédito y la configuración de tienda ahora
+  salen del preset de país (`CountryPreset.SaleDocumentTypes`) en vez de una lista
+  fija. Hoy los dos presets (Genérico y Chile) ofrecen Boleta/Factura, igual que
+  antes; queda el enganche listo para que un segundo país real aporte su propia
+  lista. Al cambiar el preset en Gestión de tienda, el combo de tipo de documento
+  se actualiza (conservando la opción elegida si el nuevo preset la incluye). La
+  numeración de folio sigue siendo "Factura vs. resto".
 - **Baja lógica coherente.** Un proveedor referenciado por compras se da de baja
   lógicamente (`status = 0`) en vez de fallar con "revise los datos"
   (`sp_delete_supplier`, migración `022`). Los clientes dados de baja dejan de

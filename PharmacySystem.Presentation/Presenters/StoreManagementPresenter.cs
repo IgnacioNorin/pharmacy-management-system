@@ -33,7 +33,7 @@ namespace PharmacySystem.Presentation
             Store store = _service.ListStore();
             _view.LoadStoreFields(store.document, store.companyName, store.email, store.phone, store.address);
             _view.SetTaxRate(store.defaultTaxRate.ToString("0.##", CultureInfo.InvariantCulture));
-            _view.LoadDocumentTypeOptions(DocumentTypes.Selectable, store.defaultDocumentType);
+            _view.LoadDocumentTypeOptions(CountryPresets.ForCode(store.countryCode).SaleDocumentTypes, store.defaultDocumentType);
 
             var options = CultureInfoHelper.SupportedCurrencies;
             int currencyIndex = options.ToList()
@@ -55,6 +55,13 @@ namespace PharmacySystem.Presentation
         public void OnCountryPresetChanged()
         {
             CountryPreset preset = CountryPresets.ForCode(_view.SelectedCountryCode);
+
+            // The sale document types are preset-driven, so refresh them even for "Genérico"
+            // (keep the current choice if the new preset still offers it).
+            var docTypes = preset.SaleDocumentTypes;
+            string currentDocType = _view.DefaultDocumentType;
+            _view.LoadDocumentTypeOptions(docTypes, docTypes.Contains(currentDocType) ? currentDocType : docTypes[0]);
+
             if (preset.IsGeneric)
             {
                 return;

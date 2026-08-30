@@ -149,6 +149,17 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
+        public void OnCountryPresetChanged_RefreshesTheDocumentTypesAndKeepsAValidCurrentChoice()
+        {
+            var view = new FakeStoreManagementView { SelectedCountryCode = "CL", DefaultDocumentType = "Factura" };
+
+            CreatePresenter(view, new FakeStoreService()).OnCountryPresetChanged();
+
+            Assert.Equal(new[] { "Boleta", "Factura" }, view.LoadedDocumentTypeOptions);
+            Assert.Equal("Factura", view.LoadedDocumentTypeSelected); // the current choice survives
+        }
+
+        [Fact]
         public void OnSave_PersistsTheSelectedCountryCode_NullForGeneric()
         {
             var chileView = new FakeStoreManagementView
