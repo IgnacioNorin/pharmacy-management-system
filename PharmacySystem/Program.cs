@@ -43,7 +43,11 @@ namespace PharmacySystem
 
             Logger.LogError(ex);
 
-            bool terminal = fatal || StartupError.IsDatabaseOrConfig(ex);
+            // A lost database connection mid-session (DataUnavailableException from a repository) is
+            // recoverable: report it and let the user retry. Only a startup/AppDomain failure or a
+            // real configuration problem is terminal.
+            bool terminal = fatal ||
+                (StartupError.IsDatabaseOrConfig(ex) && !StartupError.IsTransientDataFailure(ex));
             string message = StartupError.DescribeForUser(ex);
             if (!terminal)
             {

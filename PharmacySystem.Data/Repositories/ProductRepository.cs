@@ -43,6 +43,11 @@ namespace PharmacySystem.Data
                 {
                     return 0; // a product with that code already exists
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -76,6 +81,11 @@ namespace PharmacySystem.Data
                 catch (Exception ex) when (SqlErrorCodes.IsUniqueViolation(ex))
                 {
                     return false; // another product already uses that code
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
@@ -122,6 +132,11 @@ namespace PharmacySystem.Data
                         return true;
                     }
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -158,6 +173,11 @@ namespace PharmacySystem.Data
                         return true;
                     }
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -179,6 +199,11 @@ namespace PharmacySystem.Data
                         "WHERE h.product_id = @idProduct ORDER BY h.changed_at DESC, h.id DESC";
 
                     return oConnection.Query<ProductPriceHistoryEntry>(sql, new { idProduct }).ToList();
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
@@ -231,6 +256,11 @@ namespace PharmacySystem.Data
                         splitOn: "IdCategory")
                         .ToList();
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -247,6 +277,11 @@ namespace PharmacySystem.Data
                 {
                     int count = oConnection.ExecuteScalar<int>("SELECT COUNT(*) FROM product WHERE id = @idProduct", new { idProduct });
                     return count > 0;
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
                 {
@@ -275,6 +310,11 @@ namespace PharmacySystem.Data
 
                     return parameters.Get<bool>("result");
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -298,6 +338,11 @@ namespace PharmacySystem.Data
                         "WHERE c.id = case @category_id when '0' then c.id when 0 then c.id else @category_id end";
 
                     return oConnection.Query<ProductReportRow>(sql, new { category_id = categoryId }).ToList();
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {

@@ -1,6 +1,7 @@
 using System;
 using System.Configuration;
 using System.Data.SqlClient;
+using PharmacySystem.Infrastructure;
 
 namespace PharmacySystem
 {
@@ -42,7 +43,37 @@ namespace PharmacySystem
             return false;
         }
 
-        public static string DescribeForUser(Exception ex) =>
-            IsDatabaseOrConfig(ex) ? Database : Generic;
+        public static string DescribeForUser(Exception ex)
+        {
+            // A transient connection loss carries its own actionable message ("the server is
+            // unavailable, try again") - the ConnectionStrings.config advice in Database would
+            // only mislead, since the file is present and correct.
+            for (Exception e = ex; e != null; e = e.InnerException)
+            {
+                if (e is DataUnavailableException)
+                {
+                    return e.Message;
+                }
+            }
+
+            return IsDatabaseOrConfig(ex) ? Database : Generic;
+        }
+
+        // True when the failure is a DataUnavailableException raised by a repository because the
+        // database was briefly unreachable during an operation. Unlike a missing ConnectionStrings
+        // file or a startup failure, this is transient: the operation failed, but the application
+        // can keep running and the user can retry. Program.cs uses this so a lost connection while
+        // loading a grid shows a message instead of closing the application.
+        public static bool IsTransientDataFailure(Exception ex)
+        {
+            for (Exception e = ex; e != null; e = e.InnerException)
+            {
+                if (e is DataUnavailableException)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }

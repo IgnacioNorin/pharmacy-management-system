@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using Dapper;
 using PharmacySystem.Helpers;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Data
@@ -41,6 +42,11 @@ namespace PharmacySystem.Data
                 {
                     return 0; // a supplier with that document already exists
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -74,6 +80,11 @@ namespace PharmacySystem.Data
                 {
                     return false; // another supplier already uses that document
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -92,6 +103,11 @@ namespace PharmacySystem.Data
                         "SELECT id AS idSupplier, document_number AS document, company_name AS companyName, email, phone " +
                         "FROM supplier WHERE ISNULL(status, 1) = 1")
                         .ToList();
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
@@ -116,6 +132,11 @@ namespace PharmacySystem.Data
                     oConnection.Execute("sp_delete_supplier", parameters, commandType: CommandType.StoredProcedure);
 
                     return parameters.Get<bool>("result");
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
