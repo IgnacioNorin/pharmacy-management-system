@@ -43,6 +43,16 @@ namespace PharmacySystem.Tests.Presentation
             return GetByDocumentResult;
         }
 
+        public Person GetByIdResult { get; set; }
+        public Exception GetByIdThrows { get; set; }
+        public int? RequestedId { get; private set; }
+        public Person GetById(int idPerson)
+        {
+            RequestedId = idPerson;
+            if (GetByIdThrows != null) throw GetByIdThrows;
+            return GetByIdResult;
+        }
+
         public bool UpdatePassword(int idPerson, string hashedPassword)
         {
             UpdatedPasswordForId = idPerson;

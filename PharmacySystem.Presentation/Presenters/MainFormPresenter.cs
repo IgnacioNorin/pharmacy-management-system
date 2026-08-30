@@ -12,11 +12,41 @@ namespace PharmacySystem.Presentation
     {
         private readonly IMainFormView _view;
         private readonly INotificationConfigService _notificationService;
+        private readonly IPersonService _personService;
+        private readonly IPermissionService _permissionService;
 
-        public MainFormPresenter(IMainFormView view, INotificationConfigService notificationService)
+        public MainFormPresenter(IMainFormView view, INotificationConfigService notificationService,
+            IPersonService personService, IPermissionService permissionService)
         {
             _view = view;
             _notificationService = notificationService;
+            _personService = personService;
+            _permissionService = permissionService;
+        }
+
+        // Re-resolves the signed-in user's role and permission set from the database (DEF-21:
+        // otherwise a permission revoked mid-session only takes effect after logout). Returns:
+        //  - a fresh CurrentUser when the account is still active,
+        //  - null when the account was deleted or deactivated (the caller sends them to login),
+        //  - the same session unchanged on a transient data error (do not disrupt the session).
+        public CurrentUser RefreshSession(CurrentUser current)
+        {
+            if (current == null) return null;
+
+            try
+            {
+                Person fresh = _personService.GetById(current.PersonId);
+                if (fresh == null || !fresh.Estado)
+                {
+                    return null;
+                }
+                return new CurrentUser(fresh,
+                    _permissionService.GetPermissionsForRole(fresh.oPersonType?.idPersonType ?? 0));
+            }
+            catch (DataUnavailableException)
+            {
+                return current;
+            }
         }
 
         public void OnLoad(CurrentUser user)

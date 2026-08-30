@@ -163,8 +163,8 @@ namespace PharmacySystem
             }
         }
 
-        // Falls back to allowed when there is no session (form-construction smoke test).
-        private static bool CanSee(string permission) => MainForm.Session?.Can(permission) ?? true;
+        // No session -> deny (DEF-23). The form-construction smoke test never reaches this path.
+        private static bool CanSee(string permission) => MainForm.Session?.Can(permission) ?? false;
 
         private void frmReport_Load(object sender, EventArgs e)
         {

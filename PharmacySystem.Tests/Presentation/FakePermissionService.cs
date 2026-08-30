@@ -22,9 +22,13 @@ namespace PharmacySystem.Tests.Presentation
         public (int RoleId, string Name)? RenamedRole { get; private set; }
         public int? DeletedRoleId { get; private set; }
 
+        // Permission codes returned per role id by GetPermissionsForRole. Empty by default.
+        public Dictionary<int, List<string>> PermissionCodesByRole { get; } = new Dictionary<int, List<string>>();
+
         public List<Permission> GetCatalogue() => Catalogue;
 
-        public IReadOnlyCollection<string> GetPermissionsForRole(int personTypeId) => new HashSet<string>();
+        public IReadOnlyCollection<string> GetPermissionsForRole(int personTypeId) =>
+            PermissionCodesByRole.TryGetValue(personTypeId, out var codes) ? new HashSet<string>(codes) : new HashSet<string>();
 
         public IReadOnlyCollection<int> GetRolesGranting(string permissionCode) =>
             RolesGrantingByCode.TryGetValue(permissionCode, out var ids) ? ids : new List<int>();

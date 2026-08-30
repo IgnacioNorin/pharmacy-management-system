@@ -66,7 +66,7 @@ namespace PharmacySystem.Tests.Integration
         private static SidebarPermissions Sidebar(CurrentUser user)
         {
             var view = new FakeMainFormView();
-            new MainFormPresenter(view, new FakeNotificationConfigService()).OnLoad(user);
+            new MainFormPresenter(view, new FakeNotificationConfigService(), People, Permissions).OnLoad(user);
             return view.AppliedSidebarPermissions;
         }
 

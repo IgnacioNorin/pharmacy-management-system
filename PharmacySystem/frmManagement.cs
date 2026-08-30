@@ -219,9 +219,9 @@ namespace PharmacySystem
             }
         }
 
-        // Falls back to allowed when there is no session (e.g. the form-construction smoke test),
-        // which never reaches this code path in the real app.
-        private static bool CanSee(string permission) => MainForm.Session?.Can(permission) ?? true;
+        // No session -> deny (DEF-23). The real app always has a session by the time this runs;
+        // the form-construction smoke test never reaches this path (it does not call OnLoad).
+        private static bool CanSee(string permission) => MainForm.Session?.Can(permission) ?? false;
 
         #region ICategoryManagementView
 

@@ -20,6 +20,10 @@ namespace PharmacySystem
         private readonly MainFormPresenter _presenter;
         private IReadOnlyList<ProductAlert> _currentAlerts = new List<ProductAlert>();
 
+        // Session-refresh throttle (DEF-21): OnActivated fires on every return of focus.
+        private bool _sessionRefreshReady;
+        private DateTime _lastSessionRefresh = DateTime.MinValue;
+
         // Every sidebar item ShowForm can highlight as "active" - Salir is excluded on purpose,
         // it isn't a navigation destination. Order doesn't matter, only membership.
         private Button[] NavButtons => new[]
@@ -53,6 +57,35 @@ namespace PharmacySystem
             AddChangePasswordLink();
             LayoutSidebarItems();
             OpenHome();
+            _sessionRefreshReady = true;
+        }
+
+        // Re-checks the session whenever focus returns to the main window - e.g. after closing a
+        // child form. A permission revoked by an admin in another session then takes effect on
+        // the next navigation instead of only after logout (DEF-21). Throttled, and skips the
+        // burst of activations during construction.
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+
+            if (!_sessionRefreshReady || Session == null) return;
+            if ((DateTime.Now - _lastSessionRefresh).TotalSeconds < 3) return;
+            _lastSessionRefresh = DateTime.Now;
+
+            CurrentUser refreshed = _presenter.RefreshSession(Session);
+            if (refreshed == null)
+            {
+                _sessionRefreshReady = false;
+                MessageBox.Show(
+                    "Su sesión ya no es válida: la cuenta fue desactivada o eliminada.",
+                    "Sesión finalizada", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                Close();
+                return;
+            }
+
+            Session = refreshed;
+            oPerson = refreshed.Person;
+            _presenter.OnLoad(Session); // re-applies the sidebar to the current permission set
         }
 
         // Built in code (not in the Designer): a small "Cambiar contraseña" link in the sidebar
@@ -200,7 +233,7 @@ namespace PharmacySystem
             {
                 // The click-through opens the Producto tab in frmManagement; skip it for a role
                 // that can see alerts but not the products section (that tab is not loaded).
-                bool canOpenProduct = Session?.Can("productos.acceso") ?? true;
+                bool canOpenProduct = Session?.Can("productos.acceso") ?? false;
                 if (modal.ShowDialog(this) == DialogResult.OK && canOpenProduct && !string.IsNullOrEmpty(modal.SelectedProductCode))
                 {
                     frmManagement childForm = new frmManagement();
@@ -233,9 +266,9 @@ namespace PharmacySystem
 
         // Navigation gate. The sidebar already hides what the role cannot reach, but frmHome's
         // quick-access buttons call these same handlers through callbacks - this keeps a hidden
-        // destination unreachable even if something triggers its handler. Open when there is no
-        // session (design time / tests).
-        private static bool CanNavigate(string permission) => Session?.Can(permission) ?? true;
+        // destination unreachable even if something triggers its handler. No session -> deny:
+        // in the real app there is always a session by this point (DEF-23).
+        private static bool CanNavigate(string permission) => Session?.Can(permission) ?? false;
 
         private void btnClients_Click(object sender, EventArgs e)
         {

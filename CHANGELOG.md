@@ -38,6 +38,15 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   está *Activo*, *Inactivo* (suspendido o dado de baja) o *Bloqueado* (por
   intentos fallidos). La columna se actualiza sola al usar las acciones de esa
   pantalla.
+- **Control de acceso más estricto (DEF-21/22/23).**
+  - Sin una sesión iniciada, los controles de permiso ahora *deniegan* en vez de
+    conceder (antes, un estado sin sesión abría toda la interfaz).
+  - Registrar una venta y registrar una compra revalidan el permiso en el
+    momento de la acción, no solo al abrir la pantalla.
+  - Los permisos dejaron de quedar congelados hasta cerrar sesión: al volver a la
+    ventana principal (por ejemplo, tras cerrar una pantalla) se re-resuelven el
+    rol y los permisos desde la base. Si la cuenta fue desactivada o eliminada
+    mientras estaba en uso, la sesión se cierra y vuelve al inicio de sesión.
 
 ## [1.4.0] - 2026-08-30
 

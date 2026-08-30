@@ -34,6 +34,7 @@ namespace PharmacySystem.Presentation
         private readonly ISaleService _saleService;
         private readonly IProductService _productService;
         private readonly IStoreService _storeService;
+        private readonly CurrentUser _session;
         private readonly int _idPerson;
         private readonly List<SaleCartLine> _cart = new List<SaleCartLine>();
         // The client picked from ModalPerson, or null for a walk-in / consumidor final.
@@ -43,12 +44,13 @@ namespace PharmacySystem.Presentation
         private List<SalePaymentEntry> _paymentSplit;
         private decimal _paymentSplitTotal;
 
-        public SalePresenter(ISaleView view, ISaleService saleService, IProductService productService, IStoreService storeService, int idPerson)
+        public SalePresenter(ISaleView view, ISaleService saleService, IProductService productService, IStoreService storeService, CurrentUser session, int idPerson)
         {
             _view = view;
             _saleService = saleService;
             _productService = productService;
             _storeService = storeService;
+            _session = session;
             _idPerson = idPerson;
         }
 
@@ -237,6 +239,14 @@ namespace PharmacySystem.Presentation
 
         public void OnFinishSale()
         {
+            // Defense in depth: the sidebar already gates the screen, but the action re-checks
+            // the permission here like every other sensitive operation (DEF-22).
+            if (!(_session?.Can("ventas.acceso") ?? false))
+            {
+                _view.ShowMessage("No tiene permiso para registrar ventas.");
+                return;
+            }
+
             bool isFactura = IsFactura();
             Store store = _storeService.ListStore();
 
