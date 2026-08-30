@@ -18,7 +18,7 @@ namespace PharmacySystem.Data
         // TypePerson half, to build the nested oPersonType via Dapper multi-mapping.
         private const string PersonWithTypeSelect =
             "SELECT p.id AS idPerson, p.document_number AS document, p.name, p.address, p.phone, " +
-            "p.password, ISNULL(p.status, 1) AS Estado, " +
+            "p.password, ISNULL(p.status, 1) AS Estado, ISNULL(p.must_change_password, 0) AS mustChangePassword, " +
             "pt.id AS idPersonType, pt.description " +
             "FROM person p INNER JOIN person_type pt ON pt.id = p.person_type_id";
 
@@ -33,9 +33,11 @@ namespace PharmacySystem.Data
             {
                 try
                 {
+                    // must_change_password = 1: a user created from the Usuarios screen gets a
+                    // temporary password from the admin and must replace it on first login.
                     const string sql =
-                        "INSERT INTO person(document_number, name, address, phone, password, person_type_id) " +
-                        "VALUES (@document, @name, @address, @phone, @password, @person_type_id); " +
+                        "INSERT INTO person(document_number, name, address, phone, password, person_type_id, must_change_password) " +
+                        "VALUES (@document, @name, @address, @phone, @password, @person_type_id, 1); " +
                         "SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
                     return oConnection.ExecuteScalar<int>(sql, new
@@ -149,6 +151,32 @@ namespace PharmacySystem.Data
             }
         }
 
+        public Person GetById(int idPerson)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    return oConnection.Query<Person, TypePerson, Person>(
+                        PersonWithTypeSelect + " WHERE p.id = @id",
+                        (person, typePerson) => { person.oPersonType = typePerson; return person; },
+                        new { id = idPerson },
+                        splitOn: "idPersonType")
+                        .FirstOrDefault();
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return null;
+                }
+            }
+        }
+
         public bool UpdatePassword(int idPerson, string hashedPassword)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
@@ -158,6 +186,30 @@ namespace PharmacySystem.Data
                     oConnection.Execute(
                         "UPDATE person SET password = @password WHERE id = @id",
                         new { password = hashedPassword, id = idPerson });
+                    return true;
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return false;
+                }
+            }
+        }
+
+        public bool SetPasswordAndFlag(int idPerson, string hashedPassword, bool mustChangePassword)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    oConnection.Execute(
+                        "UPDATE person SET password = @password, must_change_password = @flag WHERE id = @id",
+                        new { password = hashedPassword, flag = mustChangePassword, id = idPerson });
                     return true;
                 }
                 catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))

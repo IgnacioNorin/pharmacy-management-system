@@ -1,61 +1,49 @@
 using PharmacySystem.Business;
-using PharmacySystem.Helpers;
 using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
 {
-    // Ported from Login.cs. Only `person` rows exist here now (clients are a separate table), so
-    // the old "refuse Cliente" guard is gone. VerifyPassword still preserves the legacy
-    // plain-text migration path: a matching plain-text password logs the user in and rewrites it
-    // as a hash before returning.
+    // The login decision (brute-force lockout, credential check, legacy plain-text -> hash
+    // migration, disabled-account check, must-change-password gate) lives in
+    // AuthenticationService now. This presenter only turns the AuthResult into a view call.
     public class LoginPresenter
     {
         private readonly ILoginView _view;
-        private readonly IPersonService _personService;
+        private readonly IAuthenticationService _authService;
 
-        public LoginPresenter(ILoginView view, IPersonService personService)
+        public LoginPresenter(ILoginView view, IAuthenticationService authService)
         {
             _view = view;
-            _personService = personService;
+            _authService = authService;
         }
 
         public void OnLogin()
         {
             try
             {
-                Person person = _personService.GetByDocument(_view.Document?.Trim());
+                AuthResult result = _authService.Authenticate(_view.Document, _view.Password);
 
-                if (person != null && person.Estado && VerifyPassword(person, _view.Password))
+                switch (result.Status)
                 {
-                    _view.LoginSucceeded(person);
-                }
-                else
-                {
-                    _view.ShowError("No se encontraron coincidencias del usuario");
+                    case AuthStatus.Ok:
+                        _view.LoginSucceeded(result.Person);
+                        break;
+                    case AuthStatus.MustChangePassword:
+                        _view.RequirePasswordChange(result.Person);
+                        break;
+                    case AuthStatus.LockedOut:
+                        _view.ShowError($"Cuenta bloqueada temporalmente por intentos fallidos. Reintente en {result.RetryAfterMinutes} minuto(s).");
+                        break;
+                    default:
+                        _view.ShowError("No se encontraron coincidencias del usuario");
+                        break;
                 }
             }
             catch (DataUnavailableException ex)
             {
                 _view.ShowError(ex.Message);
             }
-        }
-
-        private bool VerifyPassword(Person person, string enteredPassword)
-        {
-            if (PasswordHasher.IsHashed(person.password))
-            {
-                return PasswordHasher.Verify(enteredPassword, person.password);
-            }
-
-            // Legacy plain-text password: validate directly and migrate it to a hash on successful login.
-            if (person.password == enteredPassword)
-            {
-                _personService.UpdatePassword(person.idPerson, PasswordHasher.Hash(enteredPassword));
-                return true;
-            }
-
-            return false;
         }
     }
 }

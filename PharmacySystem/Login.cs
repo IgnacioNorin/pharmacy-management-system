@@ -44,6 +44,22 @@ namespace PharmacySystem
             frm.FormClosing += Frm_Closing;
         }
 
+        public void RequirePasswordChange(Person person)
+        {
+            using (var modal = new ModalChangePassword(person.idPerson, mandatory: true))
+            {
+                if (modal.ShowDialog(this) == DialogResult.OK)
+                {
+                    LoginSucceeded(person);
+                }
+                else
+                {
+                    txtpassword.Text = "";
+                    txtpassword.Focus();
+                }
+            }
+        }
+
         public void ShowError(string message) =>
             MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 

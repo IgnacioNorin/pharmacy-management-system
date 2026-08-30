@@ -50,8 +50,35 @@ namespace PharmacySystem
             // threshold purely because time passed, with nobody having sold or bought anything.
             timerNotification.Interval = 300000; // 5 minutes
             lblAlertBadge.Visible = false;
+            AddChangePasswordLink();
             LayoutSidebarItems();
             OpenHome();
+        }
+
+        // Built in code (not in the Designer): a small "Cambiar contraseña" link in the sidebar
+        // header, always available to any signed-in user regardless of role.
+        private void AddChangePasswordLink()
+        {
+            if (Session == null) return;
+
+            var link = new LinkLabel
+            {
+                Text = "Cambiar contraseña",
+                AutoSize = true,
+                Location = new Point(14, 72),
+                LinkColor = Color.FromArgb(141, 169, 196),
+                ActiveLinkColor = Color.White,
+                Font = new Font("Segoe UI", 8F, FontStyle.Regular)
+            };
+            link.LinkClicked += (s, e) =>
+            {
+                using (var modal = new ModalChangePassword(Session.PersonId, mandatory: false))
+                {
+                    modal.ShowDialog(this);
+                }
+            };
+            pnlSidebarHeader.Controls.Add(link);
+            link.BringToFront();
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)

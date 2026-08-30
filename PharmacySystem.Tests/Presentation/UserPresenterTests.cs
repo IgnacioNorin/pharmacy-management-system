@@ -12,10 +12,21 @@ namespace PharmacySystem.Tests.Presentation
             => CreatePresenter(view, service, new FakePermissionService());
 
         private static PharmacySystem.Presentation.UserPresenter CreatePresenter(FakeUserView view, FakePersonService service, FakePermissionService permissionService)
-            => new PharmacySystem.Presentation.UserPresenter(view, service, TestUser.With("usuarios.gestionar"), permissionService);
+            => new PharmacySystem.Presentation.UserPresenter(view, service, TestUser.With("usuarios.gestionar"), permissionService,
+                new FakePasswordChangeService(), new FakeAuthenticationService());
 
         private static PharmacySystem.Presentation.UserPresenter CreatePresenter(FakeUserView view, FakePersonService service, CurrentUser user)
-            => new PharmacySystem.Presentation.UserPresenter(view, service, user, new FakePermissionService());
+            => new PharmacySystem.Presentation.UserPresenter(view, service, user, new FakePermissionService(),
+                new FakePasswordChangeService(), new FakeAuthenticationService());
+
+        private static (PharmacySystem.Presentation.UserPresenter Presenter, FakePasswordChangeService Passwords, FakeAuthenticationService Auth)
+            CreateWithSecurity(FakeUserView view, FakePersonService service, CurrentUser user)
+        {
+            var passwords = new FakePasswordChangeService();
+            var auth = new FakeAuthenticationService();
+            var presenter = new PharmacySystem.Presentation.UserPresenter(view, service, user, new FakePermissionService(), passwords, auth);
+            return (presenter, passwords, auth);
+        }
 
         private static Person AdminGeneral(int id, bool active = true) =>
             new Person { idPerson = id, name = "AG" + id, Estado = active,
@@ -25,7 +36,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotRegister()
         {
             var view = ValidView();
-            new PharmacySystem.Presentation.UserPresenter(view, new FakePersonService(), TestUser.With(), new FakePermissionService()).OnSave();
+            new PharmacySystem.Presentation.UserPresenter(view, new FakePersonService(), TestUser.With(), new FakePermissionService(), new FakePasswordChangeService(), new FakeAuthenticationService()).OnSave();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
             Assert.Empty(view.AddedRows);
@@ -35,7 +46,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnDelete_WithoutManagePermission_ShowsDeniedAndDoesNotRemove()
         {
             var view = new FakeUserView { SelectedIndex = 3, UserId = 9 };
-            new PharmacySystem.Presentation.UserPresenter(view, new FakePersonService(), TestUser.With(), new FakePermissionService()).OnDelete();
+            new PharmacySystem.Presentation.UserPresenter(view, new FakePersonService(), TestUser.With(), new FakePermissionService(), new FakePasswordChangeService(), new FakeAuthenticationService()).OnDelete();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
             Assert.Empty(view.RemovedIndexes);
@@ -329,7 +340,8 @@ namespace PharmacySystem.Tests.Presentation
                 }
             };
             var presenter = new PharmacySystem.Presentation.UserPresenter(
-                view, new FakePersonService(), TestUser.WithRole(2, "usuarios.gestionar"), permissions);
+                view, new FakePersonService(), TestUser.WithRole(2, "usuarios.gestionar"), permissions,
+                new FakePasswordChangeService(), new FakeAuthenticationService());
 
             presenter.OnLoad();
 
@@ -349,11 +361,145 @@ namespace PharmacySystem.Tests.Presentation
                 }
             };
             var presenter = new PharmacySystem.Presentation.UserPresenter(
-                view, new FakePersonService(), TestUser.WithRole(1, "usuarios.gestionar"), permissions);
+                view, new FakePersonService(), TestUser.WithRole(1, "usuarios.gestionar"), permissions,
+                new FakePasswordChangeService(), new FakeAuthenticationService());
 
             presenter.OnLoad();
 
             Assert.Contains(view.LoadedRoleOptions, o => o.Text == "Administrador General");
+        }
+
+        // --- Restablecer contraseña -------------------------------------------------
+
+        private static FakePersonService WithUsers(params Person[] users) =>
+            new FakePersonService { ListResult = users.ToList() };
+
+        [Fact]
+        public void OnResetPassword_NoUserSelected_ShowsMessageAndNeverCallsService()
+        {
+            var view = new FakeUserView { SelectedIndex = 0 };
+            var f = CreateWithSecurity(view, new FakePersonService(), TestUser.WithRole(1, "usuarios.gestionar"));
+
+            f.Presenter.OnResetPassword();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("Seleccione un usuario"));
+            Assert.Null(f.Passwords.AdminResetCall);
+        }
+
+        [Fact]
+        public void OnResetPassword_WithoutManagePermission_ShowsDenied()
+        {
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 9, Password = "temp12", ConfirmPassword = "temp12" };
+            var f = CreateWithSecurity(view, new FakePersonService(), TestUser.WithRole(1));
+
+            f.Presenter.OnResetPassword();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Null(f.Passwords.AdminResetCall);
+        }
+
+        [Fact]
+        public void OnResetPassword_NonAdminGeneralTargetingAnAdminGeneral_IsBlocked()
+        {
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 3, Password = "temp12", ConfirmPassword = "temp12" };
+            var f = CreateWithSecurity(view, WithUsers(AdminGeneral(3)), TestUser.WithRole(2, "usuarios.gestionar"));
+            f.Presenter.OnLoad();
+
+            f.Presenter.OnResetPassword();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("Administrador General"));
+            Assert.Null(f.Passwords.AdminResetCall);
+        }
+
+        [Fact]
+        public void OnResetPassword_BlankPassword_ShowsMessage()
+        {
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 9, Password = "  ", ConfirmPassword = "" };
+            var f = CreateWithSecurity(view, new FakePersonService(), TestUser.WithRole(1, "usuarios.gestionar"));
+
+            f.Presenter.OnResetPassword();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("contraseña temporal"));
+            Assert.Null(f.Passwords.AdminResetCall);
+        }
+
+        [Fact]
+        public void OnResetPassword_Mismatch_ShowsMismatch()
+        {
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 9, Password = "temp12", ConfirmPassword = "other1" };
+            var f = CreateWithSecurity(view, new FakePersonService(), TestUser.WithRole(1, "usuarios.gestionar"));
+
+            f.Presenter.OnResetPassword();
+
+            Assert.Equal(1, view.PasswordMismatchCount);
+            Assert.Null(f.Passwords.AdminResetCall);
+        }
+
+        [Fact]
+        public void OnResetPassword_Valid_CallsAdminResetWithTheActorAndClearsTheForm()
+        {
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 9, Password = "temp12", ConfirmPassword = "temp12" };
+            var f = CreateWithSecurity(view,
+                WithUsers(new Person { idPerson = 9, document = "999", oPersonType = new TypePerson { idPersonType = 3 } }),
+                TestUser.WithRole(1, "usuarios.gestionar"));
+            f.Presenter.OnLoad();
+
+            f.Presenter.OnResetPassword();
+
+            Assert.Equal((9, "temp12", 1), f.Passwords.AdminResetCall);
+            Assert.True(view.ClearFormCalled);
+        }
+
+        [Fact]
+        public void OnResetPassword_ServiceReportsTooShort_ShowsTheMinLengthMessage()
+        {
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 9, Password = "abc", ConfirmPassword = "abc" };
+            var f = CreateWithSecurity(view, new FakePersonService(), TestUser.WithRole(1, "usuarios.gestionar"));
+            f.Passwords.AdminResetResult = PasswordChangeResult.TooShort;
+
+            f.Presenter.OnResetPassword();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains(PasswordRules.MinLength.ToString()));
+        }
+
+        // --- Desbloquear ---------------------------------------------------------
+
+        [Fact]
+        public void OnUnlockUser_NoUserSelected_ShowsMessage()
+        {
+            var view = new FakeUserView { SelectedIndex = 0 };
+            var f = CreateWithSecurity(view, new FakePersonService(), TestUser.WithRole(1, "usuarios.gestionar"));
+
+            f.Presenter.OnUnlockUser();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("Seleccione un usuario"));
+            Assert.Null(f.Auth.UnlockedWith);
+        }
+
+        [Fact]
+        public void OnUnlockUser_WithoutManagePermission_ShowsDenied()
+        {
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 9 };
+            var f = CreateWithSecurity(view, new FakePersonService(), TestUser.WithRole(1));
+
+            f.Presenter.OnUnlockUser();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Null(f.Auth.UnlockedWith);
+        }
+
+        [Fact]
+        public void OnUnlockUser_Valid_CallsUnlockWithTheTargetDocumentAndTheActor()
+        {
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 9 };
+            var f = CreateWithSecurity(view,
+                WithUsers(new Person { idPerson = 9, document = "999", oPersonType = new TypePerson { idPersonType = 3 } }),
+                TestUser.WithRole(1, "usuarios.gestionar"));
+            f.Presenter.OnLoad();
+
+            f.Presenter.OnUnlockUser();
+
+            Assert.Equal(("999", 1), f.Auth.UnlockedWith);
         }
     }
 }
