@@ -13,6 +13,9 @@ namespace PharmacySystem
     {
         private readonly PurchasePresenter _presenter;
 
+        // Built in code (not in the Designer): the VAT breakdown shown above "Monto Total".
+        private Label lblvatbreakdown;
+
         public frmPurchase(int IdPerson = 0)
         {
             InitializeComponent();
@@ -74,6 +77,21 @@ namespace PharmacySystem
             cbotypedocument.DisplayMember = "Text";
             cbotypedocument.ValueMember = "Value";
             cbotypedocument.SelectedIndex = 0;
+
+            lblvatbreakdown = new Label
+            {
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
+                AutoSize = true,
+                BackColor = lbltotalamount.BackColor,
+                Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular),
+                ForeColor = SystemColors.GrayText,
+                Location = new Point(label16.Left, label16.Top - 22),
+                Name = "lblvatbreakdown",
+                Text = ""
+            };
+            Controls.Add(lblvatbreakdown);
+            lblvatbreakdown.BringToFront();
+
             LockDateBack();
         }
 
@@ -205,6 +223,7 @@ namespace PharmacySystem
             txtnamesupplier.Text = "";
             dgdata.Rows.Clear();
             lbltotalamount.Text = "0";
+            if (lblvatbreakdown != null) lblvatbreakdown.Text = "";
         }
 
         private void txtCodeProduct_KeyDown(object sender, KeyEventArgs e)
@@ -281,6 +300,16 @@ namespace PharmacySystem
         public void RemoveCartLineAt(int index) => dgdata.Rows.RemoveAt(index);
 
         public void SetTotalText(string formattedTotal) => lbltotalamount.Text = formattedTotal;
+
+        public void SetVatBreakdown(decimal net, decimal tax, decimal exempt)
+        {
+            string text = $"Neto: {CultureInfoHelper.FormatAsCurrency(net)}   IVA: {CultureInfoHelper.FormatAsCurrency(tax)}";
+            if (exempt > 0)
+            {
+                text += $"   Exento: {CultureInfoHelper.FormatAsCurrency(exempt)}";
+            }
+            lblvatbreakdown.Text = text;
+        }
 
         public void ClearProductEntry() => CleanProduct();
 

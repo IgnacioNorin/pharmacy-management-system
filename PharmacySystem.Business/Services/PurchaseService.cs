@@ -22,7 +22,7 @@ namespace PharmacySystem.Business
         public List<PurchaseReportRow> ReportPurchase(string idSupplier, DateTime startDate, DateTime endDate) =>
             _repository.ReportPurchase(idSupplier, startDate, endDate);
 
-        public decimal GetTotalAmount(string idSupplier, DateTime startDate, DateTime endDate) =>
-            _repository.GetTotalAmount(idSupplier, startDate, endDate);
+        public PurchaseReportTotals GetTotals(string idSupplier, DateTime startDate, DateTime endDate) =>
+            _repository.GetTotals(idSupplier, startDate, endDate);
     }
 }

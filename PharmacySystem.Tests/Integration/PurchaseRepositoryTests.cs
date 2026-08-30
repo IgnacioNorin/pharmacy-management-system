@@ -267,7 +267,7 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void GetTotalAmount_SumsPurchasesInDateRangeForSupplier()
+        public void GetTotals_SumsPurchasesInDateRangeForSupplier_IncludingTheVatBreakdown()
         {
             string document = SqlTestHelper.NewTag();
             PersonRepo.Register(new Person
@@ -307,6 +307,10 @@ namespace PharmacySystem.Tests.Integration
                     oPerson = person,
                     oSupplier = new Supplier { idSupplier = supplierId },
                     totalAmount = 42.50m,
+                    netAmount = 36m,
+                    taxAmount = 6.50m,
+                    exemptAmount = 0m,
+                    taxRate = 19m,
                     documentType = "Factura",
                     documentNumber = documentNumber,
                     oPurchaseDetail = new List<PurchaseDetail>
@@ -334,9 +338,12 @@ namespace PharmacySystem.Tests.Integration
                     new SqlParameter("@date", purchaseDate),
                     new SqlParameter("@id", purchaseId));
 
-                decimal totalAmount = Repository.GetTotalAmount(supplierId.ToString(), purchaseDate, purchaseDate);
+                PurchaseReportTotals totals = Repository.GetTotals(supplierId.ToString(), purchaseDate, purchaseDate);
 
-                Assert.Equal(42.50m, totalAmount);
+                Assert.Equal(42.50m, totals.TotalAmount);
+                Assert.Equal(36m, totals.NetAmount);
+                Assert.Equal(6.50m, totals.TaxAmount);
+                Assert.Equal(0m, totals.ExemptAmount);
             }
             finally
             {
@@ -453,11 +460,11 @@ namespace PharmacySystem.Tests.Integration
             }
         }
 
-        // Regression test: GetTotalAmount used to join purchase_detail, so a purchase with N
-        // detail lines had its header total_amount summed N times. Here one purchase with a
-        // header total of 100 and two detail lines must still total 100, not 200.
+        // Regression test: the header-total query used to join purchase_detail, so a purchase
+        // with N detail lines had its header total_amount summed N times. Here one purchase with
+        // a header total of 100 and two detail lines must still total 100, not 200.
         [Fact]
-        public void GetTotalAmount_PurchaseWithMultipleDetailLines_CountsHeaderTotalOnce()
+        public void GetTotals_PurchaseWithMultipleDetailLines_CountsHeaderTotalOnce()
         {
             string document = SqlTestHelper.NewTag();
             PersonRepo.Register(new Person
@@ -506,7 +513,7 @@ namespace PharmacySystem.Tests.Integration
                 SqlTestHelper.ExecuteNonQuery("UPDATE purchase SET date_registered = @date WHERE id = @id",
                     new SqlParameter("@date", purchaseDate), new SqlParameter("@id", purchaseId));
 
-                decimal totalAmount = Repository.GetTotalAmount(supplierId.ToString(), purchaseDate, purchaseDate);
+                decimal totalAmount = Repository.GetTotals(supplierId.ToString(), purchaseDate, purchaseDate).TotalAmount;
 
                 Assert.Equal(100m, totalAmount);
             }

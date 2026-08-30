@@ -27,15 +27,29 @@ namespace PharmacySystem.Presentation
         private readonly IPurchaseView _view;
         private readonly IPurchaseService _purchaseService;
         private readonly IProductService _productService;
+        private readonly IStoreService _storeService;
         private readonly int _idPerson;
         private readonly List<PurchaseCartLine> _cart = new List<PurchaseCartLine>();
 
-        public PurchasePresenter(IPurchaseView view, IPurchaseService purchaseService, IProductService productService, int idPerson)
+        // The store VAT rate rarely changes during a session; read it once on first use.
+        private decimal? _taxRate;
+
+        public PurchasePresenter(IPurchaseView view, IPurchaseService purchaseService, IProductService productService, IStoreService storeService, int idPerson)
         {
             _view = view;
             _purchaseService = purchaseService;
             _productService = productService;
+            _storeService = storeService;
             _idPerson = idPerson;
+        }
+
+        private decimal TaxRate()
+        {
+            if (_taxRate == null)
+            {
+                _taxRate = _storeService.ListStore()?.defaultTaxRate ?? 19m;
+            }
+            return _taxRate.Value;
         }
 
         public void OnProductCodeEntered(string code)
@@ -81,6 +95,8 @@ namespace PharmacySystem.Presentation
 
             decimal subTotal = _view.Amount * pricePurchase;
 
+            Product product = _productService.List().FirstOrDefault(p => p.idProduct == _view.SelectedProductId);
+
             var line = new PurchaseCartLine
             {
                 ProductId = _view.SelectedProductId,
@@ -89,7 +105,8 @@ namespace PharmacySystem.Presentation
                 Quantity = _view.Amount,
                 ExpirationDate = _view.ExpirationDate,
                 PurchasePrice = pricePurchase,
-                SubTotal = subTotal
+                SubTotal = subTotal,
+                TaxAffected = product?.taxAffected ?? true
             };
 
             _cart.Add(line);
@@ -109,7 +126,15 @@ namespace PharmacySystem.Presentation
         {
             decimal total = _cart.Sum(l => l.SubTotal);
             _view.SetTotalText(CultureInfoHelper.FormatAsCurrency(total));
+
+            TaxCalculator.Breakdown vat = ComputeVat();
+            _view.SetVatBreakdown(vat.Net, vat.Tax, vat.Exempt);
         }
+
+        // Line prices are entered VAT-included, so the taxable base is backed out of the gross
+        // (see TaxCalculator). Exempt lines (product.tax_affected = 0) go straight to Exempt.
+        private TaxCalculator.Breakdown ComputeVat() =>
+            TaxCalculator.Compute(_cart.Select(l => (l.SubTotal, l.TaxAffected)), TaxRate());
 
         public void OnFinishPurchase()
         {
@@ -132,13 +157,17 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            decimal totalAmount = _cart.Sum(l => l.SubTotal);
+            TaxCalculator.Breakdown vat = ComputeVat();
 
             Purchase purchase = new Purchase
             {
                 oPerson = new Person { idPerson = _idPerson },
                 oSupplier = new Supplier { idSupplier = _view.SelectedSupplierId },
-                totalAmount = totalAmount,
+                totalAmount = vat.Total,
+                netAmount = vat.Net,
+                taxAmount = vat.Tax,
+                exemptAmount = vat.Exempt,
+                taxRate = TaxRate(),
                 documentType = _view.DocumentType,
                 documentNumber = _view.DocumentNumber.Trim(),
                 oPurchaseDetail = _cart.Select(l => new PurchaseDetail

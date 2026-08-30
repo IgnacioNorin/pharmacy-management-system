@@ -83,8 +83,8 @@ namespace PharmacySystem.Presentation
             string supplierId = _view.SelectedSupplierId;
 
             List<PurchaseReportRow> rows = _purchaseService.ReportPurchase(supplierId, startDate, endDate);
-            decimal headerTotal = _purchaseService.GetTotalAmount(supplierId, startDate, endDate);
-            _view.SetPurchaseReport(PurchaseDefinition, new ReportResult<PurchaseReportRow>(rows, PurchaseTotals(rows, headerTotal)));
+            PurchaseReportTotals headerTotals = _purchaseService.GetTotals(supplierId, startDate, endDate);
+            _view.SetPurchaseReport(PurchaseDefinition, new ReportResult<PurchaseReportRow>(rows, PurchaseTotals(rows, headerTotals)));
         }
 
         public void OnConsultProduct()
@@ -120,12 +120,15 @@ namespace PharmacySystem.Presentation
         };
 
         // Rows are one per purchase_detail line, so quantity / prices sum straight from them.
-        // "Monto Total" is a purchase-header value repeated across a purchase's lines, so it
-        // comes from GetTotalAmount (which sums it once per purchase, and has its own DB
-        // regression test).
-        private static PurchaseReportRow PurchaseTotals(List<PurchaseReportRow> rows, decimal headerTotal) => new PurchaseReportRow
+        // "Monto Total" / "Neto" / "IVA" / "Exento" are purchase-header values repeated across a
+        // purchase's lines, so they come from GetTotals (which sums each once per purchase, and
+        // has its own DB regression test).
+        private static PurchaseReportRow PurchaseTotals(List<PurchaseReportRow> rows, PurchaseReportTotals headerTotals) => new PurchaseReportRow
         {
-            TotalAmount = headerTotal,
+            TotalAmount = headerTotals.TotalAmount,
+            NetAmount = headerTotals.NetAmount,
+            TaxAmount = headerTotals.TaxAmount,
+            ExemptAmount = headerTotals.ExemptAmount,
             Quantity = rows.Sum(r => r.Quantity),
             PurchasePrice = rows.Sum(r => r.PurchasePrice),
             LineTotal = rows.Sum(r => r.LineTotal)
@@ -167,6 +170,9 @@ namespace PharmacySystem.Presentation
             new ReportColumn<PurchaseReportRow>("Tipo Documento", ReportValueType.Text, r => r.DocumentType),
             new ReportColumn<PurchaseReportRow>("Número Documento", ReportValueType.Text, r => r.DocumentNumber),
             new ReportColumn<PurchaseReportRow>("Monto Total", ReportValueType.Currency, r => r.TotalAmount),
+            new ReportColumn<PurchaseReportRow>("Neto", ReportValueType.Currency, r => r.NetAmount),
+            new ReportColumn<PurchaseReportRow>("IVA", ReportValueType.Currency, r => r.TaxAmount),
+            new ReportColumn<PurchaseReportRow>("Exento", ReportValueType.Currency, r => r.ExemptAmount),
             new ReportColumn<PurchaseReportRow>("Nombre", ReportValueType.Text, r => r.ProductName),
             new ReportColumn<PurchaseReportRow>("Cantidad", ReportValueType.Integer, r => r.Quantity),
             new ReportColumn<PurchaseReportRow>("Precio Compra", ReportValueType.Currency, r => r.PurchasePrice),

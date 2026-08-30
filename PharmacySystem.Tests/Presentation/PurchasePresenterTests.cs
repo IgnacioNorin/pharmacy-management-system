@@ -8,8 +8,8 @@ namespace PharmacySystem.Tests.Presentation
 {
     public class PurchasePresenterTests
     {
-        private static PurchasePresenter CreatePresenter(FakePurchaseView view, FakePurchaseService purchaseService, FakeProductService productService, int idPerson = 1)
-            => new PurchasePresenter(view, purchaseService, productService, idPerson);
+        private static PurchasePresenter CreatePresenter(FakePurchaseView view, FakePurchaseService purchaseService, FakeProductService productService, int idPerson = 1, FakeStoreService storeService = null)
+            => new PurchasePresenter(view, purchaseService, productService, storeService ?? new FakeStoreService(), idPerson);
 
         // The cart lives inside the Presenter now, not the View, so tests that need an existing
         // cart line build it through the real OnAddProduct() path instead of pre-seeding view state.
@@ -279,6 +279,71 @@ namespace PharmacySystem.Tests.Presentation
             }
 
             Assert.False(raised);
+        }
+
+        [Fact]
+        public void OnAddProduct_PushesTheVatBreakdownToTheView_PricesAreVatIncluded()
+        {
+            var view = new FakePurchaseView();
+            var store = new FakeStoreService { ListStoreResult = new Store { defaultTaxRate = 19m } };
+            var presenter = CreatePresenter(view, new FakePurchaseService(), new FakeProductService(), storeService: store);
+
+            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "1190.00");
+
+            Assert.NotNull(view.VatBreakdown);
+            Assert.Equal(1000m, view.VatBreakdown.Value.Net);   // 1190 / 1.19
+            Assert.Equal(190m, view.VatBreakdown.Value.Tax);
+            Assert.Equal(0m, view.VatBreakdown.Value.Exempt);
+        }
+
+        [Fact]
+        public void OnFinishPurchase_StoresTheVatBreakdownAndRateOnThePurchase()
+        {
+            var view = new FakePurchaseView { DocumentType = "Factura" };
+            var purchaseService = new FakePurchaseService { RegisterResult = true };
+            var store = new FakeStoreService { ListStoreResult = new Store { defaultTaxRate = 19m } };
+            var presenter = CreatePresenter(view, purchaseService, new FakeProductService(), storeService: store);
+            AddLine(presenter, view, productId: 1, amount: 2, pricePurchaseText: "1190.00");
+
+            view.DocumentNumber = "001";
+            view.SelectedSupplierId = 3;
+            presenter.OnFinishPurchase();
+
+            Purchase registered = purchaseService.RegisteredWith;
+            Assert.Equal(2380m, registered.totalAmount);   // gross unchanged: 2 * 1190
+            Assert.Equal(2000m, registered.netAmount);
+            Assert.Equal(380m, registered.taxAmount);
+            Assert.Equal(0m, registered.exemptAmount);
+            Assert.Equal(19m, registered.taxRate);
+        }
+
+        [Fact]
+        public void OnFinishPurchase_ExemptProduct_GoesToExemptAmountNotTheTaxableBase()
+        {
+            var view = new FakePurchaseView { DocumentType = "Factura" };
+            var purchaseService = new FakePurchaseService { RegisterResult = true };
+            var store = new FakeStoreService { ListStoreResult = new Store { defaultTaxRate = 19m } };
+            var productService = new FakeProductService
+            {
+                ListResult = new List<Product>
+                {
+                    new Product { idProduct = 1, code = "P1", name = "Product 1", taxAffected = true },
+                    new Product { idProduct = 2, code = "P2", name = "Product 2", taxAffected = false }
+                }
+            };
+            var presenter = CreatePresenter(view, purchaseService, productService, storeService: store);
+            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "1190.00");
+            AddLine(presenter, view, productId: 2, amount: 1, pricePurchaseText: "500.00");
+
+            view.DocumentNumber = "001";
+            view.SelectedSupplierId = 3;
+            presenter.OnFinishPurchase();
+
+            Purchase registered = purchaseService.RegisteredWith;
+            Assert.Equal(1690m, registered.totalAmount);
+            Assert.Equal(1000m, registered.netAmount);
+            Assert.Equal(190m, registered.taxAmount);
+            Assert.Equal(500m, registered.exemptAmount);
         }
 
         [Fact]

@@ -92,7 +92,7 @@ namespace PharmacySystem
         #region Purchase / Sale / Reports
 
         public static PurchasePresenter CreatePurchasePresenter(IPurchaseView view, int idPerson) =>
-            new PurchasePresenter(view, _purchaseService, _productService, idPerson);
+            new PurchasePresenter(view, _purchaseService, _productService, _storeService, idPerson);
 
         public static SalePresenter CreateSalePresenter(ISaleView view, int idPerson) =>
             new SalePresenter(view, _saleService, _productService, _storeService, idPerson);

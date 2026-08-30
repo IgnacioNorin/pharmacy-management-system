@@ -31,8 +31,8 @@ namespace PharmacySystem.Data
                     try
                     {
                         const string insertPurchaseQuery =
-                            "INSERT INTO purchase(person_id, supplier_id, total_amount, document_type, document_number) " +
-                            "VALUES (@person_id, @supplier_id, @total_amount, @document_type, @document_number); " +
+                            "INSERT INTO purchase(person_id, supplier_id, total_amount, net_amount, tax_amount, exempt_amount, tax_rate, document_type, document_number) " +
+                            "VALUES (@person_id, @supplier_id, @total_amount, @net_amount, @tax_amount, @exempt_amount, @tax_rate, @document_type, @document_number); " +
                             "SELECT SCOPE_IDENTITY();";
 
                         object rawId = oConnection.ExecuteScalar<object>(insertPurchaseQuery, new
@@ -40,6 +40,10 @@ namespace PharmacySystem.Data
                             person_id = purchase.oPerson.idPerson,
                             supplier_id = purchase.oSupplier.idSupplier,
                             total_amount = purchase.totalAmount,
+                            net_amount = purchase.netAmount,
+                            tax_amount = purchase.taxAmount,
+                            exempt_amount = purchase.exemptAmount,
+                            tax_rate = purchase.taxRate,
                             document_type = purchase.documentType,
                             document_number = purchase.documentNumber
                         }, objTransacion);
@@ -159,6 +163,7 @@ namespace PharmacySystem.Data
                     const string sql =
                         "SELECT pu.date_registered AS DateRegistered, su.document_number AS SupplierDocument, su.company_name AS CompanyName, " +
                         "pu.document_type AS DocumentType, pu.document_number AS DocumentNumber, pu.total_amount AS TotalAmount, " +
+                        "pu.net_amount AS NetAmount, pu.tax_amount AS TaxAmount, pu.exempt_amount AS ExemptAmount, " +
                         "pr.name AS ProductName, pd.stock AS Quantity, pd.purchase_price AS PurchasePrice, " +
                         "pd.stock * pd.purchase_price AS LineTotal " +
                         "FROM purchase pu " +
@@ -184,22 +189,25 @@ namespace PharmacySystem.Data
             }
         }
 
-        public decimal GetTotalAmount(string idSupplier, DateTime startDate, DateTime endDate)
+        public PurchaseReportTotals GetTotals(string idSupplier, DateTime startDate, DateTime endDate)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    // total_amount is a purchase-header column: it must NOT be joined to
-                    // purchase_detail, or the sum is multiplied by the number of detail lines
+                    // These are purchase-header columns: they must NOT be joined to
+                    // purchase_detail, or each sum is multiplied by the number of detail lines
                     // (a 3-line purchase counted its total three times).
                     const string sql =
-                        "SELECT ISNULL(SUM(pu.total_amount),0) AS total_amount " +
+                        "SELECT ISNULL(SUM(pu.total_amount),0) AS TotalAmount, " +
+                        "ISNULL(SUM(pu.net_amount),0) AS NetAmount, " +
+                        "ISNULL(SUM(pu.tax_amount),0) AS TaxAmount, " +
+                        "ISNULL(SUM(pu.exempt_amount),0) AS ExemptAmount " +
                         "FROM purchase pu " +
                         "WHERE pu.date_registered >= @startDate AND pu.date_registered < DATEADD(DAY, 1, @endDate) " +
                         "AND (@supplier_id = 0 OR pu.supplier_id = @supplier_id)";
 
-                    return oConnection.ExecuteScalar<decimal>(sql, new { startDate = startDate.Date, endDate = endDate.Date, supplier_id = idSupplier });
+                    return oConnection.QuerySingle<PurchaseReportTotals>(sql, new { startDate = startDate.Date, endDate = endDate.Date, supplier_id = idSupplier });
                 }
                 catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
                 {
@@ -209,7 +217,7 @@ namespace PharmacySystem.Data
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
-                    return 0;
+                    return new PurchaseReportTotals();
                 }
             }
         }

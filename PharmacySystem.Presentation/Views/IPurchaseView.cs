@@ -25,6 +25,7 @@ namespace PharmacySystem.Presentation
         void AddCartLine(PurchaseCartLine line);
         void RemoveCartLineAt(int index);
         void SetTotalText(string formattedTotal);
+        void SetVatBreakdown(decimal net, decimal tax, decimal exempt);
         void ClearProductEntry();
         void ClearPurchase();
     }

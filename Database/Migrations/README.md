@@ -73,6 +73,7 @@ fijan al inicio; `sqlcmd` por defecto los deja en `OFF`).
 | `027_store_wider_text_columns.sql` | 1.2.0 | 1.2.0 (ensancha `store.company_name` a 150, `address` a 200, `email` a 120; una razón social / dirección larga ya no falla al guardar los datos de la tienda) |
 | `028_store_drop_currency_country.sql` | 1.2.0 | 1.2.0 (el sistema es CLP puro: elimina `store.currency_culture` y `store.country_code` y su constraint por defecto; la tasa de IVA `store.default_tax_rate` sigue configurable) |
 | `029_split_client_from_person.sql` | 1.2.0 | 1.2.0 (separa los clientes de `person` a la tabla nueva `client` conservando los ids; `sale.client_id` pasa a referenciar `client`; se quitan las columnas fiscales de `person`, el rol `Cliente` (`person_type` id 4) y sus `role_permission`; `sp_update_person` / `sp_delete_person` sin la parte de cliente; nuevo `sp_delete_client`) |
+| `030_purchase_vat_breakdown.sql` | 1.2.0 | 1.2.0 (agrega `purchase.net_amount` / `tax_amount` / `exempt_amount` / `tax_rate`; el precio de compra se ingresa con IVA incluido y el neto se descuenta hacia atrás; backfill de los comprobantes previos como afectos al 19 %) |
 
 **No es una migración**, pero se ejecuta una vez después de crear la base:
 `Database\create_app_login.sql` crea el login `pharmacy_app` con privilegios
