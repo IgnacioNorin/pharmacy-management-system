@@ -248,9 +248,9 @@ namespace PharmacySystem
 
         #region ISaleView
 
-        int ISaleView.SelectedProductId => int.Parse(txtidproduct.Text);
+        int ISaleView.SelectedProductId => ViewParse.Int(txtidproduct.Text);
         string ISaleView.SelectedProductName => txtnameproduct.Text.Trim();
-        int ISaleView.Stock => int.Parse(txtstock.Text);
+        int ISaleView.Stock => ViewParse.Int(txtstock.Text);
         decimal ISaleView.Amount => txtamount.Value;
         string ISaleView.PriceSaleText => txtpricesale.Text;
 

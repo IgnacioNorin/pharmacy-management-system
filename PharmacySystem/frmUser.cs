@@ -21,15 +21,15 @@ namespace PharmacySystem
 
         #region IUserView
 
-        public int SelectedIndex => int.Parse(txtindex.Text);
+        public int SelectedIndex => ViewParse.Int(txtindex.Text);
         public int RowCount => dgdata.Rows.Count;
-        public int UserId => int.Parse(txtid.Text);
+        public int UserId => ViewParse.Int(txtid.Text);
         public string Document => txtdocument.Text;
         string IUserView.Name => txtname.Text;
         public string Password => txtpassword.Text;
         public string ConfirmPassword => txtconfirmpassword.Text;
-        public int RoleId => Convert.ToInt32(((ComboBoxItem)cborol.SelectedItem).Value.ToString());
-        public string RoleText => ((ComboBoxItem)cborol.SelectedItem).Text;
+        public int RoleId => ViewParse.ComboInt(cborol);
+        public string RoleText => ViewParse.ComboText(cborol);
 
         List<string> IUserView.Validate()
         {
@@ -42,7 +42,8 @@ namespace PharmacySystem
                     var rule = Validations.rules[ruleName];
                     if (!rule.Validate(camp.Key.Text))
                     {
-                        errors.Add($"{namesMessages[camp.Key.Name]} : {rule.MessageError}");
+                        string label = namesMessages.TryGetValue(camp.Key.Name, out var l) ? l : camp.Key.Name;
+                        errors.Add($"{label} : {rule.MessageError}");
                     }
                 }
             }
@@ -330,7 +331,8 @@ namespace PharmacySystem
 
         private void btnsearch_Click(object sender, EventArgs e)
         {
-            string columnFilter = ((ComboBoxItem)cbosearch.SelectedItem).Value.ToString();
+            string columnFilter = ViewParse.ComboValueText(cbosearch);
+            if (columnFilter == "") return;
             string value;
 
             if (dgdata.Rows.Count <= 0) return;

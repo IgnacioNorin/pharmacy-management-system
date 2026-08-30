@@ -20,8 +20,8 @@ namespace PharmacySystem
 
         #region IClientView
 
-        public int SelectedIndex => int.Parse(txtindex.Text);
-        public int PersonId => int.Parse(txtid.Text);
+        public int SelectedIndex => ViewParse.Int(txtindex.Text);
+        public int PersonId => ViewParse.Int(txtid.Text);
         public string Document => txtdocument.Text;
         string IClientView.Name => txtname.Text;
         public string Address => txtaddress.Text;
@@ -43,7 +43,8 @@ namespace PharmacySystem
                     var rule = Validations.rules[ruleName];
                     if (!rule.Validate(camp.Key.Text))
                     {
-                        errors.Add($"{namesMessages[camp.Key.Name]} : {rule.MessageError}");
+                        string label = namesMessages.TryGetValue(camp.Key.Name, out var l) ? l : camp.Key.Name;
+                        errors.Add($"{label} : {rule.MessageError}");
                     }
                 }
             }

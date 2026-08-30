@@ -108,7 +108,8 @@ namespace PharmacySystem
 
                     if (!rule.Validate(value))
                     {
-                        errors.Add($"{namesMessages[camp.Key.Name]} : {rule.MessageError}");
+                        string label = namesMessages.TryGetValue(camp.Key.Name, out var l) ? l : camp.Key.Name;
+                        errors.Add($"{label} : {rule.MessageError}");
                     }
                 }
             }
@@ -225,9 +226,9 @@ namespace PharmacySystem
 
         #region ICategoryManagementView
 
-        int ICategoryManagementView.SelectedIndex => int.Parse(txtindexcategory.Text);
+        int ICategoryManagementView.SelectedIndex => ViewParse.Int(txtindexcategory.Text);
         int ICategoryManagementView.RowCount => dgdatacategory.Rows.Count;
-        public int CategoryId => int.Parse(txtidcategory.Text);
+        public int CategoryId => ViewParse.Int(txtidcategory.Text);
         string ICategoryManagementView.Description => txtdescriptioncategory.Text;
 
         List<string> ICategoryManagementView.Validate() => ValidateForm();
@@ -327,15 +328,15 @@ namespace PharmacySystem
 
         #region IProductManagementView
 
-        int IProductManagementView.SelectedIndex => int.Parse(txtindexproduct.Text);
+        int IProductManagementView.SelectedIndex => ViewParse.Int(txtindexproduct.Text);
         int IProductManagementView.RowCount => dgdataproduct.Rows.Count;
         public string SearchText => txtsearchproduct.Text;
-        public int ProductId => int.Parse(txtidproduct.Text);
+        public int ProductId => ViewParse.Int(txtidproduct.Text);
         public string Code => txtcodeproduct.Text;
         string IProductManagementView.Name => txtnameproduct.Text;
         string IProductManagementView.Description => txtdescriptionproduct.Text;
-        public int SelectedCategoryId => (int)((ComboBoxItem)cbocategory.SelectedItem).Value;
-        public string SelectedCategoryText => ((ComboBoxItem)cbocategory.SelectedItem).Text;
+        public int SelectedCategoryId => ViewParse.ComboInt(cbocategory);
+        public string SelectedCategoryText => ViewParse.ComboText(cbocategory);
         public bool TaxAffected => chkTaxAffected.Checked;
 
         List<string> IProductManagementView.Validate() => ValidateForm();

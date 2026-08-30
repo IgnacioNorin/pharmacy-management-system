@@ -159,7 +159,15 @@ namespace PharmacySystem
 
             if (columnName == "btnVer")
             {
-                SelectedProductCode = row.Cells["Codigo"].Value.ToString();
+                // product.code is nullable: no code -> nothing to search for in Gestión (DEF-17).
+                string code = row.Cells["Codigo"].Value?.ToString() ?? "";
+                if (code == "")
+                {
+                    MessageBox.Show("El producto no tiene un código asignado; no se puede abrir en Gestión.",
+                        "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                SelectedProductCode = code;
                 DialogResult = DialogResult.OK;
                 Close();
             }
