@@ -10,9 +10,10 @@ namespace PharmacySystem.Tests.Presentation
     public class SalePresenterTests
     {
         private static SalePresenter CreatePresenter(FakeSaleView view, FakeSaleService saleService, FakeProductService productService,
-            int idPerson = 1, decimal taxRate = 19m)
+            int idPerson = 1, decimal taxRate = 19m, CurrentUser session = null)
             => new SalePresenter(view, saleService, productService,
-                new FakeStoreService { ListStoreResult = new Store { defaultTaxRate = taxRate } }, idPerson);
+                new FakeStoreService { ListStoreResult = new Store { defaultTaxRate = taxRate } },
+                session ?? TestUser.With("ventas.acceso"), idPerson);
 
         // The cart lives inside the Presenter now, not the View, so tests that need an existing
         // cart line build it through the real OnAddProduct() path instead of pre-seeding view state.
@@ -31,7 +32,8 @@ namespace PharmacySystem.Tests.Presentation
         {
             var view = new FakeSaleView();
             var presenter = new SalePresenter(view, new FakeSaleService(), new FakeProductService(),
-                new FakeStoreService { ListStoreResult = new Store { defaultDocumentType = "Factura" } }, 1);
+                new FakeStoreService { ListStoreResult = new Store { defaultDocumentType = "Factura" } },
+                TestUser.With("ventas.acceso"), 1);
 
             presenter.OnLoad();
 
@@ -158,6 +160,20 @@ namespace PharmacySystem.Tests.Presentation
 
             Assert.Empty(view.ShownMessages);
             Assert.NotNull(view.ChangeTextSet);
+        }
+
+        [Fact]
+        public void OnFinishSale_WithoutTheSalesPermission_IsDeniedAndNeverRegisters()
+        {
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
+            var service = new FakeSaleService();
+            var presenter = CreatePresenter(view, service, new FakeProductService(), session: TestUser.With());
+            AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "10.00");
+
+            presenter.OnFinishSale();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Null(service.RegisteredWith);
         }
 
         [Fact]

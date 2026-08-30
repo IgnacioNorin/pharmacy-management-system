@@ -7,8 +7,10 @@ namespace PharmacySystem.Tests.Presentation
 {
     public class MainFormPresenterTests
     {
-        private static MainFormPresenter CreatePresenter(FakeMainFormView view, FakeNotificationConfigService notificationService)
-            => new MainFormPresenter(view, notificationService);
+        private static MainFormPresenter CreatePresenter(FakeMainFormView view, FakeNotificationConfigService notificationService,
+            FakePersonService personService = null, FakePermissionService permissionService = null)
+            => new MainFormPresenter(view, notificationService,
+                personService ?? new FakePersonService(), permissionService ?? new FakePermissionService());
 
         private static CurrentUser User(string name, string roleDescription, params string[] permissions) =>
             new CurrentUser(
@@ -134,6 +136,64 @@ namespace PharmacySystem.Tests.Presentation
             CreatePresenter(view, notificationService).RefreshAlerts();
 
             Assert.Same(alerts[0], Assert.Single(view.ShownAlerts));
+        }
+
+        // DEF-21: the session re-resolves its role and permissions from the database.
+
+        [Fact]
+        public void RefreshSession_Null_ReturnsNull()
+        {
+            Assert.Null(CreatePresenter(new FakeMainFormView(), new FakeNotificationConfigService()).RefreshSession(null));
+        }
+
+        [Fact]
+        public void RefreshSession_ActiveUser_RebuildsFromTheCurrentRoleAndPermissions()
+        {
+            var people = new FakePersonService
+            {
+                GetByIdResult = new Person { idPerson = 4, name = "Ana", Estado = true, oPersonType = new TypePerson { idPersonType = 9, description = "Custom" } }
+            };
+            var permissions = new FakePermissionService();
+            permissions.PermissionCodesByRole[9] = new List<string> { "ventas.acceso" };
+            var current = User("Ana", "Old role", "compras.acceso"); // stale set
+
+            CurrentUser refreshed = CreatePresenter(new FakeMainFormView(), new FakeNotificationConfigService(), people, permissions)
+                .RefreshSession(current);
+
+            Assert.NotNull(refreshed);
+            Assert.True(refreshed.Can("ventas.acceso"));
+            Assert.False(refreshed.Can("compras.acceso")); // the revoked permission is gone
+            Assert.Equal(9, refreshed.RoleId);
+        }
+
+        [Fact]
+        public void RefreshSession_DeactivatedUser_ReturnsNull()
+        {
+            var people = new FakePersonService
+            {
+                GetByIdResult = new Person { idPerson = 4, name = "Ana", Estado = false, oPersonType = new TypePerson { idPersonType = 9 } }
+            };
+
+            Assert.Null(CreatePresenter(new FakeMainFormView(), new FakeNotificationConfigService(), people)
+                .RefreshSession(User("Ana", "Custom", "ventas.acceso")));
+        }
+
+        [Fact]
+        public void RefreshSession_DeletedUser_ReturnsNull()
+        {
+            var people = new FakePersonService { GetByIdResult = null };
+
+            Assert.Null(CreatePresenter(new FakeMainFormView(), new FakeNotificationConfigService(), people)
+                .RefreshSession(User("Ana", "Custom", "ventas.acceso")));
+        }
+
+        [Fact]
+        public void RefreshSession_DatabaseUnavailable_KeepsTheSameSession()
+        {
+            var people = new FakePersonService { GetByIdThrows = new PharmacySystem.Infrastructure.DataUnavailableException() };
+            var current = User("Ana", "Custom", "ventas.acceso");
+
+            Assert.Same(current, CreatePresenter(new FakeMainFormView(), new FakeNotificationConfigService(), people).RefreshSession(current));
         }
 
         [Fact]

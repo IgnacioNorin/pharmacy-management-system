@@ -28,18 +28,20 @@ namespace PharmacySystem.Presentation
         private readonly IPurchaseService _purchaseService;
         private readonly IProductService _productService;
         private readonly IStoreService _storeService;
+        private readonly CurrentUser _session;
         private readonly int _idPerson;
         private readonly List<PurchaseCartLine> _cart = new List<PurchaseCartLine>();
 
         // The store VAT rate rarely changes during a session; read it once on first use.
         private decimal? _taxRate;
 
-        public PurchasePresenter(IPurchaseView view, IPurchaseService purchaseService, IProductService productService, IStoreService storeService, int idPerson)
+        public PurchasePresenter(IPurchaseView view, IPurchaseService purchaseService, IProductService productService, IStoreService storeService, CurrentUser session, int idPerson)
         {
             _view = view;
             _purchaseService = purchaseService;
             _productService = productService;
             _storeService = storeService;
+            _session = session;
             _idPerson = idPerson;
         }
 
@@ -138,6 +140,14 @@ namespace PharmacySystem.Presentation
 
         public void OnFinishPurchase()
         {
+            // Defense in depth: the action re-checks the permission, like every other sensitive
+            // operation, instead of relying only on the navigation gate (DEF-22).
+            if (!(_session?.Can("compras.acceso") ?? false))
+            {
+                _view.ShowMessage("No tiene permiso para registrar compras.");
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(_view.DocumentNumber))
             {
                 _view.ShowMessage("Debe ingresar el numero de documento\npara registrar una compra");

@@ -8,8 +8,10 @@ namespace PharmacySystem.Tests.Presentation
 {
     public class PurchasePresenterTests
     {
-        private static PurchasePresenter CreatePresenter(FakePurchaseView view, FakePurchaseService purchaseService, FakeProductService productService, int idPerson = 1, FakeStoreService storeService = null)
-            => new PurchasePresenter(view, purchaseService, productService, storeService ?? new FakeStoreService(), idPerson);
+        private static PurchasePresenter CreatePresenter(FakePurchaseView view, FakePurchaseService purchaseService, FakeProductService productService,
+            int idPerson = 1, FakeStoreService storeService = null, CurrentUser session = null)
+            => new PurchasePresenter(view, purchaseService, productService, storeService ?? new FakeStoreService(),
+                session ?? TestUser.With("compras.acceso"), idPerson);
 
         // The cart lives inside the Presenter now, not the View, so tests that need an existing
         // cart line build it through the real OnAddProduct() path instead of pre-seeding view state.
@@ -130,6 +132,20 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Single(view.RenderedCartLines);
             Assert.Equal(2, view.RenderedCartLines[0].ProductId);
             Assert.NotNull(view.TotalText);
+        }
+
+        [Fact]
+        public void OnFinishPurchase_WithoutThePurchasesPermission_IsDeniedAndNeverRegisters()
+        {
+            var view = new FakePurchaseView { DocumentNumber = "001", SelectedSupplierId = 3 };
+            var service = new FakePurchaseService { RegisterResult = true };
+            var presenter = CreatePresenter(view, service, new FakeProductService(), session: TestUser.With());
+            AddLine(presenter, view, productId: 1, amount: 1, pricePurchaseText: "10.00");
+
+            presenter.OnFinishPurchase();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Null(service.RegisteredWith);
         }
 
         [Fact]

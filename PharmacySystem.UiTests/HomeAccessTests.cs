@@ -67,13 +67,13 @@ namespace PharmacySystem.UiTests
         }
 
         [Fact]
-        public void NullSession_ResolvesToEverythingVisible()
+        public void NullSession_ResolvesToNothingVisible()
         {
             var access = frmHome.ResolveAccess(null);
 
-            Assert.True(access.NewSale && access.NewPurchase && access.ManageProducts);
-            Assert.True(access.SalesTile && access.AlertTiles && access.AttentionList);
-            Assert.True(access.ProductDrillDown && access.QuickActionsPanel);
+            Assert.False(access.NewSale || access.NewPurchase || access.ManageProducts);
+            Assert.False(access.SalesTile || access.AlertTiles || access.AttentionList);
+            Assert.False(access.ProductDrillDown || access.QuickActionsPanel);
         }
     }
 }

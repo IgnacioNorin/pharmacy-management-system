@@ -94,7 +94,8 @@ namespace PharmacySystem
 
         internal static HomeAccess ResolveAccess(CurrentUser session)
         {
-            bool Can(string permission) => session?.Can(permission) ?? true;
+            // No session -> deny every tile / entry point (DEF-23).
+            bool Can(string permission) => session?.Can(permission) ?? false;
 
             bool canProducts = Can("productos.acceso");
             bool canAlerts = Can("alertas.acceso");

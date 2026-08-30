@@ -36,6 +36,8 @@ namespace PharmacySystem.Business
 
         public Person GetByDocument(string document) => _repository.GetByDocument(document);
 
+        public Person GetById(int idPerson) => _repository.GetById(idPerson);
+
         public bool UpdatePassword(int idPerson, string hashedPassword) => _repository.UpdatePassword(idPerson, hashedPassword);
 
         public bool SetActive(int idPerson, bool active) => _repository.SetActive(idPerson, active);
