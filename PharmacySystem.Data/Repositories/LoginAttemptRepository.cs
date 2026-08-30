@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
 using Dapper;
 using PharmacySystem.Helpers;
@@ -105,6 +106,38 @@ namespace PharmacySystem.Data
                 {
                     Logger.LogError(ex);
                     return null;
+                }
+            }
+        }
+
+        public ISet<string> ListLockedDocuments(int windowMinutes, int maxFailures)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    // Same "counting failures" rule as CountFailuresSinceLastReset, grouped by
+                    // document, keeping the ones at or over the threshold.
+                    const string sql =
+                        "SELECT la.document_number FROM login_attempt la " +
+                        "WHERE la.success = 0 " +
+                        "AND la.at >= DATEADD(MINUTE, -@window, GETDATE()) " +
+                        "AND la.at > ISNULL((SELECT MAX(s.at) FROM login_attempt s " +
+                        "WHERE s.document_number = la.document_number AND s.success = 1), '1900-01-01') " +
+                        "GROUP BY la.document_number HAVING COUNT(*) >= @max";
+
+                    var rows = oConnection.Query<string>(sql, new { window = windowMinutes, max = maxFailures });
+                    return new HashSet<string>(rows);
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return new HashSet<string>();
                 }
             }
         }

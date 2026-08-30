@@ -134,6 +134,14 @@ namespace PharmacySystem.Tests.Business
         }
 
         [Fact]
+        public void GetLockedDocuments_DelegatesToTheRepositoryWithTheServiceThresholds()
+        {
+            _attempts.LockedDocuments = new System.Collections.Generic.HashSet<string> { "123", "456" };
+
+            Assert.Equal(new[] { "123", "456" }, Service().GetLockedDocuments().OrderBy(d => d));
+        }
+
+        [Fact]
         public void Unlock_RecordsASuccessRowTaggedAsAdminUnlockWithTheActor()
         {
             Service().Unlock("123", actorId: 42);

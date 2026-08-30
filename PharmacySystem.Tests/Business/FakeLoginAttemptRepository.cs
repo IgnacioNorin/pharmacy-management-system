@@ -17,5 +17,9 @@ namespace PharmacySystem.Tests.Business
         public int CountFailuresSinceLastReset(string document, int windowMinutes) => FailureCount;
 
         public int? MinutesUntilUnlock(string document, int windowMinutes) => MinutesLeft;
+
+        public ISet<string> LockedDocuments { get; set; } = new HashSet<string>();
+
+        public ISet<string> ListLockedDocuments(int windowMinutes, int maxFailures) => LockedDocuments;
     }
 }

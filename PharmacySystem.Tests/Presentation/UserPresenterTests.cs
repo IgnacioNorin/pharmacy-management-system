@@ -100,6 +100,49 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
+        public void OnLoad_StatusColumn_ReflectsActiveInactiveAndLocked()
+        {
+            var view = new FakeUserView();
+            var service = new FakePersonService
+            {
+                ListResult = new List<Person>
+                {
+                    new Person { idPerson = 1, document = "A", name = "Activa", Estado = true, oPersonType = new TypePerson { idPersonType = 3, description = "Empleado" } },
+                    new Person { idPerson = 2, document = "B", name = "Inactiva", Estado = false, oPersonType = new TypePerson { idPersonType = 3, description = "Empleado" } },
+                    new Person { idPerson = 3, document = "C", name = "Bloqueada", Estado = true, oPersonType = new TypePerson { idPersonType = 3, description = "Empleado" } }
+                }
+            };
+            var f = CreateWithSecurity(view, service, TestUser.WithRole(1, "usuarios.gestionar"));
+            f.Auth.LockedDocuments = new HashSet<string> { "C" };
+
+            f.Presenter.OnLoad();
+
+            Assert.Equal(new[] { "Activo", "Inactivo", "Bloqueado" }, view.LoadedUsers.Select(u => u.StatusText));
+        }
+
+        [Fact]
+        public void OnUnlockUser_Valid_ReloadsTheListSoTheRowIsNoLongerBlocked()
+        {
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 9 };
+            var service = new FakePersonService
+            {
+                ListResult = new List<Person>
+                {
+                    new Person { idPerson = 9, document = "999", name = "U", Estado = true, oPersonType = new TypePerson { idPersonType = 3, description = "Empleado" } }
+                }
+            };
+            var f = CreateWithSecurity(view, service, TestUser.WithRole(1, "usuarios.gestionar"));
+            f.Auth.LockedDocuments = new HashSet<string> { "999" };
+            f.Presenter.OnLoad();
+            Assert.Equal("Bloqueado", view.LoadedUsers.Single().StatusText);
+
+            f.Auth.LockedDocuments = new HashSet<string>(); // Unlock() would clear it
+            f.Presenter.OnUnlockUser();
+
+            Assert.Equal("Activo", view.LoadedUsers.Single().StatusText);
+        }
+
+        [Fact]
         public void OnSave_ValidationErrors_ShowsThemAndNeverCallsService()
         {
             var view = ValidView();

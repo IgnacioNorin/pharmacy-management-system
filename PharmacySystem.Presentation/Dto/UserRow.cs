@@ -11,5 +11,7 @@ namespace PharmacySystem.Presentation
         public string Document { get; set; }
         public string Name { get; set; }
         public string RoleText { get; set; }
+        // "Activo" / "Inactivo" (person.status = 0) / "Bloqueado" (locked out by failed logins).
+        public string StatusText { get; set; }
     }
 }

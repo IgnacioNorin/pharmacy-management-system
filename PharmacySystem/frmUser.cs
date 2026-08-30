@@ -68,6 +68,7 @@ namespace PharmacySystem
 
         public void LoadUsers(IEnumerable<UserRow> users)
         {
+            dgdata.Rows.Clear();
             foreach (UserRow row in users)
             {
                 AddRow(row);
@@ -101,6 +102,22 @@ namespace PharmacySystem
             gridRow.Cells["NumeroDocumento"].Value = row.Document;
             gridRow.Cells["NombreCompleto"].Value = row.Name;
             gridRow.Cells["Rol"].Value = row.RoleText;
+            gridRow.Cells["Estado"].Value = row.StatusText;
+
+            DataGridViewCell estado = gridRow.Cells["Estado"];
+            switch (row.StatusText)
+            {
+                case "Bloqueado":
+                    estado.Style.ForeColor = Color.Firebrick;
+                    estado.Style.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+                    break;
+                case "Inactivo":
+                    estado.Style.ForeColor = Color.Gray;
+                    break;
+                default:
+                    estado.Style.ForeColor = Color.SeaGreen;
+                    break;
+            }
         }
 
         #endregion
@@ -151,11 +168,13 @@ namespace PharmacySystem
             dgdata.Columns.Add("NumeroDocumento", "Numero Documento");
             dgdata.Columns.Add("NombreCompleto", "Nombre Completo");
             dgdata.Columns.Add("Rol", "Rol");
+            dgdata.Columns.Add("Estado", "Estado");
 
             dgdata.Columns["btnSeleccionar"].Width = 80;
             dgdata.Columns["NumeroDocumento"].Width = 150;
             dgdata.Columns["NombreCompleto"].Width = 260;
-            dgdata.Columns["Rol"].Width = 300;
+            dgdata.Columns["Rol"].Width = 240;
+            dgdata.Columns["Estado"].Width = 100;
             dgdata.Columns["Id"].Visible = false;
 
             foreach (DataGridViewColumn cl in dgdata.Columns)

@@ -26,6 +26,7 @@ namespace PharmacySystem.Presentation
         private readonly IAuthenticationService _authService;
 
         private List<Person> _users = new List<Person>();
+        private ISet<string> _lockedDocuments = new HashSet<string>();
 
         public UserPresenter(IUserView view, IPersonService service, CurrentUser currentUser,
             IPermissionService permissionService, IPasswordChangeService passwordChangeService,
@@ -63,15 +64,30 @@ namespace PharmacySystem.Presentation
                 .Select(r => new ComboBoxItem { Value = r.idPersonType, Text = r.description });
             _view.LoadRoleOptions(roleOptions);
 
+            LoadUserList();
+        }
+
+        // Reloads the grid from the service, refreshing the cached lock set so the Estado column
+        // is current. Called on load and after any action that can change a user's state.
+        private void LoadUserList()
+        {
             _users = _service.List();
+            _lockedDocuments = _authService.GetLockedDocuments();
 
             _view.LoadUsers(_users.Select(p => new UserRow
             {
                 Id = p.idPerson,
                 Document = p.document,
                 Name = p.name,
-                RoleText = p.oPersonType.description
+                RoleText = p.oPersonType.description,
+                StatusText = StatusFor(p.Estado, p.document)
             }));
+        }
+
+        private string StatusFor(bool active, string document)
+        {
+            if (!active) return "Inactivo";
+            return document != null && _lockedDocuments.Contains(document) ? "Bloqueado" : "Activo";
         }
 
         public void OnSave()
@@ -141,7 +157,8 @@ namespace PharmacySystem.Presentation
                     Id = person.idPerson,
                     Document = person.document,
                     Name = person.name,
-                    RoleText = _view.RoleText
+                    RoleText = _view.RoleText,
+                    StatusText = "Activo" // a brand-new user is active and has no failed attempts
                 });
                 _view.ClearForm();
             }
@@ -152,12 +169,15 @@ namespace PharmacySystem.Presentation
                     return;
                 }
 
+                // An edit does not change status or lock state - keep whatever the row had.
+                bool wasActive = _users.FirstOrDefault(u => u.idPerson == person.idPerson)?.Estado ?? true;
                 _view.ReplaceRow(_view.SelectedIndex - 1, new UserRow
                 {
                     Id = person.idPerson,
                     Document = person.document,
                     Name = person.name,
-                    RoleText = _view.RoleText
+                    RoleText = _view.RoleText,
+                    StatusText = StatusFor(wasActive, person.document)
                 });
                 _view.ClearForm();
             }
@@ -276,6 +296,7 @@ namespace PharmacySystem.Presentation
                 case PasswordChangeResult.Ok:
                     _view.ShowMessage("Contraseña restablecida. El usuario deberá cambiarla al ingresar.");
                     _view.ClearForm();
+                    LoadUserList(); // a reset also clears the lockout - refresh the Estado column
                     break;
                 case PasswordChangeResult.TooShort:
                     _view.ShowMessage($"La contraseña temporal debe tener al menos {PasswordRules.MinLength} caracteres.");
@@ -300,6 +321,7 @@ namespace PharmacySystem.Presentation
 
             _authService.Unlock(DocumentOf(_view.UserId), ActorId);
             _view.ShowMessage("Cuenta desbloqueada. El usuario puede volver a intentar.");
+            LoadUserList(); // the row should stop showing "Bloqueado"
         }
     }
 }

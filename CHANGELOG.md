@@ -27,6 +27,10 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 - **Script `Database/reset_admin_password.sql`.** Restablece la contraseña del
   último Administrador General cuando no queda ninguna otra cuenta que pueda
   hacerlo desde la aplicación.
+- **Columna "Estado" en la lista de Usuarios.** Cada fila muestra si el usuario
+  está *Activo*, *Inactivo* (dado de baja) o *Bloqueado* (por intentos fallidos).
+  La columna se actualiza sola al desbloquear o restablecer desde esa misma
+  pantalla.
 
 ## [1.4.0] - 2026-08-30
 
