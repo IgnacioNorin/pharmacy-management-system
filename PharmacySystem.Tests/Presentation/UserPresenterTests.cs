@@ -42,7 +42,7 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void OnLoad_LoadsRoleOptionsFromPersonTypesExceptCliente()
+        public void OnLoad_LoadsRoleOptionsFromPersonTypes()
         {
             var view = new FakeUserView();
             var permissions = new FakePermissionService
@@ -50,7 +50,6 @@ namespace PharmacySystem.Tests.Presentation
                 Roles = new List<TypePerson>
                 {
                     new TypePerson { idPersonType = 2, description = "Administrador" },
-                    new TypePerson { idPersonType = 4, description = "Cliente" },
                     new TypePerson { idPersonType = 100, description = "Cajero senior" }
                 }
             };
@@ -71,7 +70,7 @@ namespace PharmacySystem.Tests.Presentation
         };
 
         [Fact]
-        public void OnLoad_ExcludesClientRole()
+        public void OnLoad_LoadsEveryUserFromTheService()
         {
             var view = new FakeUserView();
             var service = new FakePersonService
@@ -79,14 +78,14 @@ namespace PharmacySystem.Tests.Presentation
                 ListResult = new List<Person>
                 {
                     new Person { idPerson = 1, name = "Admin", oPersonType = new TypePerson { idPersonType = 2, description = "Administrador" } },
-                    new Person { idPerson = 2, name = "Client", oPersonType = new TypePerson { idPersonType = 4, description = "Cliente" } }
+                    new Person { idPerson = 2, name = "Empleado", oPersonType = new TypePerson { idPersonType = 3, description = "Empleado" } }
                 }
             };
 
             CreatePresenter(view, service).OnLoad();
 
-            Assert.Single(view.LoadedUsers);
-            Assert.Equal("Admin", view.LoadedUsers[0].Name);
+            Assert.Equal(2, view.LoadedUsers.Count);
+            Assert.Equal(new[] { "Admin", "Empleado" }, view.LoadedUsers.Select(u => u.Name));
         }
 
         [Fact]

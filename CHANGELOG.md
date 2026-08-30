@@ -55,6 +55,15 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 
 ### Cambiado
 
+- **Los clientes se separaron a su propia tabla.** Hasta ahora un cliente era una
+  fila de `person` (la misma tabla de los usuarios) con el rol "Cliente". Eso
+  dejaba los hashes de contraseña junto a los datos de clientes y obligaba a cada
+  consulta de clientes a excluir esa columna a mano. Ahora hay una tabla `client`
+  independiente, sin contraseña ni rol; `person` queda solo para los usuarios que
+  inician sesión. La migración `029` mueve los clientes conservando sus ids
+  (`sale.client_id` pasa a referenciar `client`), quita las columnas fiscales de
+  `person` y retira el rol "Cliente". Sin cambios visibles en las pantallas de
+  Clientes, el selector de cliente de la venta ni el filtro de los reportes.
 - **El sistema maneja únicamente pesos chilenos (CLP).** Se quitó por completo la
   moneda configurable y el preset de país. Todo el dinero —ventas, compras,
   reportes, comprobantes, arqueo de caja, valorización de stock— se formatea como

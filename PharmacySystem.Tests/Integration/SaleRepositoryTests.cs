@@ -15,6 +15,7 @@ namespace PharmacySystem.Tests.Integration
     {
         private static readonly ISaleRepository Repository = new SaleRepository(SqlConnectionFactory.FromConfiguration());
         private static readonly IPersonRepository PersonRepo = new PersonRepository(SqlConnectionFactory.FromConfiguration());
+        private static readonly IClientRepository ClientRepo = new ClientRepository(SqlConnectionFactory.FromConfiguration());
         private static readonly ICategoryRepository CategoryRepo = new CategoryRepository(SqlConnectionFactory.FromConfiguration());
         private static readonly IProductRepository ProductRepo = new ProductRepository(SqlConnectionFactory.FromConfiguration());
 
@@ -36,6 +37,19 @@ namespace PharmacySystem.Tests.Integration
                 oPersonType = new TypePerson { idPersonType = PersonTypeId() }
             });
             return PersonRepo.GetByDocument(document);
+        }
+
+        private static Client CreateClient(out string document)
+        {
+            document = SqlTestHelper.NewTag();
+            int id = ClientRepo.Register(new Client
+            {
+                document = document,
+                name = "Sale client",
+                address = "Address",
+                phone = "0999999999"
+            });
+            return new Client { idClient = id, document = document, name = "Sale client" };
         }
 
         private static int CreateProductWithStock(int categoryId, int stock)
@@ -798,7 +812,8 @@ namespace PharmacySystem.Tests.Integration
         [Fact]
         public void RegisterSale_WithClientId_PersistsTheLinkAndListSaleReadsItBack()
         {
-            Person client = CreatePerson(out string document);
+            Person seller = CreatePerson(out string sellerDoc);
+            Client client = CreateClient(out string clientDoc);
             int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
             int productId = CreateProductWithStock(categoryId, 10);
 
@@ -808,8 +823,8 @@ namespace PharmacySystem.Tests.Integration
                 saleId = Repository.Register(new Sale
                 {
                     typeDocument = "Boleta",
-                    oPerson = client,
-                    clientId = client.idPerson,
+                    oPerson = seller,
+                    clientId = client.idClient,
                     documentClient = client.document,
                     nameClient = client.name,
                     totalPay = 5m, payWith = 5m, change = 0m,
@@ -820,12 +835,12 @@ namespace PharmacySystem.Tests.Integration
                 });
                 Assert.True(saleId > 0);
 
-                Assert.Equal(client.idPerson,
+                Assert.Equal(client.idClient,
                     SqlTestHelper.ExecuteScalarInt("SELECT client_id FROM sale WHERE id = @id", new SqlParameter("@id", saleId)));
 
                 Sale listed = Repository.ListSale().Find(s => s.idSale == saleId);
                 Assert.NotNull(listed);
-                Assert.Equal(client.idPerson, listed.clientId);
+                Assert.Equal(client.idClient, listed.clientId);
             }
             finally
             {
@@ -835,52 +850,8 @@ namespace PharmacySystem.Tests.Integration
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product_lot WHERE product_id = @id", new SqlParameter("@id", productId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
-            }
-        }
-
-        // Migration 014: a client that appears on a sale via client_id must be soft-deleted
-        // (status = 0), not fail with an FK error the way it did before the SP knew about the link.
-        [Fact]
-        public void DeleteClient_ReferencedByASaleClientId_SoftDeletesInsteadOfFailing()
-        {
-            Person client = CreatePerson(out string document);
-            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
-            int productId = CreateProductWithStock(categoryId, 10);
-
-            int saleId = 0;
-            try
-            {
-                saleId = Repository.Register(new Sale
-                {
-                    typeDocument = "Boleta",
-                    oPerson = client,
-                    clientId = client.idPerson,
-                    documentClient = client.document,
-                    nameClient = client.name,
-                    totalPay = 5m, payWith = 5m, change = 0m,
-                    oSaleDetail = new List<SaleDetail>
-                    {
-                        new SaleDetail { oProduct = new Product { idProduct = productId }, amount = 1, salePrice = 5m, subtotal = 5m }
-                    }
-                });
-                Assert.True(saleId > 0);
-
-                bool deleted = PersonRepo.Delete(client.idPerson);
-
-                Assert.True(deleted);
-                Assert.Equal(0, SqlTestHelper.ExecuteScalarInt(
-                    "SELECT CAST(status AS INT) FROM person WHERE id = @id", new SqlParameter("@id", client.idPerson)));
-            }
-            finally
-            {
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_payment WHERE sale_id = @id", new SqlParameter("@id", saleId));
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale_detail WHERE sale_id = @id", new SqlParameter("@id", saleId));
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @id", new SqlParameter("@id", saleId));
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_lot WHERE product_id = @id", new SqlParameter("@id", productId));
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM client WHERE document_number = @d", new SqlParameter("@d", clientDoc));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", sellerDoc));
             }
         }
 
@@ -933,17 +904,18 @@ namespace PharmacySystem.Tests.Integration
         [Fact]
         public void ReportSale_WithAClientId_ReturnsOnlyThatClientSales()
         {
-            Person client = CreatePerson(out string document);
+            Person seller = CreatePerson(out string sellerDoc);
+            Client client = CreateClient(out string clientDoc);
             int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
             int productId = CreateProductWithStock(categoryId, 20);
 
             var saleIds = new System.Collections.Generic.List<int>();
             try
             {
-                Sale Make(int? cid, string number) => new Sale
+                Sale Make(int? cid) => new Sale
                 {
                     typeDocument = "Boleta",
-                    oPerson = client,
+                    oPerson = seller,
                     clientId = cid,
                     documentClient = "x", nameClient = "x",
                     totalPay = 5m, payWith = 5m, change = 0m,
@@ -953,16 +925,14 @@ namespace PharmacySystem.Tests.Integration
                     }
                 };
 
-                int linked = Repository.Register(Make(client.idPerson, "linked"));
-                int walkIn = Repository.Register(Make(null, "walkin"));
-                saleIds.Add(linked);
-                saleIds.Add(walkIn);
+                saleIds.Add(Repository.Register(Make(client.idClient)));
+                saleIds.Add(Repository.Register(Make(null)));
 
                 var start = System.DateTime.Today.AddDays(-1);
                 var end = System.DateTime.Today.AddDays(1);
 
                 var all = Repository.ReportSale(start, end, 0);
-                var forClient = Repository.ReportSale(start, end, client.idPerson);
+                var forClient = Repository.ReportSale(start, end, client.idClient);
 
                 Assert.True(all.Count >= 2);
                 Assert.Single(forClient);
@@ -978,7 +948,8 @@ namespace PharmacySystem.Tests.Integration
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product_lot WHERE product_id = @id", new SqlParameter("@id", productId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM client WHERE document_number = @d", new SqlParameter("@d", clientDoc));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", sellerDoc));
             }
         }
     }

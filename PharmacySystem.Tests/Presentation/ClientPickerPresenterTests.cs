@@ -15,41 +15,33 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void OnLoad_OnlyIncludesClientRole()
+        public void OnLoad_MapsTheServiceClientsToRows()
         {
             var view = new FakeView();
-            var service = new FakePersonService
+            var service = new FakeClientService
             {
-                ListResult = new List<Person>
+                ClientsResult = new List<Client>
                 {
-                    new Person { idPerson = 1, name = "Client", Estado = true, oPersonType = new TypePerson { idPersonType = 4 } },
-                    new Person { idPerson = 2, name = "Employee", Estado = true, oPersonType = new TypePerson { idPersonType = 3 } }
+                    new Client { idClient = 1, name = "Ana", document = "111" },
+                    new Client { idClient = 2, name = "Bruno", document = "222" }
                 }
             };
 
             new ClientPickerPresenter(view, service).OnLoad();
 
-            Assert.Single(view.Loaded);
-            Assert.Equal("Client", view.Loaded[0].Name);
+            Assert.Equal(2, view.Loaded.Count);
+            Assert.Equal("Ana", view.Loaded[0].Name);
+            Assert.Equal("222", view.Loaded[1].Document);
         }
 
         [Fact]
-        public void OnLoad_ExcludesDeactivatedClients()
+        public void OnLoad_NoClients_LoadsAnEmptyList()
         {
             var view = new FakeView();
-            var service = new FakePersonService
-            {
-                ListResult = new List<Person>
-                {
-                    new Person { idPerson = 1, name = "Activo", Estado = true, oPersonType = new TypePerson { idPersonType = 4 } },
-                    new Person { idPerson = 2, name = "Dado de baja", Estado = false, oPersonType = new TypePerson { idPersonType = 4 } }
-                }
-            };
 
-            new ClientPickerPresenter(view, service).OnLoad();
+            new ClientPickerPresenter(view, new FakeClientService()).OnLoad();
 
-            Assert.Single(view.Loaded);
-            Assert.Equal("Activo", view.Loaded[0].Name);
+            Assert.Empty(view.Loaded);
         }
     }
 }

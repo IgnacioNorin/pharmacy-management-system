@@ -18,6 +18,7 @@ namespace PharmacySystem
         // in every Create*Presenter method below.
         private static readonly ISupplierService _supplierService = new SupplierService(new SupplierRepository(ConnectionFactory));
         private static readonly IPersonService _personService = new PersonService(new PersonRepository(ConnectionFactory));
+        private static readonly IClientService _clientService = new ClientService(new ClientRepository(ConnectionFactory));
         private static readonly IProductService _productService = new ProductService(new ProductRepository(ConnectionFactory));
         private static readonly ICategoryService _categoryService = new CategoryService(new CategoryRepository(ConnectionFactory));
         private static readonly IStoreService _storeService = new StoreService(new StoreRepository(ConnectionFactory));
@@ -42,13 +43,13 @@ namespace PharmacySystem
         #region Person (client / user / login)
 
         public static ClientPresenter CreateClientPresenter(IClientView view) =>
-            new ClientPresenter(view, _personService, MainForm.Session);
+            new ClientPresenter(view, _clientService, MainForm.Session);
 
         public static UserPresenter CreateUserPresenter(IUserView view) =>
             new UserPresenter(view, _personService, MainForm.Session, _permissionService);
 
         public static ClientPickerPresenter CreateClientPickerPresenter(IClientPickerView view) =>
-            new ClientPickerPresenter(view, _personService);
+            new ClientPickerPresenter(view, _clientService);
 
         public static LoginPresenter CreateLoginPresenter(ILoginView view) =>
             new LoginPresenter(view, _personService);
@@ -100,7 +101,7 @@ namespace PharmacySystem
             new CreditNotePresenter(view, _saleService, MainForm.Session, MainForm.oPerson?.idPerson ?? 0);
 
         public static ReportPresenter CreateReportPresenter(IReportView view) =>
-            new ReportPresenter(view, _supplierService, _categoryService, _saleService, _purchaseService, _productService, _notificationConfigService, _personService, MainForm.Session);
+            new ReportPresenter(view, _supplierService, _categoryService, _saleService, _purchaseService, _productService, _notificationConfigService, _clientService, MainForm.Session);
 
         #endregion
 

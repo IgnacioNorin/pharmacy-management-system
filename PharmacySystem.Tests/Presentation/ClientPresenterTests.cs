@@ -7,14 +7,14 @@ namespace PharmacySystem.Tests.Presentation
 {
     public class ClientPresenterTests
     {
-        private static ClientPresenter CreatePresenter(FakeClientView view, FakePersonService service)
+        private static ClientPresenter CreatePresenter(FakeClientView view, FakeClientService service)
             => new ClientPresenter(view, service, TestUser.With("clientes.gestionar"));
 
         [Fact]
         public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotRegister()
         {
             var view = new FakeClientView { PersonId = 0, Document = "1", Name = "N", Address = "A", Phone = "9" };
-            new ClientPresenter(view, new FakePersonService(), TestUser.With()).OnSave();
+            new ClientPresenter(view, new FakeClientService(), TestUser.With()).OnSave();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
             Assert.Equal(0, view.LoadClientsCallCount);
@@ -24,22 +24,21 @@ namespace PharmacySystem.Tests.Presentation
         public void OnDelete_WithoutManagePermission_ShowsDeniedAndDoesNotRemove()
         {
             var view = new FakeClientView { SelectedIndex = 2, PersonId = 4 };
-            new ClientPresenter(view, new FakePersonService(), TestUser.With()).OnDelete();
+            new ClientPresenter(view, new FakeClientService(), TestUser.With()).OnDelete();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
             Assert.Equal(0, view.LoadClientsCallCount);
         }
 
         [Fact]
-        public void OnLoad_OnlyIncludesClientRole()
+        public void OnLoad_LoadsThePageFromTheService()
         {
             var view = new FakeClientView();
-            var service = new FakePersonService
+            var service = new FakeClientService
             {
-                ListResult = new List<Person>
+                ClientsResult = new List<Client>
                 {
-                    new Person { idPerson = 1, name = "Client", Estado = true, oPersonType = new TypePerson { idPersonType = 4 } },
-                    new Person { idPerson = 2, name = "Employee", Estado = true, oPersonType = new TypePerson { idPersonType = 3 } }
+                    new Client { idClient = 1, name = "Client" }
                 }
             };
 
@@ -53,7 +52,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnSave_ValidationErrors_ShowsThemAndNeverCallsService()
         {
             var view = new FakeClientView { ValidationErrors = new List<string> { "error" } };
-            var service = new FakePersonService();
+            var service = new FakeClientService();
 
             CreatePresenter(view, service).OnSave();
 
@@ -62,15 +61,16 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void OnSave_NewClient_SetsClientRoleAndEmptyPassword()
+        public void OnSave_NewClient_RegistersWithTheEnteredData()
         {
             var view = new FakeClientView { PersonId = 0, Document = "123", Name = "Test", Address = "Addr", Phone = "111" };
-            var service = new FakePersonService { RegisterResult = 55 };
+            var service = new FakeClientService { RegisterResult = 55 };
 
             CreatePresenter(view, service).OnSave();
 
-            Assert.Equal(4, service.RegisteredWith.oPersonType.idPersonType); // Cliente
-            Assert.Equal("", service.RegisteredWith.password);
+            Assert.Equal(0, service.RegisteredWith.idClient);
+            Assert.Equal("123", service.RegisteredWith.document);
+            Assert.Equal("Test", service.RegisteredWith.name);
             Assert.True(view.ClearFormCalled);
         }
 
@@ -83,7 +83,7 @@ namespace PharmacySystem.Tests.Presentation
                 BusinessName = "Ejemplo SpA", Activity = "Comercio", Commune = "Centro",
                 Email = "a@b.cl", IsCompany = true
             };
-            var service = new FakePersonService { RegisterResult = 55 };
+            var service = new FakeClientService { RegisterResult = 55 };
 
             CreatePresenter(view, service).OnSave();
 
@@ -102,7 +102,7 @@ namespace PharmacySystem.Tests.Presentation
                 PersonId = 0, Document = "1", Name = "N", Address = "A", Phone = "9",
                 IsCompany = true, BusinessName = "  ", Activity = ""
             };
-            var service = new FakePersonService { RegisterResult = 55 };
+            var service = new FakeClientService { RegisterResult = 55 };
 
             CreatePresenter(view, service).OnSave();
 
@@ -115,7 +115,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnSave_NewClient_Succeeds_ReloadsPageAndClears()
         {
             var view = new FakeClientView { PersonId = 0, Document = "123", Name = "Test", Address = "Addr", Phone = "111" };
-            var service = new FakePersonService { RegisterResult = 55 };
+            var service = new FakeClientService { RegisterResult = 55 };
 
             CreatePresenter(view, service).OnSave();
 
@@ -130,7 +130,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnSave_RegisterFails_ShowsMessage()
         {
             var view = new FakeClientView { PersonId = 0, Document = "123", Name = "Test", Address = "Addr", Phone = "111" };
-            var service = new FakePersonService { RegisterResult = 0 };
+            var service = new FakeClientService { RegisterResult = 0 };
 
             CreatePresenter(view, service).OnSave();
 
@@ -142,7 +142,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnSave_UpdateFails_AlsoShowsMessage()
         {
             var view = new FakeClientView { PersonId = 7, SelectedIndex = 1, Document = "123", Name = "Test", Address = "Addr", Phone = "111" };
-            var service = new FakePersonService { UpdateResult = false };
+            var service = new FakeClientService { UpdateResult = false };
 
             CreatePresenter(view, service).OnSave();
 
@@ -153,10 +153,11 @@ namespace PharmacySystem.Tests.Presentation
         public void OnSave_ExistingClient_UpdateSucceeds_ReloadsPageAndClears()
         {
             var view = new FakeClientView { PersonId = 7, SelectedIndex = 2, Name = "Updated" };
-            var service = new FakePersonService { UpdateResult = true };
+            var service = new FakeClientService { UpdateResult = true };
 
             CreatePresenter(view, service).OnSave();
 
+            Assert.Equal(7, service.UpdatedWith.idClient);
             Assert.Equal(1, view.LoadClientsCallCount);
             Assert.True(view.ClearFormCalled);
         }
@@ -167,7 +168,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnDelete_NoSelection_DoesNothingSilently()
         {
             var view = new FakeClientView { SelectedIndex = 0 };
-            var service = new FakePersonService();
+            var service = new FakeClientService();
 
             CreatePresenter(view, service).OnDelete();
 
@@ -179,7 +180,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnDelete_UserCancels_NeverCallsService()
         {
             var view = new FakeClientView { SelectedIndex = 1, ConfirmDeleteResult = false };
-            var service = new FakePersonService();
+            var service = new FakeClientService();
 
             CreatePresenter(view, service).OnDelete();
 
@@ -190,7 +191,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnDelete_ServiceFails_ShowsMessage()
         {
             var view = new FakeClientView { SelectedIndex = 1, PersonId = 9 };
-            var service = new FakePersonService { DeleteResult = false };
+            var service = new FakeClientService { DeleteResult = false };
 
             CreatePresenter(view, service).OnDelete();
 
@@ -202,7 +203,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnDelete_Succeeds_ReloadsPageAndClears()
         {
             var view = new FakeClientView { SelectedIndex = 3, PersonId = 9 };
-            var service = new FakePersonService { DeleteResult = true };
+            var service = new FakeClientService { DeleteResult = true };
 
             CreatePresenter(view, service).OnDelete();
 
@@ -215,12 +216,12 @@ namespace PharmacySystem.Tests.Presentation
         public void OnSearch_QueriesWithTheTermAndResetsToPageOne()
         {
             var view = new FakeClientView();
-            var service = new FakePersonService
+            var service = new FakeClientService
             {
-                ListClientsResult = new System.Collections.Generic.List<Person>
+                ClientsResult = new List<Client>
                 {
-                    new Person { idPerson = 1, name = "Ana" },
-                    new Person { idPerson = 2, name = "Bruno" }
+                    new Client { idClient = 1, name = "Ana" },
+                    new Client { idClient = 2, name = "Bruno" }
                 }
             };
             var presenter = CreatePresenter(view, service);
@@ -239,9 +240,9 @@ namespace PharmacySystem.Tests.Presentation
         public void OnNextPage_AdvancesOnePage()
         {
             var view = new FakeClientView();
-            var many = new System.Collections.Generic.List<Person>();
-            for (int i = 1; i <= 60; i++) many.Add(new Person { idPerson = i, name = "C" + i.ToString("D2") });
-            var service = new FakePersonService { ListClientsResult = many };
+            var many = new List<Client>();
+            for (int i = 1; i <= 60; i++) many.Add(new Client { idClient = i, name = "C" + i.ToString("D2") });
+            var service = new FakeClientService { ClientsResult = many };
             var presenter = CreatePresenter(view, service);
             presenter.OnLoad();
 

@@ -20,7 +20,7 @@ namespace PharmacySystem.Presentation
         private readonly IPurchaseService _purchaseService;
         private readonly IProductService _productService;
         private readonly INotificationConfigService _notificationConfigService;
-        private readonly IPersonService _personService;
+        private readonly IClientService _clientService;
         private readonly CurrentUser _currentUser;
 
         public ReportPresenter(
@@ -31,7 +31,7 @@ namespace PharmacySystem.Presentation
             IPurchaseService purchaseService,
             IProductService productService,
             INotificationConfigService notificationConfigService,
-            IPersonService personService,
+            IClientService clientService,
             CurrentUser currentUser)
         {
             _view = view;
@@ -41,7 +41,7 @@ namespace PharmacySystem.Presentation
             _purchaseService = purchaseService;
             _productService = productService;
             _notificationConfigService = notificationConfigService;
-            _personService = personService;
+            _clientService = clientService;
             _currentUser = currentUser;
         }
 
@@ -60,8 +60,8 @@ namespace PharmacySystem.Presentation
             _view.LoadCategoryOptions(categoryOptions);
 
             var clientOptions = new List<ComboBoxItem> { new ComboBoxItem { Value = "0", Text = "Todos" } };
-            clientOptions.AddRange(_personService.ListClients()
-                .Select(p => new ComboBoxItem { Value = p.idPerson, Text = p.name }));
+            clientOptions.AddRange(_clientService.ListClients()
+                .Select(c => new ComboBoxItem { Value = c.idClient, Text = c.name }));
             _view.LoadSaleClientOptions(clientOptions);
         }
 

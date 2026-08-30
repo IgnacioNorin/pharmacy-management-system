@@ -8,7 +8,7 @@ namespace PharmacySystem.Tests.Integration
 {
     // Exercises the permission catalogue and role_permission seed shipped by
     // Database/PharmacyDB.sql. The catalogue tests are read-only; the roles-admin tests below
-    // only ever touch custom roles they create and delete themselves (never the four built-ins).
+    // only ever touch custom roles they create and delete themselves (never the three built-ins).
     [Collection("Database")]
     public class PermissionRepositoryTests
     {
@@ -94,19 +94,19 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void GetCodesForRole_Cliente_ReturnsEmpty()
+        public void GetCodesForRole_UnknownRole_ReturnsEmpty()
         {
-            Assert.Empty(Repository.GetCodesForRole(4));
+            Assert.Empty(Repository.GetCodesForRole(999));
         }
 
         // --- roles admin ---
 
         [Fact]
-        public void GetRoles_ReturnsTheFourBuiltInsMarkedAsSystem()
+        public void GetRoles_ReturnsTheThreeBuiltInsMarkedAsSystem()
         {
             var roles = Repository.GetRoles();
 
-            Assert.All(new[] { 1, 2, 3, 4 }, id => Assert.Contains(roles, r => r.idPersonType == id && r.IsSystem));
+            Assert.All(new[] { 1, 2, 3 }, id => Assert.Contains(roles, r => r.idPersonType == id && r.IsSystem));
         }
 
         [Fact]

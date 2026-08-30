@@ -2,9 +2,7 @@ using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
 {
-    // What the grid displays for a client (person_type_id = PersonType.Cliente). Separate from
-    // PersonService's full Supplier-shaped list, and from SupplierRow, so this view never needs
-    // to know person has a password/person type at all.
+    // What the grid displays for a client. Built from a PharmacySystem.Model.Client row.
     public class ClientRow
     {
         public int Id { get; set; }
@@ -18,18 +16,18 @@ namespace PharmacySystem.Presentation
         public string Email { get; set; }
         public bool IsCompany { get; set; }
 
-        public static ClientRow From(Person person) => new ClientRow
+        public static ClientRow From(Client client) => new ClientRow
         {
-            Id = person.idPerson,
-            Document = person.document,
-            Name = person.name,
-            Address = person.address,
-            Phone = person.phone,
-            BusinessName = person.businessName,
-            Activity = person.activity,
-            Commune = person.commune,
-            Email = person.email,
-            IsCompany = person.isCompany
+            Id = client.idClient,
+            Document = client.document,
+            Name = client.name,
+            Address = client.address,
+            Phone = client.phone,
+            BusinessName = client.businessName,
+            Activity = client.activity,
+            Commune = client.commune,
+            Email = client.email,
+            IsCompany = client.isCompany
         };
     }
 }

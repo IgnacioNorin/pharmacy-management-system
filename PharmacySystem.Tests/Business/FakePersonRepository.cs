@@ -24,9 +24,6 @@ namespace PharmacySystem.Tests.Business
         }
 
         public List<Person> List() => new List<Person>();
-        public List<Person> ListClients() => new List<Person>();
-        public PagedResult<Person> ListClientsPaged(int pageNumber, int pageSize, string search) =>
-            PagedResult<Person>.Empty(pageSize);
         public Person GetByDocument(string document) => null;
         public bool UpdatePassword(int idPerson, string hashedPassword) => true;
         public bool Delete(int idPerson) => true;

@@ -11,7 +11,7 @@ namespace PharmacySystem.Tests.Presentation
     {
         private static (ReportPresenter Presenter, FakeReportView View, FakeSupplierService Suppliers,
             FakeCategoryService Categories, FakeSaleService Sales, FakePurchaseService Purchases, FakeProductService Products,
-            FakeNotificationConfigService Notifications, FakePersonService Persons) Create()
+            FakeNotificationConfigService Notifications, FakeClientService Clients) Create()
         {
             var view = new FakeReportView();
             var suppliers = new FakeSupplierService();
@@ -20,15 +20,15 @@ namespace PharmacySystem.Tests.Presentation
             var purchases = new FakePurchaseService();
             var products = new FakeProductService();
             var notifications = new FakeNotificationConfigService();
-            var persons = new FakePersonService();
-            var presenter = new ReportPresenter(view, suppliers, categories, sales, purchases, products, notifications, persons,
+            var clients = new FakeClientService();
+            var presenter = new ReportPresenter(view, suppliers, categories, sales, purchases, products, notifications, clients,
                 TestUser.With("reportes.ventas", "reportes.compras", "reportes.productos", "reportes.alertas"));
-            return (presenter, view, suppliers, categories, sales, purchases, products, notifications, persons);
+            return (presenter, view, suppliers, categories, sales, purchases, products, notifications, clients);
         }
 
         private static ReportPresenter PresenterFor(FakeReportView view, params string[] permissions) =>
             new ReportPresenter(view, new FakeSupplierService(), new FakeCategoryService(), new FakeSaleService(),
-                new FakePurchaseService(), new FakeProductService(), new FakeNotificationConfigService(), new FakePersonService(),
+                new FakePurchaseService(), new FakeProductService(), new FakeNotificationConfigService(), new FakeClientService(),
                 TestUser.With(permissions));
 
         private static object Cell<TRow>(ReportDefinition<TRow> definition, TRow row, string header) =>
@@ -75,14 +75,12 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void OnLoad_LoadsSaleClientOptions_TodosThenOnlyClients()
+        public void OnLoad_LoadsSaleClientOptions_TodosThenTheClients()
         {
             var f = Create();
-            f.Persons.ListResult = new List<Person>
+            f.Clients.ClientsResult = new List<Client>
             {
-                new Person { idPerson = 7, name = "Clínica Andes", Estado = true, oPersonType = new TypePerson { idPersonType = 4 } }, // Cliente
-                new Person { idPerson = 8, name = "Empleado", Estado = true, oPersonType = new TypePerson { idPersonType = 3 } },
-                new Person { idPerson = 9, name = "Cliente dado de baja", Estado = false, oPersonType = new TypePerson { idPersonType = 4 } }
+                new Client { idClient = 7, name = "Clínica Andes" }
             };
 
             f.Presenter.OnLoad();

@@ -45,18 +45,14 @@ namespace PharmacySystem.Presentation
 
         public void OnLoad()
         {
-            // Roles come from person_type: the built-ins plus any custom role, minus Cliente
-            // (a client cannot sign in). Administrador General is only offered to another
-            // Administrador General.
+            // Roles come from person_type: the built-ins plus any custom role. Administrador
+            // General is only offered to another Administrador General.
             var roleOptions = _permissionService.GetRoles()
-                .Where(r => r.idPersonType != (int)PersonType.Cliente)
                 .Where(r => CurrentIsAdminGeneral || r.idPersonType != AdminGeneralRoleId)
                 .Select(r => new ComboBoxItem { Value = r.idPersonType, Text = r.description });
             _view.LoadRoleOptions(roleOptions);
 
-            _users = _service.List()
-                .Where(p => p.oPersonType.idPersonType != (int)PersonType.Cliente)
-                .ToList();
+            _users = _service.List();
 
             _view.LoadUsers(_users.Select(p => new UserRow
             {
