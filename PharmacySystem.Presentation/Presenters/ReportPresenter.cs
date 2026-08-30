@@ -127,7 +127,8 @@ namespace PharmacySystem.Presentation
         {
             TotalAmount = headerTotal,
             Quantity = rows.Sum(r => r.Quantity),
-            PurchasePrice = rows.Sum(r => r.PurchasePrice)
+            PurchasePrice = rows.Sum(r => r.PurchasePrice),
+            LineTotal = rows.Sum(r => r.LineTotal)
         };
 
         // The totals row reinterprets the price columns as inventory valuation: total units,
@@ -168,7 +169,8 @@ namespace PharmacySystem.Presentation
             new ReportColumn<PurchaseReportRow>("Monto Total", ReportValueType.Currency, r => r.TotalAmount),
             new ReportColumn<PurchaseReportRow>("Nombre", ReportValueType.Text, r => r.ProductName),
             new ReportColumn<PurchaseReportRow>("Cantidad", ReportValueType.Integer, r => r.Quantity),
-            new ReportColumn<PurchaseReportRow>("Precio Compra", ReportValueType.Currency, r => r.PurchasePrice)
+            new ReportColumn<PurchaseReportRow>("Precio Compra", ReportValueType.Currency, r => r.PurchasePrice),
+            new ReportColumn<PurchaseReportRow>("Subtotal", ReportValueType.Currency, r => r.LineTotal)
         });
 
         private static readonly ReportDefinition<ProductReportRow> ProductDefinition = new ReportDefinition<ProductReportRow>(new[]
