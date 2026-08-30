@@ -154,6 +154,11 @@ namespace PharmacySystem.Data
 
                     return oConnection.Query<PurchaseReportRow>(sql, new { startDate = startDate.Date, endDate = endDate.Date, supplier_id = idSupplier }).ToList();
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -178,6 +183,11 @@ namespace PharmacySystem.Data
                         "AND (@supplier_id = 0 OR pu.supplier_id = @supplier_id)";
 
                     return oConnection.ExecuteScalar<decimal>(sql, new { startDate = startDate.Date, endDate = endDate.Date, supplier_id = idSupplier });
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {

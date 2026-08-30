@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using Dapper;
 using PharmacySystem.Helpers;
+using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Data
@@ -31,6 +32,11 @@ namespace PharmacySystem.Data
                     oConnection.Execute("sp_create_category", parameters, commandType: CommandType.StoredProcedure);
 
                     return parameters.Get<int>("result");
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
@@ -59,6 +65,11 @@ namespace PharmacySystem.Data
                 {
                     return false; // another category already has that description
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -76,6 +87,11 @@ namespace PharmacySystem.Data
                     return oConnection.Query<Categories>(
                         "SELECT id AS IdCategory, description FROM category WHERE status = 1")
                         .ToList();
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
@@ -100,6 +116,11 @@ namespace PharmacySystem.Data
                         "   OR id IN (SELECT DISTINCT category_id FROM product WHERE status = 1 AND category_id IS NOT NULL)")
                         .ToList();
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -121,6 +142,11 @@ namespace PharmacySystem.Data
                     oConnection.Execute("sp_delete_category", parameters, commandType: CommandType.StoredProcedure);
 
                     return parameters.Get<bool>("result");
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {

@@ -1,6 +1,7 @@
 using System;
 using System.Configuration;
 using PharmacySystem;
+using PharmacySystem.Infrastructure;
 using Xunit;
 
 namespace PharmacySystem.UiTests
@@ -54,6 +55,39 @@ namespace PharmacySystem.UiTests
         {
             Assert.Equal(StartupError.Generic,
                 StartupError.DescribeForUser(new InvalidOperationException("boom")));
+        }
+
+        [Fact]
+        public void IsTransientDataFailure_DataUnavailableException_IsTrue()
+        {
+            Assert.True(StartupError.IsTransientDataFailure(new DataUnavailableException()));
+        }
+
+        [Fact]
+        public void IsTransientDataFailure_WrappedInTypeInitializer_IsTrue()
+        {
+            var wrapped = new TypeInitializationException(
+                "PharmacySystem.CompositionRoot", new DataUnavailableException());
+
+            Assert.True(StartupError.IsTransientDataFailure(wrapped));
+        }
+
+        [Fact]
+        public void IsTransientDataFailure_PlainConfigOrDbError_IsFalse()
+        {
+            Assert.False(StartupError.IsTransientDataFailure(new ConfigurationErrorsException("boom")));
+            Assert.False(StartupError.IsTransientDataFailure(new InvalidOperationException("boom")));
+        }
+
+        [Fact]
+        public void DescribeForUser_TransientDataFailure_ReturnsItsOwnRetryMessage()
+        {
+            var ex = new DataUnavailableException();
+
+            string message = StartupError.DescribeForUser(ex);
+
+            Assert.Equal(ex.Message, message);
+            Assert.NotEqual(StartupError.Database, message);
         }
     }
 }

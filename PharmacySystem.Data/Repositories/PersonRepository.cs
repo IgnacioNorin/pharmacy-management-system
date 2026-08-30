@@ -58,6 +58,11 @@ namespace PharmacySystem.Data
                 {
                     return 0; // a person with that document already exists
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -91,6 +96,11 @@ namespace PharmacySystem.Data
 
                     return parameters.Get<bool>("result");
                 }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex);
@@ -110,6 +120,11 @@ namespace PharmacySystem.Data
                         (person, typePerson) => { person.oPersonType = typePerson; return person; },
                         splitOn: "idPersonType")
                         .ToList();
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
@@ -134,6 +149,11 @@ namespace PharmacySystem.Data
                         "FROM person p WHERE p.person_type_id = 4 AND ISNULL(p.status, 1) = 1";
 
                     return oConnection.Query<Person>(sql).ToList();
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
@@ -208,6 +228,11 @@ namespace PharmacySystem.Data
                     oConnection.Execute("sp_delete_person", parameters, commandType: CommandType.StoredProcedure);
 
                     return parameters.Get<bool>("result");
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
                 }
                 catch (Exception ex)
                 {
