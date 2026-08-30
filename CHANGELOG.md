@@ -2,7 +2,7 @@
 
 El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
-## [Sin publicar]
+## [1.4.0] - 2026-08-30
 
 ### Agregado
 
