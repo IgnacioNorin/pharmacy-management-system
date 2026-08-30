@@ -38,59 +38,88 @@ namespace PharmacySystem.Tests.Integration
             }
         }
 
+        private static void AddLot(int productId, int quantity, DateTime? expiry)
+        {
+            SqlTestHelper.ExecuteNonQuery(
+                "INSERT INTO product_lot(product_id, quantity, date_expired, unit_cost) VALUES (@p, @q, @d, 1)",
+                new SqlParameter("@p", productId),
+                new SqlParameter("@q", quantity),
+                new SqlParameter("@d", (object)expiry ?? DBNull.Value));
+        }
+
+        private static int NewProduct(int categoryId, string name) => ProductRepo.Register(new Product
+        {
+            code = SqlTestHelper.NewTag(),
+            name = name,
+            description = name,
+            oCategory = new Categories { IdCategory = categoryId }
+        });
+
+        // DEF-02 fase A (fase 2): the expiry alert is driven by the product's lots now, not the
+        // single product.date_expired field.
         [Fact]
-        public void ListExpirationDate_OnlyReturnsActiveProductsWithExpirationSet()
+        public void ListExpirationDate_ReportsTheEarliestExpiringLotWithStock_AndItsQuantity()
         {
             int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
-            int withExpiration = ProductRepo.Register(new Product
-            {
-                code = SqlTestHelper.NewTag(),
-                name = "With expiration",
-                description = "With expiration",
-                oCategory = new Categories { IdCategory = categoryId }
-            });
-            SqlTestHelper.ExecuteNonQuery("UPDATE product SET date_expired = @date WHERE id = @id",
-                new SqlParameter("@date", DateTime.Today.AddDays(10)), new SqlParameter("@id", withExpiration));
+            int productId = NewProduct(categoryId, "Lot expiry");
+            AddLot(productId, 4, DateTime.Today.AddDays(10));   // near
+            AddLot(productId, 20, DateTime.Today.AddDays(300)); // far
 
             try
             {
                 var results = Repository.ListExpirationDate(days: 15);
 
-                Assert.Contains(results, p => p.expirationDate.Date == DateTime.Today.AddDays(10).Date);
+                var row = Assert.Single(results, p => p.idProduct == productId);
+                Assert.Equal(DateTime.Today.AddDays(10).Date, row.expirationDate.Date);
+                Assert.Equal(4, row.stock); // only the units in the expiring lot
             }
             finally
             {
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", withExpiration));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_lot WHERE product_id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
             }
         }
 
-        // Regression/coverage for Fase 1 of the alerts rework: the "within days" cutoff moved from
-        // MainFormPresenter's C# loop into this query. A product expiring further out than the
-        // configured window must not come back, same as the old in-memory filter would have dropped it.
+        [Fact]
+        public void ListExpirationDate_NearLotSoldOut_NoLongerAlerts_EvenThoughAFarLotRemains()
+        {
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = NewProduct(categoryId, "Near lot emptied");
+            AddLot(productId, 0, DateTime.Today.AddDays(5));     // near lot, already consumed
+            AddLot(productId, 20, DateTime.Today.AddDays(300));  // far lot still on hand
+
+            try
+            {
+                var results = Repository.ListExpirationDate(days: 30);
+
+                Assert.DoesNotContain(results, p => p.idProduct == productId);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_lot WHERE product_id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+            }
+        }
+
         [Fact]
         public void ListExpirationDate_ProductBeyondConfiguredDays_IsExcluded()
         {
             int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
-            int farExpiration = ProductRepo.Register(new Product
-            {
-                code = SqlTestHelper.NewTag(),
-                name = "Far expiration",
-                description = "Far expiration",
-                oCategory = new Categories { IdCategory = categoryId }
-            });
-            SqlTestHelper.ExecuteNonQuery("UPDATE product SET date_expired = @date WHERE id = @id",
-                new SqlParameter("@date", DateTime.Today.AddDays(30)), new SqlParameter("@id", farExpiration));
+            int productId = NewProduct(categoryId, "Far expiration");
+            AddLot(productId, 10, DateTime.Today.AddDays(30));
 
             try
             {
                 var results = Repository.ListExpirationDate(days: 5);
 
-                Assert.DoesNotContain(results, p => p.expirationDate.Date == DateTime.Today.AddDays(30).Date);
+                Assert.DoesNotContain(results, p => p.idProduct == productId);
             }
             finally
             {
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", farExpiration));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_lot WHERE product_id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
             }
         }

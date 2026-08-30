@@ -6,14 +6,19 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 
 ### Agregado
 
-- **Trazabilidad por lote (DEF-02 fase A, fase 1).** Nueva tabla `product_lot`:
-  una fila por partida recibida de un producto, con su cantidad restante, su
-  vencimiento y su costo de compra. Cada línea de compra crea un lote; la venta
-  descuenta de los lotes que vencen antes (FEFO); una nota de crédito devuelve las
-  unidades como un lote sin fecha (se venderá después del stock con fecha).
-  `product.stock` pasa a ser la suma de los lotes; se hizo un lote inicial por
-  cada producto que tenía stock (migración `026`). Las alertas de vencimiento por
-  lote y la valorización por lote quedan para las fases siguientes.
+- **Trazabilidad por lote (DEF-02 fase A).** Nueva tabla `product_lot`: una fila
+  por partida recibida de un producto, con su cantidad restante, su vencimiento y
+  su costo de compra. Cada línea de compra crea un lote; la venta descuenta de los
+  lotes que vencen antes (FEFO); una nota de crédito devuelve las unidades como un
+  lote sin fecha. `product.stock` pasa a ser la suma de los lotes; se hizo un lote
+  inicial por cada producto que tenía stock (migración `026`).
+- **Alertas de vencimiento por lote.** La alerta de "por vencer / vencido" ya no
+  mira el campo único `product.date_expired`, sino los lotes: una alerta por
+  producto, con el lote con stock que vence antes y su cantidad ("vence el
+  dd/mm/yyyy (N u.)"). Así un lote nuevo con vencimiento lejano no puede apagar la
+  alerta del stock viejo que sigue en góndola, y cuando ese stock se vende (FEFO
+  vacía primero el lote más próximo) la alerta se apaga sola. Cierra DEF-02.
+  Falta la valorización por lote en el reporte de productos y una vista de lotes.
 - **Pago mixto en la venta.** Una venta se puede cobrar con más de una forma de
   pago (por ejemplo, parte efectivo y parte tarjeta). Botón "Pago mixto…" junto
   al combo de forma de pago: abre un diálogo con un monto por método que debe
