@@ -33,6 +33,14 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   incluidos): `PersonRepository.ListClients` trae solo clientes activos, sin la
   columna de contraseña.
 
+### Infraestructura
+
+- **Integración continua (GitHub Actions).** El flujo `.github/workflows/ci.yml`
+  compila la solución con MSBuild y corre las pruebas de unidad, negocio,
+  presentación y UI en cada push a `main` o a una rama `refactor/**` y en cada
+  pull request hacia `main`. Las pruebas de integración, que necesitan un SQL
+  Server con el esquema aplicado, se siguen corriendo en local.
+
 ## [1.3.0] - 2026-08-29
 
 ### Agregado
