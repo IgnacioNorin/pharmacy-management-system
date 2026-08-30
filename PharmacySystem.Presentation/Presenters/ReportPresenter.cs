@@ -130,12 +130,13 @@ namespace PharmacySystem.Presentation
             PurchasePrice = rows.Sum(r => r.PurchasePrice)
         };
 
-        // The totals row reinterprets the two price columns as inventory valuation: total units,
-        // value at cost (sum of stock * purchase price) and value at sale price.
+        // The totals row reinterprets the price columns as inventory valuation: total units,
+        // value at last purchase price, lot-accurate value at cost, and value at sale price.
         private static ProductReportRow ProductTotals(List<ProductReportRow> rows) => new ProductReportRow
         {
             Stock = rows.Sum(r => r.Stock),
             PurchasePrice = rows.Sum(r => r.Stock * r.PurchasePrice),
+            StockCostValue = rows.Sum(r => r.StockCostValue),
             SalePrice = rows.Sum(r => r.Stock * r.SalePrice)
         };
 
@@ -179,6 +180,7 @@ namespace PharmacySystem.Presentation
             new ReportColumn<ProductReportRow>("Categoría", ReportValueType.Text, r => r.CategoryDescription),
             new ReportColumn<ProductReportRow>("Stock", ReportValueType.Integer, r => r.Stock),
             new ReportColumn<ProductReportRow>("Precio Compra", ReportValueType.Currency, r => r.PurchasePrice),
+            new ReportColumn<ProductReportRow>("Valor Stock (costo)", ReportValueType.Currency, r => r.StockCostValue),
             new ReportColumn<ProductReportRow>("Precio Venta", ReportValueType.Currency, r => r.SalePrice),
             new ReportColumn<ProductReportRow>("Fecha Vencimiento", ReportValueType.Date, r => r.DateExpired),
             new ReportColumn<ProductReportRow>("Estado", ReportValueType.Text, r => r.StatusName)

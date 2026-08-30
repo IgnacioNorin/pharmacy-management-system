@@ -420,9 +420,14 @@ namespace PharmacySystem.Data
                     const string sql =
                         "SELECT p.date_created AS DateCreated, p.code AS Code, p.name AS Name, p.description AS Description, " +
                         "c.description AS CategoryDescription, p.stock AS Stock, p.purchase_price AS PurchasePrice, " +
-                        "p.sale_price AS SalePrice, p.date_expired AS DateExpired, s.name AS StatusName " +
+                        "p.sale_price AS SalePrice, p.date_expired AS DateExpired, s.name AS StatusName, " +
+                        // Stock valued at each lot's own cost; if the product has no lots, fall back
+                        // to its stock at the weighted-average (or last purchase) cost.
+                        "ISNULL(lot.lot_value, ISNULL(p.stock, 0) * ISNULL(p.average_cost, p.purchase_price)) AS StockCostValue " +
                         "FROM product p INNER JOIN category c ON c.id = p.category_id " +
                         "INNER JOIN state_product s ON s.id = p.status " +
+                        "LEFT JOIN (SELECT product_id, SUM(quantity * ISNULL(unit_cost, 0)) AS lot_value " +
+                        "           FROM product_lot WHERE quantity > 0 GROUP BY product_id) lot ON lot.product_id = p.id " +
                         "WHERE c.id = case @category_id when '0' then c.id when 0 then c.id else @category_id end";
 
                     return oConnection.Query<ProductReportRow>(sql, new { category_id = categoryId }).ToList();
