@@ -228,6 +228,7 @@
     </Compile>
     <Compile Include="CompositionRoot.cs" />
     <Compile Include="ModalCashCount.cs" />
+    <Compile Include="ModalProductLots.cs" />
     <Compile Include="ModalSalePayments.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="StartupError.cs" />

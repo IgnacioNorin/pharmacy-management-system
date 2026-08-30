@@ -208,13 +208,13 @@ namespace PharmacySystem.Tests.Presentation
                     DateCreated = new DateTime(2026, 1, 1),
                     Code = "A1", Name = "Aspirin", Description = "Pain relief",
                     CategoryDescription = "Meds", Stock = 20,
-                    PurchasePrice = 1m, SalePrice = 2m,
+                    PurchasePrice = 1m, SalePrice = 2m, StockCostValue = 18m,
                     DateExpired = new DateTime(2027, 1, 1), StatusName = "Activo"
                 },
                 new ProductReportRow
                 {
                     Code = "B2", Name = "Gauze", CategoryDescription = "Supplies",
-                    Stock = 5, PurchasePrice = 3m, SalePrice = 4m, StatusName = "Activo"
+                    Stock = 5, PurchasePrice = 3m, SalePrice = 4m, StockCostValue = 14m, StatusName = "Activo"
                 }
             };
 
@@ -223,11 +223,12 @@ namespace PharmacySystem.Tests.Presentation
             var result = f.View.ProductReport;
             Assert.Equal(2, result.Rows.Count);
             Assert.Equal("Aspirin", result.Rows[0].Name);
-            Assert.Equal(10, f.View.ProductDefinition.Columns.Count);
+            Assert.Equal(11, f.View.ProductDefinition.Columns.Count);
 
             Assert.True(result.HasTotals);
             Assert.Equal(25, result.Totals.Stock);              // 20 + 5 units
-            Assert.Equal(35m, result.Totals.PurchasePrice);     // 20*1 + 5*3, value at cost
+            Assert.Equal(35m, result.Totals.PurchasePrice);     // 20*1 + 5*3, value at last purchase price
+            Assert.Equal(32m, result.Totals.StockCostValue);    // 18 + 14, lot-accurate value at cost
             Assert.Equal(60m, result.Totals.SalePrice);         // 20*2 + 5*4, value at sale price
         }
 

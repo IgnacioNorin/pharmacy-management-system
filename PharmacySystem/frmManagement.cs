@@ -615,6 +615,7 @@ namespace PharmacySystem
         private Button btnProductPrev;
         private Button btnProductNext;
         private Button btnProductLast;
+        private Button btnProductLots;
         private Label lblProductPage;
 
         private void BuildProductPager()
@@ -634,6 +635,18 @@ namespace PharmacySystem
                 Text = string.Empty
             };
 
+            btnProductLots = new Button
+            {
+                Text = "Ver lotes",
+                Location = new Point(left + 176, top - 34),
+                Size = new Size(110, 25),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.WhiteSmoke,
+                Cursor = Cursors.Hand,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
+            };
+            btnProductLots.Click += (s, e) => ShowSelectedProductLots();
+
             btnProductFirst.Click += (s, e) => _productPresenter.OnFirstPage();
             btnProductPrev.Click += (s, e) => _productPresenter.OnPreviousPage();
             btnProductNext.Click += (s, e) => _productPresenter.OnNextPage();
@@ -645,6 +658,24 @@ namespace PharmacySystem
             host.Controls.Add(btnProductNext);
             host.Controls.Add(btnProductLast);
             host.Controls.Add(lblProductPage);
+            host.Controls.Add(btnProductLots);
+        }
+
+        // Opens the lots of the product currently loaded into the edit fields (via the grid's
+        // "Seleccionar" button). Read-only view of quantity / expiry / cost per batch.
+        private void ShowSelectedProductLots()
+        {
+            if (!int.TryParse(txtidproduct.Text, out int productId) || productId <= 0)
+            {
+                MessageBox.Show("Seleccione un producto de la grilla primero.", "Lotes",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using (var modal = new ModalProductLots(productId, txtnameproduct.Text))
+            {
+                modal.ShowDialog(this);
+            }
         }
 
         private static Button MakePagerButton(string text, int x, int y) => new Button

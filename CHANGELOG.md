@@ -18,7 +18,13 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   dd/mm/yyyy (N u.)"). Así un lote nuevo con vencimiento lejano no puede apagar la
   alerta del stock viejo que sigue en góndola, y cuando ese stock se vende (FEFO
   vacía primero el lote más próximo) la alerta se apaga sola. Cierra DEF-02.
-  Falta la valorización por lote en el reporte de productos y una vista de lotes.
+- **Valorización por lote y vista de lotes.** El reporte de productos suma una
+  columna "Valor Stock (costo)" que valoriza cada lote a su propio costo de
+  compra (`SUM(cantidad × costo)`), en vez de aplicar un único precio a todo el
+  stock; el total del reporte también lo trae. En la pestaña Productos de Gestión,
+  el botón "Ver lotes" abre una ventana con los lotes del producto seleccionado:
+  cantidad, vencimiento y costo unitario por partida, con el total de unidades y
+  el valor.
 - **Pago mixto en la venta.** Una venta se puede cobrar con más de una forma de
   pago (por ejemplo, parte efectivo y parte tarjeta). Botón "Pago mixto…" junto
   al combo de forma de pago: abre un diálogo con un monto por método que debe

@@ -355,5 +355,31 @@ namespace PharmacySystem.Tests.Integration
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
             }
         }
+
+        [Fact]
+        public void Report_StockCostValue_SumsEachLotAtItsOwnCost()
+        {
+            int categoryId = CreateCategory();
+            string code = SqlTestHelper.NewTag();
+            int productId = Repository.Register(NewProduct(categoryId, code));
+            SqlTestHelper.ExecuteNonQuery("UPDATE product SET stock = 8 WHERE id = @id", new SqlParameter("@id", productId));
+            SqlTestHelper.ExecuteNonQuery(
+                "INSERT INTO product_lot(product_id, quantity, date_expired, unit_cost) VALUES (@p, 3, NULL, 10), (@p, 5, NULL, 4)",
+                new SqlParameter("@p", productId));
+
+            try
+            {
+                var row = Repository.Report(categoryId.ToString()).Single(r => r.Code == code);
+
+                // 3*10 + 5*4 = 50, not stock * a single price.
+                Assert.Equal(50m, row.StockCostValue);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_lot WHERE product_id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+            }
+        }
     }
 }
