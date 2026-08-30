@@ -236,6 +236,7 @@
     <Compile Include="ModalUserActions.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="ViewParse.cs" />
     <Compile Include="ModalProductLots.cs">
       <SubType>Form</SubType>
     </Compile>

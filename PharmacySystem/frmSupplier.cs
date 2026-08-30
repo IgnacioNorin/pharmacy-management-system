@@ -24,9 +24,9 @@ namespace PharmacySystem
 
         #region ISupplierView
 
-        public int SelectedIndex => int.Parse(txtindex.Text);
+        public int SelectedIndex => ViewParse.Int(txtindex.Text);
         public int RowCount => dgdata.Rows.Count;
-        public int SupplierId => int.Parse(txtid.Text);
+        public int SupplierId => ViewParse.Int(txtid.Text);
         public string Document => txtdocument.Text;
         // Explicit interface implementation: Control.CompanyName and ContainerControl.Validate()
         // (below) are both inherited members this Form already has; qualifying them explicitly
@@ -46,7 +46,8 @@ namespace PharmacySystem
                     var rule = Validations.rules[ruleName];
                     if (!rule.Validate(camp.Key.Text))
                     {
-                        errors.Add($"{namesMessages[camp.Key.Name]} : {rule.MessageError}");
+                        string label = namesMessages.TryGetValue(camp.Key.Name, out var l) ? l : camp.Key.Name;
+                        errors.Add($"{label} : {rule.MessageError}");
                     }
                 }
             }

@@ -48,6 +48,19 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
     rol y los permisos desde la base. Si la cuenta fue desactivada o eliminada
     mientras estaba en uso, la sesión se cierra y vuelve al inicio de sesión.
 
+### Corregido
+
+- **Robustez ante datos incompletos (DEF-14/17/20/24).**
+  - Un campo de cantidad vacío en la compra ya no lanza una excepción al validar
+    el formulario: muestra el mensaje de campo requerido como el resto.
+  - "Ver" en el centro de alertas, con un producto sin código, avisa en vez de
+    fallar.
+  - Los índices e ids ocultos y los combos de las pantallas de mantenimiento se
+    leen de forma tolerante (un valor inesperado degrada a un valor por defecto,
+    no cierra la operación).
+  - Imprimir un comprobante con la ficha de tienda a medio completar ya no lanza
+    una referencia nula: los campos faltantes salen vacíos.
+
 ## [1.4.0] - 2026-08-30
 
 ### Agregado

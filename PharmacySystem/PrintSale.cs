@@ -186,15 +186,16 @@ namespace PharmacySystem
                     return;
                 }
 
-                // Load HTML ticket template
+                // Load HTML ticket template. Every store field is a nullable column: a store
+                // profile that has not been filled in must still print, not throw (DEF-24).
                 string ticketText = Properties.Resources.Ticket.ToString();
-                ticketText = ticketText.Replace("¡nombreempresa!", store.companyName.ToUpper());
-                ticketText = ticketText.Replace("¡documentoempresa!", store.document);
-                ticketText = ticketText.Replace("¡correoempresa!", store.email);
-                ticketText = ticketText.Replace("!telefonoempresa¡", store.phone);
+                ticketText = ticketText.Replace("¡nombreempresa!", (store?.companyName ?? "").ToUpper());
+                ticketText = ticketText.Replace("¡documentoempresa!", store?.document ?? "");
+                ticketText = ticketText.Replace("¡correoempresa!", store?.email ?? "");
+                ticketText = ticketText.Replace("!telefonoempresa¡", store?.phone ?? "");
 
-                ticketText = ticketText.Replace("¡tipodocumento!", sale.typeDocument);
-                ticketText = ticketText.Replace("¡numerodocumento!", sale.numberDocument);
+                ticketText = ticketText.Replace("¡tipodocumento!", sale.typeDocument ?? "");
+                ticketText = ticketText.Replace("¡numerodocumento!", sale.numberDocument ?? "");
                 ticketText = ticketText.Replace("¡fechaventa!", sale.registrationDate.ToString());
 
                 StringBuilder tableRows = new StringBuilder();
@@ -202,7 +203,7 @@ namespace PharmacySystem
                 {
                     tableRows.AppendLine("<tr>");
                     tableRows.AppendLine("<td width=\"20\">" + detail.amount + "</td>");
-                    tableRows.AppendLine("<td width=\"180\">" + detail.oProduct.name + "</td>");
+                    tableRows.AppendLine("<td width=\"180\">" + (detail.oProduct?.name ?? "") + "</td>");
                     tableRows.AppendLine("<td style=\"font-size:14px\">" + CultureInfoHelper.FormatAsCurrency(detail.salePrice) + "</td>");
                     tableRows.AppendLine("<td style=\"font-size:14px\">" + CultureInfoHelper.FormatAsCurrency(detail.subtotal) + "</td>");
                     tableRows.AppendLine("</tr>");

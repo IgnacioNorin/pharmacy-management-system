@@ -36,7 +36,9 @@ namespace PharmacySystem
         private void InitializeValidators()
         {
             var txtAmountInternal = txtamount.Controls[1] as TextBox;
-            txtAmountInternal.Name = "txtcantidad";
+            // Name it to match the namesMessages key ("Cantidad"); otherwise ValidateForm's
+            // label lookup threw KeyNotFoundException when this field was empty (DEF-14).
+            txtAmountInternal.Name = "txtamount";
             campWithRules = new Dictionary<TextBox, List<string>>
             {
                 { txtnumberdocument, new List<string>{ "NotEmpty", "ValidateDocument" } },
@@ -245,7 +247,8 @@ namespace PharmacySystem
                     var rule = Validations.rules[rulePassword];
                     if (!rule.Validate(camp.Key.Text))
                     {
-                        errors.Add($"{namesMessages[camp.Key.Name]} : {rule.MessageError}");
+                        string label = namesMessages.TryGetValue(camp.Key.Name, out var l) ? l : camp.Key.Name;
+                        errors.Add($"{label} : {rule.MessageError}");
                     }
                 }
 
@@ -255,7 +258,7 @@ namespace PharmacySystem
 
         #region IPurchaseView
 
-        int IPurchaseView.SelectedProductId => int.Parse(txtidproduct.Text);
+        int IPurchaseView.SelectedProductId => ViewParse.Int(txtidproduct.Text);
         string IPurchaseView.SelectedProductCode => txtcodeproduct.Text.Trim();
         string IPurchaseView.SelectedProductName => txtnameproduct.Text.Trim();
         decimal IPurchaseView.Amount => txtamount.Value;
@@ -263,8 +266,8 @@ namespace PharmacySystem
         string IPurchaseView.PricePurchaseText => txtpricepurchase.Text;
 
         string IPurchaseView.DocumentNumber => txtnumberdocument.Text.Trim();
-        string IPurchaseView.DocumentType => ((ComboBoxItem)cbotypedocument.SelectedItem).Value.ToString();
-        int IPurchaseView.SelectedSupplierId => int.Parse(txtidsupplier.Text.Trim());
+        string IPurchaseView.DocumentType => ViewParse.ComboValueText(cbotypedocument);
+        int IPurchaseView.SelectedSupplierId => ViewParse.Int(txtidsupplier.Text);
 
         List<string> IPurchaseView.ValidateProductEntry() => ValidateForm();
 
