@@ -122,6 +122,24 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
+        public void Build_MixedPayment_ListsEachMethodAndItsAmount()
+        {
+            Sale sale = MakeSale();
+            sale.payments = new List<SalePayment>
+            {
+                new SalePayment { paymentMethod = "Efectivo", amount = 600m },
+                new SalePayment { paymentMethod = "Tarjeta", amount = 400m }
+            };
+
+            string ticket = PharmacyTicketBuilder.Build(MakeStore(), sale, MakeDetails());
+
+            Assert.Contains("FORMA DE PAGO:", ticket);
+            Assert.Contains("Mixto", ticket);
+            Assert.Contains("Efectivo:", ticket);
+            Assert.Contains("Tarjeta:", ticket);
+        }
+
+        [Fact]
         public void Build_StoreWithoutPhoneOrEmail_OmitsThoseLines()
         {
             var store = MakeStore();

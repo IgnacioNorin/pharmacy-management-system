@@ -36,6 +36,10 @@ namespace PharmacySystem
         {
             Store store = _storeService.ListStore();
             Sale sale = _saleService.GetById(_IdSale);
+            if (sale != null)
+            {
+                sale.payments = _saleService.GetPaymentsBySaleId(_IdSale);
+            }
             List<SaleDetail> saleDetails = _saleService.GetDetailsBySaleId(_IdSale);
 
             string ticketText = PharmacyTicketBuilder.Build(store, sale, saleDetails);
@@ -170,6 +174,8 @@ namespace PharmacySystem
                     return;
                 }
 
+                sale.payments = _saleService.GetPaymentsBySaleId(_IdSale);
+
                 List<SaleDetail> saleDetails = _saleService.GetDetailsBySaleId(_IdSale);
 
                 if (saleDetails == null || !saleDetails.Any())
@@ -204,7 +210,12 @@ namespace PharmacySystem
                 ticketText = ticketText.Replace("¡detalleventa!", tableRows.ToString());
 
                 ticketText = ticketText.Replace("¡totalpagar!", CultureInfoHelper.FormatAsCurrency(sale.totalPay));
-                ticketText = ticketText.Replace("¡formapago!", string.IsNullOrWhiteSpace(sale.paymentMethod) ? PaymentMethods.Default : sale.paymentMethod);
+                string formaPago = (sale.payments != null && sale.payments.Count > 0)
+                    ? (sale.payments.Count > 1
+                        ? "Mixto (" + string.Join(", ", sale.payments.Select(p => p.paymentMethod + " " + CultureInfoHelper.FormatAsCurrency(p.amount))) + ")"
+                        : sale.payments[0].paymentMethod)
+                    : (string.IsNullOrWhiteSpace(sale.paymentMethod) ? PaymentMethods.Default : sale.paymentMethod);
+                ticketText = ticketText.Replace("¡formapago!", formaPago);
                 ticketText = ticketText.Replace("¡pagocon!", CultureInfoHelper.FormatAsCurrency(sale.payWith));
                 ticketText = ticketText.Replace("¡cambio!", CultureInfoHelper.FormatAsCurrency(sale.change));
 

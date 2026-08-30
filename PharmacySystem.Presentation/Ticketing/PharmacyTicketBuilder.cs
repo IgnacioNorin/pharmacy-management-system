@@ -117,9 +117,29 @@ namespace PharmacySystem.Presentation
 
             // Totals
             formatter.AddTwoColumns("TOTAL A PAGAR:", CultureInfoHelper.FormatAsCurrency(sale.totalPay));
-            formatter.AddTwoColumns("FORMA DE PAGO:", string.IsNullOrWhiteSpace(sale.paymentMethod) ? PaymentMethods.Default : sale.paymentMethod);
-            formatter.AddTwoColumns("PAGO CON:", CultureInfoHelper.FormatAsCurrency(sale.payWith));
-            formatter.AddTwoColumns("CAMBIO:", CultureInfoHelper.FormatAsCurrency(sale.change));
+
+            if (sale.payments != null && sale.payments.Count > 0)
+            {
+                formatter.AddTwoColumns("FORMA DE PAGO:", sale.payments.Count > 1 ? "Mixto" : sale.payments[0].paymentMethod);
+                if (sale.payments.Count > 1)
+                {
+                    foreach (SalePayment p in sale.payments)
+                    {
+                        formatter.AddTwoColumns("  " + p.paymentMethod + ":", CultureInfoHelper.FormatAsCurrency(p.amount));
+                    }
+                }
+            }
+            else
+            {
+                formatter.AddTwoColumns("FORMA DE PAGO:", string.IsNullOrWhiteSpace(sale.paymentMethod) ? PaymentMethods.Default : sale.paymentMethod);
+            }
+
+            // The cash-tendered / change lines only make sense when part of the sale was cash.
+            if (sale.payWith > 0m || sale.change > 0m)
+            {
+                formatter.AddTwoColumns("PAGO CON:", CultureInfoHelper.FormatAsCurrency(sale.payWith));
+                formatter.AddTwoColumns("CAMBIO:", CultureInfoHelper.FormatAsCurrency(sale.change));
+            }
 
             formatter.AddCharacter("-");
             formatter.AddCenteredText("¡Gracias por su compra!");

@@ -17,8 +17,12 @@ namespace PharmacySystem.Model
         public decimal totalPay { get; set; }
         public decimal payWith { get; set; }
         public decimal change { get; set; }
-        // How the sale was collected. See PaymentMethods.
+        // The "primary" method the sale was collected with (the one with the largest amount).
+        // The full breakdown is in payments; this stays for the report column and quick filters.
         public string paymentMethod { get; set; } = PaymentMethods.Default;
+        // Payment breakdown: one entry per method, summing to totalPay. A single-method sale has
+        // one entry. Empty means "not loaded" / "use paymentMethod for the whole total".
+        public List<SalePayment> payments { get; set; } = new List<SalePayment>();
         // VAT breakdown of totalPay: netAmount + taxAmount + exemptAmount == totalPay.
         public decimal netAmount { get; set; }
         public decimal taxAmount { get; set; }
