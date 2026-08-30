@@ -41,6 +41,15 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   reportes** dejan de cargar todas las personas (usuarios y sus hashes
   incluidos): `PersonRepository.ListClients` trae solo clientes activos, sin la
   columna de contraseña.
+- **Grillas de Productos, Clientes y Proveedores paginadas en el servidor.** Antes
+  cada una traía la tabla completa y filtraba las filas en memoria. Ahora la base
+  devuelve una página de 50 filas por vez (`OFFSET/FETCH` + conteo total en una sola
+  consulta), con una barra de navegación (`|<  <  >  >|` y "Página X de Y · N
+  registros") debajo de cada grilla. El buscador pasó a ser una consulta al
+  servidor: el texto se compara contra código/nombre/descripción (Productos),
+  nombre/documento/razón social/correo (Clientes) o razón social/documento/correo
+  (Proveedores), y la búsqueda también se pagina. Se dispara con Enter o el botón
+  buscar, no al tipear.
 
 ### Infraestructura
 

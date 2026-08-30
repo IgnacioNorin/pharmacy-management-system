@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using PharmacySystem.Business;
 using PharmacySystem.Model;
 
@@ -35,6 +36,34 @@ namespace PharmacySystem.Tests.Presentation
         {
             ListCalled = true;
             return ListResult;
+        }
+
+        public (int Page, int PageSize, string Search)? LastPagedCall { get; private set; }
+
+        // Pages over ListResult in memory, applying the same company/document/email text match
+        // the real query does.
+        public PagedResult<Supplier> ListPaged(int pageNumber, int pageSize, string search)
+        {
+            LastPagedCall = (pageNumber, pageSize, search);
+
+            string term = (search ?? string.Empty).Trim();
+            List<Supplier> matches = string.IsNullOrEmpty(term)
+                ? ListResult
+                : ListResult.Where(x =>
+                    (x.companyName ?? "").Contains(term) ||
+                    (x.document ?? "").Contains(term) ||
+                    (x.email ?? "").Contains(term)).ToList();
+
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = PagedResult<Supplier>.DefaultPageSize;
+
+            return new PagedResult<Supplier>
+            {
+                Items = matches.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList(),
+                TotalCount = matches.Count,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
         }
 
         public bool Delete(int idSupplier)

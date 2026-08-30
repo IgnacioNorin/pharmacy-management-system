@@ -8,6 +8,8 @@ namespace PharmacySystem.Data
         int Register(Product obj);
         bool Update(Product obj);
         List<Product> List();
+        // One page of active products, filtered by a free-text term over code / name / description.
+        PagedResult<Product> ListPaged(int pageNumber, int pageSize, string search);
         // Only products released for sale (product.is_released = 1). Backs the sale screen.
         List<Product> ListSellable();
         // One sellable product by code / id, for the sale screen's scan and add-to-cart steps.

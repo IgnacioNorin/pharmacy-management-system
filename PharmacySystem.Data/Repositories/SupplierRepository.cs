@@ -93,16 +93,18 @@ namespace PharmacySystem.Data
             }
         }
 
+        private const string SupplierSelectColumns =
+            "id AS idSupplier, document_number AS document, company_name AS companyName, email, phone ";
+
+        private const string SupplierWhere = "FROM supplier WHERE ISNULL(status, 1) = 1";
+
         public List<Supplier> List()
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    return oConnection.Query<Supplier>(
-                        "SELECT id AS idSupplier, document_number AS document, company_name AS companyName, email, phone " +
-                        "FROM supplier WHERE ISNULL(status, 1) = 1")
-                        .ToList();
+                    return oConnection.Query<Supplier>("SELECT " + SupplierSelectColumns + SupplierWhere).ToList();
                 }
                 catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
                 {
@@ -113,6 +115,61 @@ namespace PharmacySystem.Data
                 {
                     Logger.LogError(ex);
                     return new List<Supplier>();
+                }
+            }
+        }
+
+        // One page of active suppliers, filtered by a term that matches company name, document
+        // or email. Count and page come back from a single command.
+        public PagedResult<Supplier> ListPaged(int pageNumber, int pageSize, string search)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = PagedResult<Supplier>.DefaultPageSize;
+
+            const string filter =
+                " AND (@search = '' OR company_name LIKE @like OR document_number LIKE @like OR email LIKE @like)";
+
+            string sql =
+                "SELECT COUNT(*) " + SupplierWhere + filter + ";" +
+                "SELECT " + SupplierSelectColumns + SupplierWhere + filter +
+                " ORDER BY company_name, id OFFSET @offset ROWS FETCH NEXT @take ROWS ONLY;";
+
+            string term = (search ?? string.Empty).Trim();
+            var param = new
+            {
+                search = term,
+                like = "%" + term + "%",
+                offset = (pageNumber - 1) * pageSize,
+                take = pageSize
+            };
+
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    using (SqlMapper.GridReader multi = oConnection.QueryMultiple(sql, param))
+                    {
+                        int total = multi.ReadFirst<int>();
+                        var items = multi.Read<Supplier>().ToList();
+
+                        return new PagedResult<Supplier>
+                        {
+                            Items = items,
+                            TotalCount = total,
+                            PageNumber = pageNumber,
+                            PageSize = pageSize
+                        };
+                    }
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return PagedResult<Supplier>.Empty(pageSize);
                 }
             }
         }

@@ -18,6 +18,7 @@ namespace PharmacySystem
         public frmSupplier()
         {
             InitializeComponent();
+            BuildSupplierPager();
             _presenter = CompositionRoot.CreateSupplierPresenter(this);
         }
 
@@ -60,27 +61,25 @@ namespace PharmacySystem
 
         public void LoadSuppliers(IEnumerable<SupplierRow> suppliers)
         {
+            dgdata.Rows.Clear();
             foreach (SupplierRow row in suppliers)
             {
-                AddRow(row);
+                int rowId = dgdata.Rows.Add();
+                WriteRow(dgdata.Rows[rowId], row);
             }
         }
 
-        public void AddRow(SupplierRow row)
+        public void SetPageInfo(int currentPage, int totalPages, int totalCount)
         {
-            int rowId = dgdata.Rows.Add();
-            WriteRow(dgdata.Rows[rowId], row);
+            lblSupplierPage.Text = totalCount == 0
+                ? "Sin resultados"
+                : $"Página {currentPage} de {totalPages}  ·  {totalCount} proveedor(es)";
+
+            btnSupplierFirst.Enabled = btnSupplierPrev.Enabled = currentPage > 1;
+            btnSupplierNext.Enabled = btnSupplierLast.Enabled = currentPage < totalPages;
         }
 
-        public void ReplaceRow(int index, SupplierRow row)
-        {
-            WriteRow(dgdata.Rows[index], row);
-        }
-
-        public void RemoveRow(int index)
-        {
-            dgdata.Rows.RemoveAt(index);
-        }
+        public string SearchText => txtsearch.Text;
 
         public void ClearForm()
         {
@@ -229,31 +228,61 @@ namespace PharmacySystem
             _presenter.OnDelete();
         }
 
-        private void btnsearch_Click(object sender, EventArgs e)
-        {
-            if (dgdata.Rows.Count <= 0) return;
-
-            string columnFilter = ((PharmacySystem.Model.ComboBoxItem)cbosearch.SelectedItem).Value.ToString();
-            string value;
-
-            foreach (DataGridViewRow row in dgdata.Rows)
-            {
-                value = row.Cells[columnFilter].Value.ToString().Trim();
-
-                if (row.Cells[columnFilter].Value.ToString().Trim().Contains(txtsearch.Text.Trim()))
-                    row.Visible = true;
-                else
-                    row.Visible = false;
-            }
-        }
+        private void btnsearch_Click(object sender, EventArgs e) => _presenter.OnSearch();
 
         private void btnClear_Click(object sender, EventArgs e)
         {
             txtsearch.Text = "";
-            foreach (DataGridViewRow row in dgdata.Rows)
-            {
-                row.Visible = true;
-            }
+            _presenter.OnSearch();
         }
+
+        // The Proveedores grid is server-paged (SupplierPresenter). Built in code to leave the
+        // Designer untouched; the search box now runs a server-side query that matches company
+        // name, document and email at once, so the "buscar por" column selector no longer applies.
+        private Button btnSupplierFirst;
+        private Button btnSupplierPrev;
+        private Button btnSupplierNext;
+        private Button btnSupplierLast;
+        private Label lblSupplierPage;
+
+        private void BuildSupplierPager()
+        {
+            int top = dgdata.Bottom + 8;
+            int left = dgdata.Left;
+
+            btnSupplierFirst = MakePagerButton("|<", left, top);
+            btnSupplierPrev = MakePagerButton("<", left + 44, top);
+            btnSupplierNext = MakePagerButton(">", left + 88, top);
+            btnSupplierLast = MakePagerButton(">|", left + 132, top);
+
+            lblSupplierPage = new Label
+            {
+                AutoSize = true,
+                Location = new Point(left + 188, top + 6),
+                Text = string.Empty
+            };
+
+            btnSupplierFirst.Click += (s, e) => _presenter.OnFirstPage();
+            btnSupplierPrev.Click += (s, e) => _presenter.OnPreviousPage();
+            btnSupplierNext.Click += (s, e) => _presenter.OnNextPage();
+            btnSupplierLast.Click += (s, e) => _presenter.OnLastPage();
+
+            Control host = dgdata.Parent ?? this;
+            host.Controls.Add(btnSupplierFirst);
+            host.Controls.Add(btnSupplierPrev);
+            host.Controls.Add(btnSupplierNext);
+            host.Controls.Add(btnSupplierLast);
+            host.Controls.Add(lblSupplierPage);
+        }
+
+        private static Button MakePagerButton(string text, int x, int y) => new Button
+        {
+            Text = text,
+            Location = new Point(x, y),
+            Size = new Size(40, 25),
+            FlatStyle = FlatStyle.Flat,
+            BackColor = Color.WhiteSmoke,
+            Cursor = Cursors.Hand
+        };
     }
 }

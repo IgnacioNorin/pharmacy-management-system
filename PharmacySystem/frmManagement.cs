@@ -25,6 +25,7 @@ namespace PharmacySystem
         {
             InitializeComponent();
             BuildPricesTab();
+            BuildProductPager();
             _categoryPresenter = CompositionRoot.CreateCategoryManagementPresenter(this);
             _productPresenter = CompositionRoot.CreateProductManagementPresenter(this);
             _productPricePresenter = CompositionRoot.CreateProductPricePresenter(this);
@@ -328,6 +329,7 @@ namespace PharmacySystem
 
         int IProductManagementView.SelectedIndex => int.Parse(txtindexproduct.Text);
         int IProductManagementView.RowCount => dgdataproduct.Rows.Count;
+        public string SearchText => txtsearchproduct.Text;
         public int ProductId => int.Parse(txtidproduct.Text);
         public string Code => txtcodeproduct.Text;
         string IProductManagementView.Name => txtnameproduct.Text;
@@ -360,22 +362,23 @@ namespace PharmacySystem
 
         public void LoadProducts(IEnumerable<ManagementProductRow> products)
         {
+            dgdataproduct.Rows.Clear();
             foreach (ManagementProductRow row in products)
             {
-                ((IProductManagementView)this).AddRow(row);
+                int rowId = dgdataproduct.Rows.Add();
+                WriteProductRow(dgdataproduct.Rows[rowId], row, isNewRow: true);
             }
         }
 
-        void IProductManagementView.AddRow(ManagementProductRow row)
+        public void SetPageInfo(int currentPage, int totalPages, int totalCount)
         {
-            int rowId = dgdataproduct.Rows.Add();
-            WriteProductRow(dgdataproduct.Rows[rowId], row, isNewRow: true);
+            lblProductPage.Text = totalCount == 0
+                ? "Sin resultados"
+                : $"Página {currentPage} de {totalPages}  ·  {totalCount} producto(s)";
+
+            btnProductFirst.Enabled = btnProductPrev.Enabled = currentPage > 1;
+            btnProductNext.Enabled = btnProductLast.Enabled = currentPage < totalPages;
         }
-
-        void IProductManagementView.ReplaceRow(int index, ManagementProductRow row) =>
-            WriteProductRow(dgdataproduct.Rows[index], row, isNewRow: false);
-
-        void IProductManagementView.RemoveRow(int index) => dgdataproduct.Rows.RemoveAt(index);
 
         void IProductManagementView.ClearForm() => CleanProduct();
 
@@ -481,61 +484,23 @@ namespace PharmacySystem
 
         private void btnDeleteProduct_Click(object sender, EventArgs e) => _productPresenter.OnDelete();
 
-        private void btnsearch_Click(object sender, EventArgs e) => FilterProducts();
-
-        private void FilterProducts()
-        {
-            string columnFilter = ((ComboBoxItem)cbosearchproduct.SelectedItem).Value.ToString();
-
-            if (dgdataproduct.Rows.Count <= 0)
-            {
-                MessageBox.Show("No hay datos para buscar", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-            if (string.IsNullOrEmpty(txtsearchproduct.Text))
-            {
-                MessageBox.Show("Ingrese un valor al campo antes de buscar", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-
-            foreach (DataGridViewRow row in dgdataproduct.Rows)
-            {
-                string value = row.Cells[columnFilter].Value.ToString().Trim();
-
-                if (row.Cells[columnFilter].Value.ToString().Trim().Contains(txtsearchproduct.Text.Trim()))
-                    row.Visible = true;
-                else
-                    row.Visible = false;
-            }
-        }
+        private void btnsearch_Click(object sender, EventArgs e) => _productPresenter.OnSearch();
 
         // Entry point for the notification center's click-through (Fase 3 of the alerts rework):
-        // jumps straight to the Producto tab filtered to this code, reusing the exact same search
-        // the user already has instead of building a separate "select this row" mechanism.
+        // jumps straight to the Producto tab filtered to this code. The search is now a
+        // server-side query, so the "buscar por" column selector no longer applies - the term
+        // is matched against code, name and description at once.
         public void ShowProductByCode(string code)
         {
             tabManagement.SelectedTab = tabProduct;
-
-            foreach (ComboBoxItem item in cbosearchproduct.Items)
-            {
-                if ((string)item.Value == "Codigo")
-                {
-                    cbosearchproduct.SelectedItem = item;
-                    break;
-                }
-            }
-
             txtsearchproduct.Text = code;
-            FilterProducts();
+            _productPresenter.OnSearch();
         }
 
         private void btnClear_Click(object sender, EventArgs e)
         {
             txtsearchproduct.Text = "";
-            foreach (DataGridViewRow row in dgdataproduct.Rows)
-            {
-                row.Visible = true;
-            }
+            _productPresenter.OnSearch();
         }
 
         #endregion
@@ -637,6 +602,60 @@ namespace PharmacySystem
             MessageBox.Show(string.Join("\n", errors), "Errores de Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
         private void btnSaveStore_Click(object sender, EventArgs e) => _storePresenter.OnSave();
+
+        #endregion
+
+        #region Product grid pager
+
+        // The Producto grid is server-paged (ProductManagementPresenter). This bar sits just
+        // below the grid; the search box above it now triggers a server-side query instead of
+        // hiding rows in place. Built in code to leave the Designer untouched, same as the
+        // Prices tab below.
+        private Button btnProductFirst;
+        private Button btnProductPrev;
+        private Button btnProductNext;
+        private Button btnProductLast;
+        private Label lblProductPage;
+
+        private void BuildProductPager()
+        {
+            int top = dgdataproduct.Bottom + 8;
+            int left = dgdataproduct.Left;
+
+            btnProductFirst = MakePagerButton("|<", left, top);
+            btnProductPrev = MakePagerButton("<", left + 44, top);
+            btnProductNext = MakePagerButton(">", left + 88, top);
+            btnProductLast = MakePagerButton(">|", left + 132, top);
+
+            lblProductPage = new Label
+            {
+                AutoSize = true,
+                Location = new Point(left + 188, top + 6),
+                Text = string.Empty
+            };
+
+            btnProductFirst.Click += (s, e) => _productPresenter.OnFirstPage();
+            btnProductPrev.Click += (s, e) => _productPresenter.OnPreviousPage();
+            btnProductNext.Click += (s, e) => _productPresenter.OnNextPage();
+            btnProductLast.Click += (s, e) => _productPresenter.OnLastPage();
+
+            Control host = dgdataproduct.Parent ?? tabProduct;
+            host.Controls.Add(btnProductFirst);
+            host.Controls.Add(btnProductPrev);
+            host.Controls.Add(btnProductNext);
+            host.Controls.Add(btnProductLast);
+            host.Controls.Add(lblProductPage);
+        }
+
+        private static Button MakePagerButton(string text, int x, int y) => new Button
+        {
+            Text = text,
+            Location = new Point(x, y),
+            Size = new Size(40, 25),
+            FlatStyle = FlatStyle.Flat,
+            BackColor = Color.WhiteSmoke,
+            Cursor = Cursors.Hand
+        };
 
         #endregion
 

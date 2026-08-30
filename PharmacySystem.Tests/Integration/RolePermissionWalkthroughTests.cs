@@ -119,8 +119,7 @@ namespace PharmacySystem.Tests.Integration
                 products.OnSave();
                 products.OnDelete();
                 Assert.Equal(2, productView.ShownMessages.Count(m => m.Contains("No tiene permiso")));
-                Assert.Empty(productView.AddedRows);
-                Assert.Empty(productView.RemovedIndexes);
+                Assert.Equal(0, productView.LoadProductsCallCount);
 
                 // Categories
                 var categoryView = new FakeCategoryManagementView { SelectedIndex = 1, RowCount = 1, CategoryId = 7 };
@@ -137,8 +136,7 @@ namespace PharmacySystem.Tests.Integration
                 suppliers.OnSave();
                 suppliers.OnDelete();
                 Assert.Equal(2, supplierView.ShownMessages.Count(m => m.Contains("No tiene permiso")));
-                Assert.Empty(supplierView.AddedRows);
-                Assert.Empty(supplierView.RemovedIndexes);
+                Assert.Equal(0, supplierView.LoadSuppliersCallCount);
 
                 // Users
                 var userView = new FakeUserView { SelectedIndex = 1, RowCount = 1, UserId = 7 };

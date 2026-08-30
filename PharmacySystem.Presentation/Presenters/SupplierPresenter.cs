@@ -1,18 +1,28 @@
+using System;
+using System.Linq;
 using PharmacySystem.Business;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
 {
     // Ported from frmSupplier.cs's btnSave_Click/btnDelete_Click/frmSupplier_Load. Behavior is
-    // preserved exactly, including one asymmetry worth flagging rather than silently fixing:
+    // preserved, including one asymmetry worth flagging rather than silently fixing:
     // a failed Register shows a message, but a failed Update does not (mirrors the original
-    // `if (!result) return;` with no MessageBox). See SupplierPresenterTests for both cases
-    // pinned down explicitly.
+    // `if (!result) return;` with no MessageBox). See SupplierPresenterTests for both cases.
+    //
+    // The grid is server-paged: ListPaged returns one page plus the total count, the search
+    // box is a WHERE clause, and a successful save or delete reloads the current page.
     public class SupplierPresenter
     {
         private readonly ISupplierView _view;
         private readonly ISupplierService _service;
         private readonly CurrentUser _currentUser;
+
+        private const int PageSize = PagedResult<Supplier>.DefaultPageSize;
+
+        private int _page = 1;
+        private int _totalPages = 1;
+        private string _search = string.Empty;
 
         public SupplierPresenter(ISupplierView view, ISupplierService service, CurrentUser currentUser)
         {
@@ -23,9 +33,38 @@ namespace PharmacySystem.Presentation
 
         private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
 
-        public void OnLoad()
+        public void OnLoad() => LoadPage(1);
+
+        public void OnSearch()
         {
-            _view.LoadSuppliers(_service.List().ConvertAll(SupplierRow.From));
+            _search = _view.SearchText?.Trim() ?? string.Empty;
+            LoadPage(1);
+        }
+
+        public void OnFirstPage() => LoadPage(1);
+
+        public void OnPreviousPage() => LoadPage(_page - 1);
+
+        public void OnNextPage() => LoadPage(_page + 1);
+
+        public void OnLastPage() => LoadPage(_totalPages);
+
+        private void LoadPage(int requestedPage)
+        {
+            int page = requestedPage < 1 ? 1 : requestedPage;
+
+            PagedResult<Supplier> result = _service.ListPaged(page, PageSize, _search);
+
+            if (result.TotalCount > 0 && page > result.TotalPages)
+            {
+                result = _service.ListPaged(result.TotalPages, PageSize, _search);
+            }
+
+            _totalPages = result.TotalPages;
+            _page = result.TotalPages == 0 ? 1 : Math.Min(Math.Max(result.PageNumber, 1), result.TotalPages);
+
+            _view.LoadSuppliers(result.Items.Select(SupplierRow.From));
+            _view.SetPageInfo(_page, _totalPages, result.TotalCount);
         }
 
         public void OnSave()
@@ -59,37 +98,22 @@ namespace PharmacySystem.Presentation
 
             if (supplier.idSupplier == 0)
             {
-                RegisterNew(supplier);
+                if (_service.Register(supplier) == 0)
+                {
+                    _view.ShowMessage("Ya existe un proveedor con ese documento");
+                    return;
+                }
             }
             else
             {
-                UpdateExisting(supplier);
-            }
-        }
-
-        private void RegisterNew(Supplier supplier)
-        {
-            int id = _service.Register(supplier);
-            if (id == 0)
-            {
-                _view.ShowMessage("Ya existe un proveedor con ese documento");
-                return;
+                if (!_service.Update(supplier))
+                {
+                    return;
+                }
             }
 
-            supplier.idSupplier = id;
-            _view.AddRow(SupplierRow.From(supplier));
             _view.ClearForm();
-        }
-
-        private void UpdateExisting(Supplier supplier)
-        {
-            if (!_service.Update(supplier))
-            {
-                return;
-            }
-
-            _view.ReplaceRow(_view.SelectedIndex - 1, SupplierRow.From(supplier));
-            _view.ClearForm();
+            LoadPage(_page);
         }
 
         public void OnDelete()
@@ -117,8 +141,8 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            _view.RemoveRow(_view.SelectedIndex - 1);
             _view.ClearForm();
+            LoadPage(_page);
         }
     }
 }

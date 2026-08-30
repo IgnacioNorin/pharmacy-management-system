@@ -137,18 +137,20 @@ namespace PharmacySystem.Data
         // Active clients only, without the password column and without the person-type join - the
         // client picker / screen / report filter used to load every person (users and their
         // hashes included) and filter in memory (RNF-REN-01, DEF-08).
+        private const string ClientSelectColumns =
+            "p.id AS idPerson, p.document_number AS document, p.name, p.address, p.phone, " +
+            "p.business_name AS businessName, p.activity, p.commune, p.email, p.is_company AS isCompany ";
+
+        private const string ClientWhere =
+            "FROM person p WHERE p.person_type_id = 4 AND ISNULL(p.status, 1) = 1";
+
         public List<Person> ListClients()
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
-                    const string sql =
-                        "SELECT p.id AS idPerson, p.document_number AS document, p.name, p.address, p.phone, " +
-                        "p.business_name AS businessName, p.activity, p.commune, p.email, p.is_company AS isCompany " +
-                        "FROM person p WHERE p.person_type_id = 4 AND ISNULL(p.status, 1) = 1";
-
-                    return oConnection.Query<Person>(sql).ToList();
+                    return oConnection.Query<Person>("SELECT " + ClientSelectColumns + ClientWhere).ToList();
                 }
                 catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
                 {
@@ -159,6 +161,63 @@ namespace PharmacySystem.Data
                 {
                     Logger.LogError(ex);
                     return new List<Person>();
+                }
+            }
+        }
+
+        // One page of active clients, filtered by a term that matches name, document, business
+        // name or email. Count and page come back from a single command. The client screen used
+        // to load every client and filter the grid rows in memory.
+        public PagedResult<Person> ListClientsPaged(int pageNumber, int pageSize, string search)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = PagedResult<Person>.DefaultPageSize;
+
+            const string filter =
+                " AND (@search = '' OR p.name LIKE @like OR p.document_number LIKE @like " +
+                "OR p.business_name LIKE @like OR p.email LIKE @like)";
+
+            string sql =
+                "SELECT COUNT(*) " + ClientWhere + filter + ";" +
+                "SELECT " + ClientSelectColumns + ClientWhere + filter +
+                " ORDER BY p.name, p.id OFFSET @offset ROWS FETCH NEXT @take ROWS ONLY;";
+
+            string term = (search ?? string.Empty).Trim();
+            var param = new
+            {
+                search = term,
+                like = "%" + term + "%",
+                offset = (pageNumber - 1) * pageSize,
+                take = pageSize
+            };
+
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    using (SqlMapper.GridReader multi = oConnection.QueryMultiple(sql, param))
+                    {
+                        int total = multi.ReadFirst<int>();
+                        var items = multi.Read<Person>().ToList();
+
+                        return new PagedResult<Person>
+                        {
+                            Items = items,
+                            TotalCount = total,
+                            PageNumber = pageNumber,
+                            PageSize = pageSize
+                        };
+                    }
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return PagedResult<Person>.Empty(pageSize);
                 }
             }
         }

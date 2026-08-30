@@ -10,6 +10,7 @@ namespace PharmacySystem.Business
         bool Update(Person person);
         List<Person> List();
         List<Person> ListClients();
+        PagedResult<Person> ListClientsPaged(int pageNumber, int pageSize, string search);
         Person GetByDocument(string document);
         bool UpdatePassword(int idPerson, string hashedPassword);
         bool Delete(int idPerson);

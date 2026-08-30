@@ -13,6 +13,7 @@ namespace PharmacySystem.Data
         List<Person> List();
         // Active clients only, without password or person-type. For the client picker / screen / report filter.
         List<Person> ListClients();
+        PagedResult<Person> ListClientsPaged(int pageNumber, int pageSize, string search);
         Person GetByDocument(string document);
         bool UpdatePassword(int idPerson, string hashedPassword);
         bool Delete(int idPerson);

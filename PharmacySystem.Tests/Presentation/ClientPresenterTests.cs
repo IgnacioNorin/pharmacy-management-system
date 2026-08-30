@@ -17,7 +17,7 @@ namespace PharmacySystem.Tests.Presentation
             new ClientPresenter(view, new FakePersonService(), TestUser.With()).OnSave();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
-            Assert.Empty(view.AddedRows);
+            Assert.Equal(0, view.LoadClientsCallCount);
         }
 
         [Fact]
@@ -27,7 +27,7 @@ namespace PharmacySystem.Tests.Presentation
             new ClientPresenter(view, new FakePersonService(), TestUser.With()).OnDelete();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
-            Assert.Empty(view.RemovedIndexes);
+            Assert.Equal(0, view.LoadClientsCallCount);
         }
 
         [Fact]
@@ -111,18 +111,16 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Null(service.RegisteredWith);
         }
 
-        // Register() now returns the new id, so the row added to the grid carries it and can be
-        // re-selected / edited without registering a duplicate.
         [Fact]
-        public void OnSave_NewClient_Succeeds_AddedRowGetsTheNewId()
+        public void OnSave_NewClient_Succeeds_ReloadsPageAndClears()
         {
             var view = new FakeClientView { PersonId = 0, Document = "123", Name = "Test", Address = "Addr", Phone = "111" };
             var service = new FakePersonService { RegisterResult = 55 };
 
             CreatePresenter(view, service).OnSave();
 
-            Assert.Single(view.AddedRows);
-            Assert.Equal(55, view.AddedRows[0].Id);
+            Assert.Equal(1, view.LoadClientsCallCount);
+            Assert.True(view.ClearFormCalled);
         }
 
         // Unlike SupplierPresenter (which returns silently on a failed Update), ClientPresenter's
@@ -152,15 +150,14 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void OnSave_ExistingClient_UpdateSucceeds_ReplacesRow()
+        public void OnSave_ExistingClient_UpdateSucceeds_ReloadsPageAndClears()
         {
             var view = new FakeClientView { PersonId = 7, SelectedIndex = 2, Name = "Updated" };
             var service = new FakePersonService { UpdateResult = true };
 
             CreatePresenter(view, service).OnSave();
 
-            Assert.Single(view.ReplacedRows);
-            Assert.Equal(1, view.ReplacedRows[0].Index);
+            Assert.Equal(1, view.LoadClientsCallCount);
             Assert.True(view.ClearFormCalled);
         }
 
@@ -198,11 +195,11 @@ namespace PharmacySystem.Tests.Presentation
             CreatePresenter(view, service).OnDelete();
 
             Assert.Equal(new[] { "No se pudo eliminar el registro\nRevise los datos" }, view.ShownMessages);
-            Assert.Empty(view.RemovedIndexes);
+            Assert.Equal(0, view.LoadClientsCallCount);
         }
 
         [Fact]
-        public void OnDelete_Succeeds_RemovesRowAndClears()
+        public void OnDelete_Succeeds_ReloadsPageAndClears()
         {
             var view = new FakeClientView { SelectedIndex = 3, PersonId = 9 };
             var service = new FakePersonService { DeleteResult = true };
@@ -210,8 +207,48 @@ namespace PharmacySystem.Tests.Presentation
             CreatePresenter(view, service).OnDelete();
 
             Assert.Equal(9, service.DeletedId);
-            Assert.Equal(new[] { 2 }, view.RemovedIndexes);
+            Assert.Equal(1, view.LoadClientsCallCount);
             Assert.True(view.ClearFormCalled);
+        }
+
+        [Fact]
+        public void OnSearch_QueriesWithTheTermAndResetsToPageOne()
+        {
+            var view = new FakeClientView();
+            var service = new FakePersonService
+            {
+                ListClientsResult = new System.Collections.Generic.List<Person>
+                {
+                    new Person { idPerson = 1, name = "Ana" },
+                    new Person { idPerson = 2, name = "Bruno" }
+                }
+            };
+            var presenter = CreatePresenter(view, service);
+            presenter.OnLoad();
+
+            view.SearchText = "Bruno";
+            presenter.OnSearch();
+
+            Assert.Equal("Bruno", service.LastClientsPagedCall?.Search);
+            Assert.Equal(1, service.LastClientsPagedCall?.Page);
+            Assert.Single(view.LoadedClients);
+            Assert.Equal("Bruno", view.LoadedClients[0].Name);
+        }
+
+        [Fact]
+        public void OnNextPage_AdvancesOnePage()
+        {
+            var view = new FakeClientView();
+            var many = new System.Collections.Generic.List<Person>();
+            for (int i = 1; i <= 60; i++) many.Add(new Person { idPerson = i, name = "C" + i.ToString("D2") });
+            var service = new FakePersonService { ListClientsResult = many };
+            var presenter = CreatePresenter(view, service);
+            presenter.OnLoad();
+
+            presenter.OnNextPage();
+
+            Assert.Equal(2, view.LastPageInfo?.CurrentPage);
+            Assert.Equal(2, service.LastClientsPagedCall?.Page);
         }
     }
 }

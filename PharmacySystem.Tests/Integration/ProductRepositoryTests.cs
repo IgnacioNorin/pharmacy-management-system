@@ -312,5 +312,48 @@ namespace PharmacySystem.Tests.Integration
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
             }
         }
+
+        [Fact]
+        public void ListPaged_SlicesTheResult_ReportsTheTotal_AndFiltersBySearch()
+        {
+            int categoryId = CreateCategory();
+            string tag = SqlTestHelper.NewTag();
+            var ids = new System.Collections.Generic.List<int>();
+
+            try
+            {
+                // 7 products that share a searchable token in the name.
+                for (int i = 0; i < 7; i++)
+                {
+                    var p = NewProduct(categoryId);
+                    p.name = tag + " item " + i.ToString("D2");
+                    ids.Add(Repository.Register(p));
+                }
+
+                PagedResult<Product> page1 = Repository.ListPaged(1, 3, tag);
+                Assert.Equal(7, page1.TotalCount);
+                Assert.Equal(3, page1.Items.Count);
+                Assert.Equal(3, page1.TotalPages);
+                Assert.All(page1.Items, p => Assert.NotNull(p.oCategory)); // multi-map still wires the category
+
+                PagedResult<Product> page3 = Repository.ListPaged(3, 3, tag);
+                Assert.Single(page3.Items);
+
+                // Ordered by name, so paging does not repeat or skip rows.
+                var seen = page1.Items.Concat(Repository.ListPaged(2, 3, tag).Items).Concat(page3.Items)
+                    .Select(p => p.idProduct).ToList();
+                Assert.Equal(7, seen.Distinct().Count());
+
+                Assert.Equal(0, Repository.ListPaged(1, 10, "no-such-token-" + tag).TotalCount);
+            }
+            finally
+            {
+                foreach (int id in ids)
+                {
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", id));
+                }
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+            }
+        }
     }
 }

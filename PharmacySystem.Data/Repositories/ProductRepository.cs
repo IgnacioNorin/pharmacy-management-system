@@ -233,6 +233,66 @@ namespace PharmacySystem.Data
 
         public List<Product> List() => QueryProducts(ProductSelect);
 
+        // One page of active products, optionally filtered by a text that matches code, name or
+        // description. The management grid used to load every product and filter in memory.
+        // Count and page come back from a single command.
+        public PagedResult<Product> ListPaged(int pageNumber, int pageSize, string search)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = PagedResult<Product>.DefaultPageSize;
+
+            const string filter =
+                " AND (@search = '' OR p.code LIKE @like OR p.name LIKE @like OR p.description LIKE @like)";
+
+            string sql =
+                "SELECT COUNT(*) FROM product p INNER JOIN category c ON c.id = p.category_id " +
+                "WHERE p.status = 1" + filter + ";" +
+                ProductSelect + filter +
+                " ORDER BY p.name, p.id OFFSET @offset ROWS FETCH NEXT @take ROWS ONLY;";
+
+            string term = (search ?? string.Empty).Trim();
+            var param = new
+            {
+                search = term,
+                like = "%" + term + "%",
+                offset = (pageNumber - 1) * pageSize,
+                take = pageSize
+            };
+
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    using (SqlMapper.GridReader multi = oConnection.QueryMultiple(sql, param))
+                    {
+                        int total = multi.ReadFirst<int>();
+                        var items = multi.Read<Product, Categories, Product>(
+                            (product, category) => { product.oCategory = category; return product; },
+                            splitOn: "IdCategory")
+                            .ToList();
+
+                        return new PagedResult<Product>
+                        {
+                            Items = items,
+                            TotalCount = total,
+                            PageNumber = pageNumber,
+                            PageSize = pageSize
+                        };
+                    }
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return PagedResult<Product>.Empty(pageSize);
+                }
+            }
+        }
+
         public List<Product> ListSellable() => QueryProducts(ProductSelect + " AND p.is_released = 1");
 
         // One sellable product by code / id - the sale screen used to load the whole catalogue
