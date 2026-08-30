@@ -66,7 +66,7 @@ namespace PharmacySystem.Data
                         "UPDATE product SET code = @code, name = @name, description = @description, " +
                         "category_id = @category_id, tax_affected = @tax_affected WHERE id = @id_product;";
 
-                    oConnection.Execute(sql, new
+                    int affected = oConnection.Execute(sql, new
                     {
                         id_product = obj.idProduct,
                         code = obj.code,
@@ -76,7 +76,8 @@ namespace PharmacySystem.Data
                         tax_affected = obj.taxAffected
                     });
 
-                    return true;
+                    // 0 rows: the product was deleted underneath - report the failure (DEF-39).
+                    return affected > 0;
                 }
                 catch (Exception ex) when (SqlErrorCodes.IsUniqueViolation(ex))
                 {

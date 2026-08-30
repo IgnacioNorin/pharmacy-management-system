@@ -92,6 +92,8 @@ namespace PharmacySystem.Presentation
             bool productExists = _cart.Any(l => l.ProductId == _view.SelectedProductId);
             if (productExists)
             {
+                // Was a silent no-op: the user could not tell why re-adding did nothing (DEF-30).
+                _view.ShowMessage("El producto ya está en la compra.\nQuítelo y agréguelo de nuevo si quiere cambiar la cantidad.");
                 return;
             }
 

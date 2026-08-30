@@ -422,8 +422,9 @@ GO
 -- Fase 4 of the alerts rework (traceability): one row per open-or-resolved stock/expiration
 -- alert on a product. Written only on a state transition (a new alert appears, its severity
 -- changes, or it clears) - not on every poll - so this grows with real inventory activity, not
--- with the passage of time. alert_type: 1 = stock, 2 = expiration. severity: 1 = low/expiring
--- soon, 2 = critical/expired (mirrors PharmacySystem.Model.AlertType/AlertSeverity).
+-- with the passage of time. alert_type: 1 = stock, 2 = expiration. severity stores the
+-- PharmacySystem.Model.AlertSeverity enum value: 0 = Critical, 1 = Expired, 2 = Low,
+-- 3 = ExpiringSoon (ordered so a sort by severity puts the most urgent first).
 CREATE TABLE [dbo].[product_alert_history](
     [id] [int] IDENTITY(1,1) NOT NULL,
     [product_id] [int] NOT NULL,
