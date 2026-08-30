@@ -12,12 +12,14 @@ namespace PharmacySystem.Presentation
         private readonly IStoreManagementView _view;
         private readonly IStoreService _service;
         private readonly CurrentUser _currentUser;
+        private readonly ISecurityAudit _audit;
 
-        public StoreManagementPresenter(IStoreManagementView view, IStoreService service, CurrentUser currentUser)
+        public StoreManagementPresenter(IStoreManagementView view, IStoreService service, CurrentUser currentUser, ISecurityAudit audit)
         {
             _view = view;
             _service = service;
             _currentUser = currentUser;
+            _audit = audit;
         }
 
         private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
@@ -65,6 +67,8 @@ namespace PharmacySystem.Presentation
 
             if (isSuccess)
             {
+                _audit.Record(_currentUser?.PersonId ?? 0, "store.update", "store", 1,
+                    $"razón social '{_view.CompanyName}', doc {_view.Document}, IVA {taxRate:0.##}%, doc por defecto {_view.DefaultDocumentType}");
                 _view.ShowInfo("Se actualizaron los datos ingresados exitosamente");
             }
             else

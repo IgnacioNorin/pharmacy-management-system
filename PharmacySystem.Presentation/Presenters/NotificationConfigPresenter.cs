@@ -16,12 +16,14 @@ namespace PharmacySystem.Presentation
         private readonly INotificationConfigView _view;
         private readonly INotificationConfigService _service;
         private readonly CurrentUser _currentUser;
+        private readonly ISecurityAudit _audit;
 
-        public NotificationConfigPresenter(INotificationConfigView view, INotificationConfigService service, CurrentUser currentUser)
+        public NotificationConfigPresenter(INotificationConfigView view, INotificationConfigService service, CurrentUser currentUser, ISecurityAudit audit)
         {
             _view = view;
             _service = service;
             _currentUser = currentUser;
+            _audit = audit;
         }
 
         private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
@@ -82,6 +84,8 @@ namespace PharmacySystem.Presentation
 
             if (_service.ConfigUpdate(config))
             {
+                _audit.Record(_currentUser?.PersonId ?? 0, "alert_config.update", "notification_settings", 1,
+                    $"vencimiento {days} día(s), stock crítico {criticalStock}");
                 _view.ShowSaveSucceeded();
             }
             else

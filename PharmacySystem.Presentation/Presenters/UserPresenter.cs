@@ -24,13 +24,14 @@ namespace PharmacySystem.Presentation
         private readonly IPermissionService _permissionService;
         private readonly IPasswordChangeService _passwordChangeService;
         private readonly IAuthenticationService _authService;
+        private readonly ISecurityAudit _audit;
 
         private List<Person> _users = new List<Person>();
         private ISet<string> _lockedDocuments = new HashSet<string>();
 
         public UserPresenter(IUserView view, IPersonService service, CurrentUser currentUser,
             IPermissionService permissionService, IPasswordChangeService passwordChangeService,
-            IAuthenticationService authService)
+            IAuthenticationService authService, ISecurityAudit audit)
         {
             _view = view;
             _service = service;
@@ -38,7 +39,11 @@ namespace PharmacySystem.Presentation
             _permissionService = permissionService;
             _passwordChangeService = passwordChangeService;
             _authService = authService;
+            _audit = audit;
         }
+
+        private string RoleNameOf(int userId) =>
+            _users.FirstOrDefault(u => u.idPerson == userId)?.oPersonType?.description ?? "";
 
         private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
 
@@ -152,6 +157,8 @@ namespace PharmacySystem.Presentation
                 }
 
                 person.idPerson = newId;
+                _audit.Record(ActorId, "user.create", "person", newId,
+                    $"'{person.name}' (doc {person.document}), rol {_view.RoleText}");
                 _view.AddRow(new UserRow
                 {
                     Id = person.idPerson,
@@ -164,10 +171,18 @@ namespace PharmacySystem.Presentation
             }
             else
             {
+                string previousRole = RoleNameOf(person.idPerson);
+
                 if (!_service.Update(person))
                 {
                     return;
                 }
+
+                string roleChange = previousRole != _view.RoleText && previousRole.Length > 0
+                    ? $"; rol {previousRole} -> {_view.RoleText}"
+                    : "";
+                _audit.Record(ActorId, "user.update", "person", person.idPerson,
+                    $"'{person.name}' (doc {person.document}){roleChange}");
 
                 // An edit does not change status or lock state - keep whatever the row had.
                 bool wasActive = _users.FirstOrDefault(u => u.idPerson == person.idPerson)?.Estado ?? true;
@@ -246,12 +261,16 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
+            string name = _users.FirstOrDefault(u => u.idPerson == _view.UserId)?.name ?? "";
+            string doc = DocumentOf(_view.UserId);
+
             if (!_service.Delete(_view.UserId))
             {
                 _view.ShowMessage("No se pudo eliminar el registro\nRevise los datos");
                 return;
             }
 
+            _audit.Record(ActorId, "user.delete", "person", _view.UserId, $"'{name}' (doc {doc})");
             _view.RemoveRow(_view.SelectedIndex - 1);
             _view.ClearForm();
         }

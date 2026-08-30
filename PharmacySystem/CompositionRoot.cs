@@ -32,6 +32,7 @@ namespace PharmacySystem
         private static readonly ISaleService _saleService = new SaleService(new SaleRepository(ConnectionFactory), new LocalSequenceIssuer());
         private static readonly IPermissionService _permissionService = new PermissionService(new PermissionRepository(ConnectionFactory));
         private static readonly ICashCountService _cashCountService = new CashCountService(new CashCountRepository(ConnectionFactory));
+        private static readonly ISecurityAudit _securityAudit = new SecurityAudit(new SecurityEventRepository(ConnectionFactory));
 
         #region Supplier
 
@@ -49,7 +50,7 @@ namespace PharmacySystem
             new ClientPresenter(view, _clientService, MainForm.Session);
 
         public static UserPresenter CreateUserPresenter(IUserView view) =>
-            new UserPresenter(view, _personService, MainForm.Session, _permissionService, _passwordChangeService, _authService);
+            new UserPresenter(view, _personService, MainForm.Session, _permissionService, _passwordChangeService, _authService, _securityAudit);
 
         public static ClientPickerPresenter CreateClientPickerPresenter(IClientPickerView view) =>
             new ClientPickerPresenter(view, _clientService);
@@ -81,10 +82,10 @@ namespace PharmacySystem
         #region Store / Notifications
 
         public static StoreManagementPresenter CreateStoreManagementPresenter(IStoreManagementView view) =>
-            new StoreManagementPresenter(view, _storeService, MainForm.Session);
+            new StoreManagementPresenter(view, _storeService, MainForm.Session, _securityAudit);
 
         public static NotificationConfigPresenter CreateNotificationConfigPresenter(INotificationConfigView view) =>
-            new NotificationConfigPresenter(view, _notificationConfigService, MainForm.Session);
+            new NotificationConfigPresenter(view, _notificationConfigService, MainForm.Session, _securityAudit);
 
         public static MainFormPresenter CreateMainFormPresenter(IMainFormView view) =>
             new MainFormPresenter(view, _notificationConfigService, _personService, _permissionService);
@@ -133,7 +134,7 @@ namespace PharmacySystem
             new CurrentUser(person, _permissionService.GetPermissionsForRole(person.oPersonType?.idPersonType ?? 0));
 
         public static RolesPresenter CreateRolesPresenter(IRolesView view) =>
-            new RolesPresenter(view, _permissionService, MainForm.Session);
+            new RolesPresenter(view, _permissionService, MainForm.Session, _securityAudit);
 
         public static IPermissionService PermissionService => _permissionService;
 
