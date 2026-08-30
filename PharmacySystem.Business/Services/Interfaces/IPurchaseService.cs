@@ -8,6 +8,6 @@ namespace PharmacySystem.Business
     {
         bool Register(Purchase purchase);
         List<PurchaseReportRow> ReportPurchase(string idSupplier, DateTime startDate, DateTime endDate);
-        decimal GetTotalAmount(string idSupplier, DateTime startDate, DateTime endDate);
+        PurchaseReportTotals GetTotals(string idSupplier, DateTime startDate, DateTime endDate);
     }
 }

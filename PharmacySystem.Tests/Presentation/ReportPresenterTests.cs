@@ -181,7 +181,7 @@ namespace PharmacySystem.Tests.Presentation
                 }
             };
             // Both lines belong to the same purchase: its header total must be counted once.
-            f.Purchases.TotalAmountResult = 42.50m;
+            f.Purchases.TotalsResult = new PurchaseReportTotals { TotalAmount = 42.50m, NetAmount = 36m, TaxAmount = 6.50m };
 
             f.Presenter.OnConsultPurchase();
 
@@ -190,7 +190,9 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Equal("Widget", result.Rows[0].ProductName);
 
             Assert.True(result.HasTotals);
-            Assert.Equal(42.50m, result.Totals.TotalAmount);   // from GetTotalAmount, not the row sum (which would be 85)
+            Assert.Equal(42.50m, result.Totals.TotalAmount);   // from GetTotals, not the row sum (which would be 85)
+            Assert.Equal(36m, result.Totals.NetAmount);        // header VAT breakdown, counted once
+            Assert.Equal(6.50m, result.Totals.TaxAmount);
             Assert.Equal(14, result.Totals.Quantity);
             Assert.Equal(5m, result.Totals.PurchasePrice);
             Assert.Equal(38m, result.Totals.LineTotal);   // 30 + 8, straight sum of the line totals

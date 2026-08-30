@@ -10,7 +10,7 @@ namespace PharmacySystem.Tests.Presentation
         public bool RegisterResult { get; set; } = true;
         public Exception RegisterThrows { get; set; }
         public List<PurchaseReportRow> ReportResult { get; set; } = new List<PurchaseReportRow>();
-        public decimal TotalAmountResult { get; set; }
+        public PurchaseReportTotals TotalsResult { get; set; } = new PurchaseReportTotals();
         public Purchase RegisteredWith { get; private set; }
 
         public bool Register(Purchase purchase)
@@ -20,6 +20,6 @@ namespace PharmacySystem.Tests.Presentation
             return RegisterResult;
         }
         public List<PurchaseReportRow> ReportPurchase(string idSupplier, DateTime startDate, DateTime endDate) => ReportResult;
-        public decimal GetTotalAmount(string idSupplier, DateTime startDate, DateTime endDate) => TotalAmountResult;
+        public PurchaseReportTotals GetTotals(string idSupplier, DateTime startDate, DateTime endDate) => TotalsResult;
     }
 }

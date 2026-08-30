@@ -52,6 +52,14 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 - **Subtotal por línea en el reporte de compras.** Cada línea de producto ahora
   trae una columna "Subtotal" (cantidad × precio de compra), y el total del
   reporte suma esa columna. Antes solo se veía la cantidad y el precio unitario.
+- **Desglose de IVA en las compras.** El comprobante de compra ahora guarda su
+  neto, su IVA, su parte exenta y la tasa aplicada (migración `030`). El precio de
+  compra se ingresa con IVA incluido, igual que en la venta, y el neto se descuenta
+  hacia atrás (`neto = total / 1,19`); las líneas de productos exentos
+  (`product.tax_affected` en 0) van a la parte exenta. La pantalla de compra
+  muestra "Neto / IVA" arriba del monto total, y el reporte de compras suma las
+  columnas "Neto", "IVA" y "Exento" del período (útil para el crédito fiscal). Las
+  compras anteriores se rellenaron como afectas al 19 %.
 
 ### Cambiado
 

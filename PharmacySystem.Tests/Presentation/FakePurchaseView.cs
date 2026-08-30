@@ -43,6 +43,9 @@ namespace PharmacySystem.Tests.Presentation
         public string TotalText { get; private set; }
         public void SetTotalText(string formattedTotal) => TotalText = formattedTotal;
 
+        public (decimal Net, decimal Tax, decimal Exempt)? VatBreakdown { get; private set; }
+        public void SetVatBreakdown(decimal net, decimal tax, decimal exempt) => VatBreakdown = (net, tax, exempt);
+
         public bool ProductEntryCleared { get; private set; }
         public void ClearProductEntry() => ProductEntryCleared = true;
 

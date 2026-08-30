@@ -11,5 +11,8 @@ namespace PharmacySystem.Presentation
         public DateTime ExpirationDate { get; set; }
         public decimal PurchasePrice { get; set; }
         public decimal SubTotal { get; set; }
+        // Whether this product is subject to VAT (product.tax_affected). Exempt lines feed
+        // exempt_amount instead of the taxable base when the invoice breakdown is computed.
+        public bool TaxAffected { get; set; } = true;
     }
 }
