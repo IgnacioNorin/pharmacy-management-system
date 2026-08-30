@@ -27,5 +27,7 @@ namespace PharmacySystem.Presentation
         void ShowMessage(string message);
         void ShowValidationErrors(IReadOnlyList<string> errors);
         void ShowPasswordMismatch();
+        // Displays a just-generated temporary password once, for the admin to hand over.
+        void ShowTemporaryPassword(string tempPassword);
     }
 }

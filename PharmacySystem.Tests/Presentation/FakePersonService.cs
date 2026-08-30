@@ -55,5 +55,12 @@ namespace PharmacySystem.Tests.Presentation
             DeletedId = idPerson;
             return DeleteResult;
         }
+
+        public (int Id, bool Active)? SetActiveCall { get; private set; }
+        public bool SetActive(int idPerson, bool active)
+        {
+            SetActiveCall = (idPerson, active);
+            return true;
+        }
     }
 }

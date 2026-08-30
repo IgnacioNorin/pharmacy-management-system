@@ -105,5 +105,35 @@ namespace PharmacySystem.Tests.Integration
         {
             Assert.Null(Repository.MinutesUntilUnlock(SqlTestHelper.NewTag(), Window));
         }
+
+        [Fact]
+        public void ListLockedDocuments_ReturnsDocumentsAtOrOverTheThreshold_HonouringTheLastReset()
+        {
+            string locked = SqlTestHelper.NewTag();
+            string belowThreshold = SqlTestHelper.NewTag();
+            string resetSince = SqlTestHelper.NewTag();
+            try
+            {
+                for (int i = 0; i < 5; i++) InsertAttempt(locked, success: false, minutesAgo: 5);
+
+                for (int i = 0; i < 3; i++) InsertAttempt(belowThreshold, success: false, minutesAgo: 5);
+
+                for (int i = 0; i < 5; i++) InsertAttempt(resetSince, success: false, minutesAgo: 10);
+                InsertAttempt(resetSince, success: true, minutesAgo: 6); // clears the count
+
+                var result = Repository.ListLockedDocuments(Window, maxFailures: 5);
+
+                Assert.Contains(locked, result);
+                Assert.DoesNotContain(belowThreshold, result);
+                Assert.DoesNotContain(resetSince, result);
+            }
+            finally
+            {
+                foreach (string d in new[] { locked, belowThreshold, resetSince })
+                {
+                    SqlTestHelper.ExecuteNonQuery("DELETE FROM login_attempt WHERE document_number = @doc", new SqlParameter("@doc", d));
+                }
+            }
+        }
     }
 }

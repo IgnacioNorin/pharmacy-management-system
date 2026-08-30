@@ -65,6 +65,16 @@ namespace PharmacySystem.Business
             _attempts.Record(document?.Trim() ?? string.Empty, true, "admin_unlock", actorId, Station);
         }
 
+        public void RecordSuspension(string document, bool suspended, int actorId)
+        {
+            // A reactivation also clears the failure count (fresh start); a suspension is neutral.
+            _attempts.Record(document?.Trim() ?? string.Empty, !suspended,
+                suspended ? "admin_suspend" : "admin_reactivate", actorId, Station);
+        }
+
+        public System.Collections.Generic.ISet<string> GetLockedDocuments() =>
+            _attempts.ListLockedDocuments(LockWindowMinutes, MaxFailures);
+
         // Verifies the password and, for a legacy plain-text row, rewrites it as a hash on the
         // spot - the same migration LoginPresenter used to do. It must NOT touch
         // must_change_password, so it goes through UpdatePassword, not SetPasswordAndFlag.

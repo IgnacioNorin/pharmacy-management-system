@@ -39,19 +39,16 @@ namespace PharmacySystem.Business
             return PasswordChangeResult.Ok;
         }
 
-        public PasswordChangeResult AdminReset(int targetId, string tempPlain, int actorId)
+        public string AdminReset(int targetId, int actorId)
         {
-            if ((tempPlain ?? string.Empty).Length < PasswordRules.MinLength)
-            {
-                return PasswordChangeResult.TooShort;
-            }
+            string tempPassword = PasswordGenerator.Generate();
 
-            _personRepository.SetPasswordAndFlag(targetId, PasswordHasher.Hash(tempPlain), true);
+            _personRepository.SetPasswordAndFlag(targetId, PasswordHasher.Hash(tempPassword), true);
 
             Person target = _personRepository.GetById(targetId);
             _attempts.Record(target?.document ?? string.Empty, true, "admin_reset", actorId, Environment.MachineName);
 
-            return PasswordChangeResult.Ok;
+            return tempPassword;
         }
 
         private static bool CurrentMatches(Person person, string enteredCurrent)

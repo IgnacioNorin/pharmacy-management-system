@@ -100,6 +100,49 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
+        public void OnLoad_StatusColumn_ReflectsActiveInactiveAndLocked()
+        {
+            var view = new FakeUserView();
+            var service = new FakePersonService
+            {
+                ListResult = new List<Person>
+                {
+                    new Person { idPerson = 1, document = "A", name = "Activa", Estado = true, oPersonType = new TypePerson { idPersonType = 3, description = "Empleado" } },
+                    new Person { idPerson = 2, document = "B", name = "Inactiva", Estado = false, oPersonType = new TypePerson { idPersonType = 3, description = "Empleado" } },
+                    new Person { idPerson = 3, document = "C", name = "Bloqueada", Estado = true, oPersonType = new TypePerson { idPersonType = 3, description = "Empleado" } }
+                }
+            };
+            var f = CreateWithSecurity(view, service, TestUser.WithRole(1, "usuarios.gestionar"));
+            f.Auth.LockedDocuments = new HashSet<string> { "C" };
+
+            f.Presenter.OnLoad();
+
+            Assert.Equal(new[] { "Activo", "Inactivo", "Bloqueado" }, view.LoadedUsers.Select(u => u.StatusText));
+        }
+
+        [Fact]
+        public void OnUnlockUser_Valid_ReloadsTheListSoTheRowIsNoLongerBlocked()
+        {
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 9 };
+            var service = new FakePersonService
+            {
+                ListResult = new List<Person>
+                {
+                    new Person { idPerson = 9, document = "999", name = "U", Estado = true, oPersonType = new TypePerson { idPersonType = 3, description = "Empleado" } }
+                }
+            };
+            var f = CreateWithSecurity(view, service, TestUser.WithRole(1, "usuarios.gestionar"));
+            f.Auth.LockedDocuments = new HashSet<string> { "999" };
+            f.Presenter.OnLoad();
+            Assert.Equal("Bloqueado", view.LoadedUsers.Single().StatusText);
+
+            f.Auth.LockedDocuments = new HashSet<string>(); // Unlock() would clear it
+            f.Presenter.OnUnlockUser();
+
+            Assert.Equal("Activo", view.LoadedUsers.Single().StatusText);
+        }
+
+        [Fact]
         public void OnSave_ValidationErrors_ShowsThemAndNeverCallsService()
         {
             var view = ValidView();
@@ -401,7 +444,7 @@ namespace PharmacySystem.Tests.Presentation
         [Fact]
         public void OnResetPassword_NonAdminGeneralTargetingAnAdminGeneral_IsBlocked()
         {
-            var view = new FakeUserView { SelectedIndex = 2, UserId = 3, Password = "temp12", ConfirmPassword = "temp12" };
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 3 };
             var f = CreateWithSecurity(view, WithUsers(AdminGeneral(3)), TestUser.WithRole(2, "usuarios.gestionar"));
             f.Presenter.OnLoad();
 
@@ -412,54 +455,20 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void OnResetPassword_BlankPassword_ShowsMessage()
+        public void OnResetPassword_Valid_GeneratesTheTempPasswordShowsItAndReloadsTheList()
         {
-            var view = new FakeUserView { SelectedIndex = 2, UserId = 9, Password = "  ", ConfirmPassword = "" };
-            var f = CreateWithSecurity(view, new FakePersonService(), TestUser.WithRole(1, "usuarios.gestionar"));
-
-            f.Presenter.OnResetPassword();
-
-            Assert.Contains(view.ShownMessages, m => m.Contains("contraseña temporal"));
-            Assert.Null(f.Passwords.AdminResetCall);
-        }
-
-        [Fact]
-        public void OnResetPassword_Mismatch_ShowsMismatch()
-        {
-            var view = new FakeUserView { SelectedIndex = 2, UserId = 9, Password = "temp12", ConfirmPassword = "other1" };
-            var f = CreateWithSecurity(view, new FakePersonService(), TestUser.WithRole(1, "usuarios.gestionar"));
-
-            f.Presenter.OnResetPassword();
-
-            Assert.Equal(1, view.PasswordMismatchCount);
-            Assert.Null(f.Passwords.AdminResetCall);
-        }
-
-        [Fact]
-        public void OnResetPassword_Valid_CallsAdminResetWithTheActorAndClearsTheForm()
-        {
-            var view = new FakeUserView { SelectedIndex = 2, UserId = 9, Password = "temp12", ConfirmPassword = "temp12" };
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 9 };
             var f = CreateWithSecurity(view,
-                WithUsers(new Person { idPerson = 9, document = "999", oPersonType = new TypePerson { idPersonType = 3 } }),
+                WithUsers(new Person { idPerson = 9, document = "999", name = "U", Estado = true, oPersonType = new TypePerson { idPersonType = 3, description = "Empleado" } }),
                 TestUser.WithRole(1, "usuarios.gestionar"));
+            f.Passwords.AdminResetPassword = "abcd-2345";
             f.Presenter.OnLoad();
 
             f.Presenter.OnResetPassword();
 
-            Assert.Equal((9, "temp12", 1), f.Passwords.AdminResetCall);
-            Assert.True(view.ClearFormCalled);
-        }
-
-        [Fact]
-        public void OnResetPassword_ServiceReportsTooShort_ShowsTheMinLengthMessage()
-        {
-            var view = new FakeUserView { SelectedIndex = 2, UserId = 9, Password = "abc", ConfirmPassword = "abc" };
-            var f = CreateWithSecurity(view, new FakePersonService(), TestUser.WithRole(1, "usuarios.gestionar"));
-            f.Passwords.AdminResetResult = PasswordChangeResult.TooShort;
-
-            f.Presenter.OnResetPassword();
-
-            Assert.Contains(view.ShownMessages, m => m.Contains(PasswordRules.MinLength.ToString()));
+            Assert.Equal((9, 1), f.Passwords.AdminResetCall);         // (targetId, actorId), no password from the admin
+            Assert.Equal("abcd-2345", view.ShownTemporaryPassword);
+            Assert.NotNull(view.LoadedUsers);                          // list refreshed
         }
 
         // --- Desbloquear ---------------------------------------------------------
@@ -500,6 +509,99 @@ namespace PharmacySystem.Tests.Presentation
             f.Presenter.OnUnlockUser();
 
             Assert.Equal(("999", 1), f.Auth.UnlockedWith);
+        }
+
+        // --- Suspender / Reactivar ---------------------------------------------
+
+        private static Person Employee(int id, string document, bool active) => new Person
+        {
+            idPerson = id, document = document, name = "E" + id, Estado = active,
+            oPersonType = new TypePerson { idPersonType = 3, description = "Empleado" }
+        };
+
+        [Fact]
+        public void OnSuspendUser_NoUserSelected_ShowsMessage()
+        {
+            var view = new FakeUserView { SelectedIndex = 0 };
+            var service = new FakePersonService();
+            var f = CreateWithSecurity(view, service, TestUser.WithRole(1, "usuarios.gestionar"));
+
+            f.Presenter.OnSuspendUser();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("Seleccione un usuario"));
+            Assert.Null(service.SetActiveCall);
+        }
+
+        [Fact]
+        public void OnSuspendUser_WithoutManagePermission_ShowsDenied()
+        {
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 9 };
+            var service = WithUsers(Employee(9, "999", active: true));
+            var f = CreateWithSecurity(view, service, TestUser.WithRole(1));
+            f.Presenter.OnLoad();
+
+            f.Presenter.OnSuspendUser();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Null(service.SetActiveCall);
+        }
+
+        [Fact]
+        public void OnSuspendUser_ActiveUser_SuspendsIt_AuditsAndReloads()
+        {
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 9 };
+            var service = WithUsers(Employee(9, "999", active: true));
+            var f = CreateWithSecurity(view, service, TestUser.WithRole(1, "usuarios.gestionar"));
+            f.Presenter.OnLoad();
+
+            f.Presenter.OnSuspendUser();
+
+            Assert.Equal((9, false), service.SetActiveCall);
+            Assert.Equal(("999", true, 1), f.Auth.SuspensionRecorded);   // (document, suspended, actor)
+            Assert.Contains(view.ShownMessages, m => m.Contains("suspendida"));
+        }
+
+        [Fact]
+        public void OnSuspendUser_InactiveUser_ReactivatesIt()
+        {
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 9 };
+            var service = WithUsers(Employee(9, "999", active: false));
+            var f = CreateWithSecurity(view, service, TestUser.WithRole(1, "usuarios.gestionar"));
+            f.Presenter.OnLoad();
+
+            f.Presenter.OnSuspendUser();
+
+            Assert.Equal((9, true), service.SetActiveCall);
+            Assert.Equal(("999", false, 1), f.Auth.SuspensionRecorded);
+            Assert.Contains(view.ShownMessages, m => m.Contains("reactivada"));
+        }
+
+        [Fact]
+        public void OnSuspendUser_LastActiveAdminGeneral_IsRejected()
+        {
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 3 };
+            var service = WithUsers(AdminGeneral(3, active: true));
+            var f = CreateWithSecurity(view, service, TestUser.WithRole(1, "usuarios.gestionar"));
+            f.Presenter.OnLoad();
+
+            f.Presenter.OnSuspendUser();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("último Administrador General"));
+            Assert.Null(service.SetActiveCall);
+        }
+
+        [Fact]
+        public void OnSuspendUser_NonAdminGeneralTargetingAnAdminGeneral_IsRejected()
+        {
+            var view = new FakeUserView { SelectedIndex = 2, UserId = 3 };
+            var service = WithUsers(AdminGeneral(3, active: true), AdminGeneral(4, active: true));
+            var f = CreateWithSecurity(view, service, TestUser.WithRole(2, "usuarios.gestionar"));
+            f.Presenter.OnLoad();
+
+            f.Presenter.OnSuspendUser();
+
+            Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
+            Assert.Null(service.SetActiveCall);
         }
     }
 }

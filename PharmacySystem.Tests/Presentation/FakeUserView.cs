@@ -32,6 +32,7 @@ namespace PharmacySystem.Tests.Presentation
         public List<string> ShownMessages { get; } = new List<string>();
         public List<string> ShownValidationErrors { get; private set; }
         public int PasswordMismatchCount { get; private set; }
+        public string ShownTemporaryPassword { get; private set; }
 
         public void LoadRoleOptions(IEnumerable<ComboBoxItem> options) => LoadedRoleOptions = options.ToList();
         public void LoadUsers(IEnumerable<UserRow> users) => LoadedUsers = users.ToList();
@@ -42,5 +43,6 @@ namespace PharmacySystem.Tests.Presentation
         public void ShowMessage(string message) => ShownMessages.Add(message);
         public void ShowValidationErrors(IReadOnlyList<string> errors) => ShownValidationErrors = errors.ToList();
         public void ShowPasswordMismatch() => PasswordMismatchCount++;
+        public void ShowTemporaryPassword(string tempPassword) => ShownTemporaryPassword = tempPassword;
     }
 }

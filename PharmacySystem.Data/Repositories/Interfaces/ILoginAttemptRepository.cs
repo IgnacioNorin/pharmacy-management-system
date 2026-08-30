@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace PharmacySystem.Data
 {
     // Authentication audit trail. Failed rows drive the lockout; a row with success = true
@@ -14,5 +16,9 @@ namespace PharmacySystem.Data
         // there is none. Computed entirely on the server so it does not depend on the app and
         // SQL Server sharing a time zone.
         int? MinutesUntilUnlock(string document, int windowMinutes);
+
+        // Documents currently locked out: >= maxFailures counting failures in the window. Used
+        // to show the lock state in the Usuarios list without a query per row.
+        ISet<string> ListLockedDocuments(int windowMinutes, int maxFailures);
     }
 }

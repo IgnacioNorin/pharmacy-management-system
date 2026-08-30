@@ -26,6 +26,7 @@ namespace PharmacySystem.Presentation
         private readonly IAuthenticationService _authService;
 
         private List<Person> _users = new List<Person>();
+        private ISet<string> _lockedDocuments = new HashSet<string>();
 
         public UserPresenter(IUserView view, IPersonService service, CurrentUser currentUser,
             IPermissionService permissionService, IPasswordChangeService passwordChangeService,
@@ -63,15 +64,30 @@ namespace PharmacySystem.Presentation
                 .Select(r => new ComboBoxItem { Value = r.idPersonType, Text = r.description });
             _view.LoadRoleOptions(roleOptions);
 
+            LoadUserList();
+        }
+
+        // Reloads the grid from the service, refreshing the cached lock set so the Estado column
+        // is current. Called on load and after any action that can change a user's state.
+        private void LoadUserList()
+        {
             _users = _service.List();
+            _lockedDocuments = _authService.GetLockedDocuments();
 
             _view.LoadUsers(_users.Select(p => new UserRow
             {
                 Id = p.idPerson,
                 Document = p.document,
                 Name = p.name,
-                RoleText = p.oPersonType.description
+                RoleText = p.oPersonType.description,
+                StatusText = StatusFor(p.Estado, p.document)
             }));
+        }
+
+        private string StatusFor(bool active, string document)
+        {
+            if (!active) return "Inactivo";
+            return document != null && _lockedDocuments.Contains(document) ? "Bloqueado" : "Activo";
         }
 
         public void OnSave()
@@ -141,7 +157,8 @@ namespace PharmacySystem.Presentation
                     Id = person.idPerson,
                     Document = person.document,
                     Name = person.name,
-                    RoleText = _view.RoleText
+                    RoleText = _view.RoleText,
+                    StatusText = "Activo" // a brand-new user is active and has no failed attempts
                 });
                 _view.ClearForm();
             }
@@ -152,12 +169,15 @@ namespace PharmacySystem.Presentation
                     return;
                 }
 
+                // An edit does not change status or lock state - keep whatever the row had.
+                bool wasActive = _users.FirstOrDefault(u => u.idPerson == person.idPerson)?.Estado ?? true;
                 _view.ReplaceRow(_view.SelectedIndex - 1, new UserRow
                 {
                     Id = person.idPerson,
                     Document = person.document,
                     Name = person.name,
-                    RoleText = _view.RoleText
+                    RoleText = _view.RoleText,
+                    StatusText = StatusFor(wasActive, person.document)
                 });
                 _view.ClearForm();
             }
@@ -236,9 +256,9 @@ namespace PharmacySystem.Presentation
             _view.ClearForm();
         }
 
-        // Admin sets a temporary password for the selected user (typed into the same
-        // Password / Confirm fields). The user is forced to change it on next login and the
-        // reset is written to the audit trail.
+        // Admin reset: the system generates the temporary password (the admin never picks it
+        // and never needs the current one). It is shown once so the admin can hand it over;
+        // the user is forced to change it on next login. Also clears any lockout.
         public void OnResetPassword()
         {
             if (_view.SelectedIndex <= 0)
@@ -259,28 +279,52 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(_view.Password))
+            string tempPassword = _passwordChangeService.AdminReset(_view.UserId, ActorId);
+            _view.ShowTemporaryPassword(tempPassword);
+            LoadUserList(); // a reset also clears the lockout - refresh the Estado column
+        }
+
+        // Suspends or reactivates the selected account (flips person.status). No password
+        // involved; also the way to undo an accidental soft-delete.
+        public void OnSuspendUser()
+        {
+            if (_view.SelectedIndex <= 0)
             {
-                _view.ShowMessage("Ingrese la contraseña temporal en el campo de contraseña");
+                _view.ShowMessage("Seleccione un usuario para suspender o reactivar");
                 return;
             }
 
-            if (_view.Password != _view.ConfirmPassword)
+            if (!Can("usuarios.gestionar"))
             {
-                _view.ShowPasswordMismatch();
+                _view.ShowMessage("No tiene permiso para suspender usuarios.");
                 return;
             }
 
-            switch (_passwordChangeService.AdminReset(_view.UserId, _view.Password, ActorId))
+            Person target = _users.FirstOrDefault(u => u.idPerson == _view.UserId);
+            if (target == null)
             {
-                case PasswordChangeResult.Ok:
-                    _view.ShowMessage("Contraseña restablecida. El usuario deberá cambiarla al ingresar.");
-                    _view.ClearForm();
-                    break;
-                case PasswordChangeResult.TooShort:
-                    _view.ShowMessage($"La contraseña temporal debe tener al menos {PasswordRules.MinLength} caracteres.");
-                    break;
+                return;
             }
+
+            bool targetIsAdminGeneral = (target.oPersonType?.idPersonType ?? 0) == AdminGeneralRoleId;
+            if (targetIsAdminGeneral && !CurrentIsAdminGeneral)
+            {
+                _view.ShowMessage("No tiene permiso para suspender un Administrador General.");
+                return;
+            }
+            if (targetIsAdminGeneral && target.Estado && ActiveAdminGeneralCount <= 1)
+            {
+                _view.ShowMessage("No se puede suspender al último Administrador General activo.");
+                return;
+            }
+
+            bool newActive = !target.Estado;
+            _service.SetActive(_view.UserId, newActive);
+            _authService.RecordSuspension(DocumentOf(_view.UserId), suspended: !newActive, actorId: ActorId);
+            _view.ShowMessage(newActive
+                ? "Cuenta reactivada."
+                : "Cuenta suspendida. El usuario no podrá iniciar sesión.");
+            LoadUserList();
         }
 
         // Clears the brute-force lockout for the selected user so they can try again now.
@@ -300,6 +344,7 @@ namespace PharmacySystem.Presentation
 
             _authService.Unlock(DocumentOf(_view.UserId), ActorId);
             _view.ShowMessage("Cuenta desbloqueada. El usuario puede volver a intentar.");
+            LoadUserList(); // the row should stop showing "Bloqueado"
         }
     }
 }

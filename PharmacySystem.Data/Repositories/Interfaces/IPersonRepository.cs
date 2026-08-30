@@ -18,6 +18,9 @@ namespace PharmacySystem.Data
         // password-change and admin-reset paths; UpdatePassword stays for the login self-heal,
         // which must not touch the flag.
         bool SetPasswordAndFlag(int idPerson, string hashedPassword, bool mustChangePassword);
+        // Flips person.status. Used by the Suspender / Reactivar action, which is also how an
+        // accidental soft-delete is undone. Business enforces the last-Administrador-General rule.
+        bool SetActive(int idPerson, bool active);
         bool Delete(int idPerson);
     }
 }

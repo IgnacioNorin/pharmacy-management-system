@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Business
@@ -9,5 +10,12 @@ namespace PharmacySystem.Business
         // Manual unlock from the Usuarios screen: records a success row for the document, which
         // resets its running failure count so the user can try again immediately.
         void Unlock(string document, int actorId);
+
+        // Audit trail for an admin suspending / reactivating an account (the state change itself
+        // is IPersonService.SetActive).
+        void RecordSuspension(string document, bool suspended, int actorId);
+
+        // Documents currently locked out by failed attempts, for the Usuarios list.
+        ISet<string> GetLockedDocuments();
     }
 }

@@ -11,6 +11,7 @@ namespace PharmacySystem.Business
         List<Person> List();
         Person GetByDocument(string document);
         bool UpdatePassword(int idPerson, string hashedPassword);
+        bool SetActive(int idPerson, bool active);
         bool Delete(int idPerson);
     }
 }

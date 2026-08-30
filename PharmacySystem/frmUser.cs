@@ -68,6 +68,7 @@ namespace PharmacySystem
 
         public void LoadUsers(IEnumerable<UserRow> users)
         {
+            dgdata.Rows.Clear();
             foreach (UserRow row in users)
             {
                 AddRow(row);
@@ -95,12 +96,37 @@ namespace PharmacySystem
         public void ShowPasswordMismatch() =>
             MessageBox.Show("Las contraseñas no coinciden\nRevise nuevamente", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 
+        public void ShowTemporaryPassword(string tempPassword)
+        {
+            try { Clipboard.SetText(tempPassword); } catch { /* clipboard may be unavailable */ }
+            MessageBox.Show(
+                $"Contraseña temporal: {tempPassword}\n\nYa se copió al portapapeles. Comuníquesela al usuario: " +
+                "deberá cambiarla al iniciar sesión.",
+                "Contraseña restablecida", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
         private static void WriteRow(DataGridViewRow gridRow, UserRow row)
         {
             gridRow.Cells["Id"].Value = row.Id.ToString();
             gridRow.Cells["NumeroDocumento"].Value = row.Document;
             gridRow.Cells["NombreCompleto"].Value = row.Name;
             gridRow.Cells["Rol"].Value = row.RoleText;
+            gridRow.Cells["Estado"].Value = row.StatusText;
+
+            DataGridViewCell estado = gridRow.Cells["Estado"];
+            switch (row.StatusText)
+            {
+                case "Bloqueado":
+                    estado.Style.ForeColor = Color.Firebrick;
+                    estado.Style.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+                    break;
+                case "Inactivo":
+                    estado.Style.ForeColor = Color.Gray;
+                    break;
+                default:
+                    estado.Style.ForeColor = Color.SeaGreen;
+                    break;
+            }
         }
 
         #endregion
@@ -146,21 +172,33 @@ namespace PharmacySystem
             };
 
 
+            DataGridViewButtonColumn Actions = new DataGridViewButtonColumn()
+            {
+                HeaderText = "Acciones",
+                Text = "Acciones...",
+                Name = "btnAcciones",
+                UseColumnTextForButtonValue = true,
+            };
+
             dgdata.Columns.Add(Button);
             dgdata.Columns.Add("Id", "Id");
             dgdata.Columns.Add("NumeroDocumento", "Numero Documento");
             dgdata.Columns.Add("NombreCompleto", "Nombre Completo");
             dgdata.Columns.Add("Rol", "Rol");
+            dgdata.Columns.Add("Estado", "Estado");
+            dgdata.Columns.Add(Actions);
 
             dgdata.Columns["btnSeleccionar"].Width = 80;
             dgdata.Columns["NumeroDocumento"].Width = 150;
             dgdata.Columns["NombreCompleto"].Width = 260;
-            dgdata.Columns["Rol"].Width = 300;
+            dgdata.Columns["Rol"].Width = 240;
+            dgdata.Columns["Estado"].Width = 100;
+            dgdata.Columns["btnAcciones"].Width = 110;
             dgdata.Columns["Id"].Visible = false;
 
             foreach (DataGridViewColumn cl in dgdata.Columns)
             {
-                if (cl.Visible == true && cl.Name != "btnSeleccionar")
+                if (cl.Visible == true && cl.Name != "btnSeleccionar" && cl.Name != "btnAcciones")
                 {
                     cbosearch.Items.Add(new ComboBoxItem() { Value = cl.Name, Text = cl.HeaderText });
                 }
@@ -174,8 +212,6 @@ namespace PharmacySystem
             bool canManage = MainForm.Session?.Can("usuarios.gestionar") ?? false;
             btnSave.Enabled = canManage;
             btnDelete.Enabled = canManage;
-            btnResetPassword.Enabled = canManage;
-            btnUnlock.Enabled = canManage;
         }
 
         private void btnSave_Click(object sender, EventArgs e)
@@ -183,14 +219,24 @@ namespace PharmacySystem
             _presenter.OnSave();
         }
 
-        private void btnResetPassword_Click(object sender, EventArgs e)
+        // Opens the per-user admin actions dialog for the clicked row and dispatches the choice.
+        private void OpenActionsFor(int rowIndex)
         {
-            _presenter.OnResetPassword();
-        }
+            string name = dgdata.Rows[rowIndex].Cells["NombreCompleto"].Value?.ToString() ?? "";
+            string status = dgdata.Rows[rowIndex].Cells["Estado"].Value?.ToString() ?? "";
+            bool isActive = status != "Inactivo";
 
-        private void btnUnlock_Click(object sender, EventArgs e)
-        {
-            _presenter.OnUnlockUser();
+            using (var modal = new ModalUserActions(name, status, isActive))
+            {
+                if (modal.ShowDialog(this) != DialogResult.OK) return;
+
+                switch (modal.SelectedAction)
+                {
+                    case UserAction.ResetPassword: _presenter.OnResetPassword(); break;
+                    case UserAction.Unlock: _presenter.OnUnlockUser(); break;
+                    case UserAction.ToggleActive: _presenter.OnSuspendUser(); break;
+                }
+            }
         }
 
         private void dgdata_CellMouseEnter(object sender, DataGridViewCellEventArgs e)
@@ -243,9 +289,22 @@ namespace PharmacySystem
         private void dgdata_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             int index = e.RowIndex;
-            int item_index;
-            if (dgdata.Columns[e.ColumnIndex].Name != "btnSeleccionar" || index < 0) return;
+            if (index < 0) return;
 
+            string column = dgdata.Columns[e.ColumnIndex].Name;
+            if (column != "btnSeleccionar" && column != "btnAcciones") return;
+
+            // Both buttons first select the row so the presenter's SelectedIndex / UserId point
+            // at it; "Acciones" then opens the admin actions dialog.
+            SelectRow(index);
+            if (column == "btnAcciones")
+            {
+                OpenActionsFor(index);
+            }
+        }
+
+        private void SelectRow(int index)
+        {
             txtindex.Text = (index + 1).ToString();
             txtid.Text = dgdata.Rows[index].Cells["Id"].Value.ToString();
             txtdocument.Text = dgdata.Rows[index].Cells["NumeroDocumento"].Value.ToString();
@@ -258,15 +317,10 @@ namespace PharmacySystem
             {
                 if (item.Text == dgdata.Rows[index].Cells["Rol"].Value.ToString())
                 {
-                    item_index = cborol.Items.IndexOf(item);
-                    cborol.SelectedIndex = item_index;
+                    cborol.SelectedIndex = cborol.Items.IndexOf(item);
                     break;
                 }
             }
-
-
-
-
         }
 
         private void btnDelete_Click(object sender, EventArgs e)

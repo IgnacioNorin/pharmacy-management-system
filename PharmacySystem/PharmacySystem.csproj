@@ -233,6 +233,9 @@
     <Compile Include="ModalChangePassword.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="ModalUserActions.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="ModalProductLots.cs">
       <SubType>Form</SubType>
     </Compile>

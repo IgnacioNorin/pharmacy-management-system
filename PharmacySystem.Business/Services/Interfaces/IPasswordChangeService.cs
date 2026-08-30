@@ -8,8 +8,9 @@ namespace PharmacySystem.Business
         // must_change_password flag is cleared.
         PasswordChangeResult ChangeOwnPassword(int personId, string currentPlain, string newPlain);
 
-        // Admin sets a temporary password for another user: the flag is turned on so that user
-        // must replace it on next login, and the reset is written to the audit trail.
-        PasswordChangeResult AdminReset(int targetId, string tempPlain, int actorId);
+        // Admin reset: generates a temporary password for another user, turns on the
+        // must-change flag so they replace it on next login, and writes the reset to the audit
+        // trail. Returns the generated temporary password to hand over (throws on a data error).
+        string AdminReset(int targetId, int actorId);
     }
 }
