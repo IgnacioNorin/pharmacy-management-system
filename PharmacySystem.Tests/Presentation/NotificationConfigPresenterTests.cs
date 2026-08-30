@@ -10,9 +10,39 @@ namespace PharmacySystem.Tests.Presentation
         {
             public readonly FakeNotificationConfigView View = new FakeNotificationConfigView();
             public readonly FakeNotificationConfigService Service = new FakeNotificationConfigService();
+            public readonly FakeSecurityAudit Audit = new FakeSecurityAudit();
             public PharmacySystem.Presentation.CurrentUser User = TestUser.With("alertas.configurar");
             public PharmacySystem.Presentation.NotificationConfigPresenter Presenter =>
-                new PharmacySystem.Presentation.NotificationConfigPresenter(View, Service, User);
+                new PharmacySystem.Presentation.NotificationConfigPresenter(View, Service, User, Audit);
+        }
+
+        [Fact]
+        public void OnSave_ValidValues_AuditsTheChange()
+        {
+            var f = Create();
+            f.View.DaysText = "7";
+            f.View.StockText = "12";
+            f.Service.ConfigUpdateResult = true;
+
+            f.Presenter.OnSave();
+
+            var evt = Assert.Single(f.Audit.Recorded);
+            Assert.Equal("alert_config.update", evt.Action);
+            Assert.Contains("7 día", evt.Summary);
+            Assert.Contains("12", evt.Summary);
+        }
+
+        [Fact]
+        public void OnSave_Rejected_DoesNotAudit()
+        {
+            var f = Create();
+            f.View.DaysText = "5";
+            f.View.StockText = "20";
+            f.Service.ConfigUpdateResult = false;
+
+            f.Presenter.OnSave();
+
+            Assert.Empty(f.Audit.Recorded);
         }
 
         [Fact]

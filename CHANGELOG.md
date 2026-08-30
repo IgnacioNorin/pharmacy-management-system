@@ -6,6 +6,15 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 
 ### Seguridad
 
+- **Bitácora de acciones administrativas (fase 1).** Nueva tabla `security_event`
+  (migración `032`): una fila por operación sensible con quién la hizo, sobre qué
+  y un resumen legible. Esta fase registra los cambios de permisos de un rol
+  (`rol Empleado: +ventas.acceso, −reportes.acceso`), el alta / renombre / baja
+  de roles, el alta / edición (con el cambio de rol) / baja de usuarios, la
+  edición de los datos de la tienda y la edición de la configuración de alertas.
+  Por ahora se consulta directo en la base; una pantalla dedicada queda para más
+  adelante. Los rastros existentes (`login_attempt`, historial de precios,
+  historial de alertas) se mantienen aparte.
 - **Límite de intentos de inicio de sesión.** Tras 5 intentos fallidos con el
   mismo documento en 15 minutos, la cuenta queda bloqueada temporalmente y el
   login informa cuántos minutos faltan para poder reintentar. El bloqueo se

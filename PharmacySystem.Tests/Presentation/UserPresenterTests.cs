@@ -13,19 +13,20 @@ namespace PharmacySystem.Tests.Presentation
 
         private static PharmacySystem.Presentation.UserPresenter CreatePresenter(FakeUserView view, FakePersonService service, FakePermissionService permissionService)
             => new PharmacySystem.Presentation.UserPresenter(view, service, TestUser.With("usuarios.gestionar"), permissionService,
-                new FakePasswordChangeService(), new FakeAuthenticationService());
+                new FakePasswordChangeService(), new FakeAuthenticationService(), new FakeSecurityAudit());
 
         private static PharmacySystem.Presentation.UserPresenter CreatePresenter(FakeUserView view, FakePersonService service, CurrentUser user)
             => new PharmacySystem.Presentation.UserPresenter(view, service, user, new FakePermissionService(),
-                new FakePasswordChangeService(), new FakeAuthenticationService());
+                new FakePasswordChangeService(), new FakeAuthenticationService(), new FakeSecurityAudit());
 
-        private static (PharmacySystem.Presentation.UserPresenter Presenter, FakePasswordChangeService Passwords, FakeAuthenticationService Auth)
+        private static (PharmacySystem.Presentation.UserPresenter Presenter, FakePasswordChangeService Passwords, FakeAuthenticationService Auth, FakeSecurityAudit Audit)
             CreateWithSecurity(FakeUserView view, FakePersonService service, CurrentUser user)
         {
             var passwords = new FakePasswordChangeService();
             var auth = new FakeAuthenticationService();
-            var presenter = new PharmacySystem.Presentation.UserPresenter(view, service, user, new FakePermissionService(), passwords, auth);
-            return (presenter, passwords, auth);
+            var audit = new FakeSecurityAudit();
+            var presenter = new PharmacySystem.Presentation.UserPresenter(view, service, user, new FakePermissionService(), passwords, auth, audit);
+            return (presenter, passwords, auth, audit);
         }
 
         private static Person AdminGeneral(int id, bool active = true) =>
@@ -36,7 +37,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotRegister()
         {
             var view = ValidView();
-            new PharmacySystem.Presentation.UserPresenter(view, new FakePersonService(), TestUser.With(), new FakePermissionService(), new FakePasswordChangeService(), new FakeAuthenticationService()).OnSave();
+            new PharmacySystem.Presentation.UserPresenter(view, new FakePersonService(), TestUser.With(), new FakePermissionService(), new FakePasswordChangeService(), new FakeAuthenticationService(), new FakeSecurityAudit()).OnSave();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
             Assert.Empty(view.AddedRows);
@@ -46,7 +47,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnDelete_WithoutManagePermission_ShowsDeniedAndDoesNotRemove()
         {
             var view = new FakeUserView { SelectedIndex = 3, UserId = 9 };
-            new PharmacySystem.Presentation.UserPresenter(view, new FakePersonService(), TestUser.With(), new FakePermissionService(), new FakePasswordChangeService(), new FakeAuthenticationService()).OnDelete();
+            new PharmacySystem.Presentation.UserPresenter(view, new FakePersonService(), TestUser.With(), new FakePermissionService(), new FakePasswordChangeService(), new FakeAuthenticationService(), new FakeSecurityAudit()).OnDelete();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
             Assert.Empty(view.RemovedIndexes);
@@ -118,6 +119,47 @@ namespace PharmacySystem.Tests.Presentation
             f.Presenter.OnLoad();
 
             Assert.Equal(new[] { "Activo", "Inactivo", "Bloqueado" }, view.LoadedUsers.Select(u => u.StatusText));
+        }
+
+        [Fact]
+        public void OnSave_NewUser_And_Delete_AreAudited()
+        {
+            var view = ValidView();
+            view.RoleId = 2;
+            view.RoleText = "Empleado";
+            var f = CreateWithSecurity(view, new FakePersonService { RegisterResult = 55 }, TestUser.WithRole(1, "usuarios.gestionar"));
+
+            f.Presenter.OnSave();
+
+            var created = Assert.Single(f.Audit.Recorded);
+            Assert.Equal("user.create", created.Action);
+            Assert.Equal(55, created.EntityId);
+            Assert.Contains("Empleado", created.Summary);
+        }
+
+        [Fact]
+        public void OnSave_Edit_WithRoleChange_AuditsTheRoleChange()
+        {
+            var view = new FakeUserView
+            {
+                UserId = 9, SelectedIndex = 1, RowCount = 5, Document = "999", Name = "U",
+                RoleId = 3, RoleText = "Empleado", Password = "", ConfirmPassword = ""
+            };
+            var service = new FakePersonService
+            {
+                UpdateResult = true,
+                ListResult = new List<Person>
+                {
+                    new Person { idPerson = 9, document = "999", name = "U", Estado = true, oPersonType = new TypePerson { idPersonType = 2, description = "Administrador" } }
+                }
+            };
+            var f = CreateWithSecurity(view, service, TestUser.WithRole(1, "usuarios.gestionar"));
+            f.Presenter.OnLoad();
+
+            f.Presenter.OnSave();
+
+            var evt = Assert.Single(f.Audit.Recorded, e => e.Action == "user.update");
+            Assert.Contains("rol Administrador -> Empleado", evt.Summary);
         }
 
         [Fact]
@@ -384,7 +426,7 @@ namespace PharmacySystem.Tests.Presentation
             };
             var presenter = new PharmacySystem.Presentation.UserPresenter(
                 view, new FakePersonService(), TestUser.WithRole(2, "usuarios.gestionar"), permissions,
-                new FakePasswordChangeService(), new FakeAuthenticationService());
+                new FakePasswordChangeService(), new FakeAuthenticationService(), new FakeSecurityAudit());
 
             presenter.OnLoad();
 
@@ -405,7 +447,7 @@ namespace PharmacySystem.Tests.Presentation
             };
             var presenter = new PharmacySystem.Presentation.UserPresenter(
                 view, new FakePersonService(), TestUser.WithRole(1, "usuarios.gestionar"), permissions,
-                new FakePasswordChangeService(), new FakeAuthenticationService());
+                new FakePasswordChangeService(), new FakeAuthenticationService(), new FakeSecurityAudit());
 
             presenter.OnLoad();
 

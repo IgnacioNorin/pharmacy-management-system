@@ -32,7 +32,55 @@ namespace PharmacySystem.Tests.Presentation
         {
             var view = new FakeRolesView();
             var service = ServiceWithRoles();
-            return (new RolesPresenter(view, service, TestUser.With("roles.gestionar")), view, service);
+            return (new RolesPresenter(view, service, TestUser.With("roles.gestionar"), new FakeSecurityAudit()), view, service);
+        }
+
+        private static (RolesPresenter Presenter, FakeRolesView View, FakePermissionService Service, FakeSecurityAudit Audit) CreateAudited()
+        {
+            var view = new FakeRolesView();
+            var service = ServiceWithRoles();
+            var audit = new FakeSecurityAudit();
+            return (new RolesPresenter(view, service, TestUser.With("roles.gestionar"), audit), view, service, audit);
+        }
+
+        [Fact]
+        public void OnSavePermissions_AuditsTheChangeWithADiffSummary()
+        {
+            var (presenter, view, service, audit) = CreateAudited();
+            presenter.OnLoad();
+            view.SelectedRoleId = 100;                                  // "Cajero senior", currently has {1}
+            view.CheckedPermissionIds = new List<int> { 2, 3 };         // -> productos.acceso (+ancestor), productos.eliminar
+
+            presenter.OnSavePermissions();
+
+            var evt = Assert.Single(audit.Recorded);
+            Assert.Equal("role.permissions", evt.Action);
+            Assert.Equal(100, evt.EntityId);
+            Assert.Contains("+productos.acceso", evt.Summary);
+            Assert.Contains("+productos.eliminar", evt.Summary);
+            Assert.Contains("-ventas.acceso", evt.Summary);
+            Assert.Contains("Cajero senior", evt.Summary);
+        }
+
+        [Fact]
+        public void OnCreateRole_OnRenameRole_OnDeleteRole_AreAudited()
+        {
+            var (presenter, view, service, audit) = CreateAudited();
+            presenter.OnLoad();
+
+            view.RoleNameInput = "Reponedor";
+            presenter.OnCreateRole();
+
+            view.SelectedRoleId = 100;
+            view.RoleNameInput = "Cajero";
+            presenter.OnRenameRole();
+
+            view.SelectedRoleId = 100;
+            presenter.OnDeleteRole();
+
+            Assert.Equal(new[] { "role.create", "role.rename", "role.delete" }, audit.Recorded.Select(e => e.Action));
+            Assert.Contains("Reponedor", audit.Recorded[0].Summary);
+            Assert.Contains("'Cajero senior' -> 'Cajero'", audit.Recorded[1].Summary);
         }
 
         // A catalogue that actually contains roles.gestionar (under usuarios.acceso), plus the two
@@ -59,7 +107,7 @@ namespace PharmacySystem.Tests.Presentation
                 }
             };
             service.RolesGrantingByCode["roles.gestionar"] = rolesThatGrantRoleAdmin.ToList();
-            return (new RolesPresenter(view, service, TestUser.With("roles.gestionar")), view, service);
+            return (new RolesPresenter(view, service, TestUser.With("roles.gestionar"), new FakeSecurityAudit()), view, service);
         }
 
         [Fact]
@@ -238,7 +286,7 @@ namespace PharmacySystem.Tests.Presentation
         {
             var view = new FakeRolesView { SelectedRoleId = 100, RoleNameInput = "X" };
             var service = ServiceWithRoles();
-            var presenter = new RolesPresenter(view, service, TestUser.With());
+            var presenter = new RolesPresenter(view, service, TestUser.With(), new FakeSecurityAudit());
 
             presenter.OnSavePermissions();
             presenter.OnCreateRole();

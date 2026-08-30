@@ -8,13 +8,33 @@ namespace PharmacySystem.Tests.Presentation
     public class StoreManagementPresenterTests
     {
         private static StoreManagementPresenter CreatePresenter(FakeStoreManagementView view, FakeStoreService service)
-            => new StoreManagementPresenter(view, service, TestUser.With("tienda.editar"));
+            => new StoreManagementPresenter(view, service, TestUser.With("tienda.editar"), new FakeSecurityAudit());
+
+        private static StoreManagementPresenter CreatePresenter(FakeStoreManagementView view, FakeStoreService service, FakeSecurityAudit audit)
+            => new StoreManagementPresenter(view, service, TestUser.With("tienda.editar"), audit);
+
+        [Fact]
+        public void OnSave_Succeeds_AuditsTheChange()
+        {
+            var view = new FakeStoreManagementView
+            {
+                Document = "76.111.222-3", CompanyName = "Farmacia Central", Email = "c@f.cl",
+                Phone = "123456", Address = "Calle 1", TaxRate = "19"
+            };
+            var audit = new FakeSecurityAudit();
+
+            CreatePresenter(view, new FakeStoreService { UpdateStoreResult = true }, audit).OnSave();
+
+            var evt = Assert.Single(audit.Recorded);
+            Assert.Equal("store.update", evt.Action);
+            Assert.Contains("Farmacia Central", evt.Summary);
+        }
 
         [Fact]
         public void OnSave_WithoutEditPermission_ShowsDeniedAndDoesNotSave()
         {
             var view = new FakeStoreManagementView { Document = "1", CompanyName = "C", Email = "e@e.co", Phone = "9", Address = "A" };
-            new StoreManagementPresenter(view, new FakeStoreService(), TestUser.With()).OnSave();
+            new StoreManagementPresenter(view, new FakeStoreService(), TestUser.With(), new FakeSecurityAudit()).OnSave();
 
             Assert.Contains(view.ErrorMessages, m => m.Contains("No tiene permiso"));
             Assert.Empty(view.InfoMessages);

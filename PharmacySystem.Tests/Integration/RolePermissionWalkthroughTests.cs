@@ -150,7 +150,7 @@ namespace PharmacySystem.Tests.Integration
 
                 // Users
                 var userView = new FakeUserView { SelectedIndex = 1, RowCount = 1, UserId = 7 };
-                var users = new UserPresenter(userView, People, user, Permissions, Passwords, Auth);
+                var users = new UserPresenter(userView, People, user, Permissions, Passwords, Auth, new FakeSecurityAudit());
                 users.OnSave();
                 users.OnDelete();
                 Assert.Equal(2, userView.ShownMessages.Count(m => m.Contains("No tiene permiso")));
@@ -159,18 +159,18 @@ namespace PharmacySystem.Tests.Integration
 
                 // Store profile
                 var storeView = new FakeStoreManagementView();
-                new StoreManagementPresenter(storeView, new FakeStoreService(), user).OnSave();
+                new StoreManagementPresenter(storeView, new FakeStoreService(), user, new FakeSecurityAudit()).OnSave();
                 Assert.Contains(storeView.ErrorMessages, m => m.Contains("No tiene permiso"));
 
                 // Alert thresholds
                 var configView = new FakeNotificationConfigView { DaysText = "5", StockText = "5" };
-                new NotificationConfigPresenter(configView, new FakeNotificationConfigService(), user).OnSave();
+                new NotificationConfigPresenter(configView, new FakeNotificationConfigService(), user, new FakeSecurityAudit()).OnSave();
                 Assert.Contains("No tiene permiso", configView.ShownMessage ?? "");
                 Assert.Equal(0, configView.SaveSucceededCount);
 
                 // Role administration
                 var rolesView = new FakeRolesView { SelectedRoleId = 100, RoleNameInput = "X" };
-                var roles = new RolesPresenter(rolesView, new FakePermissionService(), user);
+                var roles = new RolesPresenter(rolesView, new FakePermissionService(), user, new FakeSecurityAudit());
                 roles.OnSavePermissions();
                 roles.OnCreateRole();
                 roles.OnRenameRole();
@@ -243,7 +243,7 @@ namespace PharmacySystem.Tests.Integration
 
                 // Even reaching RolesPresenter directly, every mutating action is refused.
                 var rolesView = new FakeRolesView { SelectedRoleId = 100, RoleNameInput = "X" };
-                var roles = new RolesPresenter(rolesView, new FakePermissionService(), user);
+                var roles = new RolesPresenter(rolesView, new FakePermissionService(), user, new FakeSecurityAudit());
                 roles.OnSavePermissions();
                 roles.OnCreateRole();
                 roles.OnRenameRole();
@@ -252,7 +252,7 @@ namespace PharmacySystem.Tests.Integration
 
                 // And the store profile stays read-only for a plain Administrador.
                 var storeView = new FakeStoreManagementView();
-                new StoreManagementPresenter(storeView, new FakeStoreService(), user).OnSave();
+                new StoreManagementPresenter(storeView, new FakeStoreService(), user, new FakeSecurityAudit()).OnSave();
                 Assert.Contains(storeView.ErrorMessages, m => m.Contains("No tiene permiso"));
             }
             finally

@@ -174,6 +174,29 @@ GO
 CREATE INDEX [IX_login_attempt_document_at] ON [dbo].[login_attempt] ([document_number], [at])
 GO
 
+-- One row per sensitive administrative action (migration 032): who did it, to what, and a
+-- readable summary. Fase 1 covers roles/permissions, users, the store profile and the alert
+-- configuration. The auth trail (login_attempt), price history and alert history stay as
+-- their own dedicated logs.
+CREATE TABLE [dbo].[security_event](
+    [id] [int] IDENTITY(1,1) NOT NULL,
+    [at] [datetime] NOT NULL CONSTRAINT [DF_security_event_at] DEFAULT (getdate()),
+    [actor_id] [int] NULL,
+    [action] [varchar](40) NOT NULL,
+    [entity] [varchar](40) NULL,
+    [entity_id] [int] NULL,
+    [summary] [varchar](400) NULL,
+    [station] [varchar](100) NULL,
+    CONSTRAINT [PK_security_event] PRIMARY KEY CLUSTERED ([id] ASC)
+)
+GO
+
+CREATE INDEX [IX_security_event_at] ON [dbo].[security_event] ([at])
+GO
+
+CREATE INDEX [IX_security_event_entity] ON [dbo].[security_event] ([entity], [entity_id])
+GO
+
 -- Retail customers. Split out of `person` in migration 029: no password, no role.
 -- The fiscal profile (business_name / activity / commune / email / is_company) is used
 -- when the client is the recipient of a Factura.
@@ -1038,6 +1061,14 @@ CREATE PROCEDURE [dbo].[sp_purge_login_attempts] AS
 BEGIN
     SET NOCOUNT ON;
     DELETE FROM dbo.login_attempt WHERE at < DATEADD(DAY, -90, GETDATE());
+END
+GO
+
+-- Trims the security_event audit trail (migration 032). Kept long: rows older than 2 years.
+CREATE PROCEDURE [dbo].[sp_purge_security_event] AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM dbo.security_event WHERE at < DATEADD(YEAR, -2, GETDATE());
 END
 GO
 

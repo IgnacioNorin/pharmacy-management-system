@@ -15,16 +15,26 @@ namespace PharmacySystem.Presentation
         private readonly IRolesView _view;
         private readonly IPermissionService _service;
         private readonly CurrentUser _currentUser;
+        private readonly ISecurityAudit _audit;
 
         private List<Permission> _catalogue = new List<Permission>();
         private List<TypePerson> _roles = new List<TypePerson>();
 
-        public RolesPresenter(IRolesView view, IPermissionService service, CurrentUser currentUser)
+        public RolesPresenter(IRolesView view, IPermissionService service, CurrentUser currentUser, ISecurityAudit audit)
         {
             _view = view;
             _service = service;
             _currentUser = currentUser;
+            _audit = audit;
         }
+
+        private int ActorId => _currentUser?.PersonId ?? 0;
+
+        private string RoleName(int roleId) =>
+            _roles.FirstOrDefault(r => r.idPersonType == roleId)?.description ?? roleId.ToString();
+
+        private string PermissionCode(int permissionId) =>
+            _catalogue.FirstOrDefault(p => p.Id == permissionId)?.Code ?? permissionId.ToString();
 
         // Every mutating action re-checks the permission, not just the sidebar button that opened
         // this screen (same rule as the fase 3 presenters).
@@ -87,9 +97,26 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            _view.ShowMessage(_service.SaveRolePermissions(roleId.Value, toSave)
-                ? "Permisos guardados."
-                : "No se pudieron guardar los permisos.");
+            var before = new HashSet<int>(_service.GetPermissionIdsForRole(roleId.Value));
+
+            if (_service.SaveRolePermissions(roleId.Value, toSave))
+            {
+                _audit.Record(ActorId, "role.permissions", "person_type", roleId.Value, PermissionDiff(roleId.Value, before, toSave));
+                _view.ShowMessage("Permisos guardados.");
+            }
+            else
+            {
+                _view.ShowMessage("No se pudieron guardar los permisos.");
+            }
+        }
+
+        private string PermissionDiff(int roleId, HashSet<int> before, IEnumerable<int> after)
+        {
+            var afterSet = new HashSet<int>(after);
+            var added = afterSet.Where(id => !before.Contains(id)).Select(id => "+" + PermissionCode(id));
+            var removed = before.Where(id => !afterSet.Contains(id)).Select(id => "-" + PermissionCode(id));
+            string changes = string.Join(", ", added.Concat(removed));
+            return $"rol '{RoleName(roleId)}': " + (changes.Length == 0 ? "sin cambios" : changes);
         }
 
         public void OnCreateRole()
@@ -106,12 +133,14 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            if (_service.CreateRole(name) == 0)
+            int newId = _service.CreateRole(name);
+            if (newId == 0)
             {
                 _view.ShowMessage("Ya existe un rol con ese nombre.");
                 return;
             }
 
+            _audit.Record(ActorId, "role.create", "person_type", newId, $"rol '{name}'");
             _view.ClearRoleNameInput();
             RefreshRoles();
             ClearPermissionPanel();
@@ -143,8 +172,10 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
+            string previous = RoleName(roleId.Value);
             if (_service.RenameRole(roleId.Value, name))
             {
+                _audit.Record(ActorId, "role.rename", "person_type", roleId.Value, $"'{previous}' -> '{name}'");
                 _view.ClearRoleNameInput();
                 RefreshRoles();
                 ClearPermissionPanel();
@@ -178,8 +209,10 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
+            string deleted = RoleName(roleId.Value);
             if (_service.DeleteRole(roleId.Value))
             {
+                _audit.Record(ActorId, "role.delete", "person_type", roleId.Value, $"rol '{deleted}'");
                 RefreshRoles();
                 ClearPermissionPanel();
             }
