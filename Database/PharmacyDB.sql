@@ -360,6 +360,27 @@ GO
 CREATE INDEX [IX_product_price_history_product] ON [dbo].[product_price_history] ([product_id], [changed_at])
 GO
 
+-- Lot traceability (DEF-02 fase A): one row per received batch of a product - units still on
+-- hand, its expiry and its purchase cost. A purchase creates a lot per line; a sale consumes
+-- lots first-expiry-first-out; a credit note returns units as a new undated lot. product.stock
+-- is the cached sum of the lots.
+CREATE TABLE [dbo].[product_lot](
+    [id] [int] IDENTITY(1,1) NOT NULL,
+    [product_id] [int] NOT NULL,
+    [purchase_detail_id] [int] NULL,
+    [quantity] [int] NOT NULL,
+    [date_expired] [datetime] NULL,
+    [unit_cost] [decimal](18, 2) NULL,
+    [received_at] [datetime] NOT NULL CONSTRAINT [DF_product_lot_received_at] DEFAULT (GETDATE()),
+    CONSTRAINT [PK_product_lot] PRIMARY KEY CLUSTERED ([id] ASC),
+    CONSTRAINT [FK_product_lot_product] FOREIGN KEY ([product_id]) REFERENCES [dbo].[product] ([id]),
+    CONSTRAINT [FK_product_lot_purchase_detail] FOREIGN KEY ([purchase_detail_id]) REFERENCES [dbo].[purchase_detail] ([id])
+)
+GO
+
+CREATE INDEX [IX_product_lot_product] ON [dbo].[product_lot] ([product_id], [quantity], [date_expired])
+GO
+
 -- Fase 4 of the alerts rework (traceability): one row per open-or-resolved stock/expiration
 -- alert on a product. Written only on a state transition (a new alert appears, its severity
 -- changes, or it clears) - not on every poll - so this grows with real inventory activity, not

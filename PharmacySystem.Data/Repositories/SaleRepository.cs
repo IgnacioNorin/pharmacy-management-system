@@ -63,6 +63,46 @@ namespace PharmacySystem.Data
             }
         }
 
+        // Draws `quantity` units from a product's lots, earliest expiry first (undated lots
+        // last), inside the caller's transaction. Runs after product.stock was already
+        // decremented with its own guard, so this only keeps the lots consistent.
+        private static void ConsumeLotsFefo(SqlConnection connection, SqlTransaction tx, int productId, int quantity)
+        {
+            if (quantity <= 0)
+            {
+                return;
+            }
+
+            List<ProductLot> lots = connection.Query<ProductLot>(
+                "SELECT id, quantity FROM product_lot " +
+                "WHERE product_id = @productId AND quantity > 0 " +
+                "ORDER BY CASE WHEN date_expired IS NULL THEN 1 ELSE 0 END, date_expired, received_at, id",
+                new { productId }, tx).ToList();
+
+            int remaining = quantity;
+            foreach (ProductLot lot in lots)
+            {
+                if (remaining <= 0)
+                {
+                    break;
+                }
+
+                int take = Math.Min(lot.quantity, remaining);
+                connection.Execute("UPDATE product_lot SET quantity = quantity - @take WHERE id = @id",
+                    new { take, id = lot.id }, tx);
+                remaining -= take;
+            }
+
+            if (remaining > 0)
+            {
+                // The lots covered less than product.stock allowed (historical data drift). The
+                // master stock guard already passed and was decremented - record the gap rather
+                // than fail an otherwise valid sale.
+                Logger.LogError(new InvalidOperationException(
+                    $"product {productId}: sold {quantity} units but lots only covered {quantity - remaining}."));
+            }
+        }
+
         // Payment breakdown of one sale - for printing a ticket and rebuilding a Sale.
         public List<SalePayment> GetPaymentsBySaleId(int saleId)
         {
@@ -226,6 +266,10 @@ namespace PharmacySystem.Data
                                     subtotal = dv.subtotal,
                                     tax_affected = dv.taxAffected
                                 }, objTransacion);
+
+                                // Draw the sold units from the earliest-expiring lots (FEFO), so
+                                // product.stock and the lots stay in sync.
+                                ConsumeLotsFefo(oConnection, objTransacion, dv.oProduct.idProduct, dv.amount);
                             }
 
                             objTransacion.Commit();
@@ -338,6 +382,7 @@ namespace PharmacySystem.Data
             public decimal SalePrice { get; set; }
             public decimal Subtotal { get; set; }
             public bool TaxAffected { get; set; }
+            public decimal? UnitCost { get; set; }
         }
 
         // Issues a Nota de Credito that reverses an existing sale: a new sale row with negative
@@ -407,13 +452,21 @@ namespace PharmacySystem.Data
                         new { nc_id = ncId, original_id = originalSaleId }, tx);
 
                     var lines = oConnection.Query<OriginalDetailRow>(
-                        "SELECT product_id AS ProductId, stock AS Amount, sale_price AS SalePrice, subtotal AS Subtotal, tax_affected AS TaxAffected " +
+                        "SELECT product_id AS ProductId, stock AS Amount, sale_price AS SalePrice, subtotal AS Subtotal, " +
+                        "tax_affected AS TaxAffected, unit_cost AS UnitCost " +
                         "FROM sale_detail WHERE sale_id = @id", new { id = originalSaleId }, tx);
 
                     foreach (OriginalDetailRow line in lines)
                     {
                         oConnection.Execute("UPDATE product SET stock = stock + @amount WHERE id = @product_id",
                             new { amount = line.Amount, product_id = line.ProductId }, tx);
+
+                        // The returned units go back as a new lot. Their original batch (and its
+                        // expiry) is unknown, so it is undated and will be sold after dated stock.
+                        oConnection.Execute(
+                            "INSERT INTO product_lot(product_id, purchase_detail_id, quantity, date_expired, unit_cost) " +
+                            "VALUES (@product_id, NULL, @quantity, NULL, @unit_cost)",
+                            new { product_id = line.ProductId, quantity = line.Amount, unit_cost = line.UnitCost }, tx);
 
                         oConnection.Execute(
                             "INSERT INTO sale_detail(sale_id, product_id, stock, sale_price, subtotal, tax_affected) " +

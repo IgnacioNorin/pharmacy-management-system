@@ -50,7 +50,14 @@ namespace PharmacySystem.Data
                         {
                             const string insertDetailQuery =
                                 "INSERT INTO purchase_detail(purchase_id, product_id, stock, purchase_price, total_amount, date_expired) " +
-                                "VALUES (@purchase_id, @product_id, @stock, @purchase_price, @total_amount, @date_expired)";
+                                "VALUES (@purchase_id, @product_id, @stock, @purchase_price, @total_amount, @date_expired); " +
+                                "SELECT CAST(SCOPE_IDENTITY() AS INT);";
+
+                            // One lot per purchase line: this batch's own quantity, expiry and cost,
+                            // so alerts and valuation can work per lot instead of per product.
+                            const string insertLotQuery =
+                                "INSERT INTO product_lot(product_id, purchase_detail_id, quantity, date_expired, unit_cost) " +
+                                "VALUES (@product_id, @purchase_detail_id, @quantity, @date_expired, @unit_cost)";
 
                             // A purchase only moves stock and cost. It never touches sale_price:
                             // the sale price is set deliberately in the Prices screen, which also
@@ -73,7 +80,7 @@ namespace PharmacySystem.Data
 
                             foreach (PurchaseDetail pd in purchase.oPurchaseDetail)
                             {
-                                oConnection.Execute(insertDetailQuery, new
+                                int purchaseDetailId = oConnection.ExecuteScalar<int>(insertDetailQuery, new
                                 {
                                     purchase_id = idPurchase,
                                     product_id = pd.oProduct.idProduct,
@@ -81,6 +88,15 @@ namespace PharmacySystem.Data
                                     purchase_price = pd.purchasePrice,
                                     total_amount = pd.total,
                                     date_expired = pd.expirationDate
+                                }, objTransacion);
+
+                                oConnection.Execute(insertLotQuery, new
+                                {
+                                    product_id = pd.oProduct.idProduct,
+                                    purchase_detail_id = purchaseDetailId,
+                                    quantity = pd.quantity,
+                                    date_expired = pd.expirationDate,
+                                    unit_cost = pd.purchasePrice
                                 }, objTransacion);
 
                                 oConnection.Execute(updateProductQuery, new

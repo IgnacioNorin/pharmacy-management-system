@@ -231,6 +231,34 @@ namespace PharmacySystem.Data
             public decimal? cost { get; set; }
         }
 
+        // The lots of one product with stock left, earliest expiry first (undated last).
+        public List<ProductLot> GetLots(int idProduct)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    const string sql =
+                        "SELECT id, product_id AS productId, purchase_detail_id AS purchaseDetailId, quantity, " +
+                        "date_expired AS dateExpired, unit_cost AS unitCost, received_at AS receivedAt " +
+                        "FROM product_lot WHERE product_id = @idProduct AND quantity > 0 " +
+                        "ORDER BY CASE WHEN date_expired IS NULL THEN 1 ELSE 0 END, date_expired, received_at, id";
+
+                    return oConnection.Query<ProductLot>(sql, new { idProduct }).ToList();
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return new List<ProductLot>();
+                }
+            }
+        }
+
         public List<Product> List() => QueryProducts(ProductSelect);
 
         // One page of active products, optionally filtered by a text that matches code, name or
