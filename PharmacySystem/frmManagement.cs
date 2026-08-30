@@ -61,10 +61,10 @@ namespace PharmacySystem
                 ["tabStore"] = new Dictionary<Control, List<string>>
                 {
                     { txttaxid, new List<string>{ "NotEmpty", "ValidateDocument" } },
-                    { txtlegalName, new List<string>{ "NotEmpty", "ValidateMaxLength" } },
-                    { txtemail, new List<string>{ "NotEmpty","ValidateEmail", "ValidateMaxLength" } },
+                    { txtlegalName, new List<string>{ "NotEmpty", "MaxLength150" } },
+                    { txtemail, new List<string>{ "NotEmpty","ValidateEmail", "MaxLength120" } },
                     { txtphone, new List<string>{ "NotEmpty","OnlyNumbers" } },
-                    { txtaddress, new List<string>{ "NotEmpty" , "ValidateMaxLength" } },
+                    { txtaddress, new List<string>{ "NotEmpty" , "MaxLength200" } },
                 },
                 #endregion
                 #region PRODUCT

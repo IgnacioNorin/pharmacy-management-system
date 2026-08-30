@@ -47,6 +47,23 @@ namespace PharmacySystem.Validators
                 "ValidateMaxLength", new RuleValidation(
                     value => !(value.Length > 50),
                     "Superó el máximo de caracteres permitidos")
+            },
+            // Longer limits for the store profile fields, which hold a full "razón social" and
+            // address (the store table columns were widened in migration 027).
+            {
+                "MaxLength120", new RuleValidation(
+                    value => value.Length <= 120,
+                    "Superó el máximo de 120 caracteres")
+            },
+            {
+                "MaxLength150", new RuleValidation(
+                    value => value.Length <= 150,
+                    "Superó el máximo de 150 caracteres")
+            },
+            {
+                "MaxLength200", new RuleValidation(
+                    value => value.Length <= 200,
+                    "Superó el máximo de 200 caracteres")
             }
         };
     }
