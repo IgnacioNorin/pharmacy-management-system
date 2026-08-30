@@ -62,13 +62,17 @@ namespace PharmacySystem.Business
             foreach (Product p in _repository.ListExpirationDate(ConfigDay()))
             {
                 bool expired = p.expirationDate.Date < DateTime.Today;
+                // p.stock here is the units in the lots that are expiring (set by the repository),
+                // not the product's total stock.
+                string units = p.stock > 0 ? $" ({p.stock} u.)" : "";
                 alerts.Add(new ProductAlert
                 {
                     ProductId = p.idProduct,
                     Code = p.code,
                     Name = p.name,
                     Severity = expired ? AlertSeverity.Expired : AlertSeverity.ExpiringSoon,
-                    Detail = (expired ? "Venció el " : "Vence el ") + p.expirationDate.ToString("dd/MM/yyyy")
+                    Detail = (expired ? "Venció el " : "Vence el ") + p.expirationDate.ToString("dd/MM/yyyy") + units,
+                    TriggerValue = p.stock
                 });
             }
 
