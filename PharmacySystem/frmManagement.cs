@@ -17,9 +17,6 @@ namespace PharmacySystem
         private readonly ProductManagementPresenter _productPresenter;
         private readonly ProductPricePresenter _productPricePresenter;
         private readonly StoreManagementPresenter _storePresenter;
-        // True only while _storePresenter.OnLoad() runs, so populating the preset combo does not
-        // fire OnCountryPresetChanged and overwrite the just-loaded saved values.
-        private bool _loadingStore;
 
         public frmManagement()
         {
@@ -209,9 +206,12 @@ namespace PharmacySystem
 
             if (CanSee("tienda.acceso"))
             {
-                _loadingStore = true;
-                try { _storePresenter.OnLoad(); }
-                finally { _loadingStore = false; }
+                // CLP-only: the currency and country-preset combos are gone from the flow.
+                cbocurrency.Visible = false;
+                cbocountrypreset.Visible = false;
+                label24.Visible = false;          // "Moneda:"
+                lblcountrypreset.Visible = false;
+                _storePresenter.OnLoad();
             }
             else
             {
@@ -512,42 +512,10 @@ namespace PharmacySystem
         public string Email => txtemail.Text;
         public string Phone => txtphone.Text;
         public string Address => txtaddress.Text;
-        public string SelectedCurrency => ((ComboBoxItem)cbocurrency.SelectedItem).Value.ToString();
         public string TaxRate => txttaxrate.Text;
         public string DefaultDocumentType => cbodefaultdoctype.SelectedItem?.ToString() ?? "";
-        public string SelectedCountryCode => (cbocountrypreset.SelectedItem as ComboBoxItem)?.Value?.ToString() ?? "";
 
         public void SetTaxRate(string value) => txttaxrate.Text = value;
-
-        public void LoadCountryPresetOptions(IReadOnlyList<ComboBoxItem> options, int selectedIndex)
-        {
-            cbocountrypreset.DataSource = options.ToList();
-            cbocountrypreset.DisplayMember = "Text";
-            cbocountrypreset.ValueMember = "Value";
-            if (cbocountrypreset.Items.Count > 0)
-            {
-                cbocountrypreset.SelectedIndex = selectedIndex;
-            }
-        }
-
-        public void SelectCurrency(string currencyCulture)
-        {
-            for (int i = 0; i < cbocurrency.Items.Count; i++)
-            {
-                if (cbocurrency.Items[i] is ComboBoxItem item &&
-                    string.Equals((string)item.Value, currencyCulture, StringComparison.OrdinalIgnoreCase))
-                {
-                    cbocurrency.SelectedIndex = i;
-                    return;
-                }
-            }
-        }
-
-        private void cbocountrypreset_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (_loadingStore) return;
-            _storePresenter.OnCountryPresetChanged();
-        }
 
         public void LoadDocumentTypeOptions(IReadOnlyList<string> options, string selected)
         {
@@ -581,16 +549,6 @@ namespace PharmacySystem
             txtphone.Text = phone;
             txtaddress.Text = address;
         }
-
-        public void LoadCurrencyOptions(IReadOnlyList<ComboBoxItem> options, int selectedIndex)
-        {
-            cbocurrency.DataSource = options.ToList();
-            cbocurrency.DisplayMember = "Text";
-            cbocurrency.ValueMember = "Value";
-            cbocurrency.SelectedIndex = selectedIndex;
-        }
-
-        public void SetCurrencyEditable(bool enabled) => cbocurrency.Enabled = enabled;
 
         public void ShowInfo(string message) =>
             MessageBox.Show(message, "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Information);

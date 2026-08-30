@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
@@ -61,7 +62,8 @@ namespace PharmacySystem.Presentation
 
             switch (type)
             {
-                case ReportValueType.Currency: return Convert.ToDecimal(value).ToString("0.00", CultureInfo.CurrentCulture);
+                // CLP has no minor unit: currency amounts are whole pesos.
+                case ReportValueType.Currency: return CultureInfoHelper.RoundMoney(Convert.ToDecimal(value)).ToString("0", CultureInfo.CurrentCulture);
                 case ReportValueType.Integer: return Convert.ToInt64(value).ToString(CultureInfo.CurrentCulture);
                 default: return value.ToString();
             }

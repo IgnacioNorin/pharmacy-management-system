@@ -7,8 +7,7 @@ namespace PharmacySystem.Tests.Presentation
     public class CreditNotePresenterTests
     {
         private static CreditNotePresenter Create(FakeCreditNoteView view, FakeSaleService service, params string[] permissions)
-            => new CreditNotePresenter(view, service, new FakeStoreService { ListStoreResult = new Store() },
-                                       TestUser.With(permissions), currentPersonId: 7);
+            => new CreditNotePresenter(view, service, TestUser.With(permissions), currentPersonId: 7);
 
         private static SaleLookup Vigente(int id = 5) => new SaleLookup
         {

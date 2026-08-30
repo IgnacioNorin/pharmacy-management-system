@@ -15,12 +15,8 @@ namespace PharmacySystem.Model
         public string phone { get; set; }
 
         public string address { get; set; }
-        public string currencyCulture { get; set; }
-        // ISO 3166-1 alpha-2 country preset code, or null/empty for the generic preset
-        // (no national assumptions). See CountryPresets.
-        public string countryCode { get; set; }
-        // VAT rate applied to tax-affected items, as a percentage (e.g. 19.00). Country-neutral:
-        // Chile is 19, but it is a setting, not a constant.
+        // VAT rate applied to tax-affected items, as a percentage. Chile is 19; kept as a
+        // setting so an edge case can adjust it. The system is CLP-only (no currency setting).
         public decimal defaultTaxRate { get; set; } = 19m;
         // Document type pre-selected on the sale screen.
         public string defaultDocumentType { get; set; } = DocumentTypes.Boleta;

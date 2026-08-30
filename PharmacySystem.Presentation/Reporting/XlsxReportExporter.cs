@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.IO;
 using ClosedXML.Excel;
+using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
@@ -78,8 +79,9 @@ namespace PharmacySystem.Presentation
             switch (type)
             {
                 case ReportValueType.Currency:
-                    cell.Value = Convert.ToDecimal(value);
-                    cell.Style.NumberFormat.Format = "#,##0.00";
+                    // CLP has no minor unit: currency amounts are whole pesos.
+                    cell.Value = CultureInfoHelper.RoundMoney(Convert.ToDecimal(value));
+                    cell.Style.NumberFormat.Format = "$ #,##0";
                     break;
                 case ReportValueType.Integer:
                     cell.Value = Convert.ToInt64(value);

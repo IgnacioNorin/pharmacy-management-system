@@ -55,8 +55,7 @@ namespace PharmacySystem.Presentation
         public void OnLoad()
         {
             Store store = _storeService.ListStore();
-            var documentTypes = CountryPresets.ForCode(store?.countryCode).SaleDocumentTypes;
-            _view.SetDocumentTypeOptions(documentTypes, store?.defaultDocumentType ?? documentTypes[0]);
+            _view.SetDocumentTypeOptions(DocumentTypes.Selectable, store?.defaultDocumentType ?? DocumentTypes.Boleta);
             _view.SetPaymentMethodOptions(PaymentMethods.Selectable, PaymentMethods.Default);
             _view.SetFacturaFieldsVisible(IsFactura());
         }
@@ -240,7 +239,6 @@ namespace PharmacySystem.Presentation
         {
             bool isFactura = IsFactura();
             Store store = _storeService.ListStore();
-            CountryPreset preset = CountryPresets.ForCode(store?.countryCode);
 
             if (!isFactura && (_view.DocumentClient.Trim() == "" || _view.NameClient.Trim() == ""))
             {
@@ -257,11 +255,9 @@ namespace PharmacySystem.Presentation
                     _view.ShowMessage("Complete los datos del receptor de la factura");
                     return;
                 }
-                if (!RecipientDocumentValidator.IsValid(recipientDocument, preset.RecipientDocumentScheme))
+                if (!ChileanRutValidator.IsValid(recipientDocument))
                 {
-                    _view.ShowMessage(preset.RecipientDocumentScheme == CountryPresets.ChileanRutScheme
-                        ? "El RUT del receptor no es válido"
-                        : "El documento del receptor no es válido");
+                    _view.ShowMessage("El RUT del receptor no es válido");
                     return;
                 }
             }

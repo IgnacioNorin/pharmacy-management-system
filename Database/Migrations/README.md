@@ -71,6 +71,7 @@ fijan al inicio; `sqlcmd` por defecto los deja en `OFF`).
 | `025_sale_payment.sql` | 1.2.0 | 1.2.0 (pago mixto: tabla `sale_payment` con una fila por forma de pago de la venta; `sale.payment_method` pasa a ser el método "principal"; backfill de una fila por venta/NC existente) |
 | `026_product_lot.sql` | 1.2.0 | 1.2.0 (trazabilidad por lote — DEF-02 fase A: tabla `product_lot` con cantidad, vencimiento y costo por lote; la compra crea un lote por línea, la venta consume FEFO, la NC devuelve un lote sin fecha; `product.stock` = suma de lotes; backfill de un lote por producto con stock) |
 | `027_store_wider_text_columns.sql` | 1.2.0 | 1.2.0 (ensancha `store.company_name` a 150, `address` a 200, `email` a 120; una razón social / dirección larga ya no falla al guardar los datos de la tienda) |
+| `028_store_drop_currency_country.sql` | 1.2.0 | 1.2.0 (el sistema es CLP puro: elimina `store.currency_culture` y `store.country_code` y su constraint por defecto; la tasa de IVA `store.default_tax_rate` sigue configurable) |
 
 **No es una migración**, pero se ejecuta una vez después de crear la base:
 `Database\create_app_login.sql` crea el login `pharmacy_app` con privilegios

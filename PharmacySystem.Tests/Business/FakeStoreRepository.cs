@@ -5,7 +5,7 @@ namespace PharmacySystem.Tests.Business
 {
     internal class FakeStoreRepository : IStoreRepository
     {
-        public Store StoredStore { get; set; } = new Store { currencyCulture = "es-EC" };
+        public Store StoredStore { get; set; } = new Store();
         public bool HasOperationalDataResult { get; set; }
         public bool UpdateStoreRowResult { get; set; } = true;
         public Store UpdatedWith { get; private set; }

@@ -823,7 +823,6 @@
             this.cbocountrypreset.Name = "cbocountrypreset";
             this.cbocountrypreset.Size = new System.Drawing.Size(200, 23);
             this.cbocountrypreset.TabIndex = 69;
-            this.cbocountrypreset.SelectedIndexChanged += new System.EventHandler(this.cbocountrypreset_SelectedIndexChanged);
             //
             // lbltaxrate
             //
