@@ -190,7 +190,7 @@ namespace PharmacySystem.Data
                             "IF @document_type = 'Factura' SET @folio = NEXT VALUE FOR dbo.seq_folio_factura; " +
                             "ELSE SET @folio = NEXT VALUE FOR dbo.seq_folio_boleta; " +
                             "INSERT INTO sale(document_type, document_number, user_id, document_client, name_client, total_amount, amount_received, change_amount, payment_method, net_amount, tax_amount, exempt_amount, recipient_tax_id, recipient_business_name, recipient_activity, recipient_address, recipient_commune, client_id) " +
-                            "VALUES (@document_type, RIGHT('000000' + CAST(@folio AS VARCHAR(20)), 6), @user_id, @document_client, @name_client, @total_amount, @amount_received, @change_amount, @payment_method, @net_amount, @tax_amount, @exempt_amount, @recipient_tax_id, @recipient_business_name, @recipient_activity, @recipient_address, @recipient_commune, @client_id); " +
+                            "VALUES (@document_type, CASE WHEN @folio > 999999 THEN CAST(@folio AS VARCHAR(20)) ELSE RIGHT('000000' + CAST(@folio AS VARCHAR(20)), 6) END, @user_id, @document_client, @name_client, @total_amount, @amount_received, @change_amount, @payment_method, @net_amount, @tax_amount, @exempt_amount, @recipient_tax_id, @recipient_business_name, @recipient_activity, @recipient_address, @recipient_commune, @client_id); " +
                             "SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
                         int idSale = oConnection.ExecuteScalar<int>(insertSaleQuery, new
@@ -422,7 +422,7 @@ namespace PharmacySystem.Data
                     const string insertNc =
                         "DECLARE @folio INT = NEXT VALUE FOR dbo.seq_folio_nota_credito; " +
                         "INSERT INTO sale(document_type, document_number, user_id, document_client, name_client, total_amount, amount_received, change_amount, net_amount, tax_amount, exempt_amount, recipient_tax_id, recipient_business_name, recipient_activity, recipient_address, recipient_commune, client_id, reference_id, reference_reason) " +
-                        "VALUES ('Nota de Credito', RIGHT('000000' + CAST(@folio AS VARCHAR(20)), 6), @user_id, @document_client, @name_client, @total, 0, 0, @net, @tax, @exempt, @rtaxid, @rname, @ractivity, @raddress, @rcommune, @client_id, @reference, @reason); " +
+                        "VALUES ('Nota de Credito', CASE WHEN @folio > 999999 THEN CAST(@folio AS VARCHAR(20)) ELSE RIGHT('000000' + CAST(@folio AS VARCHAR(20)), 6) END, @user_id, @document_client, @name_client, @total, 0, 0, @net, @tax, @exempt, @rtaxid, @rname, @ractivity, @raddress, @rcommune, @client_id, @reference, @reason); " +
                         "SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
                     int ncId = oConnection.ExecuteScalar<int>(insertNc, new
