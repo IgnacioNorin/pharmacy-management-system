@@ -70,22 +70,28 @@ namespace PharmacySystem.Tests.Business
         }
 
         [Fact]
-        public void AdminReset_TempTooShort_ReturnsTooShort_AndDoesNotWrite()
-        {
-            Assert.Equal(PasswordChangeResult.TooShort, Service().AdminReset(9, "abc", actorId: 1));
-            Assert.Null(_people.SetPasswordAndFlagCall);
-        }
-
-        [Fact]
-        public void AdminReset_Valid_SetsThePasswordWithTheFlagOn_AndAuditsTheReset()
+        public void AdminReset_GeneratesATemporaryPassword_LongEnoughAndReturnedToTheCaller()
         {
             _people.GetByIdResult = new Person { idPerson = 9, document = "999" };
 
-            PasswordChangeResult result = Service().AdminReset(9, "temp123", actorId: 42);
+            string temp = Service().AdminReset(9, actorId: 1);
 
-            Assert.Equal(PasswordChangeResult.Ok, result);
+            Assert.NotNull(temp);
+            Assert.True(temp.Replace("-", "").Length >= PasswordRules.MinLength);
+        }
+
+        [Fact]
+        public void AdminReset_SetsThePasswordWithTheFlagOn_AndAuditsTheReset()
+        {
+            _people.GetByIdResult = new Person { idPerson = 9, document = "999" };
+
+            string temp = Service().AdminReset(9, actorId: 42);
+
             Assert.Equal(9, _people.SetPasswordAndFlagCall.Value.Id);
             Assert.True(_people.SetPasswordAndFlagCall.Value.MustChange);
+            Assert.True(PasswordHasher.IsHashed(_people.SetPasswordAndFlagCall.Value.Hash));
+            // The stored hash verifies against the temp password that was handed back.
+            Assert.True(PasswordHasher.Verify(temp, _people.SetPasswordAndFlagCall.Value.Hash));
 
             var row = _attempts.Recorded.Single();
             Assert.True(row.Success);

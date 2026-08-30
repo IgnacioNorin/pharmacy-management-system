@@ -65,6 +65,13 @@ namespace PharmacySystem.Business
             _attempts.Record(document?.Trim() ?? string.Empty, true, "admin_unlock", actorId, Station);
         }
 
+        public void RecordSuspension(string document, bool suspended, int actorId)
+        {
+            // A reactivation also clears the failure count (fresh start); a suspension is neutral.
+            _attempts.Record(document?.Trim() ?? string.Empty, !suspended,
+                suspended ? "admin_suspend" : "admin_reactivate", actorId, Station);
+        }
+
         public System.Collections.Generic.ISet<string> GetLockedDocuments() =>
             _attempts.ListLockedDocuments(LockWindowMinutes, MaxFailures);
 

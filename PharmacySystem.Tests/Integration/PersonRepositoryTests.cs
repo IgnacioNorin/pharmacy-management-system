@@ -102,6 +102,26 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
+        public void SetActive_TogglesStatus_BothWays()
+        {
+            string document = SqlTestHelper.NewTag();
+            int newId = Repository.Register(NewPerson(document));
+
+            try
+            {
+                Assert.True(Repository.SetActive(newId, false));
+                Assert.False(Repository.GetById(newId).Estado);
+
+                Assert.True(Repository.SetActive(newId, true));
+                Assert.True(Repository.GetById(newId).Estado);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
+
+        [Fact]
         public void Register_DuplicateDocument_ReturnsZero()
         {
             string document = SqlTestHelper.NewTag();

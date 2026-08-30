@@ -19,17 +19,24 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   cambio de contraseña que no se puede saltar. Además hay una opción "Cambiar
   contraseña" en la cabecera de la barra lateral, disponible para cualquier
   usuario. Largo mínimo de contraseña: 6 caracteres.
-- **Restablecer y desbloquear desde Usuarios.** Dos botones nuevos en la
-  pantalla de Usuarios (permiso `usuarios.gestionar`): "Restablecer contraseña"
-  fija una contraseña temporal para el usuario seleccionado y lo obliga a
-  cambiarla al ingresar, dejando registro de qué administrador lo hizo;
-  "Desbloquear" limpia el bloqueo por intentos fallidos de ese usuario.
+- **Acciones de administración por usuario.** En la lista de Usuarios, la columna
+  "Acciones" abre un diálogo con las operaciones sobre esa cuenta (permiso
+  `usuarios.gestionar`), separadas del formulario de alta/edición:
+  - **Restablecer contraseña**: el sistema genera una contraseña temporal (el
+    administrador no la elige ni necesita la actual), la muestra una vez y la
+    copia al portapapeles; el usuario debe cambiarla al ingresar. Queda registro
+    de qué administrador lo hizo.
+  - **Desbloquear**: limpia el bloqueo por intentos fallidos.
+  - **Suspender / Reactivar**: habilita o deshabilita el inicio de sesión de la
+    cuenta sin tocar la contraseña. Es también la forma de deshacer una baja
+    hecha por error. No se puede suspender al último Administrador General
+    activo; queda auditado.
 - **Script `Database/reset_admin_password.sql`.** Restablece la contraseña del
   último Administrador General cuando no queda ninguna otra cuenta que pueda
   hacerlo desde la aplicación.
 - **Columna "Estado" en la lista de Usuarios.** Cada fila muestra si el usuario
-  está *Activo*, *Inactivo* (dado de baja) o *Bloqueado* (por intentos fallidos).
-  La columna se actualiza sola al desbloquear o restablecer desde esa misma
+  está *Activo*, *Inactivo* (suspendido o dado de baja) o *Bloqueado* (por
+  intentos fallidos). La columna se actualiza sola al usar las acciones de esa
   pantalla.
 
 ## [1.4.0] - 2026-08-30

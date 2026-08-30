@@ -23,6 +23,10 @@ namespace PharmacySystem.Tests.Presentation
 
         public void Unlock(string document, int actorId) => UnlockedWith = (document, actorId);
 
+        public (string Document, bool Suspended, int ActorId)? SuspensionRecorded { get; private set; }
+        public void RecordSuspension(string document, bool suspended, int actorId) =>
+            SuspensionRecorded = (document, suspended, actorId);
+
         public ISet<string> GetLockedDocuments() => LockedDocuments;
     }
 }

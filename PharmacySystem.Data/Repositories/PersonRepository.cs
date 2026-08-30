@@ -225,6 +225,30 @@ namespace PharmacySystem.Data
             }
         }
 
+        public bool SetActive(int idPerson, bool active)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    oConnection.Execute(
+                        "UPDATE person SET status = @active WHERE id = @id",
+                        new { active, id = idPerson });
+                    return true;
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return false;
+                }
+            }
+        }
+
         public bool Delete(int idPerson)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())

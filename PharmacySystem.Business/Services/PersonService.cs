@@ -38,6 +38,8 @@ namespace PharmacySystem.Business
 
         public bool UpdatePassword(int idPerson, string hashedPassword) => _repository.UpdatePassword(idPerson, hashedPassword);
 
+        public bool SetActive(int idPerson, bool active) => _repository.SetActive(idPerson, active);
+
         public bool Delete(int idPerson) => _repository.Delete(idPerson);
 
         private static string HashIfNeeded(string password) =>

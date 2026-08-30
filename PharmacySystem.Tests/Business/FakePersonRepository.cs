@@ -46,6 +46,13 @@ namespace PharmacySystem.Tests.Business
             return true;
         }
 
+        public (int Id, bool Active)? SetActiveCall { get; private set; }
+        public bool SetActive(int idPerson, bool active)
+        {
+            SetActiveCall = (idPerson, active);
+            return true;
+        }
+
         public bool Delete(int idPerson) => true;
     }
 }
