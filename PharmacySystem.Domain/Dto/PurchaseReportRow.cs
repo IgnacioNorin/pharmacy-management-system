@@ -13,5 +13,7 @@ namespace PharmacySystem.Model
         public string ProductName { get; set; }
         public int Quantity { get; set; }
         public decimal PurchasePrice { get; set; }
+        // Line total for this product: Quantity * PurchasePrice.
+        public decimal LineTotal { get; set; }
     }
 }

@@ -174,12 +174,12 @@ namespace PharmacySystem.Tests.Presentation
                     SupplierDocument = "111", CompanyName = "Acme",
                     DocumentType = "Factura", DocumentNumber = "000001",
                     TotalAmount = 42.50m, ProductName = "Widget",
-                    Quantity = 10, PurchasePrice = 3m
+                    Quantity = 10, PurchasePrice = 3m, LineTotal = 30m
                 },
                 new PurchaseReportRow
                 {
                     TotalAmount = 42.50m, ProductName = "Gadget",
-                    Quantity = 4, PurchasePrice = 2m
+                    Quantity = 4, PurchasePrice = 2m, LineTotal = 8m
                 }
             };
             // Both lines belong to the same purchase: its header total must be counted once.
@@ -195,6 +195,7 @@ namespace PharmacySystem.Tests.Presentation
             Assert.Equal(42.50m, result.Totals.TotalAmount);   // from GetTotalAmount, not the row sum (which would be 85)
             Assert.Equal(14, result.Totals.Quantity);
             Assert.Equal(5m, result.Totals.PurchasePrice);
+            Assert.Equal(38m, result.Totals.LineTotal);   // 30 + 8, straight sum of the line totals
         }
 
         [Fact]

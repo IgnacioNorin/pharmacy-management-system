@@ -49,6 +49,9 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   `sale.payment_method` (migración `023`), sale en el comprobante y hay una
   columna "Forma de Pago" en el reporte de ventas. Las ventas anteriores quedan
   en Efectivo.
+- **Subtotal por línea en el reporte de compras.** Cada línea de producto ahora
+  trae una columna "Subtotal" (cantidad × precio de compra), y el total del
+  reporte suma esa columna. Antes solo se veía la cantidad y el precio unitario.
 
 ### Cambiado
 

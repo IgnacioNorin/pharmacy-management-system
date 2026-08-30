@@ -159,7 +159,8 @@ namespace PharmacySystem.Data
                     const string sql =
                         "SELECT pu.date_registered AS DateRegistered, su.document_number AS SupplierDocument, su.company_name AS CompanyName, " +
                         "pu.document_type AS DocumentType, pu.document_number AS DocumentNumber, pu.total_amount AS TotalAmount, " +
-                        "pr.name AS ProductName, pd.stock AS Quantity, pd.purchase_price AS PurchasePrice " +
+                        "pr.name AS ProductName, pd.stock AS Quantity, pd.purchase_price AS PurchasePrice, " +
+                        "pd.stock * pd.purchase_price AS LineTotal " +
                         "FROM purchase pu " +
                         "INNER JOIN supplier su ON su.id = pu.supplier_id " +
                         "INNER JOIN purchase_detail pd ON pd.purchase_id = pu.id " +
