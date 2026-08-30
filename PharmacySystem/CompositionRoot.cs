@@ -18,6 +18,9 @@ namespace PharmacySystem
         // in every Create*Presenter method below.
         private static readonly ISupplierService _supplierService = new SupplierService(new SupplierRepository(ConnectionFactory));
         private static readonly IPersonService _personService = new PersonService(new PersonRepository(ConnectionFactory));
+        private static readonly ILoginAttemptRepository _loginAttemptRepository = new LoginAttemptRepository(ConnectionFactory);
+        private static readonly IAuthenticationService _authService = new AuthenticationService(new PersonRepository(ConnectionFactory), _loginAttemptRepository);
+        private static readonly IPasswordChangeService _passwordChangeService = new PasswordChangeService(new PersonRepository(ConnectionFactory), _loginAttemptRepository);
         private static readonly IClientService _clientService = new ClientService(new ClientRepository(ConnectionFactory));
         private static readonly IProductService _productService = new ProductService(new ProductRepository(ConnectionFactory));
         private static readonly ICategoryService _categoryService = new CategoryService(new CategoryRepository(ConnectionFactory));
@@ -46,13 +49,16 @@ namespace PharmacySystem
             new ClientPresenter(view, _clientService, MainForm.Session);
 
         public static UserPresenter CreateUserPresenter(IUserView view) =>
-            new UserPresenter(view, _personService, MainForm.Session, _permissionService);
+            new UserPresenter(view, _personService, MainForm.Session, _permissionService, _passwordChangeService, _authService);
 
         public static ClientPickerPresenter CreateClientPickerPresenter(IClientPickerView view) =>
             new ClientPickerPresenter(view, _clientService);
 
         public static LoginPresenter CreateLoginPresenter(ILoginView view) =>
-            new LoginPresenter(view, _personService);
+            new LoginPresenter(view, _authService);
+
+        public static ChangePasswordPresenter CreateChangePasswordPresenter(IChangePasswordView view, int personId) =>
+            new ChangePasswordPresenter(view, _passwordChangeService, personId);
 
         #endregion
 

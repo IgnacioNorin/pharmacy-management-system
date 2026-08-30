@@ -2,6 +2,32 @@
 
 El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
+## [Sin publicar]
+
+### Seguridad
+
+- **Límite de intentos de inicio de sesión.** Tras 5 intentos fallidos con el
+  mismo documento en 15 minutos, la cuenta queda bloqueada temporalmente y el
+  login informa cuántos minutos faltan para poder reintentar. El bloqueo se
+  levanta solo al pasar la ventana sin más intentos, con un inicio de sesión
+  correcto, o con un desbloqueo manual. Cada intento (ok o fallido) queda
+  registrado en la tabla nueva `login_attempt` (migración `031`); las filas de
+  más de 90 días se purgan solas.
+- **Cambio de contraseña forzado en el primer ingreso.** La cuenta sembrada y
+  todo usuario creado desde la pantalla de Usuarios nacen con
+  `must_change_password`: al iniciar sesión aparece un diálogo obligatorio de
+  cambio de contraseña que no se puede saltar. Además hay una opción "Cambiar
+  contraseña" en la cabecera de la barra lateral, disponible para cualquier
+  usuario. Largo mínimo de contraseña: 6 caracteres.
+- **Restablecer y desbloquear desde Usuarios.** Dos botones nuevos en la
+  pantalla de Usuarios (permiso `usuarios.gestionar`): "Restablecer contraseña"
+  fija una contraseña temporal para el usuario seleccionado y lo obliga a
+  cambiarla al ingresar, dejando registro de qué administrador lo hizo;
+  "Desbloquear" limpia el bloqueo por intentos fallidos de ese usuario.
+- **Script `Database/reset_admin_password.sql`.** Restablece la contraseña del
+  último Administrador General cuando no queda ninguna otra cuenta que pueda
+  hacerlo desde la aplicación.
+
 ## [1.4.0] - 2026-08-30
 
 ### Agregado

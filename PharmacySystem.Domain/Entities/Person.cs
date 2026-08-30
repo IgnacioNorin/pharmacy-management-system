@@ -16,5 +16,7 @@ namespace PharmacySystem.Model
         public string password { get; set; }
         public TypePerson oPersonType { get; set; }
         public bool Estado { get; set; }
+        // When true, the next successful login forces a password change before the app opens.
+        public bool mustChangePassword { get; set; }
     }
 }

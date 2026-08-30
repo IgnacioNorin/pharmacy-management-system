@@ -45,6 +45,8 @@
             this.label1 = new System.Windows.Forms.Label();
             this.btnDelete = new System.Windows.Forms.Button();
             this.btnClean = new System.Windows.Forms.Button();
+            this.btnResetPassword = new System.Windows.Forms.Button();
+            this.btnUnlock = new System.Windows.Forms.Button();
             this.btnSave = new System.Windows.Forms.Button();
             this.cborol = new System.Windows.Forms.ComboBox();
             this.label11 = new System.Windows.Forms.Label();
@@ -195,7 +197,7 @@
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.Location = new System.Drawing.Point(0, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(258, 568);
+            this.label1.Size = new System.Drawing.Size(258, 610);
             this.label1.TabIndex = 27;
             // 
             // btnDelete
@@ -229,9 +231,35 @@
             this.btnClean.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnClean.UseVisualStyleBackColor = false;
             this.btnClean.Click += new System.EventHandler(this.btnClean_Click);
-            // 
+            //
+            // btnResetPassword
+            //
+            this.btnResetPassword.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.btnResetPassword.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnResetPassword.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnResetPassword.Location = new System.Drawing.Point(38, 499);
+            this.btnResetPassword.Name = "btnResetPassword";
+            this.btnResetPassword.Size = new System.Drawing.Size(195, 38);
+            this.btnResetPassword.TabIndex = 43;
+            this.btnResetPassword.Text = "Restablecer contraseña";
+            this.btnResetPassword.UseVisualStyleBackColor = false;
+            this.btnResetPassword.Click += new System.EventHandler(this.btnResetPassword_Click);
+            //
+            // btnUnlock
+            //
+            this.btnUnlock.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.btnUnlock.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnUnlock.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnUnlock.Location = new System.Drawing.Point(38, 543);
+            this.btnUnlock.Name = "btnUnlock";
+            this.btnUnlock.Size = new System.Drawing.Size(195, 38);
+            this.btnUnlock.TabIndex = 44;
+            this.btnUnlock.Text = "Desbloquear";
+            this.btnUnlock.UseVisualStyleBackColor = false;
+            this.btnUnlock.Click += new System.EventHandler(this.btnUnlock_Click);
+            //
             // btnSave
-            // 
+            //
             this.btnSave.BackColor = System.Drawing.Color.WhiteSmoke;
             this.btnSave.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -405,7 +433,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(1269, 568);
+            this.ClientSize = new System.Drawing.Size(1269, 610);
             this.ControlBox = false;
             this.Controls.Add(this.pblist);
             this.Controls.Add(this.txtsearch);
@@ -422,6 +450,8 @@
             this.Controls.Add(this.label7);
             this.Controls.Add(this.btnDelete);
             this.Controls.Add(this.btnClean);
+            this.Controls.Add(this.btnResetPassword);
+            this.Controls.Add(this.btnUnlock);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.txtconfirmpassword);
@@ -451,6 +481,8 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Button btnDelete;
         private System.Windows.Forms.Button btnClean;
+        private System.Windows.Forms.Button btnResetPassword;
+        private System.Windows.Forms.Button btnUnlock;
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox txtpassword;

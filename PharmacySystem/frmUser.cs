@@ -174,11 +174,23 @@ namespace PharmacySystem
             bool canManage = MainForm.Session?.Can("usuarios.gestionar") ?? false;
             btnSave.Enabled = canManage;
             btnDelete.Enabled = canManage;
+            btnResetPassword.Enabled = canManage;
+            btnUnlock.Enabled = canManage;
         }
 
         private void btnSave_Click(object sender, EventArgs e)
         {
             _presenter.OnSave();
+        }
+
+        private void btnResetPassword_Click(object sender, EventArgs e)
+        {
+            _presenter.OnResetPassword();
+        }
+
+        private void btnUnlock_Click(object sender, EventArgs e)
+        {
+            _presenter.OnUnlockUser();
         }
 
         private void dgdata_CellMouseEnter(object sender, DataGridViewCellEventArgs e)

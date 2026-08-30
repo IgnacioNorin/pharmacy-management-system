@@ -148,9 +148,30 @@ CREATE TABLE [dbo].[person](
     [password] [varchar](255) NULL,
     [person_type_id] [int] NULL,
     [status] [bit] NULL,
+    -- Forces a password change on the next login (migration 031). Every user created
+    -- from the Usuarios screen, and the seeded admin below, start with it set.
+    [must_change_password] [bit] NOT NULL CONSTRAINT [DF_person_must_change_password] DEFAULT ((0)),
     [date_created] [datetime] NULL,
     CONSTRAINT [PK__PERSONA__2EC8D2AC47F385CC] PRIMARY KEY CLUSTERED ([id] ASC)
 )
+GO
+
+-- One row per authentication attempt (migration 031). Failed rows drive the lockout
+-- (5 failures for a document in the last 15 minutes); a row with success = 1 clears
+-- the running count, which is how both the automatic and the manual unlock work.
+CREATE TABLE [dbo].[login_attempt](
+    [id] [int] IDENTITY(1,1) NOT NULL,
+    [document_number] [varchar](50) NOT NULL,
+    [success] [bit] NOT NULL,
+    [reason] [varchar](20) NOT NULL CONSTRAINT [DF_login_attempt_reason] DEFAULT ('login'),
+    [actor_id] [int] NULL,
+    [station] [varchar](100) NULL,
+    [at] [datetime] NOT NULL CONSTRAINT [DF_login_attempt_at] DEFAULT (getdate()),
+    CONSTRAINT [PK_login_attempt] PRIMARY KEY CLUSTERED ([id] ASC)
+)
+GO
+
+CREATE INDEX [IX_login_attempt_document_at] ON [dbo].[login_attempt] ([document_number], [at])
 GO
 
 -- Retail customers. Split out of `person` in migration 029: no password, no role.
@@ -665,13 +686,15 @@ INSERT INTO [dbo].[role_permission] (person_type_id, permission_id)
 GO
 
 -- Default Administrador General account so a fresh database has someone who can log in and
--- reach the Tienda tab (person_type 1) right away. Plain-text password on purpose: LoginPresenter
--- (VerifyPassword) accepts a plain-text match on first login and rewrites it as a hash
+-- reach the Tienda tab (person_type 1) right away. Plain-text password on purpose: the
+-- authentication path accepts a plain-text match on first login and rewrites it as a hash
 -- immediately after, the same legacy migration path every pre-existing account went through.
+-- must_change_password = 1: the operator is forced to replace the factory password on that
+-- first login (migration 031).
 IF NOT EXISTS (SELECT 1 FROM [dbo].[person] WHERE document_number = '1010101010')
 BEGIN
-    INSERT INTO [dbo].[person] (document_number, name, address, phone, password, person_type_id, status, date_created)
-    VALUES ('1010101010', 'Administrador General', 'N/A', 'N/A', '12345678', 1, 1, GETDATE())
+    INSERT INTO [dbo].[person] (document_number, name, address, phone, password, person_type_id, status, must_change_password, date_created)
+    VALUES ('1010101010', 'Administrador General', 'N/A', 'N/A', '12345678', 1, 1, 1, GETDATE())
 END
 GO
 
@@ -1005,6 +1028,15 @@ BEGIN
         UPDATE client SET status = 0 WHERE id = @id_client;
         SET @result = 1;
     END
+END
+GO
+
+-- Trims the authentication audit trail (migration 031). Called opportunistically by
+-- LoginAttemptRepository so login_attempt does not grow without bound.
+CREATE PROCEDURE [dbo].[sp_purge_login_attempts] AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM dbo.login_attempt WHERE at < DATEADD(DAY, -90, GETDATE());
 END
 GO
 

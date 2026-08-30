@@ -22,6 +22,9 @@ namespace PharmacySystem.Tests.Integration
         private static readonly IPermissionService Permissions = new PermissionService(new PermissionRepository(Factory));
         private static readonly IPersonService People = new PersonService(new PersonRepository(Factory));
         private static readonly IClientService Clients = new ClientService(new ClientRepository(Factory));
+        private static readonly ILoginAttemptRepository LoginAttempts = new LoginAttemptRepository(Factory);
+        private static readonly IAuthenticationService Auth = new AuthenticationService(new PersonRepository(Factory), LoginAttempts);
+        private static readonly IPasswordChangeService Passwords = new PasswordChangeService(new PersonRepository(Factory), LoginAttempts);
 
         private const string Password = "Walkthrough.123";
 
@@ -40,8 +43,14 @@ namespace PharmacySystem.Tests.Integration
                 oPersonType = new TypePerson { idPersonType = roleId }
             }) > 0);
 
+            // Every new user is created with must_change_password = 1; this walkthrough is about
+            // role permissions, not the first-login flow, so clear it and let the login through.
+            SqlTestHelper.ExecuteNonQuery(
+                "UPDATE person SET must_change_password = 0 WHERE document_number = @doc",
+                new SqlParameter("@doc", document));
+
             var loginView = new FakeLoginView { Document = document, Password = Password };
-            new LoginPresenter(loginView, People).OnLogin();
+            new LoginPresenter(loginView, Auth).OnLogin();
 
             Assert.Null(loginView.ShownError);
             Assert.NotNull(loginView.LoggedInPerson);
@@ -141,7 +150,7 @@ namespace PharmacySystem.Tests.Integration
 
                 // Users
                 var userView = new FakeUserView { SelectedIndex = 1, RowCount = 1, UserId = 7 };
-                var users = new UserPresenter(userView, People, user, Permissions);
+                var users = new UserPresenter(userView, People, user, Permissions, Passwords, Auth);
                 users.OnSave();
                 users.OnDelete();
                 Assert.Equal(2, userView.ShownMessages.Count(m => m.Contains("No tiene permiso")));

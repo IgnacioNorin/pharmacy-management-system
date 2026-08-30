@@ -55,6 +55,53 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
+        public void Register_New_StartsWithMustChangePasswordSet_AndGetByIdReadsItBack()
+        {
+            string document = SqlTestHelper.NewTag();
+            int newId = Repository.Register(NewPerson(document));
+
+            try
+            {
+                Assert.True(Repository.GetByDocument(document).mustChangePassword);
+
+                Person byId = Repository.GetById(newId);
+                Assert.NotNull(byId);
+                Assert.Equal(document, byId.document);
+                Assert.True(byId.mustChangePassword);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
+
+        [Fact]
+        public void SetPasswordAndFlag_WritesBothColumns()
+        {
+            string document = SqlTestHelper.NewTag();
+            int newId = Repository.Register(NewPerson(document));
+
+            try
+            {
+                Assert.True(Repository.SetPasswordAndFlag(newId, "brand-new-hash", mustChangePassword: false));
+
+                Person stored = Repository.GetById(newId);
+                Assert.Equal("brand-new-hash", stored.password);
+                Assert.False(stored.mustChangePassword);
+            }
+            finally
+            {
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
+        }
+
+        [Fact]
+        public void GetById_UnknownId_ReturnsNull()
+        {
+            Assert.Null(Repository.GetById(-1));
+        }
+
+        [Fact]
         public void Register_DuplicateDocument_ReturnsZero()
         {
             string document = SqlTestHelper.NewTag();

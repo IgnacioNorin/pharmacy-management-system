@@ -74,6 +74,7 @@ fijan al inicio; `sqlcmd` por defecto los deja en `OFF`).
 | `028_store_drop_currency_country.sql` | 1.2.0 | 1.2.0 (el sistema es CLP puro: elimina `store.currency_culture` y `store.country_code` y su constraint por defecto; la tasa de IVA `store.default_tax_rate` sigue configurable) |
 | `029_split_client_from_person.sql` | 1.2.0 | 1.2.0 (separa los clientes de `person` a la tabla nueva `client` conservando los ids; `sale.client_id` pasa a referenciar `client`; se quitan las columnas fiscales de `person`, el rol `Cliente` (`person_type` id 4) y sus `role_permission`; `sp_update_person` / `sp_delete_person` sin la parte de cliente; nuevo `sp_delete_client`) |
 | `030_purchase_vat_breakdown.sql` | 1.2.0 | 1.2.0 (agrega `purchase.net_amount` / `tax_amount` / `exempt_amount` / `tax_rate`; el precio de compra se ingresa con IVA incluido y el neto se descuenta hacia atrás; backfill de los comprobantes previos como afectos al 19 %) |
+| `031_login_hardening.sql` | 1.4.0 | 1.4.0 (agrega `person.must_change_password` y la tabla `login_attempt` + índice + `sp_purge_login_attempts`; el bloqueo por intentos fallidos se deriva de `login_attempt` (5 fallos / 15 min); fuerza el cambio de contraseña de la cuenta sembrada `1010101010` si aún tiene la contraseña de fábrica) |
 
 **No es una migración**, pero se ejecuta una vez después de crear la base:
 `Database\create_app_login.sql` crea el login `pharmacy_app` con privilegios

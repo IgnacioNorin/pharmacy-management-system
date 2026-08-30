@@ -85,10 +85,17 @@ de la aplicación.
    Contraseña:  12345678
    ```
 
-3. **Cambiar de inmediato la contraseña de esa cuenta** (queda en texto plano
-   en la base hasta el primer inicio de sesión; ahí se re-hashea con PBKDF2).
-   Crear las cuentas reales de los usuarios y, si esa cuenta por defecto no se
-   va a usar, darla de baja desde la pantalla de Usuarios.
+3. **Cambiar la contraseña de esa cuenta.** El primer inicio de sesión obliga a
+   hacerlo con un diálogo que no se puede saltar (la contraseña de fábrica queda
+   en texto plano hasta ese momento; ahí se re-hashea con PBKDF2). Crear las
+   cuentas reales de los usuarios (cada una nace pidiendo su propio cambio de
+   contraseña) y, si la cuenta por defecto no se va a usar, darla de baja desde
+   la pantalla de Usuarios.
+
+   Si más adelante el último Administrador General pierde su contraseña y no
+   queda otra cuenta que pueda restablecerla desde la aplicación, usar
+   `Database\reset_admin_password.sql` contra la base (fija una contraseña
+   temporal y fuerza el cambio en el siguiente inicio).
 4. Cargar los datos de la tienda (nombre, datos fiscales, moneda) en
    Gestión → Tienda.
 5. Ajustar los umbrales de alerta en el centro de notificaciones.
