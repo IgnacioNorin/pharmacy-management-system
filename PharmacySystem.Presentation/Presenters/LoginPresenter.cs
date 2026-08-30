@@ -5,9 +5,10 @@ using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
 {
-    // Ported from Login.cs. Cliente is refused here regardless of password. VerifyPassword also
-    // preserves the legacy plain-text migration path: a matching plain-text password logs the
-    // user in and rewrites it as a hash before returning.
+    // Ported from Login.cs. Only `person` rows exist here now (clients are a separate table), so
+    // the old "refuse Cliente" guard is gone. VerifyPassword still preserves the legacy
+    // plain-text migration path: a matching plain-text password logs the user in and rewrites it
+    // as a hash before returning.
     public class LoginPresenter
     {
         private readonly ILoginView _view;
@@ -25,7 +26,7 @@ namespace PharmacySystem.Presentation
             {
                 Person person = _personService.GetByDocument(_view.Document?.Trim());
 
-                if (person != null && person.Estado && person.oPersonType.idPersonType != (int)PersonType.Cliente && VerifyPassword(person, _view.Password))
+                if (person != null && person.Estado && VerifyPassword(person, _view.Password))
                 {
                     _view.LoginSucceeded(person);
                 }

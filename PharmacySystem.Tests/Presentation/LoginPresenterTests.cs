@@ -24,21 +24,6 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void OnLogin_ClientRole_IsAlwaysRejected()
-        {
-            var view = new FakeLoginView { Document = "123", Password = "secret" };
-            var service = new FakePersonService
-            {
-                GetByDocumentResult = new Person { idPerson = 1, password = "secret", oPersonType = new TypePerson { idPersonType = 4 } } // Cliente
-            };
-
-            CreatePresenter(view, service).OnLogin();
-
-            Assert.Equal("No se encontraron coincidencias del usuario", view.ShownError);
-            Assert.Null(view.LoggedInPerson);
-        }
-
-        [Fact]
         public void OnLogin_WrongPassword_ShowsError()
         {
             var view = new FakeLoginView { Document = "123", Password = "wrong" };

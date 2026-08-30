@@ -145,16 +145,31 @@ CREATE TABLE [dbo].[person](
     [name] [varchar](50) NULL,
     [address] [varchar](50) NULL,
     [phone] [varchar](50) NULL,
-    [business_name] [varchar](120) NULL,
-    [activity] [varchar](80) NULL,
-    [commune] [varchar](60) NULL,
-    [email] [varchar](120) NULL,
-    [is_company] [bit] NOT NULL CONSTRAINT [DF_person_is_company] DEFAULT ((0)),
     [password] [varchar](255) NULL,
     [person_type_id] [int] NULL,
     [status] [bit] NULL,
     [date_created] [datetime] NULL,
     CONSTRAINT [PK__PERSONA__2EC8D2AC47F385CC] PRIMARY KEY CLUSTERED ([id] ASC)
+)
+GO
+
+-- Retail customers. Split out of `person` in migration 029: no password, no role.
+-- The fiscal profile (business_name / activity / commune / email / is_company) is used
+-- when the client is the recipient of a Factura.
+CREATE TABLE [dbo].[client](
+    [id] [int] IDENTITY(1,1) NOT NULL,
+    [document_number] [varchar](50) NULL,
+    [name] [varchar](50) NULL,
+    [address] [varchar](50) NULL,
+    [phone] [varchar](50) NULL,
+    [business_name] [varchar](120) NULL,
+    [activity] [varchar](80) NULL,
+    [commune] [varchar](60) NULL,
+    [email] [varchar](120) NULL,
+    [is_company] [bit] NOT NULL CONSTRAINT [DF_client_is_company] DEFAULT ((0)),
+    [status] [bit] NULL CONSTRAINT [DF_client_status] DEFAULT ((1)),
+    [date_created] [datetime] NULL CONSTRAINT [DF_client_date_created] DEFAULT (getdate()),
+    CONSTRAINT [PK_client] PRIMARY KEY CLUSTERED ([id] ASC)
 )
 GO
 
@@ -500,7 +515,7 @@ ALTER TABLE [dbo].[sale] WITH CHECK ADD CONSTRAINT [FK_sale_reference]
 GO
 -- The client the sale was made to (NULL for a walk-in / consumidor final).
 ALTER TABLE [dbo].[sale] WITH CHECK ADD CONSTRAINT [FK_sale_client]
-    FOREIGN KEY([client_id]) REFERENCES [dbo].[person] ([id])
+    FOREIGN KEY([client_id]) REFERENCES [dbo].[client] ([id])
 GO
 ALTER TABLE [dbo].[sale_detail] WITH CHECK ADD CONSTRAINT [FK__DETALLE_V__IdPro__3A81B327]
     FOREIGN KEY([product_id]) REFERENCES [dbo].[product] ([id])
@@ -523,6 +538,8 @@ GO
 
 -- Natural keys the stored procedures only guarded with a race-prone NOT EXISTS check.
 CREATE UNIQUE INDEX [UX_person_document] ON [dbo].[person] ([document_number]) WHERE [document_number] IS NOT NULL
+GO
+CREATE UNIQUE INDEX [UX_client_document] ON [dbo].[client] ([document_number]) WHERE [document_number] IS NOT NULL
 GO
 CREATE UNIQUE INDEX [UX_supplier_document] ON [dbo].[supplier] ([document_number]) WHERE [document_number] IS NOT NULL
 GO
@@ -586,8 +603,6 @@ INSERT INTO [dbo].[person_type] (id, description, status, date_created, is_syste
 GO
 INSERT INTO [dbo].[person_type] (id, description, status, date_created, is_system) VALUES (3, 'Empleado', 1, GETDATE(), 1)
 GO
-INSERT INTO [dbo].[person_type] (id, description, status, date_created, is_system) VALUES (4, 'Cliente', 1, GETDATE(), 1)
-GO
 
 -- Permission catalogue (section.action). Each section has a '<section>.acceso' root
 -- (parent_code IS NULL); the rest hang off it, and each report "exportar" hangs off its "ver".
@@ -633,7 +648,6 @@ GO
 --                              Administrador cannot re-permission its own role past the Tienda
 --                              boundary)
 --   3 Empleado              -> Ventas, Clientes and Alertas (view + acknowledge/mute)
---   4 Cliente               -> nothing (cannot sign in)
 INSERT INTO [dbo].[role_permission] (person_type_id, permission_id)
     SELECT 1, id FROM [dbo].[permission]
 GO
@@ -789,12 +803,11 @@ BEGIN
         RETURN;   -- @result stays 0
     END
 
-    -- Same soft-delete pattern as products/categories: a person referenced by a sale (as the
-    -- seller or the client), a purchase or an acknowledged alert cannot be physically removed
-    -- (FK), so deactivate them instead. LoginPresenter must reject status = 0 so a former
-    -- employee cannot sign in.
+    -- Same soft-delete pattern as products/categories: a user referenced by a sale (as the
+    -- seller), a purchase or an acknowledged alert cannot be physically removed (FK), so
+    -- deactivate them instead. LoginPresenter must reject status = 0 so a former employee
+    -- cannot sign in.
     IF NOT EXISTS (SELECT 1 FROM sale WHERE user_id = @id_person)
-       AND NOT EXISTS (SELECT 1 FROM sale WHERE client_id = @id_person)
        AND NOT EXISTS (SELECT 1 FROM purchase WHERE person_id = @id_person)
        AND NOT EXISTS (SELECT 1 FROM product_alert_history WHERE acknowledged_by = @id_person)
     BEGIN
@@ -940,11 +953,6 @@ CREATE PROCEDURE [dbo].[sp_update_person](
 @phone VARCHAR(50),
 @password VARCHAR(255),
 @person_type_id INT,
-@business_name VARCHAR(120) = NULL,
-@activity VARCHAR(80) = NULL,
-@commune VARCHAR(60) = NULL,
-@email VARCHAR(120) = NULL,
-@is_company BIT = 0,
 @result BIT OUTPUT
 ) AS
 BEGIN
@@ -966,13 +974,31 @@ BEGIN
             address = @address,
             phone = @phone,
             password = ISNULL(@password, password),
-            person_type_id = @person_type_id,
-            business_name = @business_name,
-            activity = @activity,
-            commune = @commune,
-            email = @email,
-            is_company = @is_company
+            person_type_id = @person_type_id
         WHERE id = @id_person;
+        SET @result = 1;
+    END
+END
+GO
+
+-- Client soft-delete: same pattern as sp_delete_supplier. A client referenced by a sale
+-- (client_id) cannot be physically removed (FK), so deactivate it instead.
+CREATE PROCEDURE [dbo].[sp_delete_client]
+    @id_client INT,
+    @result BIT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET @result = 0;
+
+    IF NOT EXISTS (SELECT 1 FROM sale WHERE client_id = @id_client)
+    BEGIN
+        DELETE FROM client WHERE id = @id_client;
+        SET @result = 1;
+    END
+    ELSE
+    BEGIN
+        UPDATE client SET status = 0 WHERE id = @id_client;
         SET @result = 1;
     END
 END

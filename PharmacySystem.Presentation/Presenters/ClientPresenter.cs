@@ -16,16 +16,16 @@ namespace PharmacySystem.Presentation
     public class ClientPresenter
     {
         private readonly IClientView _view;
-        private readonly IPersonService _service;
+        private readonly IClientService _service;
         private readonly CurrentUser _currentUser;
 
-        private const int PageSize = PagedResult<Person>.DefaultPageSize;
+        private const int PageSize = PagedResult<Client>.DefaultPageSize;
 
         private int _page = 1;
         private int _totalPages = 1;
         private string _search = string.Empty;
 
-        public ClientPresenter(IClientView view, IPersonService service, CurrentUser currentUser)
+        public ClientPresenter(IClientView view, IClientService service, CurrentUser currentUser)
         {
             _view = view;
             _service = service;
@@ -54,7 +54,7 @@ namespace PharmacySystem.Presentation
         {
             int page = requestedPage < 1 ? 1 : requestedPage;
 
-            PagedResult<Person> result = _service.ListClientsPaged(page, PageSize, _search);
+            PagedResult<Client> result = _service.ListClientsPaged(page, PageSize, _search);
 
             if (result.TotalCount > 0 && page > result.TotalPages)
             {
@@ -89,9 +89,9 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            Person person = new Person
+            Client client = new Client
             {
-                idPerson = _view.PersonId,
+                idClient = _view.PersonId,
                 document = _view.Document?.Trim(),
                 name = _view.Name?.Trim(),
                 address = _view.Address?.Trim(),
@@ -100,14 +100,12 @@ namespace PharmacySystem.Presentation
                 activity = _view.Activity?.Trim(),
                 commune = _view.Commune?.Trim(),
                 email = _view.Email?.Trim(),
-                isCompany = _view.IsCompany,
-                password = "",
-                oPersonType = new TypePerson { idPersonType = (int)PersonType.Cliente }
+                isCompany = _view.IsCompany
             };
 
-            bool result = person.idPerson == 0
-                ? _service.Register(person) != 0
-                : _service.Update(person);
+            bool result = client.idClient == 0
+                ? _service.Register(client) != 0
+                : _service.Update(client);
 
             if (result)
             {

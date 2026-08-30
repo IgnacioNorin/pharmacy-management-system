@@ -21,6 +21,7 @@ namespace PharmacySystem.Tests.Integration
         private static readonly ISqlConnectionFactory Factory = SqlConnectionFactory.FromConfiguration();
         private static readonly IPermissionService Permissions = new PermissionService(new PermissionRepository(Factory));
         private static readonly IPersonService People = new PersonService(new PersonRepository(Factory));
+        private static readonly IClientService Clients = new ClientService(new ClientRepository(Factory));
 
         private const string Password = "Walkthrough.123";
 
@@ -189,7 +190,7 @@ namespace PharmacySystem.Tests.Integration
                     ConfirmDeleteResult = false, // stop OnDelete right after the permission check
                     ValidationErrors = new List<string> { "stop OnSave right after the permission check" }
                 };
-                var clients = new ClientPresenter(clientView, People, user);
+                var clients = new ClientPresenter(clientView, Clients, user);
                 clients.OnSave();
                 clients.OnDelete();
 

@@ -7,9 +7,9 @@ namespace PharmacySystem.Presentation
     public class ClientPickerPresenter
     {
         private readonly IClientPickerView _view;
-        private readonly IPersonService _service;
+        private readonly IClientService _service;
 
-        public ClientPickerPresenter(IClientPickerView view, IPersonService service)
+        public ClientPickerPresenter(IClientPickerView view, IClientService service)
         {
             _view = view;
             _service = service;

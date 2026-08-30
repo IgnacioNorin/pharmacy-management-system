@@ -1,5 +1,4 @@
 using System.Data.SqlClient;
-using System.Linq;
 using PharmacySystem.Data;
 using PharmacySystem.Model;
 using Xunit;
@@ -9,7 +8,8 @@ namespace PharmacySystem.Tests.Integration
     // Was PersonServiceTests. The hash-if-not-already-hashed rule moved to Business - see
     // PersonServiceTests in PharmacySystem.Tests.Business for that, tested with no database.
     // This file only covers what the repository does: it persists person.password exactly as
-    // given, so every password here is already in its final (hashed) form.
+    // given, so every password here is already in its final (hashed) form. Clients live in
+    // their own table now - see ClientRepositoryTests.
     [Collection("Database")]
     public class PersonRepositoryTests
     {
@@ -31,38 +31,6 @@ namespace PharmacySystem.Tests.Integration
                 password = password,
                 oPersonType = new TypePerson { idPersonType = PersonTypeId() }
             };
-        }
-
-        [Fact]
-        public void ListClients_OnlyActiveClients_WithoutPasswordOrUsers()
-        {
-            string clientDoc = SqlTestHelper.NewTag();
-            string userDoc = SqlTestHelper.NewTag();
-            int clientId = 0, userId = 0;
-            try
-            {
-                // A client (person_type_id = 4) and a non-client (whatever PersonTypeId() returns,
-                // which is a system role, not Cliente).
-                var client = NewPerson(clientDoc, "hash-should-not-come-back");
-                client.oPersonType = new TypePerson { idPersonType = 4 };
-                clientId = Repository.Register(client);
-                userId = Repository.Register(NewPerson(userDoc));
-
-                var clients = Repository.ListClients();
-                Person listed = clients.SingleOrDefault(p => p.idPerson == clientId);
-                Assert.NotNull(listed);
-                Assert.True(string.IsNullOrEmpty(listed.password)); // password column not selected
-                Assert.DoesNotContain(clients, p => p.idPerson == userId);
-
-                // Soft-deleting the client drops it from the list.
-                SqlTestHelper.ExecuteNonQuery("UPDATE person SET status = 0 WHERE id = @id", new SqlParameter("@id", clientId));
-                Assert.DoesNotContain(Repository.ListClients(), p => p.idPerson == clientId);
-            }
-            finally
-            {
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number IN (@a, @b)",
-                    new SqlParameter("@a", clientDoc), new SqlParameter("@b", userDoc));
-            }
         }
 
         [Fact]
@@ -126,51 +94,6 @@ namespace PharmacySystem.Tests.Integration
 
                 Assert.True(result);
                 Assert.Equal("Updated name", Repository.GetByDocument(document).name);
-            }
-            finally
-            {
-                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
-            }
-        }
-
-        [Fact]
-        public void FiscalProfile_RoundTripsThroughRegisterAndUpdate()
-        {
-            string document = SqlTestHelper.NewTag();
-            Person toRegister = NewPerson(document);
-            toRegister.businessName = "Comercial Ejemplo SpA";
-            toRegister.activity = "Venta al por menor";
-            toRegister.commune = "Providencia";
-            toRegister.email = "contacto@ejemplo.cl";
-            toRegister.isCompany = true;
-
-            Repository.Register(toRegister);
-
-            try
-            {
-                Person stored = Repository.GetByDocument(document);
-                Assert.Equal("Comercial Ejemplo SpA", stored.businessName);
-                Assert.Equal("Venta al por menor", stored.activity);
-                Assert.Equal("Providencia", stored.commune);
-                Assert.Equal("contacto@ejemplo.cl", stored.email);
-                Assert.True(stored.isCompany);
-
-                stored.businessName = "Otra Razon Ltda";
-                stored.activity = "Servicios";
-                stored.commune = "Nunoa";
-                stored.email = "nuevo@ejemplo.cl";
-                stored.isCompany = false;
-                stored.oPersonType = new TypePerson { idPersonType = PersonTypeId() };
-
-                bool updated = Repository.Update(stored);
-                Assert.True(updated);
-
-                Person reread = Repository.GetByDocument(document);
-                Assert.Equal("Otra Razon Ltda", reread.businessName);
-                Assert.Equal("Servicios", reread.activity);
-                Assert.Equal("Nunoa", reread.commune);
-                Assert.Equal("nuevo@ejemplo.cl", reread.email);
-                Assert.False(reread.isCompany);
             }
             finally
             {
@@ -296,42 +219,6 @@ namespace PharmacySystem.Tests.Integration
             {
                 SqlTestHelper.ExecuteNonQuery("UPDATE person SET status = 1 WHERE id = 1");
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @d", new SqlParameter("@d", document));
-            }
-        }
-
-        [Fact]
-        public void ListClientsPaged_SlicesTheResult_ReportsTheTotal_AndFiltersBySearch()
-        {
-            string tag = SqlTestHelper.NewTag();
-            var docs = new System.Collections.Generic.List<string>();
-
-            try
-            {
-                for (int i = 0; i < 6; i++)
-                {
-                    string doc = SqlTestHelper.NewTag();
-                    docs.Add(doc);
-                    var client = NewPerson(doc, "hash");
-                    client.name = tag + " client " + i;
-                    client.oPersonType = new TypePerson { idPersonType = 4 };
-                    Repository.Register(client);
-                }
-
-                PagedResult<Person> page1 = Repository.ListClientsPaged(1, 4, tag);
-                Assert.Equal(6, page1.TotalCount);
-                Assert.Equal(4, page1.Items.Count);
-                Assert.Equal(2, page1.TotalPages);
-                Assert.All(page1.Items, p => Assert.True(string.IsNullOrEmpty(p.password)));
-
-                Assert.Equal(2, Repository.ListClientsPaged(2, 4, tag).Items.Count);
-                Assert.Equal(0, Repository.ListClientsPaged(1, 10, "absent-" + tag).TotalCount);
-            }
-            finally
-            {
-                foreach (string doc in docs)
-                {
-                    SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @d", new SqlParameter("@d", doc));
-                }
             }
         }
     }
