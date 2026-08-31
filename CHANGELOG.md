@@ -4,6 +4,14 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 
 ## [Sin publicar]
 
+### Cambiado
+
+- **Los reportes ya no congelan la ventana.** Consultar un reporte (ventas,
+  compras, productos, historial de alertas) corre en segundo plano: mientras
+  dura, los botones de consulta quedan deshabilitados y el cursor pasa a
+  "ocupado", pero la ventana sigue respondiendo. El resto del acceso a datos
+  sigue siendo sincrónico.
+
 ### Añadido
 
 - **Anulación parcial de venta.** La nota de crédito dejó de anular siempre la

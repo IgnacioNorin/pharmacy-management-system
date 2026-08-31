@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PharmacySystem
@@ -82,35 +83,54 @@ namespace PharmacySystem
             cbocategory.SelectedIndex = 0;
         }
 
-        public void SetSaleReport(ReportDefinition<SaleReportRow> definition, ReportResult<SaleReportRow> result)
+        // The presenter runs OnConsult* on a background thread now (RunConsult), so these calls
+        // can arrive off the UI thread - marshal the grid/label writes back before touching them.
+        public void SetSaleReport(ReportDefinition<SaleReportRow> definition, ReportResult<SaleReportRow> result) => RunOnUi(() =>
         {
             _saleDefinition = definition;
             _saleResult = result;
             dgdatasale.DataSource = BuildTable(definition, result);
             lblSaleTotals.Text = TotalsCaption(definition, result);
-        }
+        });
 
-        public void SetPurchaseReport(ReportDefinition<PurchaseReportRow> definition, ReportResult<PurchaseReportRow> result)
+        public void SetPurchaseReport(ReportDefinition<PurchaseReportRow> definition, ReportResult<PurchaseReportRow> result) => RunOnUi(() =>
         {
             _purchaseDefinition = definition;
             _purchaseResult = result;
             dgdatapurchase.DataSource = BuildTable(definition, result);
             lblPurchaseTotals.Text = TotalsCaption(definition, result);
-        }
+        });
 
-        public void SetProductReport(ReportDefinition<ProductReportRow> definition, ReportResult<ProductReportRow> result)
+        public void SetProductReport(ReportDefinition<ProductReportRow> definition, ReportResult<ProductReportRow> result) => RunOnUi(() =>
         {
             _productDefinition = definition;
             _productResult = result;
             dgdataproduct.DataSource = BuildTable(definition, result);
             lblProductTotals.Text = TotalsCaption(definition, result);
-        }
+        });
 
-        public void SetAlertHistoryReport(ReportDefinition<ProductAlertHistoryEntry> definition, ReportResult<ProductAlertHistoryEntry> result)
+        public void SetAlertHistoryReport(ReportDefinition<ProductAlertHistoryEntry> definition, ReportResult<ProductAlertHistoryEntry> result) => RunOnUi(() =>
         {
             _alertHistoryDefinition = definition;
             _alertHistoryResult = result;
             dgdataalerthistory.DataSource = BuildTable(definition, result);
+        });
+
+        // Runs action on the UI thread. Used because the report consult runs on a thread-pool
+        // thread; a report window closed mid-run just drops the late result.
+        private void RunOnUi(Action action)
+        {
+            if (IsDisposed || !IsHandleCreated) return;
+            if (InvokeRequired)
+            {
+                try { Invoke(action); }
+                catch (ObjectDisposedException) { }
+                catch (InvalidOperationException) { }
+            }
+            else
+            {
+                action();
+            }
         }
 
         #endregion
@@ -298,15 +318,17 @@ namespace PharmacySystem
             }
         }
 
-        // A failed consult must surface as a logged error and a message, never a silent no-op or
-        // a frozen window.
-        private void RunConsult(Action consult)
+        // Runs the consult off the UI thread so a slow date range does not freeze the window.
+        // A failure surfaces as a logged error and a message, never a silent no-op. The consult
+        // buttons are disabled while it runs so it cannot be launched twice.
+        private async void RunConsult(Action consult)
         {
+            SetConsultButtonsEnabled(false);
             Cursor previous = Cursor.Current;
             Cursor.Current = Cursors.WaitCursor;
             try
             {
-                consult();
+                await Task.Run(consult);
             }
             catch (Exception ex)
             {
@@ -317,7 +339,16 @@ namespace PharmacySystem
             finally
             {
                 Cursor.Current = previous;
+                SetConsultButtonsEnabled(true);
             }
+        }
+
+        private void SetConsultButtonsEnabled(bool enabled)
+        {
+            btnConsultSale.Enabled = enabled;
+            btnConsultPurchase.Enabled = enabled;
+            btnConsultProduct.Enabled = enabled;
+            btnConsultAlertHistory.Enabled = enabled;
         }
 
         private void ChangeMaxDate(params DateTimePicker[] camps)
