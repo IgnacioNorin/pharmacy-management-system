@@ -24,6 +24,7 @@ namespace PharmacySystem.Presentation
         private readonly IProductService _productService;
         private readonly ICategoryService _categoryService;
         private readonly CurrentUser _currentUser;
+        private readonly ISecurityAudit _audit;
 
         private const int PageSize = PagedResult<Product>.DefaultPageSize;
 
@@ -31,13 +32,16 @@ namespace PharmacySystem.Presentation
         private int _totalPages = 1;
         private string _search = string.Empty;
 
-        public ProductManagementPresenter(IProductManagementView view, IProductService productService, ICategoryService categoryService, CurrentUser currentUser)
+        public ProductManagementPresenter(IProductManagementView view, IProductService productService, ICategoryService categoryService, CurrentUser currentUser, ISecurityAudit audit)
         {
             _view = view;
             _productService = productService;
             _categoryService = categoryService;
             _currentUser = currentUser;
+            _audit = audit;
         }
+
+        private int ActorId => _currentUser?.PersonId ?? 0;
 
         public void OnLoad()
         {
@@ -110,10 +114,12 @@ namespace PharmacySystem.Presentation
 
             if (product.idProduct == 0)
             {
-                if (_productService.Register(product) == 0)
+                int newId = _productService.Register(product);
+                if (newId == 0)
                 {
                     return;
                 }
+                _audit.Record(ActorId, "product.create", "product", newId, $"'{product.name}' (código {product.code})");
             }
             else
             {
@@ -121,6 +127,7 @@ namespace PharmacySystem.Presentation
                 {
                     return;
                 }
+                _audit.Record(ActorId, "product.update", "product", product.idProduct, $"'{product.name}' (código {product.code})");
             }
 
             _view.ClearForm();
@@ -151,6 +158,7 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
+            _audit.Record(ActorId, "product.delete", "product", _view.ProductId, $"'{_view.Name}' (código {_view.Code})");
             _view.ClearForm();
             LoadPage(_page);
         }

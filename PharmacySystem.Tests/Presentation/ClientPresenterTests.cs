@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using Xunit;
@@ -8,13 +9,28 @@ namespace PharmacySystem.Tests.Presentation
     public class ClientPresenterTests
     {
         private static ClientPresenter CreatePresenter(FakeClientView view, FakeClientService service)
-            => new ClientPresenter(view, service, TestUser.With("clientes.gestionar"));
+            => new ClientPresenter(view, service, TestUser.With("clientes.gestionar"), new FakeSecurityAudit());
+
+        [Fact]
+        public void OnSave_And_OnDelete_AreAudited()
+        {
+            var audit = new FakeSecurityAudit();
+            var createView = new FakeClientView { PersonId = 0, Document = "12.3", Name = "Clínica Andes", Address = "A", Phone = "9" };
+            new ClientPresenter(createView, new FakeClientService { RegisterResult = 5 }, TestUser.With("clientes.gestionar"), audit).OnSave();
+
+            var deleteView = new FakeClientView { SelectedIndex = 2, PersonId = 5, Name = "Clínica Andes", Document = "12.3" };
+            new ClientPresenter(deleteView, new FakeClientService { DeleteResult = true }, TestUser.With("clientes.gestionar"), audit).OnDelete();
+
+            Assert.Equal(new[] { "client.create", "client.delete" }, audit.Recorded.Select(e => e.Action));
+            Assert.Equal(5, audit.Recorded[0].EntityId);
+            Assert.Contains("Clínica Andes", audit.Recorded[0].Summary);
+        }
 
         [Fact]
         public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotRegister()
         {
             var view = new FakeClientView { PersonId = 0, Document = "1", Name = "N", Address = "A", Phone = "9" };
-            new ClientPresenter(view, new FakeClientService(), TestUser.With()).OnSave();
+            new ClientPresenter(view, new FakeClientService(), TestUser.With(), new FakeSecurityAudit()).OnSave();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
             Assert.Equal(0, view.LoadClientsCallCount);
@@ -24,7 +40,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnDelete_WithoutManagePermission_ShowsDeniedAndDoesNotRemove()
         {
             var view = new FakeClientView { SelectedIndex = 2, PersonId = 4 };
-            new ClientPresenter(view, new FakeClientService(), TestUser.With()).OnDelete();
+            new ClientPresenter(view, new FakeClientService(), TestUser.With(), new FakeSecurityAudit()).OnDelete();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
             Assert.Equal(0, view.LoadClientsCallCount);

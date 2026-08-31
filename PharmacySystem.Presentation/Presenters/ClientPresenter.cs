@@ -18,6 +18,7 @@ namespace PharmacySystem.Presentation
         private readonly IClientView _view;
         private readonly IClientService _service;
         private readonly CurrentUser _currentUser;
+        private readonly ISecurityAudit _audit;
 
         private const int PageSize = PagedResult<Client>.DefaultPageSize;
 
@@ -25,14 +26,16 @@ namespace PharmacySystem.Presentation
         private int _totalPages = 1;
         private string _search = string.Empty;
 
-        public ClientPresenter(IClientView view, IClientService service, CurrentUser currentUser)
+        public ClientPresenter(IClientView view, IClientService service, CurrentUser currentUser, ISecurityAudit audit)
         {
             _view = view;
             _service = service;
             _currentUser = currentUser;
+            _audit = audit;
         }
 
         private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
+        private int ActorId => _currentUser?.PersonId ?? 0;
 
         public void OnLoad() => LoadPage(1);
 
@@ -103,12 +106,14 @@ namespace PharmacySystem.Presentation
                 isCompany = _view.IsCompany
             };
 
-            bool result = client.idClient == 0
-                ? _service.Register(client) != 0
-                : _service.Update(client);
+            bool isNew = client.idClient == 0;
+            int newId = isNew ? _service.Register(client) : 0;
+            bool result = isNew ? newId != 0 : _service.Update(client);
 
             if (result)
             {
+                _audit.Record(ActorId, isNew ? "client.create" : "client.update", "client",
+                    isNew ? newId : client.idClient, $"'{client.name}' (doc {client.document})");
                 _view.ClearForm();
                 LoadPage(_page);
             }
@@ -138,6 +143,7 @@ namespace PharmacySystem.Presentation
 
             if (_service.Delete(_view.PersonId))
             {
+                _audit.Record(ActorId, "client.delete", "client", _view.PersonId, $"'{_view.Name}' (doc {_view.Document})");
                 _view.ClearForm();
                 LoadPage(_page);
             }

@@ -16,15 +16,18 @@ namespace PharmacySystem.Presentation
         private readonly ICategoryManagementView _view;
         private readonly ICategoryService _service;
         private readonly CurrentUser _currentUser;
+        private readonly ISecurityAudit _audit;
 
-        public CategoryManagementPresenter(ICategoryManagementView view, ICategoryService service, CurrentUser currentUser)
+        public CategoryManagementPresenter(ICategoryManagementView view, ICategoryService service, CurrentUser currentUser, ISecurityAudit audit)
         {
             _view = view;
             _service = service;
             _currentUser = currentUser;
+            _audit = audit;
         }
 
         private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
+        private int ActorId => _currentUser?.PersonId ?? 0;
 
         public void OnLoad()
         {
@@ -59,6 +62,7 @@ namespace PharmacySystem.Presentation
                 result = id != 0;
                 if (result)
                 {
+                    _audit.Record(ActorId, "category.create", "category", id, $"'{category.description}'");
                     _view.AddRow(new CategoryRow { Id = id, Description = category.description });
                 }
             }
@@ -67,6 +71,7 @@ namespace PharmacySystem.Presentation
                 result = _service.Update(category);
                 if (result)
                 {
+                    _audit.Record(ActorId, "category.update", "category", category.IdCategory, $"'{category.description}'");
                     _view.ReplaceRow(_view.SelectedIndex - 1, new CategoryRow { Id = category.IdCategory, Description = category.description });
                 }
             }
@@ -106,6 +111,7 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
+            _audit.Record(ActorId, "category.delete", "category", _view.CategoryId, $"'{_view.Description}'");
             RefreshProductCategoryOptions();
             _view.RemoveRow(_view.SelectedIndex - 1);
             _view.ClearForm();

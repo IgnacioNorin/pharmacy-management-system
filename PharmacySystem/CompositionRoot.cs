@@ -37,7 +37,7 @@ namespace PharmacySystem
         #region Supplier
 
         public static SupplierPresenter CreateSupplierPresenter(ISupplierView view) =>
-            new SupplierPresenter(view, _supplierService, MainForm.Session);
+            new SupplierPresenter(view, _supplierService, MainForm.Session, _securityAudit);
 
         public static SupplierPickerPresenter CreateSupplierPickerPresenter(ISupplierPickerView view) =>
             new SupplierPickerPresenter(view, _supplierService);
@@ -47,7 +47,7 @@ namespace PharmacySystem
         #region Person (client / user / login)
 
         public static ClientPresenter CreateClientPresenter(IClientView view) =>
-            new ClientPresenter(view, _clientService, MainForm.Session);
+            new ClientPresenter(view, _clientService, MainForm.Session, _securityAudit);
 
         public static UserPresenter CreateUserPresenter(IUserView view) =>
             new UserPresenter(view, _personService, MainForm.Session, _permissionService, _passwordChangeService, _authService, _securityAudit);
@@ -69,10 +69,10 @@ namespace PharmacySystem
             new ProductPickerPresenter(view, _productService, origin);
 
         public static CategoryManagementPresenter CreateCategoryManagementPresenter(ICategoryManagementView view) =>
-            new CategoryManagementPresenter(view, _categoryService, MainForm.Session);
+            new CategoryManagementPresenter(view, _categoryService, MainForm.Session, _securityAudit);
 
         public static ProductManagementPresenter CreateProductManagementPresenter(IProductManagementView view) =>
-            new ProductManagementPresenter(view, _productService, _categoryService, MainForm.Session);
+            new ProductManagementPresenter(view, _productService, _categoryService, MainForm.Session, _securityAudit);
 
         public static ProductPricePresenter CreateProductPricePresenter(IProductPriceView view) =>
             new ProductPricePresenter(view, _productService, MainForm.Session);

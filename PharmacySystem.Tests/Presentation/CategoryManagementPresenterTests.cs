@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using Xunit;
@@ -8,13 +9,28 @@ namespace PharmacySystem.Tests.Presentation
     public class CategoryManagementPresenterTests
     {
         private static CategoryManagementPresenter CreatePresenter(FakeCategoryManagementView view, FakeCategoryService service)
-            => new CategoryManagementPresenter(view, service, TestUser.With("categorias.gestionar"));
+            => new CategoryManagementPresenter(view, service, TestUser.With("categorias.gestionar"), new FakeSecurityAudit());
+
+        [Fact]
+        public void OnSave_And_OnDelete_AreAudited()
+        {
+            var audit = new FakeSecurityAudit();
+            var createView = new FakeCategoryManagementView { CategoryId = 0, Description = "Analgésicos" };
+            new CategoryManagementPresenter(createView, new FakeCategoryService { RegisterResult = 7 }, TestUser.With("categorias.gestionar"), audit).OnSave();
+
+            var deleteView = new FakeCategoryManagementView { SelectedIndex = 2, CategoryId = 7, Description = "Analgésicos" };
+            new CategoryManagementPresenter(deleteView, new FakeCategoryService { DeleteResult = true }, TestUser.With("categorias.gestionar"), audit).OnDelete();
+
+            Assert.Equal(new[] { "category.create", "category.delete" }, audit.Recorded.Select(e => e.Action));
+            Assert.Equal(7, audit.Recorded[0].EntityId);
+            Assert.Contains("Analgésicos", audit.Recorded[0].Summary);
+        }
 
         [Fact]
         public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotRegister()
         {
             var view = new FakeCategoryManagementView { CategoryId = 0, Description = "Analgesicos" };
-            new CategoryManagementPresenter(view, new FakeCategoryService(), TestUser.With()).OnSave();
+            new CategoryManagementPresenter(view, new FakeCategoryService(), TestUser.With(), new FakeSecurityAudit()).OnSave();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
             Assert.Empty(view.AddedRows);
@@ -24,7 +40,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnDelete_WithoutManagePermission_ShowsDeniedAndDoesNotRemove()
         {
             var view = new FakeCategoryManagementView { SelectedIndex = 2, CategoryId = 9 };
-            new CategoryManagementPresenter(view, new FakeCategoryService(), TestUser.With()).OnDelete();
+            new CategoryManagementPresenter(view, new FakeCategoryService(), TestUser.With(), new FakeSecurityAudit()).OnDelete();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
             Assert.Empty(view.RemovedIndexes);

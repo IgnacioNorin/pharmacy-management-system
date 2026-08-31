@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using Xunit;
@@ -12,13 +13,28 @@ namespace PharmacySystem.Tests.Presentation
     public class SupplierPresenterTests
     {
         private static SupplierPresenter CreatePresenter(FakeSupplierView view, FakeSupplierService service)
-            => new SupplierPresenter(view, service, TestUser.With("proveedores.gestionar"));
+            => new SupplierPresenter(view, service, TestUser.With("proveedores.gestionar"), new FakeSecurityAudit());
+
+        [Fact]
+        public void OnSave_And_OnDelete_AreAudited()
+        {
+            var audit = new FakeSecurityAudit();
+            var createView = new FakeSupplierView { SupplierId = 0, RowCount = 3, Document = "76.1-2", CompanyName = "Acme", Email = "a@b.cl", Phone = "9" };
+            new SupplierPresenter(createView, new FakeSupplierService { RegisterResult = 42 }, TestUser.With("proveedores.gestionar"), audit).OnSave();
+
+            var deleteView = new FakeSupplierView { SelectedIndex = 3, SupplierId = 42, CompanyName = "Acme", Document = "76.1-2" };
+            new SupplierPresenter(deleteView, new FakeSupplierService { DeleteResult = true }, TestUser.With("proveedores.gestionar"), audit).OnDelete();
+
+            Assert.Equal(new[] { "supplier.create", "supplier.delete" }, audit.Recorded.Select(e => e.Action));
+            Assert.Equal(42, audit.Recorded[0].EntityId);
+            Assert.Contains("Acme", audit.Recorded[0].Summary);
+        }
 
         [Fact]
         public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotRegister()
         {
             var view = new FakeSupplierView { SupplierId = 0, SelectedIndex = 0, RowCount = 0, Document = "1", CompanyName = "C", Email = "e@e.co", Phone = "9" };
-            new SupplierPresenter(view, new FakeSupplierService(), TestUser.With()).OnSave();
+            new SupplierPresenter(view, new FakeSupplierService(), TestUser.With(), new FakeSecurityAudit()).OnSave();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
             Assert.Equal(0, view.LoadSuppliersCallCount);
@@ -28,7 +44,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnDelete_WithoutManagePermission_ShowsDeniedAndDoesNotRemove()
         {
             var view = new FakeSupplierView { SelectedIndex = 2, SupplierId = 7 };
-            new SupplierPresenter(view, new FakeSupplierService(), TestUser.With()).OnDelete();
+            new SupplierPresenter(view, new FakeSupplierService(), TestUser.With(), new FakeSecurityAudit()).OnDelete();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
             Assert.Equal(0, view.LoadSuppliersCallCount);
