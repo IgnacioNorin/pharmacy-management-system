@@ -371,10 +371,9 @@ namespace PharmacySystem
         {
             if (!CanNavigate("bitacora.acceso")) return;
 
-            using (var modal = new ModalSecurityLog())
-            {
-                modal.ShowDialog(this);
-            }
+            // Ported to WPF (step 2). Same ISecurityLogView; the presenter now runs the query
+            // off the UI thread.
+            SecurityLogDialog.Show(Handle, CompositionRoot.CreateSecurityLogPresenter);
         }
 
         // ShowForm already calls checkNotifications() for every navigation below - each handler

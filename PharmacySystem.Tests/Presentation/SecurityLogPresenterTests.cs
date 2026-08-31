@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using PharmacySystem.Business;
 using PharmacySystem.Infrastructure;
 using PharmacySystem.Model;
@@ -17,9 +18,9 @@ namespace PharmacySystem.Tests.Presentation
             new SecurityLogPresenter(_view, _audit, user);
 
         [Fact]
-        public void OnConsult_WithoutPermission_ShowsErrorAndDoesNotQuery()
+        public async Task OnConsult_WithoutPermission_ShowsErrorAndDoesNotQuery()
         {
-            Presenter(TestUser.With()).OnConsult();
+            await Presenter(TestUser.With()).OnConsultAsync();
 
             Assert.Null(_view.ShownEvents);
             Assert.False(string.IsNullOrEmpty(_view.ShownError));
@@ -27,7 +28,7 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void OnConsult_WithPermission_ShowsEventsForTheSelectedRange()
+        public async Task OnConsult_WithPermission_ShowsEventsForTheSelectedRange()
         {
             _view.StartDate = new DateTime(2026, 8, 1);
             _view.EndDate = new DateTime(2026, 8, 30);
@@ -36,7 +37,7 @@ namespace PharmacySystem.Tests.Presentation
                 new SecurityEventRow { Action = "user.create", ActorName = "Ana" }
             };
 
-            Presenter(TestUser.With("bitacora.acceso")).OnConsult();
+            await Presenter(TestUser.With("bitacora.acceso")).OnConsultAsync();
 
             Assert.Same(_audit.Events, _view.ShownEvents);
             Assert.Equal(new DateTime(2026, 8, 1), _audit.ListedFrom);
@@ -45,11 +46,11 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
-        public void OnConsult_DataUnavailable_ShowsError()
+        public async Task OnConsult_DataUnavailable_ShowsError()
         {
             var audit = new ThrowingAudit();
 
-            new SecurityLogPresenter(_view, audit, TestUser.With("bitacora.acceso")).OnConsult();
+            await new SecurityLogPresenter(_view, audit, TestUser.With("bitacora.acceso")).OnConsultAsync();
 
             Assert.Equal(DataUnavailableException.DefaultMessage, _view.ShownError);
             Assert.Null(_view.ShownEvents);

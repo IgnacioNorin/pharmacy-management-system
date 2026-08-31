@@ -1,10 +1,15 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using PharmacySystem.Business;
 using PharmacySystem.Infrastructure;
+using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
 {
     // Read-only "Bitácora" screen: shows the security_event audit trail for the selected date
-    // range. Gated by bitacora.acceso.
+    // range. Gated by bitacora.acceso. The query runs off the caller's thread so the window
+    // stays responsive; the view inputs are read before that, on the caller's thread.
     public class SecurityLogPresenter
     {
         private readonly ISecurityLogView _view;
@@ -18,7 +23,7 @@ namespace PharmacySystem.Presentation
             _currentUser = currentUser;
         }
 
-        public void OnConsult()
+        public async Task OnConsultAsync()
         {
             if (!(_currentUser?.Can("bitacora.acceso") ?? false))
             {
@@ -26,9 +31,13 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
+            DateTime from = _view.StartDate;
+            DateTime to = _view.EndDate;
+
             try
             {
-                _view.ShowEvents(_audit.List(_view.StartDate, _view.EndDate));
+                IReadOnlyList<SecurityEventRow> events = await Task.Run(() => _audit.List(from, to));
+                _view.ShowEvents(events);
             }
             catch (DataUnavailableException ex)
             {
