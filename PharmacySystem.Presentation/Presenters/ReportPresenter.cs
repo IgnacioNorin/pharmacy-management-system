@@ -45,8 +45,8 @@ namespace PharmacySystem.Presentation
             _currentUser = currentUser;
         }
 
-        // Each report type has its own permission. frmReport already hides the tab a role cannot
-        // see; this is the fail-closed gate for the consult action behind it.
+        // Each report type has its own permission. The report window already hides the tab a role
+        // cannot see; this is the fail-closed gate for the consult action behind it.
         private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
 
         public void OnLoad()

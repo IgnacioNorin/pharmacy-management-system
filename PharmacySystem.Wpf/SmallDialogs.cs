@@ -30,6 +30,17 @@ namespace PharmacySystem.Wpf
         }
     }
 
+    public static class ReportDialog
+    {
+        public static void Show(IntPtr ownerHandle,
+            Func<IReportView, ReportPresenter> presenterFactory, ReportPermissions permissions)
+        {
+            var window = new ReportWindow(presenterFactory, permissions);
+            if (ownerHandle != IntPtr.Zero) new WindowInteropHelper(window) { Owner = ownerHandle };
+            window.ShowDialog();
+        }
+    }
+
     public static class CashCountDialog
     {
         public static void Show(IntPtr ownerHandle, Func<ICashCountView, CashCountPresenter> presenterFactory)

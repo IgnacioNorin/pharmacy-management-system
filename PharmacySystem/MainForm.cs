@@ -378,9 +378,22 @@ namespace PharmacySystem
         {
             if (!CanNavigate("reportes.acceso")) return;
 
-            frmReport childForm = new frmReport();
+            // Ported to WPF (PharmacySystem.Wpf.ReportWindow). Same IReportView; ReportPresenter
+            // unchanged. The shell resolves the per-report permissions since the WPF project can't
+            // reach MainForm.Session.
+            var reportPermissions = new ReportPermissions
+            {
+                Sales = Session?.Can("reportes.ventas") ?? false,
+                SalesExport = Session?.Can("reportes.ventas.exportar") ?? false,
+                Purchases = Session?.Can("reportes.compras") ?? false,
+                PurchasesExport = Session?.Can("reportes.compras.exportar") ?? false,
+                Products = Session?.Can("reportes.productos") ?? false,
+                ProductsExport = Session?.Can("reportes.productos.exportar") ?? false,
+                AlertHistory = Session?.Can("reportes.alertas") ?? false,
+                AlertHistoryExport = Session?.Can("reportes.alertas.exportar") ?? false
+            };
 
-            ShowForm(childForm, sender);
+            ReportDialog.Show(Handle, CompositionRoot.CreateReportPresenter, reportPermissions);
         }
 
         private void btnCashCount_Click(object sender, EventArgs e)
