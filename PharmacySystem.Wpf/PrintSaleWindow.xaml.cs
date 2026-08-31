@@ -1,9 +1,11 @@
 using System;
 using System.Drawing;
 using System.Drawing.Printing;
+using System.IO;
 using System.ServiceProcess;
 using System.Windows;
 using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.Wpf;
 using PharmacySystem.Helpers;
 using PharmacySystem.Presentation;
 
@@ -19,6 +21,7 @@ namespace PharmacySystem.Wpf
         private readonly int _saleId;
         private readonly Func<int, PrintTicketData> _dataProvider;
         private PrintTicketData _data;
+        private string _ticketHtml;
         private bool _webViewReady;
 
         public PrintSaleWindow(int saleId, Func<int, PrintTicketData> dataProvider)
@@ -26,10 +29,30 @@ namespace PharmacySystem.Wpf
             InitializeComponent();
             _saleId = saleId;
             _dataProvider = dataProvider;
+
+            // Pin the user-data folder to a writable per-user location. The WebView2 default sits
+            // next to the executable, which is read-only under "Program Files" in a real install
+            // and makes CoreWebView2 initialization fail hard. Setting it here (before the control
+            // loads) also steers the control's own implicit initialization.
+            webView.CreationProperties = new CoreWebView2CreationProperties
+            {
+                UserDataFolder = ResolveUserDataFolder()
+            };
+            webView.CoreWebView2InitializationCompleted += WebView_CoreWebView2InitializationCompleted;
+
             Loaded += PrintSaleWindow_Loaded;
         }
 
-        private async void PrintSaleWindow_Loaded(object sender, RoutedEventArgs e)
+        private static string ResolveUserDataFolder()
+        {
+            string root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string folder = Path.Combine(root, "PharmacySystem", "WebView2");
+            try { Directory.CreateDirectory(folder); }
+            catch (Exception ex) { Logger.LogError(ex); }
+            return folder;
+        }
+
+        private void PrintSaleWindow_Loaded(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -54,23 +77,39 @@ namespace PharmacySystem.Wpf
                 // The HTML fill (RECEPTOR block + NETO/IVA/EXENTO breakdown, HTML-encoded) lives
                 // in HtmlTicketBuilder so this normal-printer receipt cannot drift from the
                 // thermal one (PharmacyTicketBuilder). DEF-11 / DEF-12.
-                string html = HtmlTicketBuilder.Build(_data.HtmlTemplate, _data.Store, _data.Sale, _data.Details);
+                _ticketHtml = HtmlTicketBuilder.Build(_data.HtmlTemplate, _data.Store, _data.Sale, _data.Details);
 
-                try
-                {
-                    await webView.EnsureCoreWebView2Async(null);
-                }
-                catch (Exception initEx)
-                {
-                    Logger.LogError(initEx);
-                    MessageBox.Show(this,
-                        "No se pudo inicializar el visor del ticket. Instale el runtime de " +
-                        "Microsoft Edge WebView2 y vuelva a intentar.\n\n" + initEx.Message,
-                        "Impresión", MessageBoxButton.OK, MessageBoxImage.Error);
-                    Close();
-                    return;
-                }
+                // Kicks off (or joins) CoreWebView2 initialization; the result is handled in
+                // WebView_CoreWebView2InitializationCompleted for both this call and the control's
+                // own implicit initialization.
+                _ = webView.EnsureCoreWebView2Async(null);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex);
+                MessageBox.Show(this, "Error al cargar la venta: " + ex.Message, "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                Close();
+            }
+        }
 
+        private void WebView_CoreWebView2InitializationCompleted(
+            object sender, CoreWebView2InitializationCompletedEventArgs e)
+        {
+            if (!e.IsSuccess)
+            {
+                Logger.LogError(e.InitializationException ??
+                    new InvalidOperationException("CoreWebView2 initialization failed."));
+                MessageBox.Show(this,
+                    "No se pudo inicializar el visor del ticket. Instale el runtime de " +
+                    "Microsoft Edge WebView2 y vuelva a intentar.",
+                    "Impresión", MessageBoxButton.OK, MessageBoxImage.Error);
+                Close();
+                return;
+            }
+
+            try
+            {
                 var settings = webView.CoreWebView2.Settings;
                 settings.AreDevToolsEnabled = false;
                 settings.AreDefaultContextMenusEnabled = false;
@@ -80,12 +119,12 @@ namespace PharmacySystem.Wpf
                 _webViewReady = true;
                 // WebView2 (Chromium) always reads NavigateToString content as UTF-8, so the old
                 // Trident charset workaround is gone.
-                webView.NavigateToString(html);
+                webView.NavigateToString(_ticketHtml);
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex);
-                MessageBox.Show(this, "Error al cargar la venta: " + ex.Message, "Error",
+                MessageBox.Show(this, "Error al preparar el visor del ticket: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 Close();
             }
