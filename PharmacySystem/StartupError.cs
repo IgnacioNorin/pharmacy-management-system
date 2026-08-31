@@ -1,6 +1,6 @@
 using System;
 using System.Configuration;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using PharmacySystem.Infrastructure;
 
 namespace PharmacySystem

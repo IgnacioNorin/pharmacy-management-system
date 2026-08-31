@@ -4,6 +4,7 @@ using System.IO;
 using MigraDoc.DocumentObjectModel;
 using MigraDoc.DocumentObjectModel.Tables;
 using MigraDoc.Rendering;
+using PdfSharp.Fonts;
 using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 
@@ -14,6 +15,14 @@ namespace PharmacySystem.Presentation
     // shows them (currency with the configured symbol, dates in presentation format).
     public class PdfReportExporter : IReportExporter
     {
+        // PDFsharp 6.x does not read system fonts by default. The app is Windows-only and the
+        // report uses Arial / Courier New, so let it pull those from C:\Windows\Fonts. The flag
+        // is a safe no-op on non-Windows.
+        static PdfReportExporter()
+        {
+            GlobalFontSettings.UseWindowsFontsUnderWindows = true;
+        }
+
         public ReportExportFormat Format => ReportExportFormat.Pdf;
         public string Extension => "pdf";
         public string FilterLabel => "PDF (*.pdf)";
@@ -23,19 +32,22 @@ namespace PharmacySystem.Presentation
             int columnCount = definition.Columns.Count;
 
             var document = new Document();
-            PageSetup page = document.DefaultPageSetup;
-            page.Orientation = Orientation.Landscape;
-            page.PageFormat = PageFormat.A4;
-            page.TopMargin = Unit.FromCentimeter(1.5);
-            page.BottomMargin = Unit.FromCentimeter(1.5);
-            page.LeftMargin = Unit.FromCentimeter(1.2);
-            page.RightMargin = Unit.FromCentimeter(1.2);
 
             Style normal = document.Styles["Normal"];
             normal.Font.Name = "Arial";
             normal.Font.Size = 7;
 
             Section section = document.AddSection();
+
+            // MigraDoc 6.x freezes Document.DefaultPageSetup - page settings go on the section's
+            // own PageSetup (which starts as a clone of the default).
+            PageSetup page = section.PageSetup;
+            page.Orientation = Orientation.Landscape;
+            page.PageFormat = PageFormat.A4;
+            page.TopMargin = Unit.FromCentimeter(1.5);
+            page.BottomMargin = Unit.FromCentimeter(1.5);
+            page.LeftMargin = Unit.FromCentimeter(1.2);
+            page.RightMargin = Unit.FromCentimeter(1.2);
 
             Paragraph heading = section.AddParagraph(string.IsNullOrWhiteSpace(title) ? "Reporte" : title);
             heading.Format.Font.Size = 13;
@@ -105,7 +117,7 @@ namespace PharmacySystem.Presentation
             footer.AddText(" de ");
             footer.AddNumPagesField();
 
-            var renderer = new PdfDocumentRenderer(true) { Document = document };
+            var renderer = new PdfDocumentRenderer { Document = document };
             renderer.RenderDocument();
             renderer.PdfDocument.Save(target, false);
         }

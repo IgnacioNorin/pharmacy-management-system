@@ -3,7 +3,7 @@
   <!-- Deliberately has no reference to System.Windows.Forms: presenters and view
        interfaces must stay free of UI types so they can be unit tested without a Form. -->
   <PropertyGroup>
-    <TargetFramework>net48</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>PharmacySystem.Presentation</RootNamespace>
     <AssemblyName>PharmacySystem.Presentation</AssemblyName>
   </PropertyGroup>
@@ -13,12 +13,12 @@
     <ProjectReference Include="..\PharmacySystem.Business\PharmacySystem.Business.csproj" />
   </ItemGroup>
 
-  <!-- Report exporters (CSV needs nothing; XLSX uses ClosedXML; PDF uses the GDI build of
-       PDFsharp/MigraDoc, which is fully managed - no native binaries to package). None of
-       these pull in a UI type, so the project stays unit-testable without a Form. -->
+  <!-- Report exporters: CSV needs nothing; XLSX uses ClosedXML; PDF uses PDFsharp/MigraDoc 6.x
+       (cross-platform, fully managed - the old separate -GDI package is gone). Neither pulls in
+       a UI type, so the project stays unit-testable without a Form. -->
   <ItemGroup>
-    <PackageReference Include="ClosedXML" Version="0.95.4" />
-    <PackageReference Include="PDFsharp-MigraDoc-GDI" Version="1.50.5147" />
+    <PackageReference Include="ClosedXML" Version="0.104.2" />
+    <PackageReference Include="PDFsharp-MigraDoc" Version="6.2.0" />
   </ItemGroup>
 
 </Project>

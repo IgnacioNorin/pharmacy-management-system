@@ -57,10 +57,7 @@ namespace PharmacySystem.Helpers
 
         private static byte[] DeriveKey(string password, byte[] salt, int iterations)
         {
-            using (Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256))
-            {
-                return pbkdf2.GetBytes(HashSize);
-            }
+            return Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, HashSize);
         }
 
         private static bool FixedTimeEquals(byte[] a, byte[] b)
