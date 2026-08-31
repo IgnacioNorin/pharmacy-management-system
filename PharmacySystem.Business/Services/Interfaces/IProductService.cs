@@ -13,6 +13,8 @@ namespace PharmacySystem.Business
         List<Product> ListSellable();
         Product GetSellableByCode(string code);
         Product GetSellableById(int idProduct);
+        Product GetByCode(string code);
+        Product GetById(int idProduct);
         bool Verify(int idProduct);
         bool Delete(int idProduct);
         List<ProductReportRow> Report(string categoryId);

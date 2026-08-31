@@ -33,6 +33,10 @@ namespace PharmacySystem.Business
 
         public Product GetSellableById(int idProduct) => _repository.GetSellableById(idProduct);
 
+        public Product GetByCode(string code) => _repository.GetByCode(code);
+
+        public Product GetById(int idProduct) => _repository.GetById(idProduct);
+
         public bool Verify(int idProduct) => _repository.Verify(idProduct);
 
         public bool Delete(int idProduct) => _repository.Delete(idProduct);

@@ -459,9 +459,11 @@ CREATE TABLE [dbo].[product_alert_history](
     [acknowledged_by] [int] NULL,
     [acknowledged_at] [datetime] NULL,
     [muted_at] [datetime] NULL,
+    [muted_by] [int] NULL,
     CONSTRAINT [PK_product_alert_history] PRIMARY KEY CLUSTERED ([id] ASC),
     CONSTRAINT [FK_product_alert_history_product] FOREIGN KEY ([product_id]) REFERENCES [dbo].[product] ([id]),
-    CONSTRAINT [FK_product_alert_history_person] FOREIGN KEY ([acknowledged_by]) REFERENCES [dbo].[person] ([id])
+    CONSTRAINT [FK_product_alert_history_person] FOREIGN KEY ([acknowledged_by]) REFERENCES [dbo].[person] ([id]),
+    CONSTRAINT [FK_product_alert_history_muted_by] FOREIGN KEY ([muted_by]) REFERENCES [dbo].[person] ([id])
 )
 GO
 

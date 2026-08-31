@@ -242,7 +242,7 @@ namespace PharmacySystem
 
             bool ok = currentlyMuted
                 ? _notificationService.UnmuteAlert(historyId.Value)
-                : _notificationService.MuteAlert(historyId.Value);
+                : _notificationService.MuteAlert(historyId.Value, _currentPersonId);
 
             if (ok)
             {

@@ -177,30 +177,41 @@ namespace PharmacySystem.Tests.Integration
         }
 
         [Fact]
-        public void Mute_ThenUnmute_RoundTripsMutedAt()
+        public void Mute_ThenUnmute_RoundTripsMutedAtAndMutedBy()
         {
             int categoryId = CreateCategory();
             int productId = CreateProduct(categoryId);
+            int personId = CreatePerson();
             int historyId = Repository.Insert(productId, AlertType.Stock, AlertSeverity.Critical, 0m);
 
             try
             {
-                bool muted = Repository.Mute(historyId);
+                bool muted = Repository.Mute(historyId, personId);
                 Assert.True(muted);
                 var entry = Assert.Single(Repository.GetOpenAlerts(), o => o.Id == historyId);
                 Assert.NotNull(entry.MutedAt);
+                Assert.Equal(personId, MutedBy(historyId));
 
                 bool unmuted = Repository.Unmute(historyId);
                 Assert.True(unmuted);
                 entry = Assert.Single(Repository.GetOpenAlerts(), o => o.Id == historyId);
                 Assert.Null(entry.MutedAt);
+                Assert.Null(MutedBy(historyId));
             }
             finally
             {
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product_alert_history WHERE id = @id", new SqlParameter("@id", historyId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE id = @id", new SqlParameter("@id", personId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
             }
+        }
+
+        private static int? MutedBy(int historyId)
+        {
+            object raw = SqlTestHelper.ExecuteScalar(
+                "SELECT muted_by FROM product_alert_history WHERE id = @id", new SqlParameter("@id", historyId));
+            return raw == null || raw == DBNull.Value ? (int?)null : Convert.ToInt32(raw);
         }
 
         [Fact]
@@ -208,19 +219,22 @@ namespace PharmacySystem.Tests.Integration
         {
             int categoryId = CreateCategory();
             int productId = CreateProduct(categoryId);
+            int personId = CreatePerson();
             int historyId = Repository.Insert(productId, AlertType.Stock, AlertSeverity.Low, 3m);
 
             try
             {
-                Repository.Mute(historyId);
+                Repository.Mute(historyId, personId);
                 Repository.UpdateSeverity(historyId, AlertSeverity.Critical, 0m);
 
                 var entry = Assert.Single(Repository.GetOpenAlerts(), o => o.Id == historyId);
                 Assert.Null(entry.MutedAt);
+                Assert.Null(MutedBy(historyId));
             }
             finally
             {
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product_alert_history WHERE id = @id", new SqlParameter("@id", historyId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE id = @id", new SqlParameter("@id", personId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
                 SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
             }

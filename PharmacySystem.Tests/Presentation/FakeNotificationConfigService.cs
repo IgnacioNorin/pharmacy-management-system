@@ -58,11 +58,13 @@ namespace PharmacySystem.Tests.Presentation
         public bool MuteAlertResult { get; set; } = true;
         public bool UnmuteAlertResult { get; set; } = true;
         public int? MutedHistoryId { get; private set; }
+        public int? MutedByPersonId { get; private set; }
         public int? UnmutedHistoryId { get; private set; }
 
-        public bool MuteAlert(int historyId)
+        public bool MuteAlert(int historyId, int personId)
         {
             MutedHistoryId = historyId;
+            MutedByPersonId = personId;
             return MuteAlertResult;
         }
 
