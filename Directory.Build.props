@@ -1,0 +1,12 @@
+<Project>
+
+  <!-- Ajustes compartidos por todos los proyectos de la solución. Un .csproj puede sobrescribir
+       cualquiera de estas propiedades localmente. -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+</Project>

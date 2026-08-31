@@ -5,7 +5,6 @@
     <UseWPF>true</UseWPF>
     <RootNamespace>PharmacySystem.Wpf</RootNamespace>
     <AssemblyName>PharmacySystem.Wpf</AssemblyName>
-    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,7 +15,7 @@
        check (System.ServiceProcess.ServiceController). System.Printing and Microsoft.CSharp come
        with the WindowsDesktop SDK. -->
   <ItemGroup>
-    <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.0" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" />
   </ItemGroup>
 
 </Project>
