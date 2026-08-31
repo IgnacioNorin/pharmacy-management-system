@@ -24,8 +24,8 @@ con:
 ```
 PharmacySystem.exe            aplicación
 *.dll                         dependencias
-PharmacySystem.exe.config     configuración (sin credenciales)
-ConnectionStrings.config.example  plantilla de cadena de conexión
+appsettings.json             configuración (sin credenciales)
+appsettings.Local.json.example  plantilla de cadena de conexión
 Database\PharmacyDB.sql       esquema para instalación nueva
 Database\Migrations\          scripts de actualización
 CHANGELOG.md
@@ -64,20 +64,25 @@ de la aplicación.
 
 1. Copiar la carpeta del paquete al equipo cliente (por ejemplo
    `C:\PharmacySystem\`).
-2. Copiar `ConnectionStrings.config.example` a `ConnectionStrings.config` en la
+2. Copiar `appsettings.Local.json.example` a `appsettings.Local.json` en la
    misma carpeta que `PharmacySystem.exe` y completar servidor, base y
    credenciales:
 
-   ```xml
-   <connectionStrings>
-     <add name="connection"
-          connectionString="Server=SERVIDOR;database=PharmacyDB;User Id=pharmacy_app;Password=CLAVE;"
-          providerName="System.Data.SqlClient"/>
-   </connectionStrings>
+   ```json
+   {
+     "ConnectionStrings": {
+       "connection": "Server=SERVIDOR;Database=PharmacyDB;User Id=pharmacy_app;Password=CLAVE;TrustServerCertificate=True;"
+     }
+   }
    ```
 
+   Como alternativa, definir la variable de entorno `ConnectionStrings__connection`
+   con el mismo valor (tiene prioridad sobre el archivo).
+
    Usar el login `pharmacy_app` creado con `Database\create_app_login.sql`
-   (permisos solo sobre `PharmacyDB`). **Nunca `sa`.**
+   (permisos solo sobre `PharmacyDB`). **Nunca `sa`.** `TrustServerCertificate=True`
+   solo si el SQL Server usa un certificado autofirmado; con un certificado válido,
+   quitarlo.
 
 ## 4. Primer arranque
 
@@ -129,5 +134,5 @@ reporte un usuario.
 
 1. Backup de la base.
 2. Reemplazar los archivos de la aplicación por los del paquete nuevo,
-   conservando `ConnectionStrings.config`.
+   conservando `appsettings.Local.json`.
 3. Aplicar los scripts de `Database\Migrations\` que falten, en orden.

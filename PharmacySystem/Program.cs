@@ -45,7 +45,7 @@ namespace PharmacySystem
             catch (Exception ex)
             {
                 // A failure while building the first screen lands here, before the message loop
-                // starts: e.g. a missing ConnectionStrings.config makes CompositionRoot's static
+                // starts: e.g. a missing connection string makes CompositionRoot's static
                 // initializer throw. Without this the app would die with the bare .NET dialog.
                 Report(ex, fatal: true);
             }

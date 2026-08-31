@@ -67,31 +67,27 @@ La solución compila y corre pruebas con el CLI de `dotnet` (`dotnet build` / `d
    dotnet restore PharmacySystem.sln
    ```
 
-4. Configurar la cadena de conexión. El proyecto no usa `App.config` directamente — usa un archivo `ConnectionStrings.config` separado (ignorado por git) en cada uno de estos tres proyectos:
+4. Configurar la cadena de conexión. La configuración se lee de `appsettings.json` (versionado, con la entrada vacía), luego `appsettings.Local.json` (ignorado por git, valores reales de desarrollo) y por último la variable de entorno `ConnectionStrings__connection` (CI / despliegue).
 
-   - `PharmacySystem/ConnectionStrings.config`
-   - `PharmacySystem.Tests/ConnectionStrings.config`
-   - `PharmacySystem.UiTests/ConnectionStrings.config`
-
-   Cada carpeta tiene un archivo `ConnectionStrings.config.example` de plantilla. Copiar cada uno a `ConnectionStrings.config` (mismo directorio, sin el `.example`) y completar las credenciales correspondientes:
+   Para desarrollo, copiar la plantilla en cada proyecto que toca la base y completar las credenciales:
 
    ```bash
-   cp PharmacySystem/ConnectionStrings.config.example PharmacySystem/ConnectionStrings.config
-   cp PharmacySystem.Tests/ConnectionStrings.config.example PharmacySystem.Tests/ConnectionStrings.config
-   cp PharmacySystem.UiTests/ConnectionStrings.config.example PharmacySystem.UiTests/ConnectionStrings.config
+   cp PharmacySystem/appsettings.Local.json.example        PharmacySystem/appsettings.Local.json
+   cp PharmacySystem.Tests/appsettings.Local.json.example  PharmacySystem.Tests/appsettings.Local.json
+   cp PharmacySystem.DbMigrator/appsettings.Local.json.example PharmacySystem.DbMigrator/appsettings.Local.json
    ```
 
-   ```xml
-   <connectionStrings>
-     <add name="connection"
-          connectionString="Server=#HereYourServer#;database=PharmacyDB;User Id=#HereYourUser#;Password=#HereYourPassword#;TrustServerCertificate=True;"
-          providerName="Microsoft.Data.SqlClient"/>
-   </connectionStrings>
+   ```json
+   {
+     "ConnectionStrings": {
+       "connection": "Server=localhost;Database=PharmacyDB;User Id=sa;Password=YOUR_PASSWORD;TrustServerCertificate=True;"
+     }
+   }
    ```
 
    `Microsoft.Data.SqlClient` cifra la conexión por defecto; `TrustServerCertificate=True` alcanza para un SQL Server local con certificado autofirmado (en producción, usar un certificado válido en vez de esa opción).
 
-   `PharmacySystem.Tests` corre pruebas de integración reales contra esta base (limpian sus propias filas al terminar), y `PharmacySystem.UiTests` solo necesita que el archivo exista y esté bien formado — no ejecuta consultas reales.
+   `PharmacySystem.Tests` corre pruebas de integración reales contra esta base (limpian sus propias filas al terminar). El resto de las pruebas no toca la base y no necesita `appsettings.Local.json`.
 
 5. Compilar y ejecutar:
 

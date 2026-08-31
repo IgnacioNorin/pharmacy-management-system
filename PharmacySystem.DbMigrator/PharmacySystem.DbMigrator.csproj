@@ -10,7 +10,9 @@
   <ItemGroup>
     <PackageReference Include="dbup-sqlserver" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,6 +21,11 @@
     <EmbeddedResource Include="..\Database\Migrations\*.sql">
       <Link>Migrations\%(Filename)%(Extension)</Link>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('appsettings.json')" />
+    <None Update="appsettings.Local.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('appsettings.Local.json')" />
   </ItemGroup>
 
 </Project>

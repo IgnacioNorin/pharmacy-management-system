@@ -49,8 +49,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="ConnectionStrings.config" CopyToOutputDirectory="PreserveNewest" Condition="Exists('ConnectionStrings.config')" />
-    <None Update="ConnectionStrings.config.example" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="appsettings.Local.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('appsettings.Local.json')" />
   </ItemGroup>
 
 </Project>

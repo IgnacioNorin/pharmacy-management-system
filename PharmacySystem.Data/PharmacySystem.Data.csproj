@@ -9,7 +9,9 @@
   <ItemGroup>
     <PackageReference Include="Dapper" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
   </ItemGroup>
 
   <ItemGroup>

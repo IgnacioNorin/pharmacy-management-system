@@ -18,9 +18,9 @@ aplicó en `dbo.SchemaVersions`. Los scripts van embebidos en el ejecutable.
    ```
 
    La cadena también se puede tomar de la variable de entorno
-   `PHARMACY_DB_CONNECTION` o de un `ConnectionStrings.config` junto al `.exe`
-   (entrada `connection`). Código de salida `0` = OK, `1` = falló, `2` = sin
-   cadena de conexión.
+   `PHARMACY_DB_CONNECTION` o de un `appsettings.Local.json` junto al `.exe`
+   (entrada `ConnectionStrings:connection`). Código de salida `0` = OK, `1` = falló,
+   `2` = sin cadena de conexión.
 
 **Bootstrap:** si la base ya existe (tiene `dbo.person`) pero no tiene
 `dbo.SchemaVersions` —una instalación previa a esta herramienta, o una base

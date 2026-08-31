@@ -1,0 +1,5 @@
+{
+  "ConnectionStrings": {
+    "connection": "Server=localhost;Database=PharmacyDB;User Id=sa;Password=YOUR_PASSWORD;TrustServerCertificate=True;"
+  }
+}
