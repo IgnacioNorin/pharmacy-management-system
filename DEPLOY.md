@@ -5,6 +5,10 @@
 - Windows 10 / 11 (x64).
 - **.NET Desktop Runtime 10** ([descarga](https://dotnet.microsoft.com/download/dotnet/10.0)).
   No hace falta si el paquete se arma con `-SelfContained` (ver abajo).
+- **Runtime de Microsoft Edge WebView2** (para la vista previa e impresión del
+  ticket). Ya viene con Windows 11 y con Microsoft Edge; en equipos sin él,
+  instalar el "Evergreen Bootstrapper" desde
+  <https://developer.microsoft.com/microsoft-edge/webview2/>.
 - Acceso de red a una instancia de **SQL Server 2019 o superior** (puede ser
   local en el mismo equipo).
 

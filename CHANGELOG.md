@@ -6,6 +6,18 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 
 ### Cambiado
 
+- **Impresión del ticket con Microsoft Edge WebView2.** La pantalla de impresión
+  dejó de usar el control `WebBrowser` (motor Internet Explorer / Trident, en
+  retiro) y renderiza el ticket en WebView2 (Chromium). La impresión abre el
+  diálogo del navegador, con vista previa y todas las impresoras instaladas
+  (incluida "Microsoft Print to PDF"). El equipo cliente necesita el runtime de
+  WebView2 (viene con Windows 11 y con Edge).
+- **Configuración, logging e inyección de dependencias modernizados.** La
+  configuración se lee de `appsettings.json` / `appsettings.Local.json` /
+  variables de entorno (antes `App.config` + `ConnectionStrings.config`). El
+  registro de errores enruta por `Microsoft.Extensions.Logging` (Serilog). El
+  grafo de servicios y repositorios se arma en un contenedor de inyección de
+  dependencias.
 - **Interfaz reescrita en WPF.** Toda la UI pasó de Windows Forms a WPF, pantalla
   por pantalla detrás de las mismas interfaces `IView`; las capas de dominio,
   datos, negocio y presentación no cambiaron. Ya no queda ningún formulario de
