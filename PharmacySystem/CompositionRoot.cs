@@ -126,6 +126,13 @@ namespace PharmacySystem
 
         #endregion
 
+        #region Security log
+
+        public static SecurityLogPresenter CreateSecurityLogPresenter(ISecurityLogView view) =>
+            new SecurityLogPresenter(view, _securityAudit, MainForm.Session);
+
+        #endregion
+
         #region Permissions / session
 
         // Resolves the logged-in user's permission set from their role. Built once, right after

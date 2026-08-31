@@ -50,6 +50,7 @@ namespace PharmacySystem
             this.lblGroupConsulta = new System.Windows.Forms.Label();
             this.btnReports = new System.Windows.Forms.Button();
             this.btnCashCount = new System.Windows.Forms.Button();
+            this.btnAuditLog = new System.Windows.Forms.Button();
             this.btnAlerts = new System.Windows.Forms.Button();
             this.lblAlertBadge = new System.Windows.Forms.Label();
             this.pnlSidebarHeader = new System.Windows.Forms.Panel();
@@ -192,6 +193,7 @@ namespace PharmacySystem
             // items show depends on ApplySidebarPermissions.
             this.pnlSidebarItems.Controls.Add(this.btnAlerts);
             this.pnlSidebarItems.Controls.Add(this.btnCashCount);
+            this.pnlSidebarItems.Controls.Add(this.btnAuditLog);
             this.pnlSidebarItems.Controls.Add(this.btnReports);
             this.pnlSidebarItems.Controls.Add(this.lblGroupConsulta);
             this.pnlSidebarItems.Controls.Add(this.btnRoles);
@@ -452,6 +454,26 @@ namespace PharmacySystem
             this.btnCashCount.UseVisualStyleBackColor = false;
             this.btnCashCount.Click += new System.EventHandler(this.btnCashCount_Click);
             //
+            // btnAuditLog
+            //
+            this.btnAuditLog.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(37)))), ((int)(((byte)(69)))));
+            this.btnAuditLog.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnAuditLog.FlatAppearance.BorderSize = 0;
+            this.btnAuditLog.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnAuditLog.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
+            this.btnAuditLog.ForeColor = System.Drawing.Color.White;
+            this.btnAuditLog.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnAuditLog.Location = new System.Drawing.Point(10, 530);
+            this.btnAuditLog.Name = "btnAuditLog";
+            this.btnAuditLog.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
+            this.btnAuditLog.Size = new System.Drawing.Size(190, 40);
+            this.btnAuditLog.TabIndex = 12;
+            this.btnAuditLog.Text = "        Bitácora";
+            this.btnAuditLog.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnAuditLog.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
+            this.btnAuditLog.UseVisualStyleBackColor = false;
+            this.btnAuditLog.Click += new System.EventHandler(this.btnAuditLog_Click);
+            //
             // btnAlerts
             //
             this.btnAlerts.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(37)))), ((int)(((byte)(69)))));
@@ -637,6 +659,7 @@ namespace PharmacySystem
         private System.Windows.Forms.Label lblGroupConsulta;
         private System.Windows.Forms.Button btnReports;
         private System.Windows.Forms.Button btnCashCount;
+        private System.Windows.Forms.Button btnAuditLog;
         private System.Windows.Forms.Button btnAlerts;
         private System.Windows.Forms.Label lblAlertBadge;
         private System.Windows.Forms.Panel pnlSidebarHeader;

@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Linq;
 using Dapper;
 using PharmacySystem.Helpers;
 using PharmacySystem.Infrastructure;
+using PharmacySystem.Model;
 
 namespace PharmacySystem.Data
 {
@@ -50,6 +53,35 @@ namespace PharmacySystem.Data
                 {
                     // Never let an audit-write failure block the operation that triggered it.
                     Logger.LogError(ex);
+                }
+            }
+        }
+
+        public List<SecurityEventRow> List(DateTime from, DateTime to, int max)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    string sql =
+                        "SELECT TOP (@max) e.at AS At, ISNULL(p.name, '') AS ActorName, e.action AS Action, " +
+                        "e.entity AS Entity, e.entity_id AS EntityId, e.summary AS Summary, e.station AS Station " +
+                        "FROM security_event e LEFT JOIN person p ON p.id = e.actor_id " +
+                        "WHERE e.at >= @from AND e.at < DATEADD(DAY, 1, @to) " +
+                        "ORDER BY e.at DESC, e.id DESC";
+
+                    return oConnection.Query<SecurityEventRow>(sql,
+                        new { from = from.Date, to = to.Date, max }).ToList();
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return new List<SecurityEventRow>();
                 }
             }
         }

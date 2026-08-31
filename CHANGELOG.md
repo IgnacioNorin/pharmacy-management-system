@@ -12,10 +12,14 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
   (`rol Empleado: +ventas.acceso, −reportes.acceso`), alta / renombre / baja de
   roles; alta / edición (con el cambio de rol) / baja de usuarios; edición de los
   datos de la tienda; edición de la configuración de alertas; y el alta / edición
-  / baja de productos, categorías, clientes y proveedores. Por ahora se consulta
-  directo en la base; una pantalla dedicada queda para más adelante. Los rastros
+  / baja de productos, categorías, clientes y proveedores. Los rastros
   existentes (`login_attempt`, historial de precios, historial de alertas) se
   mantienen aparte.
+- **Pantalla "Bitácora".** Nueva opción en la barra lateral (grupo Consulta),
+  bajo el permiso `bitacora.acceso` (migración `033`; roles Administrador General
+  y Administrador). Muestra los registros de `security_event` de un rango de
+  fechas, del más reciente al más antiguo (hasta 1000 filas): fecha y hora,
+  usuario, acción, entidad, id y detalle. Es solo de lectura.
 - **Límite de intentos de inicio de sesión.** Tras 5 intentos fallidos con el
   mismo documento en 15 minutos, la cuenta queda bloqueada temporalmente y el
   login informa cuántos minutos faltan para poder reintentar. El bloqueo se

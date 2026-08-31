@@ -76,6 +76,7 @@ fijan al inicio; `sqlcmd` por defecto los deja en `OFF`).
 | `030_purchase_vat_breakdown.sql` | 1.2.0 | 1.2.0 (agrega `purchase.net_amount` / `tax_amount` / `exempt_amount` / `tax_rate`; el precio de compra se ingresa con IVA incluido y el neto se descuenta hacia atrás; backfill de los comprobantes previos como afectos al 19 %) |
 | `031_login_hardening.sql` | 1.4.0 | 1.4.0 (agrega `person.must_change_password` y la tabla `login_attempt` + índice + `sp_purge_login_attempts`; el bloqueo por intentos fallidos se deriva de `login_attempt` (5 fallos / 15 min); fuerza el cambio de contraseña de la cuenta sembrada `1010101010` si aún tiene la contraseña de fábrica) |
 | `032_security_event.sql` | 1.4.0 | 1.4.0 (agrega la tabla `security_event` + índices + `sp_purge_security_event`: una fila por acción administrativa sensible — actor, acción, entidad, resumen legible; fase 1 = roles/permisos, usuarios, tienda, config de alertas) |
+| `033_bitacora_permission.sql` | 1.4.0 | 1.4.0 (agrega el permiso `bitacora.acceso` y lo concede a los roles 1 y 2; gatea la pantalla "Bitácora" que muestra `security_event`) |
 
 **No es una migración**, pero se ejecuta una vez después de crear la base:
 `Database\create_app_login.sql` crea el login `pharmacy_app` con privilegios

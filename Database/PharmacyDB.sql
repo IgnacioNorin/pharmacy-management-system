@@ -687,7 +687,8 @@ INSERT INTO [dbo].[permission] (code, section, description, parent_code) VALUES
     ('alertas.reconocer',       'alertas',     'Reconocer alertas de inventario',          'alertas.acceso'),
     ('alertas.silenciar',       'alertas',     'Silenciar alertas puntuales',              'alertas.acceso'),
     ('alertas.configurar',      'alertas',     'Cambiar los umbrales de alerta',           'alertas.acceso'),
-    ('caja.acceso',             'caja',        'Registrar el arqueo de caja',              NULL)
+    ('caja.acceso',             'caja',        'Registrar el arqueo de caja',              NULL),
+    ('bitacora.acceso',         'usuarios',    'Ver la bitácora de acciones',              NULL)
 GO
 
 -- Seed role_permission so the four built-in roles behave exactly as before this feature:
