@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>PharmacySystem.Wpf</RootNamespace>
+    <AssemblyName>PharmacySystem.Wpf</AssemblyName>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PharmacySystem.Presentation\PharmacySystem.Presentation.csproj" />
+  </ItemGroup>
+
+</Project>

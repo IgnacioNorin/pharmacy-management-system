@@ -1,5 +1,6 @@
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
+using PharmacySystem.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -107,10 +108,13 @@ namespace PharmacySystem
             };
             link.LinkClicked += (s, e) =>
             {
-                using (var modal = new ModalChangePassword(Session.PersonId, mandatory: false))
-                {
-                    modal.ShowDialog(this);
-                }
+                // First screen ported to WPF. The presenter/service are unchanged - the WPF
+                // window implements the same IChangePasswordView. The login-forced path still
+                // uses the WinForms ModalChangePassword for now.
+                ChangePasswordDialog.Show(
+                    Handle,
+                    mandatory: false,
+                    presenterFactory: view => CompositionRoot.CreateChangePasswordPresenter(view, Session.PersonId));
             };
             pnlSidebarHeader.Controls.Add(link);
             link.BringToFront();

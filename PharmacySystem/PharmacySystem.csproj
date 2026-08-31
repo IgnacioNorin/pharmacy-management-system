@@ -325,6 +325,10 @@
       <Project>{C7BA7957-0E0C-4EF3-B77D-861DEECBC75A}</Project>
       <Name>PharmacySystem.Presentation</Name>
     </ProjectReference>
+    <ProjectReference Include="..\PharmacySystem.Wpf\PharmacySystem.Wpf.csproj">
+      <Project>{3F7A9C21-8B4D-4E6A-9C1F-2D5E7A8B4C10}</Project>
+      <Name>PharmacySystem.Wpf</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">
