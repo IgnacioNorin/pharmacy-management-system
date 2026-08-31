@@ -30,6 +30,18 @@ namespace PharmacySystem.Wpf
         }
     }
 
+    public static class ManagementDialog
+    {
+        public static void Show(IntPtr ownerHandle,
+            ManagementPresenterFactories factories, ManagementPermissions permissions,
+            string pendingProductCode = null)
+        {
+            var window = new ManagementWindow(factories, permissions, pendingProductCode);
+            if (ownerHandle != IntPtr.Zero) new WindowInteropHelper(window) { Owner = ownerHandle };
+            window.ShowDialog();
+        }
+    }
+
     public static class ReportDialog
     {
         public static void Show(IntPtr ownerHandle,

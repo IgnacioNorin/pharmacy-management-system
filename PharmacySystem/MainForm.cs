@@ -256,9 +256,8 @@ namespace PharmacySystem
 
             if (canOpenProduct && !string.IsNullOrEmpty(selectedProductCode))
             {
-                frmManagement childForm = new frmManagement();
-                ShowForm(childForm, btnManagement);
-                childForm.ShowProductByCode(selectedProductCode);
+                ManagementDialog.Show(Handle, CompositionRoot.CreateManagementFactories(),
+                    BuildManagementPermissions(), selectedProductCode);
             }
 
             // Acknowledging or muting inside the center changes what should count toward the
@@ -279,9 +278,10 @@ namespace PharmacySystem
                 () => btnManagement_Click(btnManagement, EventArgs.Empty),
                 code =>
                 {
-                    frmManagement mgmt = new frmManagement();
-                    ShowForm(mgmt, btnManagement);
-                    mgmt.ShowProductByCode(code);
+                    if (!CanNavigate("productos.acceso")) return;
+                    ManagementDialog.Show(Handle, CompositionRoot.CreateManagementFactories(),
+                        BuildManagementPermissions(), code);
+                    checkNotifications();
                 });
 
             ShowForm(childForm, btnHome);
@@ -320,10 +320,20 @@ namespace PharmacySystem
                 return;
             }
 
-            frmManagement childForm = new frmManagement();
-
-            ShowForm(childForm, sender);
+            // Ported to WPF (PharmacySystem.Wpf.ManagementWindow). Same four IView interfaces;
+            // presenters unchanged. The shell resolves the per-tab permissions.
+            checkNotifications();
+            ManagementDialog.Show(Handle, CompositionRoot.CreateManagementFactories(), BuildManagementPermissions());
+            checkNotifications();
         }
+
+        private ManagementPermissions BuildManagementPermissions() => new ManagementPermissions
+        {
+            Categories = Session?.Can("categorias.acceso") ?? false,
+            Products = Session?.Can("productos.acceso") ?? false,
+            ProductPrices = Session?.Can("productos.editar_precios") ?? false,
+            Store = Session?.Can("tienda.acceso") ?? false
+        };
 
         private void btnPurchases_Click(object sender, EventArgs e)
         {

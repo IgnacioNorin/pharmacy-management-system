@@ -48,20 +48,9 @@ namespace PharmacySystem.UiTests
         // frmCreditNote was ported to WPF (PharmacySystem.Wpf.CreditNoteWindow) - see the WPF
         // migration. CreditNotePresenter keeps its full unit-test coverage in PharmacySystem.Tests.
 
-        [Fact]
-        public void FrmManagement_ConstructsAndImplementsAllThreeTabViews()
-        {
-            StaThread.Run(() =>
-            {
-                using (var form = new frmManagement())
-                {
-                    Assert.IsAssignableFrom<ICategoryManagementView>(form);
-                    Assert.IsAssignableFrom<IProductManagementView>(form);
-                    Assert.IsAssignableFrom<IProductPriceView>(form);
-                    Assert.IsAssignableFrom<IStoreManagementView>(form);
-                }
-            });
-        }
+        // frmManagement was ported to WPF (PharmacySystem.Wpf.ManagementWindow). Its four
+        // presenters (Category / Product / ProductPrice / Store management) keep their full
+        // unit-test coverage in PharmacySystem.Tests.
 
         [Fact]
         public void MainForm_ConstructsAndImplementsView()

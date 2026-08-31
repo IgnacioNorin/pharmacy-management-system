@@ -112,12 +112,6 @@
     <Compile Include="MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="frmManagement.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="frmManagement.Designer.cs">
-      <DependentUpon>frmManagement.cs</DependentUpon>
-    </Compile>
     <Compile Include="frmSupplier.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -152,9 +146,6 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="ViewParse.cs" />
-    <Compile Include="ModalProductLots.cs">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="StartupError.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -162,9 +153,6 @@
     <Compile Include="Validators\Validations.cs" />
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="frmManagement.resx">
-      <DependentUpon>frmManagement.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmSupplier.resx">
       <DependentUpon>frmSupplier.cs</DependentUpon>

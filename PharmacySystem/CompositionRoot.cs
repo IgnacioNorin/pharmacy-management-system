@@ -83,6 +83,16 @@ namespace PharmacySystem
         public static ProductPricePresenter CreateProductPricePresenter(IProductPriceView view) =>
             new ProductPricePresenter(view, _productService, MainForm.Session);
 
+        // Bundle handed to the WPF Gestión window: the four tab presenters plus the lots lookup
+        // (ModalProductLots' old ad-hoc service, now resolved from the shared ProductService).
+        public static ManagementPresenterFactories CreateManagementFactories() =>
+            new ManagementPresenterFactories(
+                CreateCategoryManagementPresenter,
+                CreateProductManagementPresenter,
+                CreateProductPricePresenter,
+                CreateStoreManagementPresenter,
+                id => _productService.GetLots(id));
+
         #endregion
 
         #region Store / Notifications
