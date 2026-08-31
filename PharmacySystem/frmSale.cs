@@ -1,6 +1,7 @@
 using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
+using PharmacySystem.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -187,10 +188,8 @@ namespace PharmacySystem
 
         private void btnCreditNote_Click(object sender, EventArgs e)
         {
-            using (var form = new frmCreditNote())
-            {
-                form.ShowDialog(this);
-            }
+            // Ported to WPF (step 4). Same ICreditNoteView; CreditNotePresenter unchanged.
+            CreditNoteDialog.Show(Handle, CompositionRoot.CreateCreditNotePresenter);
         }
 
         private void Clean()
