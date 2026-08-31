@@ -350,9 +350,9 @@ namespace PharmacySystem
         {
             if (!CanNavigate("usuarios.acceso")) return;
 
-            frmUser childForm = new frmUser();
-
-            ShowForm(childForm, sender);
+            // Ported to WPF. Same IUserView; UserPresenter unchanged.
+            bool canManage = Session?.Can("usuarios.gestionar") ?? false;
+            UserDialog.Show(Handle, canManage, CompositionRoot.CreateUserPresenter);
         }
 
         private void btnRoles_Click(object sender, EventArgs e)

@@ -41,17 +41,8 @@ namespace PharmacySystem.UiTests
         // frmClient was ported to WPF (PharmacySystem.Wpf.ClientWindow) - see the WPF migration.
         // The presenter (ClientPresenter) keeps its full unit-test coverage in PharmacySystem.Tests.
 
-        [Fact]
-        public void FrmUser_ConstructsAndImplementsView()
-        {
-            StaThread.Run(() =>
-            {
-                using (var form = new frmUser())
-                {
-                    Assert.IsAssignableFrom<IUserView>(form);
-                }
-            });
-        }
+        // frmUser was ported to WPF (PharmacySystem.Wpf.UserWindow). UserPresenter keeps its
+        // full unit-test coverage in PharmacySystem.Tests.
 
         // ModalPerson (client picker) was ported to WPF (PharmacySystem.Wpf.ClientPickerWindow).
         // ClientPickerPresenter keeps its coverage in PharmacySystem.Tests.

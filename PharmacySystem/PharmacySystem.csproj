@@ -130,12 +130,6 @@
     <Compile Include="frmReport.Designer.cs">
       <DependentUpon>frmReport.cs</DependentUpon>
     </Compile>
-    <Compile Include="frmUser.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="frmUser.Designer.cs">
-      <DependentUpon>frmUser.cs</DependentUpon>
-    </Compile>
     <Compile Include="frmRoles.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -184,9 +178,6 @@
     <Compile Include="ModalChangePassword.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ModalUserActions.cs">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="ViewParse.cs" />
     <Compile Include="ModalProductLots.cs">
       <SubType>Form</SubType>
@@ -207,9 +198,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="frmReport.resx">
       <DependentUpon>frmReport.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="frmUser.resx">
-      <DependentUpon>frmUser.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="PrintSale.resx">
       <DependentUpon>PrintSale.cs</DependentUpon>
