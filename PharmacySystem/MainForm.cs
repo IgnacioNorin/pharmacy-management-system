@@ -308,9 +308,10 @@ namespace PharmacySystem
         {
             if (!CanNavigate("proveedores.acceso")) return;
 
-            frmSupplier childForm = new frmSupplier();
-
-            ShowForm(childForm, sender);
+            // Ported to WPF (PharmacySystem.Wpf.SupplierWindow). Same ISupplierView;
+            // SupplierPresenter unchanged.
+            bool canManage = Session?.Can("proveedores.gestionar") ?? false;
+            SupplierDialog.Show(Handle, canManage, CompositionRoot.CreateSupplierPresenter);
         }
 
         private void btnManagement_Click(object sender, EventArgs e)

@@ -11,17 +11,8 @@ namespace PharmacySystem.UiTests
     // string (CompositionRoot builds repositories eagerly) but never actually query the database.
     public class FormSmokeTests
     {
-        [Fact]
-        public void FrmSupplier_ConstructsAndImplementsView()
-        {
-            StaThread.Run(() =>
-            {
-                using (var form = new frmSupplier())
-                {
-                    Assert.IsAssignableFrom<ISupplierView>(form);
-                }
-            });
-        }
+        // frmSupplier was ported to WPF (PharmacySystem.Wpf.SupplierWindow). SupplierPresenter
+        // keeps its full unit-test coverage in PharmacySystem.Tests.
 
         // ModalConfignotification and ModalCashCount were ported to WPF
         // (PharmacySystem.Wpf.NotificationConfigWindow / CashCountWindow). Their presenters keep
