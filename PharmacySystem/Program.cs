@@ -22,9 +22,13 @@ namespace PharmacySystem
 
             try
             {
+                // PrintSale is still a WinForms dialog; hand the shell a callback to open it.
+                var shellServices = CompositionRoot.CreateShellServices(
+                    idSale => { using (var print = new PrintSale(idSale)) print.ShowDialog(); });
+
                 // Log in, run the shell, and when the shell closes come back to the login screen
                 // (log in as someone else without restarting). "Salir" on the login screen ends
-                // the loop and the app. LoginHost keeps the WPF types in PharmacySystem.Wpf.
+                // the loop and the app. LoginHost/ShellHost keep the WPF types in PharmacySystem.Wpf.
                 while (true)
                 {
                     CurrentUser session = LoginHost.RunLogin(
@@ -37,10 +41,7 @@ namespace PharmacySystem
                         break;
                     }
 
-                    using (var main = new MainForm(session))
-                    {
-                        Application.Run(main);
-                    }
+                    ShellHost.RunShell(session, shellServices);
                 }
             }
             catch (Exception ex)

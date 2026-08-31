@@ -43,17 +43,8 @@ namespace PharmacySystem.UiTests
         // presenters (Category / Product / ProductPrice / Store management) keep their full
         // unit-test coverage in PharmacySystem.Tests.
 
-        [Fact]
-        public void MainForm_ConstructsAndImplementsView()
-        {
-            StaThread.Run(() =>
-            {
-                using (var form = new MainForm())
-                {
-                    Assert.IsAssignableFrom<IMainFormView>(form);
-                }
-            });
-        }
+        // MainForm was ported to WPF (PharmacySystem.Wpf.MainWindow). MainFormPresenter keeps its
+        // full unit-test coverage in PharmacySystem.Tests.
 
         // Login was ported to WPF (PharmacySystem.Wpf.LoginWindow). LoginPresenter keeps its
         // full unit-test coverage in PharmacySystem.Tests.
@@ -66,17 +57,9 @@ namespace PharmacySystem.UiTests
         // It has no Presenter; NotificationConfigPresenter (its "Configurar umbrales" button)
         // keeps its full unit-test coverage in PharmacySystem.Tests.
 
-        [Fact]
-        public void FrmHome_ConstructsAndImplementsView()
-        {
-            StaThread.Run(() =>
-            {
-                using (var form = new frmHome(() => { }, () => { }, () => { }, code => { }))
-                {
-                    Assert.IsAssignableFrom<PharmacySystem.Presentation.IHomeView>(form);
-                }
-            });
-        }
+        // frmHome was ported to WPF (PharmacySystem.Wpf.HomeView). HomePresenter keeps its
+        // full unit-test coverage in PharmacySystem.Tests; HomeAccess.Resolve is covered by
+        // HomeAccessTests.
 
         [Fact]
         public void PrintSale_ConstructsWithoutException()
