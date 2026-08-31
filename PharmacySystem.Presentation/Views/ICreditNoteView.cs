@@ -13,6 +13,11 @@ namespace PharmacySystem.Presentation
 
         void SetDocumentTypeOptions(IReadOnlyList<string> options);
         void ShowSale(SaleLookup sale);
+        // The lines of the found sale with their still-creditable quantity, for the operator to
+        // choose how many units of each to credit.
+        void ShowCreditableLines(IReadOnlyList<SaleCreditDetail> lines);
+        // How many units of each original line the operator asked to credit.
+        IReadOnlyList<CreditNoteLineRequest> GetRequestedQuantities();
         void ClearSale();
         void SetGenerateEnabled(bool enabled);
         void ShowMessage(string message);

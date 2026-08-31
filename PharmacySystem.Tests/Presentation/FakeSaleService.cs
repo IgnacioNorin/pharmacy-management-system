@@ -16,9 +16,12 @@ namespace PharmacySystem.Tests.Presentation
         public Sale RegisteredWith { get; private set; }
 
         public SaleLookup FindByDocumentResult { get; set; }
+        public List<SaleCreditDetail> CreditableLinesResult { get; set; } = new List<SaleCreditDetail>();
         public CreditNoteResult CreateCreditNoteResult { get; set; } = CreditNoteResult.Ok;
         public (string Type, string Number)? FindByDocumentArgs { get; private set; }
+        public int? CreditableLinesArg { get; private set; }
         public (int SaleId, int UserId, string Reason)? CreditNoteArgs { get; private set; }
+        public IReadOnlyList<CreditNoteLineRequest> CreditNoteLines { get; private set; }
 
         public List<Sale> ListSale() => ListSaleResult;
         public List<SaleDetail> ListSaleDetail() => ListSaleDetailResult;
@@ -40,9 +43,17 @@ namespace PharmacySystem.Tests.Presentation
             return FindByDocumentResult;
         }
 
-        public CreditNoteResult CreateCreditNote(int originalSaleId, int userId, string reason)
+        public List<SaleCreditDetail> GetCreditableLines(int saleId)
+        {
+            CreditableLinesArg = saleId;
+            return CreditableLinesResult;
+        }
+
+        public CreditNoteResult CreateCreditNote(int originalSaleId, int userId, string reason,
+            IReadOnlyList<CreditNoteLineRequest> lines)
         {
             CreditNoteArgs = (originalSaleId, userId, reason);
+            CreditNoteLines = lines;
             return CreateCreditNoteResult;
         }
         public List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate, int clientId) { ReportClientId = clientId; return ReportResult; }

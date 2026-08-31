@@ -10,12 +10,31 @@ namespace PharmacySystem
     // Hand-authored Designer (like frmRoles). Issues a Nota de Credito that reverses a sale.
     public partial class frmCreditNote : Form, ICreditNoteView
     {
+        private const string ColSource = "SourceDetailId";
+        private const string ColProduct = "Producto";
+        private const string ColPrice = "PrecioUnit";
+        private const string ColSold = "Vendido";
+        private const string ColCredited = "Acreditado";
+        private const string ColToCredit = "AAcreditar";
+
         private readonly CreditNotePresenter _presenter;
 
         public frmCreditNote()
         {
             InitializeComponent();
+            BuildLineGrid();
             _presenter = CompositionRoot.CreateCreditNotePresenter(this);
+        }
+
+        private void BuildLineGrid()
+        {
+            dgvLines.Columns.Clear();
+            dgvLines.Columns.Add(new DataGridViewTextBoxColumn { Name = ColSource, Visible = false });
+            dgvLines.Columns.Add(new DataGridViewTextBoxColumn { Name = ColProduct, HeaderText = "Producto", ReadOnly = true, FillWeight = 34 });
+            dgvLines.Columns.Add(new DataGridViewTextBoxColumn { Name = ColPrice, HeaderText = "Precio unit.", ReadOnly = true, FillWeight = 16 });
+            dgvLines.Columns.Add(new DataGridViewTextBoxColumn { Name = ColSold, HeaderText = "Vendido", ReadOnly = true, FillWeight = 14 });
+            dgvLines.Columns.Add(new DataGridViewTextBoxColumn { Name = ColCredited, HeaderText = "Acreditado", ReadOnly = true, FillWeight = 16 });
+            dgvLines.Columns.Add(new DataGridViewTextBoxColumn { Name = ColToCredit, HeaderText = "A acreditar", FillWeight = 20 });
         }
 
         private void frmCreditNote_Load(object sender, EventArgs e) => _presenter.OnLoad();
@@ -45,15 +64,64 @@ namespace PharmacySystem
 
         public void ShowSale(SaleLookup sale)
         {
+            string state = sale.IsCreditNote ? "Nota de crédito"
+                : sale.FullyCreditNoted ? "Acreditada por completo"
+                : sale.AlreadyCreditNoted ? "Acreditada en parte"
+                : "Vigente";
+
             lblDetail.Text =
                 $"{sale.DocumentType} N° {sale.DocumentNumber}\r\n" +
                 $"Fecha: {sale.Date:dd/MM/yyyy HH:mm}\r\n" +
                 $"Cliente: {sale.ClientName}\r\n" +
                 $"Total: {CultureInfoHelper.FormatAsCurrency(sale.TotalAmount)}\r\n" +
-                $"Estado: {(sale.IsCreditNote ? "Nota de crédito" : sale.AlreadyCreditNoted ? "Ya anulada" : "Vigente")}";
+                $"Estado: {state}";
         }
 
-        public void ClearSale() => lblDetail.Text = "Sin comprobante seleccionado.";
+        public void ShowCreditableLines(IReadOnlyList<SaleCreditDetail> lines)
+        {
+            dgvLines.Rows.Clear();
+            foreach (SaleCreditDetail line in lines)
+            {
+                int index = dgvLines.Rows.Add(
+                    line.SourceDetailId,
+                    line.ProductName,
+                    CultureInfoHelper.FormatAsCurrency(line.UnitPrice),
+                    line.SoldQuantity,
+                    line.CreditedQuantity,
+                    line.RemainingQuantity);
+
+                DataGridViewRow row = dgvLines.Rows[index];
+                // A fully-credited line has nothing left to credit - lock it at 0.
+                if (line.RemainingQuantity <= 0)
+                {
+                    row.Cells[ColToCredit].Value = 0;
+                    row.Cells[ColToCredit].ReadOnly = true;
+                    row.DefaultCellStyle.ForeColor = System.Drawing.Color.Gray;
+                }
+            }
+        }
+
+        public IReadOnlyList<CreditNoteLineRequest> GetRequestedQuantities()
+        {
+            var requests = new List<CreditNoteLineRequest>();
+            foreach (DataGridViewRow row in dgvLines.Rows)
+            {
+                if (row.IsNewRow) continue;
+                int quantity = ViewParse.Int(row.Cells[ColToCredit].Value?.ToString());
+                requests.Add(new CreditNoteLineRequest
+                {
+                    SourceDetailId = ViewParse.Int(row.Cells[ColSource].Value?.ToString()),
+                    Quantity = quantity < 0 ? 0 : quantity
+                });
+            }
+            return requests;
+        }
+
+        public void ClearSale()
+        {
+            lblDetail.Text = "Sin comprobante seleccionado.";
+            dgvLines.Rows.Clear();
+        }
 
         public void SetGenerateEnabled(bool enabled) => btnGenerate.Enabled = enabled;
 

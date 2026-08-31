@@ -345,7 +345,11 @@ namespace PharmacySystem.Data
                         "SELECT s.id AS Id, s.document_type AS DocumentType, s.document_number AS DocumentNumber, " +
                         "s.date_registered AS Date, COALESCE(NULLIF(s.recipient_business_name, ''), s.name_client) AS ClientName, s.total_amount AS TotalAmount, " +
                         "CAST(CASE WHEN s.document_type = 'Nota de Credito' THEN 1 ELSE 0 END AS BIT) AS IsCreditNote, " +
-                        "CAST(CASE WHEN EXISTS (SELECT 1 FROM sale nc WHERE nc.reference_id = s.id) THEN 1 ELSE 0 END AS BIT) AS AlreadyCreditNoted " +
+                        "CAST(CASE WHEN EXISTS (SELECT 1 FROM sale nc WHERE nc.reference_id = s.id) THEN 1 ELSE 0 END AS BIT) AS AlreadyCreditNoted, " +
+                        "CAST(CASE WHEN s.document_type <> 'Nota de Credito' AND NOT EXISTS (" +
+                        "  SELECT 1 FROM sale_detail sd WHERE sd.sale_id = s.id AND sd.stock > " +
+                        "  ISNULL((SELECT SUM(ncd.stock) FROM sale_detail ncd WHERE ncd.source_detail_id = sd.id), 0)" +
+                        ") THEN 1 ELSE 0 END AS BIT) AS FullyCreditNoted " +
                         "FROM sale s WHERE s.document_type = @documentType AND s.document_number = @documentNumber";
 
                     return oConnection.QueryFirstOrDefault<SaleLookup>(sql, new { documentType, documentNumber });
@@ -377,18 +381,67 @@ namespace PharmacySystem.Data
 
         private class OriginalDetailRow
         {
+            public int Id { get; set; }
             public int ProductId { get; set; }
             public int Amount { get; set; }
             public decimal SalePrice { get; set; }
-            public decimal Subtotal { get; set; }
             public bool TaxAffected { get; set; }
             public decimal? UnitCost { get; set; }
+            public int AlreadyCredited { get; set; }
         }
 
-        // Issues a Nota de Credito that reverses an existing sale: a new sale row with negative
-        // amounts and reference_id set, and the stock of every line put back. Atomic.
-        public CreditNoteResult CreateCreditNote(int originalSaleId, int userId, string reason)
+        private class SalePaymentRow
         {
+            public string PaymentMethod { get; set; }
+            public decimal Amount { get; set; }
+        }
+
+        public List<SaleCreditDetail> GetCreditableLines(int saleId)
+        {
+            using (SqlConnection oConnection = _connectionFactory.Create())
+            {
+                try
+                {
+                    const string sql =
+                        "SELECT sd.id AS SourceDetailId, sd.product_id AS ProductId, p.name AS ProductName, " +
+                        "sd.sale_price AS UnitPrice, sd.tax_affected AS TaxAffected, sd.stock AS SoldQuantity, " +
+                        "ISNULL((SELECT SUM(ncd.stock) FROM sale_detail ncd WHERE ncd.source_detail_id = sd.id), 0) AS CreditedQuantity " +
+                        "FROM sale_detail sd INNER JOIN product p ON p.id = sd.product_id " +
+                        "WHERE sd.sale_id = @saleId ORDER BY sd.id";
+
+                    return oConnection.Query<SaleCreditDetail>(sql, new { saleId }).ToList();
+                }
+                catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
+                {
+                    Logger.LogError(ex);
+                    throw new DataUnavailableException(DataUnavailableException.DefaultMessage, ex);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex);
+                    return new List<SaleCreditDetail>();
+                }
+            }
+        }
+
+        // Issues a Nota de Credito that credits the requested quantity of each given original sale
+        // line: a new sale row with negative amounts and reference_id set, the credited stock put
+        // back, and one sale_detail per credited line carrying source_detail_id. A sale can be
+        // credited across several notes until every line is fully credited. Atomic.
+        public CreditNoteResult CreateCreditNote(int originalSaleId, int userId, string reason,
+            IReadOnlyList<CreditNoteLineRequest> lines)
+        {
+            // Collapse duplicate requests for the same line and drop the non-positive ones.
+            Dictionary<int, int> requested = (lines ?? new List<CreditNoteLineRequest>())
+                .Where(l => l.Quantity > 0)
+                .GroupBy(l => l.SourceDetailId)
+                .ToDictionary(g => g.Key, g => g.Sum(l => l.Quantity));
+
+            if (requested.Count == 0)
+            {
+                return CreditNoteResult.NothingToCredit;
+            }
+
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 oConnection.Open();
@@ -401,7 +454,7 @@ namespace PharmacySystem.Data
                         "recipient_tax_id AS RecipientTaxId, recipient_business_name AS RecipientBusinessName, " +
                         "recipient_activity AS RecipientActivity, recipient_address AS RecipientAddress, recipient_commune AS RecipientCommune, " +
                         "client_id AS ClientId " +
-                        "FROM sale WITH (UPDLOCK) WHERE id = @id", new { id = originalSaleId }, tx);
+                        "FROM sale WITH (UPDLOCK, HOLDLOCK) WHERE id = @id", new { id = originalSaleId }, tx);
 
                     if (original == null)
                     {
@@ -413,11 +466,40 @@ namespace PharmacySystem.Data
                         tx.Rollback();
                         return CreditNoteResult.NotAllowedOnCreditNote;
                     }
-                    if (oConnection.ExecuteScalar<int>("SELECT COUNT(*) FROM sale WHERE reference_id = @id", new { id = originalSaleId }, tx) > 0)
+
+                    // Lock the sale's lines and read how much of each is still creditable, inside
+                    // the transaction, so two concurrent notes cannot both pass the cap check.
+                    List<OriginalDetailRow> originalLines = oConnection.Query<OriginalDetailRow>(
+                        "SELECT sd.id AS Id, sd.product_id AS ProductId, sd.stock AS Amount, sd.sale_price AS SalePrice, " +
+                        "sd.tax_affected AS TaxAffected, sd.unit_cost AS UnitCost, " +
+                        "ISNULL((SELECT SUM(ncd.stock) FROM sale_detail ncd WHERE ncd.source_detail_id = sd.id), 0) AS AlreadyCredited " +
+                        "FROM sale_detail sd WITH (UPDLOCK, HOLDLOCK) WHERE sd.sale_id = @id", new { id = originalSaleId }, tx).ToList();
+
+                    var byId = originalLines.ToDictionary(l => l.Id);
+                    foreach (KeyValuePair<int, int> req in requested)
                     {
-                        tx.Rollback();
-                        return CreditNoteResult.AlreadyCreditNoted;
+                        if (!byId.TryGetValue(req.Key, out OriginalDetailRow src) ||
+                            req.Value > src.Amount - src.AlreadyCredited)
+                        {
+                            tx.Rollback();
+                            return CreditNoteResult.QuantityExceedsRemaining;
+                        }
                     }
+
+                    // VAT rate the original sale used, recovered from its own breakdown so the note
+                    // splits the credited gross the same way (whole-percent, so a clean 19% sale
+                    // recovers 19 exactly). All-exempt sales have no affected gross to split.
+                    decimal ratePercent = original.NetAmount > 0m
+                        ? Math.Round(original.TaxAmount * 100m / original.NetAmount, 0, MidpointRounding.AwayFromZero)
+                        : 0m;
+
+                    var creditedLines = originalLines
+                        .Where(l => requested.ContainsKey(l.Id))
+                        .Select(l => new { Line = l, Qty = requested[l.Id], Gross = l.SalePrice * requested[l.Id] })
+                        .ToList();
+
+                    TaxCalculator.Breakdown vat = TaxCalculator.Compute(
+                        creditedLines.Select(c => (c.Gross, c.Line.TaxAffected)), ratePercent);
 
                     const string insertNc =
                         "DECLARE @folio INT = NEXT VALUE FOR dbo.seq_folio_nota_credito; " +
@@ -430,10 +512,10 @@ namespace PharmacySystem.Data
                         user_id = userId,
                         document_client = original.DocumentClient,
                         name_client = original.NameClient,
-                        total = -original.TotalAmount,
-                        net = -original.NetAmount,
-                        tax = -original.TaxAmount,
-                        exempt = -original.ExemptAmount,
+                        total = -vat.Total,
+                        net = -vat.Net,
+                        tax = -vat.Tax,
+                        exempt = -vat.Exempt,
                         rtaxid = original.RecipientTaxId,
                         rname = original.RecipientBusinessName,
                         ractivity = original.RecipientActivity,
@@ -444,41 +526,35 @@ namespace PharmacySystem.Data
                         reason = reason
                     }, tx);
 
-                    // Mirror the original sale's payment breakdown, negated, so the arqueo
-                    // reduces each method's expected cash by what was refunded on it.
-                    oConnection.Execute(
-                        "INSERT INTO sale_payment(sale_id, payment_method, amount) " +
-                        "SELECT @nc_id, payment_method, -amount FROM sale_payment WHERE sale_id = @original_id",
-                        new { nc_id = ncId, original_id = originalSaleId }, tx);
+                    WriteNegatedPayments(oConnection, tx, originalSaleId, ncId, original.TotalAmount, vat.Total);
 
-                    var lines = oConnection.Query<OriginalDetailRow>(
-                        "SELECT product_id AS ProductId, stock AS Amount, sale_price AS SalePrice, subtotal AS Subtotal, " +
-                        "tax_affected AS TaxAffected, unit_cost AS UnitCost " +
-                        "FROM sale_detail WHERE sale_id = @id", new { id = originalSaleId }, tx);
-
-                    foreach (OriginalDetailRow line in lines)
+                    foreach (var credited in creditedLines)
                     {
+                        OriginalDetailRow line = credited.Line;
+
                         oConnection.Execute("UPDATE product SET stock = stock + @amount WHERE id = @product_id",
-                            new { amount = line.Amount, product_id = line.ProductId }, tx);
+                            new { amount = credited.Qty, product_id = line.ProductId }, tx);
 
                         // The returned units go back as a new lot. Their original batch (and its
                         // expiry) is unknown, so it is undated and will be sold after dated stock.
                         oConnection.Execute(
                             "INSERT INTO product_lot(product_id, purchase_detail_id, quantity, date_expired, unit_cost) " +
                             "VALUES (@product_id, NULL, @quantity, NULL, @unit_cost)",
-                            new { product_id = line.ProductId, quantity = line.Amount, unit_cost = line.UnitCost }, tx);
+                            new { product_id = line.ProductId, quantity = credited.Qty, unit_cost = line.UnitCost }, tx);
 
                         oConnection.Execute(
-                            "INSERT INTO sale_detail(sale_id, product_id, stock, sale_price, subtotal, tax_affected) " +
-                            "VALUES (@sale_id, @product_id, @amount, @sale_price, @subtotal, @tax_affected)",
+                            "INSERT INTO sale_detail(sale_id, product_id, stock, sale_price, unit_cost, subtotal, tax_affected, source_detail_id) " +
+                            "VALUES (@sale_id, @product_id, @amount, @sale_price, @unit_cost, @subtotal, @tax_affected, @source_detail_id)",
                             new
                             {
                                 sale_id = ncId,
                                 product_id = line.ProductId,
-                                amount = line.Amount,
+                                amount = credited.Qty,
                                 sale_price = line.SalePrice,
-                                subtotal = line.Subtotal,
-                                tax_affected = line.TaxAffected
+                                unit_cost = line.UnitCost,
+                                subtotal = credited.Gross,
+                                tax_affected = line.TaxAffected,
+                                source_detail_id = line.Id
                             }, tx);
                     }
 
@@ -491,6 +567,54 @@ namespace PharmacySystem.Data
                     try { tx.Rollback(); } catch { }
                     return CreditNoteResult.Error;
                 }
+            }
+        }
+
+        // Splits the refund across the original sale's payment methods in proportion to how much of
+        // the sale is being credited, so the arqueo lowers each method's expected cash by what was
+        // actually refunded on it. A full credit negates the rows exactly; a partial one rounds
+        // each share and puts the rounding remainder on the largest method.
+        private static void WriteNegatedPayments(SqlConnection oConnection, SqlTransaction tx,
+            int originalSaleId, int ncId, decimal originalTotal, decimal creditedTotal)
+        {
+            List<SalePaymentRow> payments = oConnection.Query<SalePaymentRow>(
+                "SELECT payment_method AS PaymentMethod, amount AS Amount FROM sale_payment WHERE sale_id = @id " +
+                "ORDER BY amount DESC, payment_method", new { id = originalSaleId }, tx).ToList();
+
+            if (payments.Count == 0)
+            {
+                return;
+            }
+
+            bool full = originalTotal != 0m && creditedTotal >= originalTotal;
+            decimal fraction = originalTotal != 0m ? creditedTotal / originalTotal : 0m;
+
+            for (int i = 0; i < payments.Count; i++)
+            {
+                decimal share = full
+                    ? payments[i].Amount
+                    : (i == 0
+                        ? 0m // filled below as the remainder
+                        : Math.Round(payments[i].Amount * fraction, 0, MidpointRounding.AwayFromZero));
+
+                if (!full && i == 0)
+                {
+                    decimal others = 0m;
+                    for (int j = 1; j < payments.Count; j++)
+                    {
+                        others += Math.Round(payments[j].Amount * fraction, 0, MidpointRounding.AwayFromZero);
+                    }
+                    share = creditedTotal - others;
+                }
+
+                if (share == 0m)
+                {
+                    continue;
+                }
+
+                oConnection.Execute(
+                    "INSERT INTO sale_payment(sale_id, payment_method, amount) VALUES (@sale_id, @method, @amount)",
+                    new { sale_id = ncId, method = payments[i].PaymentMethod, amount = -share }, tx);
             }
         }
 

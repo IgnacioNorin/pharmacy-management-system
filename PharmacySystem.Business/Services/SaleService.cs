@@ -47,8 +47,12 @@ namespace PharmacySystem.Business
         public SaleLookup FindByDocument(string documentType, string documentNumber) =>
             _repository.FindByDocument(documentType, documentNumber);
 
-        public CreditNoteResult CreateCreditNote(int originalSaleId, int userId, string reason) =>
-            _repository.CreateCreditNote(originalSaleId, userId, reason);
+        public List<SaleCreditDetail> GetCreditableLines(int saleId) =>
+            _repository.GetCreditableLines(saleId);
+
+        public CreditNoteResult CreateCreditNote(int originalSaleId, int userId, string reason,
+            IReadOnlyList<CreditNoteLineRequest> lines) =>
+            _repository.CreateCreditNote(originalSaleId, userId, reason, lines);
 
         public List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate, int clientId) => _repository.ReportSale(startDate, endDate, clientId);
 

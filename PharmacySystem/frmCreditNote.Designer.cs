@@ -23,6 +23,7 @@ namespace PharmacySystem
             this.txtNumber = new System.Windows.Forms.TextBox();
             this.btnSearch = new System.Windows.Forms.Button();
             this.lblDetail = new System.Windows.Forms.Label();
+            this.dgvLines = new System.Windows.Forms.DataGridView();
             this.lblReason = new System.Windows.Forms.Label();
             this.txtReason = new System.Windows.Forms.TextBox();
             this.btnGenerate = new System.Windows.Forms.Button();
@@ -75,43 +76,57 @@ namespace PharmacySystem
             this.lblDetail.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lblDetail.Location = new System.Drawing.Point(12, 82);
             this.lblDetail.Name = "lblDetail";
-            this.lblDetail.Size = new System.Drawing.Size(348, 90);
+            this.lblDetail.Size = new System.Drawing.Size(596, 76);
             this.lblDetail.TabIndex = 3;
             this.lblDetail.Text = "Sin comprobante seleccionado.";
+            //
+            // dgvLines
+            //
+            this.dgvLines.AllowUserToAddRows = false;
+            this.dgvLines.AllowUserToDeleteRows = false;
+            this.dgvLines.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvLines.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvLines.Location = new System.Drawing.Point(12, 168);
+            this.dgvLines.MultiSelect = false;
+            this.dgvLines.Name = "dgvLines";
+            this.dgvLines.RowHeadersVisible = false;
+            this.dgvLines.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
+            this.dgvLines.Size = new System.Drawing.Size(596, 170);
+            this.dgvLines.TabIndex = 4;
             //
             // lblReason
             //
             this.lblReason.AutoSize = true;
-            this.lblReason.Location = new System.Drawing.Point(12, 185);
+            this.lblReason.Location = new System.Drawing.Point(12, 348);
             this.lblReason.Name = "lblReason";
             this.lblReason.Size = new System.Drawing.Size(45, 15);
             this.lblReason.Text = "Motivo";
             //
             // txtReason
             //
-            this.txtReason.Location = new System.Drawing.Point(12, 203);
+            this.txtReason.Location = new System.Drawing.Point(12, 366);
             this.txtReason.Multiline = true;
             this.txtReason.Name = "txtReason";
-            this.txtReason.Size = new System.Drawing.Size(348, 50);
-            this.txtReason.TabIndex = 4;
+            this.txtReason.Size = new System.Drawing.Size(596, 50);
+            this.txtReason.TabIndex = 5;
             //
             // btnGenerate
             //
             this.btnGenerate.Enabled = false;
-            this.btnGenerate.Location = new System.Drawing.Point(12, 263);
+            this.btnGenerate.Location = new System.Drawing.Point(12, 426);
             this.btnGenerate.Name = "btnGenerate";
             this.btnGenerate.Size = new System.Drawing.Size(200, 32);
-            this.btnGenerate.TabIndex = 5;
+            this.btnGenerate.TabIndex = 6;
             this.btnGenerate.Text = "Emitir nota de crédito";
             this.btnGenerate.UseVisualStyleBackColor = true;
             this.btnGenerate.Click += new System.EventHandler(this.btnGenerate_Click);
             //
             // btnClose
             //
-            this.btnClose.Location = new System.Drawing.Point(270, 263);
+            this.btnClose.Location = new System.Drawing.Point(518, 426);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(90, 32);
-            this.btnClose.TabIndex = 6;
+            this.btnClose.TabIndex = 7;
             this.btnClose.Text = "Cerrar";
             this.btnClose.UseVisualStyleBackColor = true;
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
@@ -120,11 +135,12 @@ namespace PharmacySystem
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(374, 309);
+            this.ClientSize = new System.Drawing.Size(620, 470);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.btnGenerate);
             this.Controls.Add(this.txtReason);
             this.Controls.Add(this.lblReason);
+            this.Controls.Add(this.dgvLines);
             this.Controls.Add(this.lblDetail);
             this.Controls.Add(this.btnSearch);
             this.Controls.Add(this.txtNumber);
@@ -150,6 +166,7 @@ namespace PharmacySystem
         private System.Windows.Forms.TextBox txtNumber;
         private System.Windows.Forms.Button btnSearch;
         private System.Windows.Forms.Label lblDetail;
+        private System.Windows.Forms.DataGridView dgvLines;
         private System.Windows.Forms.Label lblReason;
         private System.Windows.Forms.TextBox txtReason;
         private System.Windows.Forms.Button btnGenerate;

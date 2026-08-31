@@ -4,6 +4,17 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 
 ## [Sin publicar]
 
+### Añadido
+
+- **Anulación parcial de venta.** La nota de crédito dejó de anular siempre la
+  venta completa: la pantalla lista las líneas del comprobante con lo vendido, lo
+  ya acreditado y lo que queda, y el operador indica cuántas unidades de cada una
+  acreditar. Una venta se puede acreditar de a poco en varias notas hasta
+  cubrirla; el sistema no deja pasar más de lo que resta por línea. El IVA se
+  reparte en proporción a lo acreditado, el stock vuelve solo por esas unidades y
+  el reintegro se distribuye entre las formas de pago de la venta original.
+  Migración `035` (`sale_detail.source_detail_id`).
+
 ### Seguridad
 
 - **Bitácora de acciones administrativas.** Nueva tabla `security_event`
