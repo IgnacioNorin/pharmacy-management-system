@@ -41,4 +41,19 @@ namespace PharmacySystem.Wpf
             return window.ShowDialog() == true ? window.Picked : null;
         }
     }
+
+    public static class ClientPickerDialog
+    {
+        public static ClientRow Show(IntPtr ownerHandle, Func<IClientPickerView, ClientPickerPresenter> presenterFactory)
+        {
+            if (presenterFactory == null) throw new ArgumentNullException(nameof(presenterFactory));
+
+            var window = new ClientPickerWindow(presenterFactory);
+            if (ownerHandle != IntPtr.Zero)
+            {
+                new WindowInteropHelper(window) { Owner = ownerHandle };
+            }
+            return window.ShowDialog() == true ? window.Picked : null;
+        }
+    }
 }

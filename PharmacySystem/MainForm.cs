@@ -331,9 +331,19 @@ namespace PharmacySystem
         {
             if (!CanNavigate("ventas.acceso")) return;
 
-            frmSale childForm = new frmSale(oPerson.idPerson);
+            // Ported to WPF (step 4d). Same ISaleView; SalePresenter unchanged. Modal over the
+            // WinForms shell until the shell itself is migrated. PrintSale (ticket) stays here.
+            checkNotifications();
+            var hooks = new SaleShellHooks(
+                CompositionRoot.CreatePickerFactories(),
+                CompositionRoot.CreateCreditNotePresenter,
+                idSale => { using (var print = new PrintSale(idSale)) print.ShowDialog(); },
+                Session?.Can("ventas.nota_credito") ?? false);
 
-            ShowForm(childForm, sender);
+            SaleDialog.Show(Handle,
+                v => CompositionRoot.CreateSalePresenter(v, oPerson.idPerson),
+                hooks);
+            checkNotifications();
         }
 
         private void btnUsers_Click(object sender, EventArgs e)

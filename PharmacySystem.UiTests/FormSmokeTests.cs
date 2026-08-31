@@ -53,17 +53,8 @@ namespace PharmacySystem.UiTests
             });
         }
 
-        [Fact]
-        public void ModalPerson_ConstructsAndImplementsView()
-        {
-            StaThread.Run(() =>
-            {
-                using (var form = new ModalPerson())
-                {
-                    Assert.IsAssignableFrom<IClientPickerView>(form);
-                }
-            });
-        }
+        // ModalPerson (client picker) was ported to WPF (PharmacySystem.Wpf.ClientPickerWindow).
+        // ClientPickerPresenter keeps its coverage in PharmacySystem.Tests.
 
         [Fact]
         public void FrmReport_ConstructsAndImplementsView()
@@ -131,20 +122,9 @@ namespace PharmacySystem.UiTests
             });
         }
 
-        // frmPurchase was ported to WPF (PharmacySystem.Wpf.PurchaseWindow) - see the WPF
-        // migration. PurchasePresenter keeps its full unit-test coverage in PharmacySystem.Tests.
-
-        [Fact]
-        public void FrmSale_ConstructsAndImplementsView()
-        {
-            StaThread.Run(() =>
-            {
-                using (var form = new frmSale())
-                {
-                    Assert.IsAssignableFrom<ISaleView>(form);
-                }
-            });
-        }
+        // frmPurchase and frmSale were ported to WPF (PharmacySystem.Wpf.PurchaseWindow /
+        // SaleWindow). PurchasePresenter / SalePresenter keep their full unit-test coverage in
+        // PharmacySystem.Tests.
 
         // ModalAlerts is a plain data-display dialog (Fase 3 of the alerts rework), not an MVP
         // screen - no View interface to assert against, just confirms the hand-authored
