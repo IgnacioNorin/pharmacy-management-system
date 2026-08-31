@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using PharmacySystem.Data;
 using PharmacySystem.Helpers;
 using PharmacySystem.Presentation;
 using PharmacySystem.Wpf;
@@ -13,6 +14,10 @@ namespace PharmacySystem
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+            // Route Logger.LogError through Microsoft.Extensions.Logging (Serilog file sink),
+            // level and path from appsettings ("Logging" section).
+            Logger.Initialize(SqlConnectionFactory.BuildConfiguration());
 
             // Send WinForms UI-thread exceptions to our handler instead of the default crash dialog,
             // and catch everything else through the AppDomain hook.

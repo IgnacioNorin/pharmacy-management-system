@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using PharmacySystem.Business;
 using PharmacySystem.Data;
 using PharmacySystem.Model;
@@ -6,34 +7,74 @@ using PharmacySystem.Wpf;
 
 namespace PharmacySystem
 {
-    // Manual composition instead of a DI container: with a handful of services this stays
-    // readable, and a container would add a dependency plus runtime "magic" to resolve a
-    // graph this small. Revisit only if the graph grows enough that this file gets unwieldy.
+    // Composition seam. The service / repository graph is registered in a
+    // Microsoft.Extensions.DependencyInjection container (BuildServiceProvider below) and
+    // resolved once here; presenters still get built by the Create* factory methods because
+    // each one needs a runtime IView argument the container cannot supply.
     internal static class CompositionRoot
     {
-        internal static readonly ISqlConnectionFactory ConnectionFactory = SqlConnectionFactory.FromConfiguration();
+        private static readonly ServiceProvider _services = BuildServiceProvider();
 
-        // Services are stateless wrappers around a repository, which in turn only holds the
-        // shared ConnectionFactory above - safe to build each one once and hand the same instance
-        // to every screen that needs it, instead of re-building the same repository+service pair
-        // in every Create*Presenter method below.
-        private static readonly ISupplierService _supplierService = new SupplierService(new SupplierRepository(ConnectionFactory));
-        private static readonly IPersonService _personService = new PersonService(new PersonRepository(ConnectionFactory));
-        private static readonly ILoginAttemptRepository _loginAttemptRepository = new LoginAttemptRepository(ConnectionFactory);
-        private static readonly IAuthenticationService _authService = new AuthenticationService(new PersonRepository(ConnectionFactory), _loginAttemptRepository);
-        private static readonly IPasswordChangeService _passwordChangeService = new PasswordChangeService(new PersonRepository(ConnectionFactory), _loginAttemptRepository);
-        private static readonly IClientService _clientService = new ClientService(new ClientRepository(ConnectionFactory));
-        private static readonly IProductService _productService = new ProductService(new ProductRepository(ConnectionFactory));
-        private static readonly ICategoryService _categoryService = new CategoryService(new CategoryRepository(ConnectionFactory));
-        private static readonly IStoreService _storeService = new StoreService(new StoreRepository(ConnectionFactory));
-        private static readonly INotificationConfigService _notificationConfigService = new NotificationConfigService(new NotificationConfigRepository(ConnectionFactory), new ProductAlertHistoryRepository(ConnectionFactory));
-        private static readonly IPurchaseService _purchaseService = new PurchaseService(new PurchaseRepository(ConnectionFactory));
-        // LocalSequenceIssuer: receipts stay internal (numbered by the local sequence, no DTE).
-        // Replace with a provider-backed IFiscalDocumentIssuer to emit electronic documents.
-        private static readonly ISaleService _saleService = new SaleService(new SaleRepository(ConnectionFactory), new LocalSequenceIssuer());
-        private static readonly IPermissionService _permissionService = new PermissionService(new PermissionRepository(ConnectionFactory));
-        private static readonly ICashCountService _cashCountService = new CashCountService(new CashCountRepository(ConnectionFactory));
-        private static readonly ISecurityAudit _securityAudit = new SecurityAudit(new SecurityEventRepository(ConnectionFactory));
+        internal static readonly ISqlConnectionFactory ConnectionFactory = _services.GetRequiredService<ISqlConnectionFactory>();
+
+        // Resolved singletons, kept as fields so every Create* method reads like before.
+        private static readonly ISupplierService _supplierService = _services.GetRequiredService<ISupplierService>();
+        private static readonly IPersonService _personService = _services.GetRequiredService<IPersonService>();
+        private static readonly IAuthenticationService _authService = _services.GetRequiredService<IAuthenticationService>();
+        private static readonly IPasswordChangeService _passwordChangeService = _services.GetRequiredService<IPasswordChangeService>();
+        private static readonly IClientService _clientService = _services.GetRequiredService<IClientService>();
+        private static readonly IProductService _productService = _services.GetRequiredService<IProductService>();
+        private static readonly ICategoryService _categoryService = _services.GetRequiredService<ICategoryService>();
+        private static readonly IStoreService _storeService = _services.GetRequiredService<IStoreService>();
+        private static readonly INotificationConfigService _notificationConfigService = _services.GetRequiredService<INotificationConfigService>();
+        private static readonly IPurchaseService _purchaseService = _services.GetRequiredService<IPurchaseService>();
+        private static readonly ISaleService _saleService = _services.GetRequiredService<ISaleService>();
+        private static readonly IPermissionService _permissionService = _services.GetRequiredService<IPermissionService>();
+        private static readonly ICashCountService _cashCountService = _services.GetRequiredService<ICashCountService>();
+        private static readonly ISecurityAudit _securityAudit = _services.GetRequiredService<ISecurityAudit>();
+
+        private static ServiceProvider BuildServiceProvider()
+        {
+            var services = new ServiceCollection();
+
+            services.AddSingleton<ISqlConnectionFactory>(_ => SqlConnectionFactory.FromConfiguration());
+
+            services.AddSingleton<ISupplierRepository, SupplierRepository>();
+            services.AddSingleton<IPersonRepository, PersonRepository>();
+            services.AddSingleton<ILoginAttemptRepository, LoginAttemptRepository>();
+            services.AddSingleton<IClientRepository, ClientRepository>();
+            services.AddSingleton<IProductRepository, ProductRepository>();
+            services.AddSingleton<ICategoryRepository, CategoryRepository>();
+            services.AddSingleton<IStoreRepository, StoreRepository>();
+            services.AddSingleton<INotificationConfigRepository, NotificationConfigRepository>();
+            services.AddSingleton<IProductAlertHistoryRepository, ProductAlertHistoryRepository>();
+            services.AddSingleton<IPurchaseRepository, PurchaseRepository>();
+            services.AddSingleton<ISaleRepository, SaleRepository>();
+            services.AddSingleton<IPermissionRepository, PermissionRepository>();
+            services.AddSingleton<ICashCountRepository, CashCountRepository>();
+            services.AddSingleton<ISecurityEventRepository, SecurityEventRepository>();
+
+            services.AddSingleton<ISupplierService, SupplierService>();
+            services.AddSingleton<IPersonService, PersonService>();
+            services.AddSingleton<IAuthenticationService, AuthenticationService>();
+            services.AddSingleton<IPasswordChangeService, PasswordChangeService>();
+            services.AddSingleton<IClientService, ClientService>();
+            services.AddSingleton<IProductService, ProductService>();
+            services.AddSingleton<ICategoryService, CategoryService>();
+            services.AddSingleton<IStoreService, StoreService>();
+            services.AddSingleton<INotificationConfigService, NotificationConfigService>();
+            services.AddSingleton<IPurchaseService, PurchaseService>();
+            services.AddSingleton<IPermissionService, PermissionService>();
+            services.AddSingleton<ICashCountService, CashCountService>();
+            services.AddSingleton<ISecurityAudit, SecurityAudit>();
+
+            // LocalSequenceIssuer: receipts stay internal (numbered by the local sequence, no
+            // DTE). Swap for a provider-backed IFiscalDocumentIssuer to emit electronic documents.
+            services.AddSingleton<IFiscalDocumentIssuer, LocalSequenceIssuer>();
+            services.AddSingleton<ISaleService, SaleService>();
+
+            return services.BuildServiceProvider();
+        }
 
         #region Supplier
 
