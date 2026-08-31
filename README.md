@@ -23,30 +23,31 @@ El proyecto sigue una arquitectura MVP (Model-View-Presenter) organizada en capa
 | `PharmacySystem.Domain` | Entidades, enums, DTOs y helpers estáticos sin dependencias externas. |
 | `PharmacySystem.Data` | Acceso a datos: repositorios (Dapper), fábrica de conexión y logging. |
 | `PharmacySystem.Business` | Servicios con la lógica de negocio, sobre las interfaces de `Data`. |
-| `PharmacySystem.Presentation` | Presenters, interfaces `IView` y DTOs de presentación — testable sin WinForms. |
-| `PharmacySystem` | Formularios WinForms (.NET Framework 4.8), implementan las interfaces `IView`, y `CompositionRoot.cs` con el cableado manual de dependencias. |
+| `PharmacySystem.Presentation` | Presenters, interfaces `IView` y DTOs de presentación — testable sin UI. |
+| `PharmacySystem.Wpf` | Ventanas WPF que implementan las interfaces `IView` (pantallas, shell, login, impresión de ticket). |
+| `PharmacySystem` | Ejecutable delgado: `Program.cs` (arranque login → shell) y `CompositionRoot.cs` con el cableado manual de dependencias. |
 | `PharmacySystem.Tests` | Pruebas unitarias (Presenters/Business con fakes) y de integración (repositorios contra base real). |
-| `PharmacySystem.UiTests` | Pruebas "smoke" que construyen cada formulario y verifican que implemente su interfaz. |
+| `PharmacySystem.UiTests` | Pruebas "smoke" de helpers de UI (`ViewParse`, `StartupError`, `HomeAccess`). |
 
 Dentro de `Data`, `Business` y `Presentation`, los archivos están organizados en carpetas por responsabilidad (por ejemplo `Data/Repositories/` y `Data/Repositories/Interfaces/`), no por feature.
 
 ## Tecnologías
 
-- **Framework:** .NET Framework 4.8
+- **Framework:** .NET 10 (`net10.0` / `net10.0-windows`)
 - **Lenguaje:** C#
-- **UI:** Windows Forms
+- **UI:** WPF
 - **Base de datos:** SQL Server (probado con SQL Server 2019+)
-- **Acceso a datos:** Dapper
+- **Acceso a datos:** Dapper + `Microsoft.Data.SqlClient`
 - **Pruebas:** xUnit
-- **Exportación a Excel:** ClosedXML
+- **Exportación:** ClosedXML (Excel), PDFsharp/MigraDoc (PDF)
 
 ## Requisitos previos
 
-- **Visual Studio 2022** (o superior) con la carga de trabajo **".NET desktop development"** instalada — necesaria para compilar el proyecto WinForms (`PharmacySystem`), que usa `packages.config` en lugar de `PackageReference`.
+- **SDK de .NET 10** (`dotnet --version` ≥ 10.0). Visual Studio 2022 17.14+ / VS 2026 opcional para el diseñador de WPF.
 - **SQL Server** (local o accesible en red) con permisos para crear la base de datos y sus objetos.
 - El SQL Server Client SDK / `sqlcmd`, si se prefiere ejecutar el script de base de datos desde la línea de comandos en vez de SSMS.
 
-> ⚠️ **`dotnet build` / `dotnet test` no compilan el proyecto `PharmacySystem`** (falla con MSB3822/3823 por ser un proyecto WinForms de .NET Framework con `packages.config`). Usar Visual Studio, o `MSBuild.exe`/`vstest.console.exe` desde la instalación de Visual Studio, para compilar y correr pruebas sobre toda la solución.
+La solución compila y corre pruebas con el CLI de `dotnet` (`dotnet build` / `dotnet test`) o desde Visual Studio.
 
 ## Instalación
 
@@ -60,13 +61,11 @@ Dentro de `Data`, `Business` y `Presentation`, los archivos están organizados e
 
    > Si ya hay una base `PharmacyDB` desplegada de una versión anterior, **no** volver a correr este script (contiene `DROP DATABASE`). Aplicar en su lugar los scripts incrementales de **`Database/Migrations/`** en orden — ver `Database/Migrations/README.md`.
 
-3. Abrir la solución en Visual Studio:
+3. Restaurar los paquetes:
 
+   ```bash
+   dotnet restore PharmacySystem.sln
    ```
-   PharmacySystem.sln
-   ```
-
-   Al abrirla, Visual Studio restaura automáticamente los paquetes NuGet (o de forma manual con clic derecho sobre la solución → *Restaurar paquetes NuGet*).
 
 4. Configurar la cadena de conexión. El proyecto no usa `App.config` directamente — usa un archivo `ConnectionStrings.config` separado (ignorado por git) en cada uno de estos tres proyectos:
 
@@ -85,29 +84,34 @@ Dentro de `Data`, `Business` y `Presentation`, los archivos están organizados e
    ```xml
    <connectionStrings>
      <add name="connection"
-          connectionString="Server=#HereYourServer#;database=PharmacyDB;User Id=#HereYourUser#;Password=#HereYourPassword#;"
-          providerName="System.Data.SqlClient"/>
+          connectionString="Server=#HereYourServer#;database=PharmacyDB;User Id=#HereYourUser#;Password=#HereYourPassword#;TrustServerCertificate=True;"
+          providerName="Microsoft.Data.SqlClient"/>
    </connectionStrings>
    ```
 
+   `Microsoft.Data.SqlClient` cifra la conexión por defecto; `TrustServerCertificate=True` alcanza para un SQL Server local con certificado autofirmado (en producción, usar un certificado válido en vez de esa opción).
+
    `PharmacySystem.Tests` corre pruebas de integración reales contra esta base (limpian sus propias filas al terminar), y `PharmacySystem.UiTests` solo necesita que el archivo exista y esté bien formado — no ejecuta consultas reales.
 
-5. Compilar y ejecutar (F5) el proyecto `PharmacySystem`.
+5. Compilar y ejecutar:
+
+   ```bash
+   dotnet run --project PharmacySystem
+   ```
 
 ## Ejecutar las pruebas
 
-Desde Visual Studio: *Test → Test Explorer → Run All*.
-
-Desde línea de comandos, usando las herramientas de Visual Studio (no `dotnet test`):
-
 ```bash
-"C:\Program Files\Microsoft Visual Studio\<version>\<edition>\MSBuild\Current\Bin\MSBuild.exe" PharmacySystem.sln /t:Build
+dotnet build PharmacySystem.sln
 
-"C:\Program Files\Microsoft Visual Studio\<version>\<edition>\Common7\IDE\Extensions\TestPlatform\vstest.console.exe" ^
-  PharmacySystem.Tests\bin\Debug\net48\PharmacySystem.Tests.dll ^
-  PharmacySystem.UiTests\bin\Debug\net48\PharmacySystem.UiTests.dll ^
-  /Platform:x64
+# Todas menos las de integración (que necesitan una base con el esquema aplicado):
+dotnet test PharmacySystem.sln --no-build --filter "FullyQualifiedName!~PharmacySystem.Tests.Integration"
+
+# Solo las de integración (contra la base configurada):
+dotnet test PharmacySystem.Tests --no-build --filter "FullyQualifiedName~PharmacySystem.Tests.Integration"
 ```
+
+Desde Visual Studio: *Test → Test Explorer → Run All*.
 
 ## Roles y usuario por defecto
 

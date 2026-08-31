@@ -2,8 +2,7 @@ name: CI
 
 # Compila la solucion y corre las pruebas en cada push a main o a una rama de
 # trabajo, y en cada pull request hacia main. El runner es Windows porque el
-# proyecto de escritorio usa WinForms + packages.config + csproj clasico, que
-# necesitan MSBuild y nuget.exe (el CLI de dotnet no puede compilarlo).
+# ejecutable de escritorio usa WPF + WinForms (net10.0-windows).
 
 on:
   push:
@@ -24,11 +23,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
-
-      - name: Setup NuGet
-        uses: NuGet/setup-nuget@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
 
       - name: Preparar ConnectionStrings.config
         shell: pwsh
@@ -54,11 +52,11 @@ jobs:
             }
           }
 
-      - name: Restaurar paquetes NuGet
-        run: nuget restore PharmacySystem.sln
+      - name: Restaurar
+        run: dotnet restore PharmacySystem.sln
 
       - name: Compilar
-        run: msbuild PharmacySystem.sln -t:Build -p:Configuration=Debug -m -v:minimal -nologo
+        run: dotnet build PharmacySystem.sln --configuration Debug --no-restore --nologo
 
       - name: Pruebas (unidad, negocio, presentacion, UI)
         shell: pwsh
@@ -66,15 +64,13 @@ jobs:
           # Las pruebas de integracion ([Collection("Database")] en
           # PharmacySystem.Tests.Integration) necesitan un SQL Server con el
           # esquema aplicado; se corren en local. Aca se excluyen por namespace.
-          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-          $vstest = & $vswhere -latest -products '*' -find '**\vstest.console.exe' | Select-Object -First 1
-          if (-not $vstest) { throw 'No se encontro vstest.console.exe en el runner.' }
-          Write-Host "vstest: $vstest"
-          & $vstest `
-            "PharmacySystem.Tests\bin\Debug\net48\PharmacySystem.Tests.dll" `
-            "PharmacySystem.UiTests\bin\Debug\net48\PharmacySystem.UiTests.dll" `
-            /TestCaseFilter:"FullyQualifiedName!~PharmacySystem.Tests.Integration" `
-            /Logger:"trx;LogFileName=test-results.trx"
+          dotnet test PharmacySystem.sln `
+            --configuration Debug `
+            --no-build `
+            --nologo `
+            --filter "FullyQualifiedName!~PharmacySystem.Tests.Integration" `
+            --logger "trx;LogFileName=test-results.trx" `
+            --results-directory TestResults
           if ($LASTEXITCODE -ne 0) { throw "Las pruebas fallaron (exit code $LASTEXITCODE)" }
 
       - name: Publicar resultados de pruebas
