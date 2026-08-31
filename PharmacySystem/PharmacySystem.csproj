@@ -112,12 +112,6 @@
     <Compile Include="MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="frmClient.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="frmClient.Designer.cs">
-      <DependentUpon>frmClient.cs</DependentUpon>
-    </Compile>
     <Compile Include="frmPurchase.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -243,9 +237,6 @@
     <Compile Include="Validators\Validations.cs" />
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="frmClient.resx">
-      <DependentUpon>frmClient.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmPurchase.resx">
       <DependentUpon>frmPurchase.cs</DependentUpon>

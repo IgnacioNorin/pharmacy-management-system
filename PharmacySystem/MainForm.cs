@@ -286,9 +286,11 @@ namespace PharmacySystem
         {
             if (!CanNavigate("clientes.acceso")) return;
 
-            frmClient childForm = new frmClient();
-
-            ShowForm(childForm, sender);
+            // Ported to WPF (step 3). Same IClientView; ClientPresenter unchanged. Shown modally
+            // over the WinForms shell until the shell itself is migrated.
+            checkNotifications();
+            bool canManage = Session?.Can("clientes.gestionar") ?? false;
+            ClientDialog.Show(Handle, canManage, CompositionRoot.CreateClientPresenter);
         }
 
         private void btnSuppliers_Click(object sender, EventArgs e)

@@ -47,17 +47,8 @@ namespace PharmacySystem.UiTests
             });
         }
 
-        [Fact]
-        public void FrmClient_ConstructsAndImplementsView()
-        {
-            StaThread.Run(() =>
-            {
-                using (var form = new frmClient())
-                {
-                    Assert.IsAssignableFrom<IClientView>(form);
-                }
-            });
-        }
+        // frmClient was ported to WPF (PharmacySystem.Wpf.ClientWindow) - see the WPF migration.
+        // The presenter (ClientPresenter) keeps its full unit-test coverage in PharmacySystem.Tests.
 
         [Fact]
         public void FrmUser_ConstructsAndImplementsView()
