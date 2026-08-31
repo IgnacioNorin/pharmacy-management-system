@@ -23,17 +23,9 @@ namespace PharmacySystem.UiTests
             });
         }
 
-        [Fact]
-        public void ModalConfignotification_ConstructsAndImplementsView()
-        {
-            StaThread.Run(() =>
-            {
-                using (var form = new ModalConfignotification())
-                {
-                    Assert.IsAssignableFrom<INotificationConfigView>(form);
-                }
-            });
-        }
+        // ModalConfignotification and ModalCashCount were ported to WPF
+        // (PharmacySystem.Wpf.NotificationConfigWindow / CashCountWindow). Their presenters keep
+        // full coverage in PharmacySystem.Tests.
 
         // ModalSupplier and ModalProduct were ported to WPF (PharmacySystem.Wpf.SupplierPickerWindow
         // / ProductPickerWindow). Their presenters keep coverage in PharmacySystem.Tests.

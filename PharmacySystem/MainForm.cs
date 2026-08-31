@@ -376,10 +376,8 @@ namespace PharmacySystem
         {
             if (!CanNavigate("caja.acceso")) return;
 
-            using (var modal = new ModalCashCount())
-            {
-                modal.ShowDialog(this);
-            }
+            // Ported to WPF. Same ICashCountView; CashCountPresenter unchanged.
+            CashCountDialog.Show(Handle, CompositionRoot.CreateCashCountPresenter);
         }
 
         private void btnAuditLog_Click(object sender, EventArgs e)

@@ -268,10 +268,10 @@ namespace PharmacySystem
 
         private void btnConfig_Click(object sender, EventArgs e)
         {
-            using (var modal = new ModalConfignotification())
-            {
-                modal.ShowDialog(this);
-            }
+            // Ported to WPF. Same INotificationConfigView; NotificationConfigPresenter unchanged.
+            bool canConfigure = MainForm.Session?.Can("alertas.configurar") ?? false;
+            PharmacySystem.Wpf.NotificationConfigDialog.Show(Handle, canConfigure,
+                CompositionRoot.CreateNotificationConfigPresenter);
         }
 
         private void btnClose_Click(object sender, EventArgs e)
