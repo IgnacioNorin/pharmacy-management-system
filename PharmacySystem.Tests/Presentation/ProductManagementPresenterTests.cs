@@ -35,7 +35,25 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         private static ProductManagementPresenter CreatePresenter(FakeProductManagementView view, FakeProductService productService, FakeCategoryService categoryService)
-            => new ProductManagementPresenter(view, productService, categoryService, TestUser.With("productos.gestionar", "productos.eliminar"));
+            => new ProductManagementPresenter(view, productService, categoryService, TestUser.With("productos.gestionar", "productos.eliminar"), new FakeSecurityAudit());
+
+        [Fact]
+        public void OnSave_And_OnDelete_AreAudited()
+        {
+            var audit = new FakeSecurityAudit();
+            var createView = new FakeProductManagementView { ProductId = 0, Code = "P2", Name = "Ibuprofeno", Description = "d", SelectedCategoryId = 2 };
+            new ProductManagementPresenter(createView, new FakeProductService { RegisterResult = 7, ListResult = ManyProducts(1) }, new FakeCategoryService(),
+                TestUser.With("productos.gestionar", "productos.eliminar"), audit).OnSave();
+
+            var deleteView = new FakeProductManagementView { SelectedIndex = 2, ProductId = 7, Name = "Ibuprofeno", Code = "P2" };
+            new ProductManagementPresenter(deleteView, new FakeProductService { DeleteResult = true, ListResult = ManyProducts(1) }, new FakeCategoryService(),
+                TestUser.With("productos.gestionar", "productos.eliminar"), audit).OnDelete();
+
+            Assert.Equal(new[] { "product.create", "product.delete" }, audit.Recorded.Select(e => e.Action));
+            Assert.Equal(7, audit.Recorded[0].EntityId);
+            Assert.Contains("Ibuprofeno", audit.Recorded[0].Summary);
+            Assert.Contains("P2", audit.Recorded[0].Summary);
+        }
 
         private static Product Prod(int id, string code, string name, string description = "") => new Product
         {
@@ -54,7 +72,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnSave_WithoutManagePermission_ShowsDeniedAndDoesNotTouchTheGrid()
         {
             var view = new FakeProductManagementView { ProductId = 0, Code = "P", Name = "N", Description = "D", SelectedCategoryId = 1 };
-            new ProductManagementPresenter(view, new FakeProductService(), new FakeCategoryService(), TestUser.With()).OnSave();
+            new ProductManagementPresenter(view, new FakeProductService(), new FakeCategoryService(), TestUser.With(), new FakeSecurityAudit()).OnSave();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
             Assert.Equal(0, view.LoadProductsCallCount);
@@ -64,7 +82,7 @@ namespace PharmacySystem.Tests.Presentation
         public void OnDelete_WithoutDeletePermission_ShowsDeniedAndDoesNotTouchTheGrid()
         {
             var view = new FakeProductManagementView { SelectedIndex = 2, ProductId = 5 };
-            new ProductManagementPresenter(view, new FakeProductService(), new FakeCategoryService(), TestUser.With("productos.gestionar")).OnDelete();
+            new ProductManagementPresenter(view, new FakeProductService(), new FakeCategoryService(), TestUser.With("productos.gestionar"), new FakeSecurityAudit()).OnDelete();
 
             Assert.Contains(view.ShownMessages, m => m.Contains("No tiene permiso"));
             Assert.Equal(0, view.LoadProductsCallCount);

@@ -17,6 +17,7 @@ namespace PharmacySystem.Presentation
         private readonly ISupplierView _view;
         private readonly ISupplierService _service;
         private readonly CurrentUser _currentUser;
+        private readonly ISecurityAudit _audit;
 
         private const int PageSize = PagedResult<Supplier>.DefaultPageSize;
 
@@ -24,14 +25,16 @@ namespace PharmacySystem.Presentation
         private int _totalPages = 1;
         private string _search = string.Empty;
 
-        public SupplierPresenter(ISupplierView view, ISupplierService service, CurrentUser currentUser)
+        public SupplierPresenter(ISupplierView view, ISupplierService service, CurrentUser currentUser, ISecurityAudit audit)
         {
             _view = view;
             _service = service;
             _currentUser = currentUser;
+            _audit = audit;
         }
 
         private bool Can(string permission) => _currentUser?.Can(permission) ?? false;
+        private int ActorId => _currentUser?.PersonId ?? 0;
 
         public void OnLoad() => LoadPage(1);
 
@@ -98,11 +101,13 @@ namespace PharmacySystem.Presentation
 
             if (supplier.idSupplier == 0)
             {
-                if (_service.Register(supplier) == 0)
+                int newId = _service.Register(supplier);
+                if (newId == 0)
                 {
                     _view.ShowMessage("Ya existe un proveedor con ese documento");
                     return;
                 }
+                _audit.Record(ActorId, "supplier.create", "supplier", newId, $"'{supplier.companyName}' (doc {supplier.document})");
             }
             else
             {
@@ -110,6 +115,7 @@ namespace PharmacySystem.Presentation
                 {
                     return;
                 }
+                _audit.Record(ActorId, "supplier.update", "supplier", supplier.idSupplier, $"'{supplier.companyName}' (doc {supplier.document})");
             }
 
             _view.ClearForm();
@@ -141,6 +147,7 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
+            _audit.Record(ActorId, "supplier.delete", "supplier", _view.SupplierId, $"'{_view.CompanyName}' (doc {_view.Document})");
             _view.ClearForm();
             LoadPage(_page);
         }

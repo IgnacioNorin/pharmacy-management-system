@@ -125,7 +125,7 @@ namespace PharmacySystem.Tests.Integration
                 // Products. SelectedIndex = 1 so OnDelete gets past its "nothing selected" check
                 // and actually reaches the permission guard.
                 var productView = new FakeProductManagementView { SelectedIndex = 1, RowCount = 1, ProductId = 7 };
-                var products = new ProductManagementPresenter(productView, new FakeProductService(), new FakeCategoryService(), user);
+                var products = new ProductManagementPresenter(productView, new FakeProductService(), new FakeCategoryService(), user, new FakeSecurityAudit());
                 products.OnSave();
                 products.OnDelete();
                 Assert.Equal(2, productView.ShownMessages.Count(m => m.Contains("No tiene permiso")));
@@ -133,7 +133,7 @@ namespace PharmacySystem.Tests.Integration
 
                 // Categories
                 var categoryView = new FakeCategoryManagementView { SelectedIndex = 1, RowCount = 1, CategoryId = 7 };
-                var categories = new CategoryManagementPresenter(categoryView, new FakeCategoryService(), user);
+                var categories = new CategoryManagementPresenter(categoryView, new FakeCategoryService(), user, new FakeSecurityAudit());
                 categories.OnSave();
                 categories.OnDelete();
                 Assert.Equal(2, categoryView.ShownMessages.Count(m => m.Contains("No tiene permiso")));
@@ -142,7 +142,7 @@ namespace PharmacySystem.Tests.Integration
 
                 // Suppliers
                 var supplierView = new FakeSupplierView { SelectedIndex = 1, RowCount = 1, SupplierId = 7 };
-                var suppliers = new SupplierPresenter(supplierView, new FakeSupplierService(), user);
+                var suppliers = new SupplierPresenter(supplierView, new FakeSupplierService(), user, new FakeSecurityAudit());
                 suppliers.OnSave();
                 suppliers.OnDelete();
                 Assert.Equal(2, supplierView.ShownMessages.Count(m => m.Contains("No tiene permiso")));
@@ -199,7 +199,7 @@ namespace PharmacySystem.Tests.Integration
                     ConfirmDeleteResult = false, // stop OnDelete right after the permission check
                     ValidationErrors = new List<string> { "stop OnSave right after the permission check" }
                 };
-                var clients = new ClientPresenter(clientView, Clients, user);
+                var clients = new ClientPresenter(clientView, Clients, user, new FakeSecurityAudit());
                 clients.OnSave();
                 clients.OnDelete();
 
