@@ -7,7 +7,7 @@
   <!-- Una sola lista de versiones para toda la solución. Los .csproj referencian los paquetes
        sin atributo Version. -->
   <ItemGroup>
-    <PackageVersion Include="ClosedXML" Version="0.104.2" />
+    <PackageVersion Include="ClosedXML" Version="0.105.1" />
     <PackageVersion Include="Dapper" Version="2.1.66" />
     <PackageVersion Include="dbup-sqlserver" Version="6.0.16" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.0.2" />
