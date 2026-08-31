@@ -131,17 +131,8 @@ namespace PharmacySystem.UiTests
             });
         }
 
-        [Fact]
-        public void FrmPurchase_ConstructsAndImplementsView()
-        {
-            StaThread.Run(() =>
-            {
-                using (var form = new frmPurchase())
-                {
-                    Assert.IsAssignableFrom<IPurchaseView>(form);
-                }
-            });
-        }
+        // frmPurchase was ported to WPF (PharmacySystem.Wpf.PurchaseWindow) - see the WPF
+        // migration. PurchasePresenter keeps its full unit-test coverage in PharmacySystem.Tests.
 
         [Fact]
         public void FrmSale_ConstructsAndImplementsView()

@@ -318,9 +318,13 @@ namespace PharmacySystem
         {
             if (!CanNavigate("compras.acceso")) return;
 
-            frmPurchase childForm = new frmPurchase(oPerson.idPerson);
-
-            ShowForm(childForm, sender);
+            // Ported to WPF (step 4c). Same IPurchaseView; PurchasePresenter unchanged. Modal
+            // over the WinForms shell until the shell itself is migrated.
+            checkNotifications();
+            PurchaseDialog.Show(Handle,
+                v => CompositionRoot.CreatePurchasePresenter(v, oPerson.idPerson),
+                CompositionRoot.CreatePickerFactories());
+            checkNotifications();
         }
 
         private void btnSales_Click(object sender, EventArgs e)

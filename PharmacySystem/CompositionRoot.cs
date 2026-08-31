@@ -2,6 +2,7 @@ using PharmacySystem.Business;
 using PharmacySystem.Data;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
+using PharmacySystem.Wpf;
 
 namespace PharmacySystem
 {
@@ -41,6 +42,11 @@ namespace PharmacySystem
 
         public static SupplierPickerPresenter CreateSupplierPickerPresenter(ISupplierPickerView view) =>
             new SupplierPickerPresenter(view, _supplierService);
+
+        // Bundle of the sub-picker factories the WPF sale/purchase windows need (they cannot see
+        // this class). Handed to them by the shell.
+        public static PickerFactories CreatePickerFactories() =>
+            new PickerFactories(CreateSupplierPickerPresenter, CreateProductPickerPresenter, CreateClientPickerPresenter);
 
         #endregion
 
