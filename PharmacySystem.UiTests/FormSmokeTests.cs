@@ -35,17 +35,8 @@ namespace PharmacySystem.UiTests
             });
         }
 
-        [Fact]
-        public void ModalSupplier_ConstructsAndImplementsView()
-        {
-            StaThread.Run(() =>
-            {
-                using (var form = new ModalSupplier())
-                {
-                    Assert.IsAssignableFrom<ISupplierPickerView>(form);
-                }
-            });
-        }
+        // ModalSupplier and ModalProduct were ported to WPF (PharmacySystem.Wpf.SupplierPickerWindow
+        // / ProductPickerWindow). Their presenters keep coverage in PharmacySystem.Tests.
 
         // frmClient was ported to WPF (PharmacySystem.Wpf.ClientWindow) - see the WPF migration.
         // The presenter (ClientPresenter) keeps its full unit-test coverage in PharmacySystem.Tests.
@@ -70,18 +61,6 @@ namespace PharmacySystem.UiTests
                 using (var form = new ModalPerson())
                 {
                     Assert.IsAssignableFrom<IClientPickerView>(form);
-                }
-            });
-        }
-
-        [Fact]
-        public void ModalProduct_ConstructsAndImplementsView()
-        {
-            StaThread.Run(() =>
-            {
-                using (var form = new ModalProduct("frmSale"))
-                {
-                    Assert.IsAssignableFrom<IProductPickerView>(form);
                 }
             });
         }

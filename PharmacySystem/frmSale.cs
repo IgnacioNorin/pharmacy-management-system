@@ -110,18 +110,16 @@ namespace PharmacySystem
 
         private void btnSearchProduct_Click(object sender, EventArgs e)
         {
-            using (var form = new ModalProduct("frmSale"))
+            // Picker ported to WPF (step 4b). Same IProductPickerView / ProductPickerPresenter.
+            ProductPickerRow picked = ProductPickerDialog.Show(Handle,
+                v => CompositionRoot.CreateProductPickerPresenter(v, "frmSale"));
+            if (picked != null)
             {
-                var result = form.ShowDialog();
-                if (result == DialogResult.OK)
-                {
-                    txtcodeproduct.Text = form.code;
-                    txtstock.Text = form.stock;
-                    txtnameproduct.Text = form.name;
-                    txtidproduct.Text = form.idProduct.ToString();
-                    txtpricesale.Text = CultureInfoHelper.FormatAsCurrency(Convert.ToDecimal(form.priceSale.ToLower()));
-
-                }
+                txtcodeproduct.Text = picked.Code;
+                txtstock.Text = picked.Stock.ToString();
+                txtnameproduct.Text = picked.Name;
+                txtidproduct.Text = picked.Id.ToString();
+                txtpricesale.Text = CultureInfoHelper.FormatAsCurrency(picked.SalePrice);
             }
         }
 

@@ -183,18 +183,6 @@
     <Compile Include="ModalPerson.Designer.cs">
       <DependentUpon>ModalPerson.cs</DependentUpon>
     </Compile>
-    <Compile Include="ModalProduct.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="ModalProduct.Designer.cs">
-      <DependentUpon>ModalProduct.cs</DependentUpon>
-    </Compile>
-    <Compile Include="ModalSupplier.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="ModalSupplier.Designer.cs">
-      <DependentUpon>ModalSupplier.cs</DependentUpon>
-    </Compile>
     <Compile Include="ModalAlerts.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -261,12 +249,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ModalPerson.resx">
       <DependentUpon>ModalPerson.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="ModalProduct.resx">
-      <DependentUpon>ModalProduct.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="ModalSupplier.resx">
-      <DependentUpon>ModalSupplier.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ModalAlerts.resx">
       <DependentUpon>ModalAlerts.cs</DependentUpon>

@@ -2,6 +2,7 @@ using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using PharmacySystem.Validators;
+using PharmacySystem.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -104,29 +105,25 @@ namespace PharmacySystem
 
         private void btnSearchSupplier_Click(object sender, EventArgs e)
         {
-            using (var form = new ModalSupplier())
+            // Picker ported to WPF (step 4b). Same ISupplierPickerView / SupplierPickerPresenter.
+            SupplierRow picked = SupplierPickerDialog.Show(Handle, CompositionRoot.CreateSupplierPickerPresenter);
+            if (picked != null)
             {
-                var result = form.ShowDialog();
-                if (result == DialogResult.OK)
-                {
-                    txtnamesupplier.Text = form.companyName;
-                    txtdocumentsupplier.Text = form.document;
-                    txtidsupplier.Text = form.idSupplier.ToString();
-                }
+                txtnamesupplier.Text = picked.CompanyName;
+                txtdocumentsupplier.Text = picked.Document;
+                txtidsupplier.Text = picked.Id.ToString();
             }
         }
 
         private void btnSearchProduct_Click(object sender, EventArgs e)
         {
-            using (var form = new ModalProduct("frmPurchase"))
+            ProductPickerRow picked = ProductPickerDialog.Show(Handle,
+                v => CompositionRoot.CreateProductPickerPresenter(v, "frmPurchase"));
+            if (picked != null)
             {
-                var result = form.ShowDialog();
-                if (result == DialogResult.OK)
-                {
-                    txtcodeproduct.Text = form.code;
-                    txtnameproduct.Text = form.name;
-                    txtidproduct.Text = form.idProduct.ToString();
-                }
+                txtcodeproduct.Text = picked.Code;
+                txtnameproduct.Text = picked.Name;
+                txtidproduct.Text = picked.Id.ToString();
             }
         }
 
