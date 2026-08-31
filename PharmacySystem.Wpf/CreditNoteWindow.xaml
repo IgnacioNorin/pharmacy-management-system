@@ -1,0 +1,74 @@
+<Window x:Class="PharmacySystem.Wpf.CreditNoteWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Nota de crédito"
+        Height="600" Width="720"
+        MinHeight="480" MinWidth="600"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        FontFamily="Segoe UI" FontSize="13">
+    <DockPanel Margin="12">
+
+        <!-- Lookup -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="Tipo documento:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <ComboBox x:Name="cboType" Width="130" Height="24"/>
+            <TextBlock Text="N° comprobante:" VerticalAlignment="Center" Margin="16,0,6,0"/>
+            <TextBox x:Name="txtNumber" Width="140" Height="24"/>
+            <Button x:Name="btnSearch" Content="Buscar" Width="90" Height="26" Margin="12,0,0,0" Click="btnSearch_Click"/>
+        </StackPanel>
+
+        <!-- Sale summary -->
+        <Border DockPanel.Dock="Top" BorderBrush="#C0C0C0" BorderThickness="1" Padding="8" Margin="0,0,0,8">
+            <TextBlock x:Name="lblDetail" Text="Sin comprobante seleccionado." TextWrapping="Wrap"/>
+        </Border>
+
+        <!-- Reason + actions -->
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+            <TextBlock Text="Motivo" Margin="0,0,0,4"/>
+            <TextBox x:Name="txtReason" Height="54" AcceptsReturn="True" TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                <Button x:Name="btnGenerate" Content="Emitir nota de crédito" Width="180" Height="32"
+                        IsEnabled="False" Click="btnGenerate_Click"/>
+                <Button x:Name="btnClose" Content="Cerrar" Width="90" Height="32" Margin="8,0,0,0"
+                        IsCancel="True" Click="btnClose_Click"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Creditable lines -->
+        <DataGrid x:Name="dgLines"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False" CanUserDeleteRows="False"
+                  HeadersVisibility="Column" SelectionMode="Single"
+                  GridLinesVisibility="Horizontal" RowHeaderWidth="0">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Editable}" Value="False">
+                            <Setter Property="Foreground" Value="Gray"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Producto" Width="*" IsReadOnly="True" Binding="{Binding Product}"/>
+                <DataGridTextColumn Header="Precio unit." Width="110" IsReadOnly="True" Binding="{Binding PriceText}"/>
+                <DataGridTextColumn Header="Vendido" Width="80" IsReadOnly="True" Binding="{Binding Sold}"/>
+                <DataGridTextColumn Header="Acreditado" Width="90" IsReadOnly="True" Binding="{Binding Credited}"/>
+                <DataGridTextColumn Header="A acreditar" Width="100"
+                                    Binding="{Binding ToCredit, UpdateSourceTrigger=PropertyChanged}">
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Editable}" Value="False">
+                                    <Setter Property="IsEnabled" Value="False"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>

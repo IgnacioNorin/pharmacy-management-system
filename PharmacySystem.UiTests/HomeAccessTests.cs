@@ -4,7 +4,7 @@ using Xunit;
 
 namespace PharmacySystem.UiTests
 {
-    // frmHome.ResolveAccess is the single decision the landing screen uses to hide the tiles and
+    // HomeAccess.Resolve is the single decision the landing screen uses to hide the tiles and
     // quick-access buttons a role cannot reach. These are plain logic checks - no Form, no STA -
     // so the "an Empleado sees nothing about purchases or restocking" rule stays pinned down.
     public class HomeAccessTests
@@ -20,7 +20,7 @@ namespace PharmacySystem.UiTests
         [Fact]
         public void Empleado_SeesNoPurchaseOrProductEntryPoints()
         {
-            var access = frmHome.ResolveAccess(Empleado());
+            var access = HomeAccess.Resolve(Empleado());
 
             Assert.False(access.NewPurchase);
             Assert.False(access.ManageProducts);
@@ -30,7 +30,7 @@ namespace PharmacySystem.UiTests
         [Fact]
         public void Empleado_StillSeesTheSaleShortcutAndAlertContent()
         {
-            var access = frmHome.ResolveAccess(Empleado());
+            var access = HomeAccess.Resolve(Empleado());
 
             Assert.True(access.NewSale);
             Assert.True(access.SalesTile);
@@ -42,7 +42,7 @@ namespace PharmacySystem.UiTests
         [Fact]
         public void RoleWithoutSalesOrAlerts_HidesEveryTileAndTheQuickActionsPanel()
         {
-            var access = frmHome.ResolveAccess(User("clientes.acceso"));
+            var access = HomeAccess.Resolve(User("clientes.acceso"));
 
             Assert.False(access.SalesTile);
             Assert.False(access.AlertTiles);
@@ -56,7 +56,7 @@ namespace PharmacySystem.UiTests
         [Fact]
         public void FullPermissionUser_SeesEveryEntryPoint()
         {
-            var access = frmHome.ResolveAccess(
+            var access = HomeAccess.Resolve(
                 User("ventas.acceso", "compras.acceso", "productos.acceso", "alertas.acceso"));
 
             Assert.True(access.NewSale);
@@ -69,7 +69,7 @@ namespace PharmacySystem.UiTests
         [Fact]
         public void NullSession_ResolvesToNothingVisible()
         {
-            var access = frmHome.ResolveAccess(null);
+            var access = HomeAccess.Resolve(null);
 
             Assert.False(access.NewSale || access.NewPurchase || access.ManageProducts);
             Assert.False(access.SalesTile || access.AlertTiles || access.AttentionList);

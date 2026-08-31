@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>PharmacySystem.Wpf</RootNamespace>
+    <AssemblyName>PharmacySystem.Wpf</AssemblyName>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PharmacySystem.Presentation\PharmacySystem.Presentation.csproj" />
+  </ItemGroup>
+
+  <!-- PrintSaleWindow: thermal-printer plaintext path (System.Drawing.Printing), spooler check
+       (System.ServiceProcess) and the HTML print via the WebBrowser's mshtml document (dynamic). -->
+  <ItemGroup>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Printing" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+
+</Project>

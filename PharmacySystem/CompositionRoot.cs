@@ -2,6 +2,7 @@ using PharmacySystem.Business;
 using PharmacySystem.Data;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
+using PharmacySystem.Wpf;
 
 namespace PharmacySystem
 {
@@ -37,20 +38,25 @@ namespace PharmacySystem
         #region Supplier
 
         public static SupplierPresenter CreateSupplierPresenter(ISupplierView view) =>
-            new SupplierPresenter(view, _supplierService, MainForm.Session, _securityAudit);
+            new SupplierPresenter(view, _supplierService, AppSession.Current, _securityAudit);
 
         public static SupplierPickerPresenter CreateSupplierPickerPresenter(ISupplierPickerView view) =>
             new SupplierPickerPresenter(view, _supplierService);
+
+        // Bundle of the sub-picker factories the WPF sale/purchase windows need (they cannot see
+        // this class). Handed to them by the shell.
+        public static PickerFactories CreatePickerFactories() =>
+            new PickerFactories(CreateSupplierPickerPresenter, CreateProductPickerPresenter, CreateClientPickerPresenter);
 
         #endregion
 
         #region Person (client / user / login)
 
         public static ClientPresenter CreateClientPresenter(IClientView view) =>
-            new ClientPresenter(view, _clientService, MainForm.Session, _securityAudit);
+            new ClientPresenter(view, _clientService, AppSession.Current, _securityAudit);
 
         public static UserPresenter CreateUserPresenter(IUserView view) =>
-            new UserPresenter(view, _personService, MainForm.Session, _permissionService, _passwordChangeService, _authService, _securityAudit);
+            new UserPresenter(view, _personService, AppSession.Current, _permissionService, _passwordChangeService, _authService, _securityAudit);
 
         public static ClientPickerPresenter CreateClientPickerPresenter(IClientPickerView view) =>
             new ClientPickerPresenter(view, _clientService);
@@ -69,29 +75,39 @@ namespace PharmacySystem
             new ProductPickerPresenter(view, _productService, origin);
 
         public static CategoryManagementPresenter CreateCategoryManagementPresenter(ICategoryManagementView view) =>
-            new CategoryManagementPresenter(view, _categoryService, MainForm.Session, _securityAudit);
+            new CategoryManagementPresenter(view, _categoryService, AppSession.Current, _securityAudit);
 
         public static ProductManagementPresenter CreateProductManagementPresenter(IProductManagementView view) =>
-            new ProductManagementPresenter(view, _productService, _categoryService, MainForm.Session, _securityAudit);
+            new ProductManagementPresenter(view, _productService, _categoryService, AppSession.Current, _securityAudit);
 
         public static ProductPricePresenter CreateProductPricePresenter(IProductPriceView view) =>
-            new ProductPricePresenter(view, _productService, MainForm.Session);
+            new ProductPricePresenter(view, _productService, AppSession.Current);
+
+        // Bundle handed to the WPF Gestión window: the four tab presenters plus the lots lookup
+        // (ModalProductLots' old ad-hoc service, now resolved from the shared ProductService).
+        public static ManagementPresenterFactories CreateManagementFactories() =>
+            new ManagementPresenterFactories(
+                CreateCategoryManagementPresenter,
+                CreateProductManagementPresenter,
+                CreateProductPricePresenter,
+                CreateStoreManagementPresenter,
+                id => _productService.GetLots(id));
 
         #endregion
 
         #region Store / Notifications
 
         public static StoreManagementPresenter CreateStoreManagementPresenter(IStoreManagementView view) =>
-            new StoreManagementPresenter(view, _storeService, MainForm.Session, _securityAudit);
+            new StoreManagementPresenter(view, _storeService, AppSession.Current, _securityAudit);
 
         public static NotificationConfigPresenter CreateNotificationConfigPresenter(INotificationConfigView view) =>
-            new NotificationConfigPresenter(view, _notificationConfigService, MainForm.Session, _securityAudit);
+            new NotificationConfigPresenter(view, _notificationConfigService, AppSession.Current, _securityAudit);
 
         public static MainFormPresenter CreateMainFormPresenter(IMainFormView view) =>
             new MainFormPresenter(view, _notificationConfigService, _personService, _permissionService);
 
-        // ModalAlerts isn't a Presenter/View screen (see its own comment) - it just needs the
-        // service directly to acknowledge an alert.
+        // The notification center (PharmacySystem.Wpf.AlertsWindow) isn't a Presenter/View screen -
+        // it just needs the service directly to acknowledge or mute an alert.
         public static INotificationConfigService NotificationConfigService => _notificationConfigService;
 
         #endregion
@@ -99,16 +115,16 @@ namespace PharmacySystem
         #region Purchase / Sale / Reports
 
         public static PurchasePresenter CreatePurchasePresenter(IPurchaseView view, int idPerson) =>
-            new PurchasePresenter(view, _purchaseService, _productService, _storeService, MainForm.Session, idPerson);
+            new PurchasePresenter(view, _purchaseService, _productService, _storeService, AppSession.Current, idPerson);
 
         public static SalePresenter CreateSalePresenter(ISaleView view, int idPerson) =>
-            new SalePresenter(view, _saleService, _productService, _storeService, MainForm.Session, idPerson);
+            new SalePresenter(view, _saleService, _productService, _storeService, AppSession.Current, idPerson);
 
         public static CreditNotePresenter CreateCreditNotePresenter(ICreditNoteView view) =>
-            new CreditNotePresenter(view, _saleService, MainForm.Session, MainForm.oPerson?.idPerson ?? 0);
+            new CreditNotePresenter(view, _saleService, AppSession.Current, AppSession.Person?.idPerson ?? 0);
 
         public static ReportPresenter CreateReportPresenter(IReportView view) =>
-            new ReportPresenter(view, _supplierService, _categoryService, _saleService, _purchaseService, _productService, _notificationConfigService, _clientService, MainForm.Session);
+            new ReportPresenter(view, _supplierService, _categoryService, _saleService, _purchaseService, _productService, _notificationConfigService, _clientService, AppSession.Current);
 
         #endregion
 
@@ -122,14 +138,14 @@ namespace PharmacySystem
         #region Cash count
 
         public static CashCountPresenter CreateCashCountPresenter(ICashCountView view) =>
-            new CashCountPresenter(view, _cashCountService, MainForm.Session);
+            new CashCountPresenter(view, _cashCountService, AppSession.Current);
 
         #endregion
 
         #region Security log
 
         public static SecurityLogPresenter CreateSecurityLogPresenter(ISecurityLogView view) =>
-            new SecurityLogPresenter(view, _securityAudit, MainForm.Session);
+            new SecurityLogPresenter(view, _securityAudit, AppSession.Current);
 
         #endregion
 
@@ -141,9 +157,51 @@ namespace PharmacySystem
             new CurrentUser(person, _permissionService.GetPermissionsForRole(person.oPersonType?.idPersonType ?? 0));
 
         public static RolesPresenter CreateRolesPresenter(IRolesView view) =>
-            new RolesPresenter(view, _permissionService, MainForm.Session, _securityAudit);
+            new RolesPresenter(view, _permissionService, AppSession.Current, _securityAudit);
 
         public static IPermissionService PermissionService => _permissionService;
+
+        #endregion
+
+        #region Shell
+
+        // Everything the WPF shell's sidebar needs to open a screen, in one bundle so MainWindow
+        // (in PharmacySystem.Wpf) never references this class.
+        public static ShellServices CreateShellServices() => new ShellServices
+        {
+            MainPresenter = CreateMainFormPresenter,
+            HomePresenter = CreateHomePresenter,
+            ClientPresenter = CreateClientPresenter,
+            SupplierPresenter = CreateSupplierPresenter,
+            UserPresenter = CreateUserPresenter,
+            RolesPresenter = CreateRolesPresenter,
+            ReportPresenter = CreateReportPresenter,
+            CashCountPresenter = CreateCashCountPresenter,
+            SecurityLogPresenter = CreateSecurityLogPresenter,
+            NotificationConfigPresenter = CreateNotificationConfigPresenter,
+            ChangePasswordPresenter = (view, personId) => CreateChangePasswordPresenter(view, personId),
+            PurchasePresenter = (view, idPerson) => CreatePurchasePresenter(view, idPerson),
+            SalePresenter = (view, idPerson) => CreateSalePresenter(view, idPerson),
+            CreditNotePresenter = CreateCreditNotePresenter,
+            ManagementFactories = CreateManagementFactories(),
+            Pickers = CreatePickerFactories(),
+            NotificationConfigService = _notificationConfigService,
+            TicketData = idSale =>
+            {
+                Sale sale = _saleService.GetById(idSale);
+                if (sale != null)
+                {
+                    sale.payments = _saleService.GetPaymentsBySaleId(idSale);
+                }
+                return new PrintTicketData
+                {
+                    Store = _storeService.ListStore(),
+                    Sale = sale,
+                    Details = sale == null ? null : _saleService.GetDetailsBySaleId(idSale),
+                    HtmlTemplate = Properties.Resources.Ticket
+                };
+            }
+        };
 
         #endregion
     }
