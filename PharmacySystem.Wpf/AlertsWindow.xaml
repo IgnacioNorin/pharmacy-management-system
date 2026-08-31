@@ -1,0 +1,95 @@
+<Window x:Class="PharmacySystem.Wpf.AlertsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Notificaciones"
+        Height="470" Width="860"
+        MinHeight="320" MinWidth="640"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="White"
+        FontFamily="Segoe UI" FontSize="13">
+    <DockPanel Margin="16">
+        <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+            <TextBlock Text="Centro de notificaciones" FontSize="16" FontWeight="Bold"
+                       VerticalAlignment="Center"/>
+            <Button x:Name="btnConfig" Content="Configurar umbrales" Width="160" Height="28"
+                    HorizontalAlignment="Right" Click="btnConfig_Click"/>
+        </Grid>
+
+        <Button x:Name="btnClose" DockPanel.Dock="Bottom" Content="Cerrar"
+                Width="115" Height="32" Margin="0,12,0,0"
+                HorizontalAlignment="Right" IsCancel="True" Click="btnClose_Click"/>
+
+        <TextBlock x:Name="lblEmpty" Text="No hay alertas activas."
+                   FontStyle="Italic" Foreground="DimGray" Visibility="Collapsed"
+                   VerticalAlignment="Top"/>
+
+        <DataGrid x:Name="dgData"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  HeadersVisibility="Column"
+                  SelectionMode="Single"
+                  GridLinesVisibility="Horizontal"
+                  RowHeaderWidth="0">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Severidad" Width="90" Binding="{Binding SeverityLabel}">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontWeight" Value="Bold"/>
+                            <Setter Property="Foreground" Value="{Binding SeverityBrush}"/>
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Producto" Width="200" Binding="{Binding Product}"/>
+                <DataGridTextColumn Header="Detalle" Width="*" Binding="{Binding Detail}"/>
+                <DataGridTextColumn Header="Estado" Width="90" Binding="{Binding Status}"/>
+                <DataGridTemplateColumn Header="" Width="70">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="Ver" Margin="2" Padding="4,1" Click="btnView_Click"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="{Binding AckText}" IsEnabled="{Binding AckEnabled}"
+                                    Margin="2" Padding="4,1" Click="btnAck_Click">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding AckText}" Value="">
+                                                <Setter Property="Visibility" Value="Hidden"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="{Binding MuteText}" IsEnabled="{Binding MuteEnabled}"
+                                    Margin="2" Padding="4,1" Click="btnMute_Click">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding MuteText}" Value="">
+                                                <Setter Property="Visibility" Value="Hidden"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>

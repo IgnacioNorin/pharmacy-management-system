@@ -1,9 +1,35 @@
 using System;
+using System.Collections.Generic;
 using System.Windows.Interop;
+using PharmacySystem.Business;
+using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 
 namespace PharmacySystem.Wpf
 {
+    public static class AlertsDialog
+    {
+        // Opens the notification center modally over a WinForms owner and returns the product code
+        // the user clicked "Ver" on, or null if the window was just closed.
+        public static string Show(
+            IntPtr ownerHandle,
+            IReadOnlyList<ProductAlert> alerts,
+            INotificationConfigService notificationService,
+            int currentPersonId,
+            bool canAcknowledge,
+            bool canMute,
+            bool canConfigure,
+            Func<INotificationConfigView, NotificationConfigPresenter> configPresenterFactory)
+        {
+            var window = new AlertsWindow(alerts, notificationService, currentPersonId,
+                canAcknowledge, canMute, canConfigure, configPresenterFactory);
+            if (ownerHandle != IntPtr.Zero) new WindowInteropHelper(window) { Owner = ownerHandle };
+
+            bool picked = window.ShowDialog() == true;
+            return picked ? window.SelectedProductCode : null;
+        }
+    }
+
     public static class CashCountDialog
     {
         public static void Show(IntPtr ownerHandle, Func<ICashCountView, CashCountPresenter> presenterFactory)

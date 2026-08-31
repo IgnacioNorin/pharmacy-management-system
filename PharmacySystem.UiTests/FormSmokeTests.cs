@@ -100,20 +100,9 @@ namespace PharmacySystem.UiTests
         // SaleWindow). PurchasePresenter / SalePresenter keep their full unit-test coverage in
         // PharmacySystem.Tests.
 
-        // ModalAlerts is a plain data-display dialog (Fase 3 of the alerts rework), not an MVP
-        // screen - no View interface to assert against, just confirms the hand-authored
-        // Designer.cs/.resx pair (no visual designer was used to generate them) actually wires up.
-        [Fact]
-        public void ModalAlerts_ConstructsWithoutException()
-        {
-            StaThread.Run(() =>
-            {
-                using (var form = new ModalAlerts())
-                {
-                    Assert.NotNull(form);
-                }
-            });
-        }
+        // ModalAlerts (notification center) was ported to WPF (PharmacySystem.Wpf.AlertsWindow).
+        // It has no Presenter; NotificationConfigPresenter (its "Configurar umbrales" button)
+        // keeps its full unit-test coverage in PharmacySystem.Tests.
 
         [Fact]
         public void FrmHome_ConstructsAndImplementsView()

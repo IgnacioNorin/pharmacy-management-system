@@ -96,8 +96,8 @@ namespace PharmacySystem
         public static MainFormPresenter CreateMainFormPresenter(IMainFormView view) =>
             new MainFormPresenter(view, _notificationConfigService, _personService, _permissionService);
 
-        // ModalAlerts isn't a Presenter/View screen (see its own comment) - it just needs the
-        // service directly to acknowledge an alert.
+        // The notification center (PharmacySystem.Wpf.AlertsWindow) isn't a Presenter/View screen -
+        // it just needs the service directly to acknowledge or mute an alert.
         public static INotificationConfigService NotificationConfigService => _notificationConfigService;
 
         #endregion

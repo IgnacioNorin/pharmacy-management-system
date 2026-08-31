@@ -237,17 +237,28 @@ namespace PharmacySystem
         {
             if (!CanNavigate("alertas.acceso")) return;
 
-            using (var modal = new ModalAlerts(_currentAlerts, CompositionRoot.NotificationConfigService, oPerson.idPerson))
+            // The click-through opens the Producto tab in frmManagement; skip it for a role
+            // that can see alerts but not the products section (that tab is not loaded).
+            bool canOpenProduct = Session?.Can("productos.acceso") ?? false;
+
+            // Ported to WPF (PharmacySystem.Wpf.AlertsWindow). Same alert list and notification
+            // service; the shell passes the per-action permissions in since the WPF project can't
+            // reach MainForm.Session.
+            string selectedProductCode = AlertsDialog.Show(
+                Handle,
+                _currentAlerts,
+                CompositionRoot.NotificationConfigService,
+                oPerson.idPerson,
+                Session?.Can("alertas.reconocer") ?? false,
+                Session?.Can("alertas.silenciar") ?? false,
+                Session?.Can("alertas.configurar") ?? false,
+                CompositionRoot.CreateNotificationConfigPresenter);
+
+            if (canOpenProduct && !string.IsNullOrEmpty(selectedProductCode))
             {
-                // The click-through opens the Producto tab in frmManagement; skip it for a role
-                // that can see alerts but not the products section (that tab is not loaded).
-                bool canOpenProduct = Session?.Can("productos.acceso") ?? false;
-                if (modal.ShowDialog(this) == DialogResult.OK && canOpenProduct && !string.IsNullOrEmpty(modal.SelectedProductCode))
-                {
-                    frmManagement childForm = new frmManagement();
-                    ShowForm(childForm, btnManagement);
-                    childForm.ShowProductByCode(modal.SelectedProductCode);
-                }
+                frmManagement childForm = new frmManagement();
+                ShowForm(childForm, btnManagement);
+                childForm.ShowProductByCode(selectedProductCode);
             }
 
             // Acknowledging or muting inside the center changes what should count toward the
