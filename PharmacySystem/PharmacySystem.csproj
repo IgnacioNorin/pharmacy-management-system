@@ -130,12 +130,6 @@
     <Compile Include="frmReport.Designer.cs">
       <DependentUpon>frmReport.cs</DependentUpon>
     </Compile>
-    <Compile Include="frmRoles.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="frmRoles.Designer.cs">
-      <DependentUpon>frmRoles.cs</DependentUpon>
-    </Compile>
     <Compile Include="PrintSale.cs">
       <SubType>Form</SubType>
     </Compile>

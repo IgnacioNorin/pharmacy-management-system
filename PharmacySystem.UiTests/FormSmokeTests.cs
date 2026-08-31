@@ -59,17 +59,8 @@ namespace PharmacySystem.UiTests
             });
         }
 
-        [Fact]
-        public void FrmRoles_ConstructsAndImplementsView()
-        {
-            StaThread.Run(() =>
-            {
-                using (var form = new frmRoles())
-                {
-                    Assert.IsAssignableFrom<IRolesView>(form);
-                }
-            });
-        }
+        // frmRoles was ported to WPF (PharmacySystem.Wpf.RolesWindow). RolesPresenter keeps its
+        // full unit-test coverage in PharmacySystem.Tests.
 
         // frmCreditNote was ported to WPF (PharmacySystem.Wpf.CreditNoteWindow) - see the WPF
         // migration. CreditNotePresenter keeps its full unit-test coverage in PharmacySystem.Tests.

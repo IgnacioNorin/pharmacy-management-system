@@ -359,9 +359,8 @@ namespace PharmacySystem
         {
             if (!CanNavigate("roles.gestionar")) return;
 
-            frmRoles childForm = new frmRoles();
-
-            ShowForm(childForm, sender);
+            // Ported to WPF. Same IRolesView; RolesPresenter unchanged.
+            RolesDialog.Show(Handle, CompositionRoot.CreateRolesPresenter);
         }
 
         private void btnReports_Click(object sender, EventArgs e)
