@@ -1,10 +1,13 @@
+using System.Collections.Generic;
+using System.Linq;
 using PharmacySystem.Business;
 using PharmacySystem.Model;
 
 namespace PharmacySystem.Presentation
 {
-    // frmCreditNote: look a sale up by document type + number, then issue a Nota de Credito that
-    // reverses it (negative document + stock restored). This is the "anular venta" flow.
+    // frmCreditNote: look a sale up by document type + number, choose how many units of each line
+    // to credit, then issue a Nota de Credito (negative document + stock restored) for that part.
+    // A sale can be credited across several notes until every line is fully credited.
     public class CreditNotePresenter
     {
         private readonly ICreditNoteView _view;
@@ -60,10 +63,17 @@ namespace PharmacySystem.Presentation
                 _view.ShowMessage("El comprobante seleccionado es una nota de crédito.");
                 return;
             }
+            if (sale.FullyCreditNoted)
+            {
+                _view.ShowMessage("El comprobante ya fue acreditado por completo.");
+                return;
+            }
+
+            _view.ShowCreditableLines(_service.GetCreditableLines(sale.Id));
+
             if (sale.AlreadyCreditNoted)
             {
-                _view.ShowMessage("El comprobante ya tiene una nota de crédito emitida.");
-                return;
+                _view.ShowMessage("El comprobante ya tiene una nota de crédito parcial. Puede acreditar el resto.");
             }
 
             _selectedSaleId = sale.Id;
@@ -90,20 +100,32 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
+            List<CreditNoteLineRequest> lines = (_view.GetRequestedQuantities() ?? new List<CreditNoteLineRequest>())
+                .Where(l => l.Quantity > 0)
+                .ToList();
+            if (lines.Count == 0)
+            {
+                _view.ShowMessage("Indique cuántas unidades acreditar en al menos una línea.");
+                return;
+            }
+
             if (!_view.ConfirmGenerate())
             {
                 return;
             }
 
-            switch (_service.CreateCreditNote(_selectedSaleId.Value, _currentPersonId, reason))
+            switch (_service.CreateCreditNote(_selectedSaleId.Value, _currentPersonId, reason, lines))
             {
                 case CreditNoteResult.Ok:
                     _view.ShowMessage("Nota de crédito emitida. Se devolvió el stock.");
                     InventoryChangeNotifier.NotifyStockChanged();
                     _view.CreditNoteCompleted();
                     break;
-                case CreditNoteResult.AlreadyCreditNoted:
-                    _view.ShowMessage("El comprobante ya tiene una nota de crédito emitida.");
+                case CreditNoteResult.NothingToCredit:
+                    _view.ShowMessage("Indique cuántas unidades acreditar en al menos una línea.");
+                    break;
+                case CreditNoteResult.QuantityExceedsRemaining:
+                    _view.ShowMessage("Una de las cantidades supera lo que queda por acreditar de esa línea. Vuelva a buscar el comprobante.");
                     break;
                 case CreditNoteResult.NotFound:
                     _view.ShowMessage("No se encontró el comprobante.");

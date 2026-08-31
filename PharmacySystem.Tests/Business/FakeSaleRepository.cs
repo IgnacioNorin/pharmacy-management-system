@@ -33,7 +33,9 @@ namespace PharmacySystem.Tests.Business
         public List<SaleDetail> GetDetailsBySaleId(int saleId) => new List<SaleDetail>();
         public List<SalePayment> GetPaymentsBySaleId(int saleId) => new List<SalePayment>();
         public SaleLookup FindByDocument(string documentType, string documentNumber) => null;
-        public CreditNoteResult CreateCreditNote(int originalSaleId, int userId, string reason) => CreditNoteResult.Ok;
+        public List<SaleCreditDetail> GetCreditableLines(int saleId) => new List<SaleCreditDetail>();
+        public CreditNoteResult CreateCreditNote(int originalSaleId, int userId, string reason,
+            IReadOnlyList<CreditNoteLineRequest> lines) => CreditNoteResult.Ok;
         public List<SaleReportRow> ReportSale(DateTime startDate, DateTime endDate, int clientId) => new List<SaleReportRow>();
         public decimal SumTotalPay(DateTime startDate, DateTime endDate) => 0;
         public decimal SumAmountReceived(DateTime startDate, DateTime endDate) => 0;

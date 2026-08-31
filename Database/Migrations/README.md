@@ -78,6 +78,7 @@ fijan al inicio; `sqlcmd` por defecto los deja en `OFF`).
 | `032_security_event.sql` | 1.4.0 | 1.4.0 (agrega la tabla `security_event` + índices + `sp_purge_security_event`: una fila por acción administrativa sensible — actor, acción, entidad, resumen legible; fase 1 = roles/permisos, usuarios, tienda, config de alertas) |
 | `033_bitacora_permission.sql` | 1.4.0 | 1.4.0 (agrega el permiso `bitacora.acceso` y lo concede a los roles 1 y 2; gatea la pantalla "Bitácora" que muestra `security_event`) |
 | `034_alert_muted_by.sql` | 1.4.0 | 1.4.0 (agrega `product_alert_history.muted_by` + FK a `person`: registra quién silenció la alerta, se limpia al desmutear; NULL para las filas previas — DEF-37) |
+| `035_partial_credit_note.sql` | 1.4.0 | 1.4.0 (agrega `sale_detail.source_detail_id` + FK e índice filtrado: en una línea de nota de crédito apunta a la línea de venta original que acredita; habilita anular una venta por partes — línea a línea y unidad a unidad — en varias notas) |
 
 **No es una migración**, pero se ejecuta una vez después de crear la base:
 `Database\create_app_login.sql` crea el login `pharmacy_app` con privilegios

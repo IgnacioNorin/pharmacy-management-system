@@ -353,8 +353,18 @@ CREATE TABLE [dbo].[sale_detail](
     [subtotal] [decimal](18, 2) NULL,
     [tax_affected] [bit] NOT NULL CONSTRAINT [DF_sale_detail_tax_affected] DEFAULT ((1)),
     [date_registered] [datetime] NULL,
-    PRIMARY KEY CLUSTERED ([id] ASC)
+    -- On a Nota de Credito line, the original sale_detail.id it credits (partial credit notes,
+    -- migration 035). NULL for sale lines and for credit-note lines that reversed a whole sale.
+    [source_detail_id] [int] NULL,
+    PRIMARY KEY CLUSTERED ([id] ASC),
+    CONSTRAINT [FK_sale_detail_source_detail] FOREIGN KEY ([source_detail_id]) REFERENCES [dbo].[sale_detail] ([id])
 )
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE INDEX [ix_sale_detail_source_detail] ON [dbo].[sale_detail] ([source_detail_id])
+    WHERE [source_detail_id] IS NOT NULL
 GO
 
 -- Payment breakdown of a sale: one row per method it was collected with (part cash, part

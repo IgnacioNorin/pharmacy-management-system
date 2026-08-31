@@ -24,6 +24,17 @@ namespace PharmacySystem.Tests.Integration
             return SqlTestHelper.ExecuteScalarInt("SELECT TOP 1 id FROM person_type");
         }
 
+        // Credits every unit of every line still creditable on a sale - the pre-partial-credit
+        // "anular la venta completa" behaviour, expressed through the new per-line API.
+        private static CreditNoteResult CreditWholeSale(int saleId, int userId, string reason)
+        {
+            List<CreditNoteLineRequest> lines = Repository.GetCreditableLines(saleId)
+                .Where(l => l.RemainingQuantity > 0)
+                .Select(l => new CreditNoteLineRequest { SourceDetailId = l.SourceDetailId, Quantity = l.RemainingQuantity })
+                .ToList();
+            return Repository.CreateCreditNote(saleId, userId, reason, lines);
+        }
+
         private static Person CreatePerson(out string document)
         {
             document = SqlTestHelper.NewTag();
@@ -171,7 +182,7 @@ namespace PharmacySystem.Tests.Integration
                 Assert.Equal(DateTime.Today.AddDays(200), lots[0].dateExpired);
 
                 // A full credit note puts the 5 units back as one new undated lot.
-                Assert.Equal(CreditNoteResult.Ok, Repository.CreateCreditNote(saleId, person.idPerson, "prueba"));
+                Assert.Equal(CreditNoteResult.Ok, CreditWholeSale(saleId, person.idPerson, "prueba"));
                 var afterNc = ProductRepo.GetLots(productId);
                 Assert.Contains(afterNc, l => l.dateExpired == null && l.quantity == 5);
                 Assert.Equal(10, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId)));
@@ -305,29 +316,37 @@ namespace PharmacySystem.Tests.Integration
                     netAmount = 1000m, taxAmount = 190m, exemptAmount = 0m,
                     oSaleDetail = new List<SaleDetail>
                     {
-                        new SaleDetail { oProduct = new Product { idProduct = productId }, amount = 3, salePrice = 5m, subtotal = 15m }
+                        new SaleDetail { oProduct = new Product { idProduct = productId }, amount = 1, salePrice = 1190m, subtotal = 1190m, taxAffected = true }
                     }
                 });
                 Assert.True(originalId > 0);
-                Assert.Equal(7, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId)));
+                Assert.Equal(9, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId)));
 
-                CreditNoteResult result = Repository.CreateCreditNote(originalId, person.idPerson, "Devolución del cliente");
+                CreditNoteResult result = CreditWholeSale(originalId, person.idPerson, "Devolución del cliente");
                 Assert.Equal(CreditNoteResult.Ok, result);
 
                 // stock restored
                 Assert.Equal(10, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId)));
 
-                // a negative-amount NC row referencing the original
+                // a negative-amount NC row referencing the original, with the VAT split recomputed
                 ncId = SqlTestHelper.ExecuteScalarInt("SELECT id FROM sale WHERE reference_id = @id", new SqlParameter("@id", originalId));
                 Assert.Equal("Nota de Credito", (string)SqlTestHelper.ExecuteScalar("SELECT document_type FROM sale WHERE id = @id", new SqlParameter("@id", ncId)));
                 Assert.Equal(-1190, SqlTestHelper.ExecuteScalarInt("SELECT total_amount FROM sale WHERE id = @id", new SqlParameter("@id", ncId)));
                 Assert.Equal(-1000, SqlTestHelper.ExecuteScalarInt("SELECT net_amount FROM sale WHERE id = @id", new SqlParameter("@id", ncId)));
+                Assert.Equal(-190, SqlTestHelper.ExecuteScalarInt("SELECT tax_amount FROM sale WHERE id = @id", new SqlParameter("@id", ncId)));
 
-                // second attempt is rejected
-                Assert.Equal(CreditNoteResult.AlreadyCreditNoted, Repository.CreateCreditNote(originalId, person.idPerson, "otra vez"));
+                // the NC line links back to the original line it credited
+                Assert.Equal(1, SqlTestHelper.ExecuteScalarInt(
+                    "SELECT COUNT(*) FROM sale_detail nc JOIN sale_detail o ON o.id = nc.source_detail_id " +
+                    "WHERE nc.sale_id = @nc AND o.sale_id = @o", new SqlParameter("@nc", ncId), new SqlParameter("@o", originalId)));
+
+                // nothing left to credit -> a second whole-sale credit is a no-op
+                Assert.Equal(CreditNoteResult.NothingToCredit, CreditWholeSale(originalId, person.idPerson, "otra vez"));
 
                 // and a NC cannot itself be credit-noted
-                Assert.Equal(CreditNoteResult.NotAllowedOnCreditNote, Repository.CreateCreditNote(ncId, person.idPerson, "no"));
+                Assert.Equal(CreditNoteResult.NotAllowedOnCreditNote,
+                    Repository.CreateCreditNote(ncId, person.idPerson, "no",
+                        new List<CreditNoteLineRequest> { new CreditNoteLineRequest { SourceDetailId = 1, Quantity = 1 } }));
             }
             finally
             {
@@ -345,7 +364,89 @@ namespace PharmacySystem.Tests.Integration
         [Fact]
         public void CreateCreditNote_UnknownSale_ReturnsNotFound()
         {
-            Assert.Equal(CreditNoteResult.NotFound, Repository.CreateCreditNote(-999, 1, "x"));
+            Assert.Equal(CreditNoteResult.NotFound, Repository.CreateCreditNote(-999, 1, "x",
+                new List<CreditNoteLineRequest> { new CreditNoteLineRequest { SourceDetailId = 1, Quantity = 1 } }));
+        }
+
+        [Fact]
+        public void CreateCreditNote_NoLinesRequested_ReturnsNothingToCredit()
+        {
+            Assert.Equal(CreditNoteResult.NothingToCredit,
+                Repository.CreateCreditNote(-999, 1, "x", new List<CreditNoteLineRequest>()));
+        }
+
+        [Fact]
+        public void CreateCreditNote_PartialThenTheRest_TracksRemainingAndSplitsVat()
+        {
+            Person person = CreatePerson(out string document);
+            int categoryId = CategoryRepo.Register(new Categories { description = SqlTestHelper.NewTag() });
+            int productId = CreateProductWithStock(categoryId, 20);
+
+            int originalId = 0;
+            try
+            {
+                originalId = Repository.Register(new Sale
+                {
+                    typeDocument = "Boleta", oPerson = person,
+                    documentClient = "9999999999", nameClient = "Walk-in",
+                    totalPay = 2380m, payWith = 2380m, change = 0m,
+                    netAmount = 2000m, taxAmount = 380m, exemptAmount = 0m,
+                    oSaleDetail = new List<SaleDetail>
+                    {
+                        new SaleDetail { oProduct = new Product { idProduct = productId }, amount = 5, salePrice = 476m, subtotal = 2380m, taxAffected = true }
+                    }
+                });
+                Assert.Equal(15, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId)));
+
+                int sourceDetailId = Repository.GetCreditableLines(originalId).Single().SourceDetailId;
+
+                // Credit 2 of the 5 units.
+                Assert.Equal(CreditNoteResult.Ok, Repository.CreateCreditNote(originalId, person.idPerson, "devuelve 2",
+                    new List<CreditNoteLineRequest> { new CreditNoteLineRequest { SourceDetailId = sourceDetailId, Quantity = 2 } }));
+
+                SaleCreditDetail afterFirst = Repository.GetCreditableLines(originalId).Single();
+                Assert.Equal(5, afterFirst.SoldQuantity);
+                Assert.Equal(2, afterFirst.CreditedQuantity);
+                Assert.Equal(3, afterFirst.RemainingQuantity);
+                Assert.Equal(17, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId)));
+
+                int nc1 = SqlTestHelper.ExecuteScalarInt("SELECT TOP 1 id FROM sale WHERE reference_id = @id ORDER BY id", new SqlParameter("@id", originalId));
+                // 2 * 476 = 952 gross; net = round(952 / 1.19) = 800; tax = 152.
+                Assert.Equal(-952, SqlTestHelper.ExecuteScalarInt("SELECT total_amount FROM sale WHERE id = @id", new SqlParameter("@id", nc1)));
+                Assert.Equal(-800, SqlTestHelper.ExecuteScalarInt("SELECT net_amount FROM sale WHERE id = @id", new SqlParameter("@id", nc1)));
+                Assert.Equal(-152, SqlTestHelper.ExecuteScalarInt("SELECT tax_amount FROM sale WHERE id = @id", new SqlParameter("@id", nc1)));
+
+                Assert.True(Repository.FindByDocument("Boleta",
+                    (string)SqlTestHelper.ExecuteScalar("SELECT document_number FROM sale WHERE id = @id", new SqlParameter("@id", originalId))).AlreadyCreditNoted);
+                Assert.False(Repository.FindByDocument("Boleta",
+                    (string)SqlTestHelper.ExecuteScalar("SELECT document_number FROM sale WHERE id = @id", new SqlParameter("@id", originalId))).FullyCreditNoted);
+
+                // Asking for 4 more when only 3 remain is rejected, atomically.
+                Assert.Equal(CreditNoteResult.QuantityExceedsRemaining, Repository.CreateCreditNote(originalId, person.idPerson, "de mas",
+                    new List<CreditNoteLineRequest> { new CreditNoteLineRequest { SourceDetailId = sourceDetailId, Quantity = 4 } }));
+                Assert.Equal(3, Repository.GetCreditableLines(originalId).Single().RemainingQuantity);
+
+                // Credit the remaining 3.
+                Assert.Equal(CreditNoteResult.Ok, CreditWholeSale(originalId, person.idPerson, "el resto"));
+                Assert.Equal(0, Repository.GetCreditableLines(originalId).Single().RemainingQuantity);
+                Assert.Equal(20, SqlTestHelper.ExecuteScalarInt("SELECT stock FROM product WHERE id = @id", new SqlParameter("@id", productId)));
+                Assert.True(Repository.FindByDocument("Boleta",
+                    (string)SqlTestHelper.ExecuteScalar("SELECT document_number FROM sale WHERE id = @id", new SqlParameter("@id", originalId))).FullyCreditNoted);
+            }
+            finally
+            {
+                // The original plus every Nota de Credito that references it.
+                SqlTestHelper.ExecuteNonQuery(
+                    "DELETE FROM sale_payment WHERE sale_id = @o OR sale_id IN (SELECT id FROM sale WHERE reference_id = @o)", new SqlParameter("@o", originalId));
+                SqlTestHelper.ExecuteNonQuery(
+                    "DELETE FROM sale_detail WHERE sale_id = @o OR sale_id IN (SELECT id FROM sale WHERE reference_id = @o)", new SqlParameter("@o", originalId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE reference_id = @o", new SqlParameter("@o", originalId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM sale WHERE id = @o", new SqlParameter("@o", originalId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product_lot WHERE product_id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM product WHERE id = @id", new SqlParameter("@id", productId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM category WHERE id = @id", new SqlParameter("@id", categoryId));
+                SqlTestHelper.ExecuteNonQuery("DELETE FROM person WHERE document_number = @document", new SqlParameter("@document", document));
+            }
         }
 
         [Fact]
@@ -375,11 +476,14 @@ namespace PharmacySystem.Tests.Integration
                 Assert.Equal(originalId, before.Id);
                 Assert.False(before.IsCreditNote);
                 Assert.False(before.AlreadyCreditNoted);
+                Assert.False(before.FullyCreditNoted);
 
-                Repository.CreateCreditNote(originalId, person.idPerson, "test");
+                CreditWholeSale(originalId, person.idPerson, "test");
                 ncId = SqlTestHelper.ExecuteScalarInt("SELECT id FROM sale WHERE reference_id = @id", new SqlParameter("@id", originalId));
 
-                Assert.True(Repository.FindByDocument("Boleta", number).AlreadyCreditNoted);
+                SaleLookup after = Repository.FindByDocument("Boleta", number);
+                Assert.True(after.AlreadyCreditNoted);
+                Assert.True(after.FullyCreditNoted);
             }
             finally
             {
