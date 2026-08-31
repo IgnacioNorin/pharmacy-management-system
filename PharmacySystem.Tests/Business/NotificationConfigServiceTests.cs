@@ -304,7 +304,7 @@ namespace PharmacySystem.Tests.Business
 
             public bool Acknowledge(int historyId, int personId) => true;
 
-            public bool Mute(int historyId) => true;
+            public bool Mute(int historyId, int personId) => true;
 
             public bool Unmute(int historyId) => true;
 
@@ -362,10 +362,11 @@ namespace PharmacySystem.Tests.Business
         {
             var historyRepository = new FakeProductAlertHistoryRepository { MuteResult = true };
 
-            bool result = CreateService(new FakeNotificationConfigRepository(), historyRepository).MuteAlert(7);
+            bool result = CreateService(new FakeNotificationConfigRepository(), historyRepository).MuteAlert(7, 42);
 
             Assert.True(result);
             Assert.Equal(new[] { 7 }, historyRepository.Muted);
+            Assert.Equal((7, 42), historyRepository.MutedWith);
         }
 
         [Fact]

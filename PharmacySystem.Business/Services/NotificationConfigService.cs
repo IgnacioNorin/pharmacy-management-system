@@ -83,7 +83,7 @@ namespace PharmacySystem.Business
 
         public bool AcknowledgeAlert(int historyId, int personId) => _historyRepository.Acknowledge(historyId, personId);
 
-        public bool MuteAlert(int historyId) => _historyRepository.Mute(historyId);
+        public bool MuteAlert(int historyId, int personId) => _historyRepository.Mute(historyId, personId);
 
         public bool UnmuteAlert(int historyId) => _historyRepository.Unmute(historyId);
 

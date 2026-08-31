@@ -365,6 +365,17 @@ namespace PharmacySystem.Tests.Presentation
         }
 
         [Fact]
+        public void OnFinishSale_BoletaWithMalformedDocument_ShowsMessage()
+        {
+            // DEF-32: the Boleta recipient document was only checked for emptiness.
+            var view = new FakeSaleView { DocumentClient = "!!", NameClient = "Juan" };
+
+            CreatePresenter(view, new FakeSaleService(), new FakeProductService()).OnFinishSale();
+
+            Assert.Equal(new[] { "El documento del cliente no tiene un formato válido" }, view.ShownMessages);
+        }
+
+        [Fact]
         public void OnFinishSale_EmptyCart_ShowsMessage()
         {
             var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
@@ -484,7 +495,7 @@ namespace PharmacySystem.Tests.Presentation
         [Fact]
         public void OnFinishSale_Succeeds_SetsVatBreakdownOnTheSale()
         {
-            var view = new FakeSaleView { DocumentClient = "1", NameClient = "Juan" };
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
             var saleService = new FakeSaleService { RegisterResult = 1 };
             var presenter = CreatePresenter(view, saleService, new FakeProductService { VerifyResult = true });
             AddLine(presenter, view, productId: 1, amount: 1, priceSaleText: "1190.00");
@@ -502,7 +513,7 @@ namespace PharmacySystem.Tests.Presentation
         [Fact]
         public void OnFinishSale_ExemptProduct_SetsExemptAmountAndNoTax()
         {
-            var view = new FakeSaleView { DocumentClient = "1", NameClient = "Juan" };
+            var view = new FakeSaleView { DocumentClient = "123", NameClient = "Juan" };
             var saleService = new FakeSaleService { RegisterResult = 1 };
             var productService = new FakeProductService
             {

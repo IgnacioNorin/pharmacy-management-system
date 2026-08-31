@@ -109,6 +109,16 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 - **La venta vuelve a Boleta al terminar (DEF-31).** Tras registrar una venta,
   el tipo de documento se restablece a Boleta y el panel del receptor se oculta,
   en vez de arrancar la siguiente venta en modo Factura con los datos anteriores.
+- **La pantalla de compra deja de recorrer todo el catálogo en memoria
+  (DEF-33).** Buscar un producto por código y agregarlo a la compra ahora hace
+  una consulta puntual (`ProductRepository.GetByCode` / `GetById`), como ya lo
+  hacía la pantalla de venta.
+- **Queda registrado quién silenció una alerta (DEF-37).** Nueva columna
+  `product_alert_history.muted_by` (migración `034`), a la par de
+  `acknowledged_by`; se limpia al desmutear.
+- **El documento del cliente en la boleta se valida el formato (DEF-32).** Antes
+  solo se comprobaba que no estuviera vacío; ahora aplica la misma verificación
+  de formato (`DocumentValidator`) que el resto de la aplicación.
 
 ## [1.4.0] - 2026-08-30
 

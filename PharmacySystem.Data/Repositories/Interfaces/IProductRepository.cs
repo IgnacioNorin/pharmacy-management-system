@@ -17,6 +17,10 @@ namespace PharmacySystem.Data
         // One sellable product by code / id, for the sale screen's scan and add-to-cart steps.
         Product GetSellableByCode(string code);
         Product GetSellableById(int idProduct);
+        // One active product by code / id, released or not, for the purchase screen's scan and
+        // add-to-cart steps (buying stock does not require the product to be on sale).
+        Product GetByCode(string code);
+        Product GetById(int idProduct);
         bool Verify(int idProduct);
         bool Delete(int idProduct);
 

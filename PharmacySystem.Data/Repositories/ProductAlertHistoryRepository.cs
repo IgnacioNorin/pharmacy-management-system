@@ -85,7 +85,7 @@ namespace PharmacySystem.Data
                     // clear it here too, in case the caller ever updates severity without going
                     // through NotificationConfigService.SyncAlertHistory's own reset.
                     oConnection.Execute(
-                        "UPDATE product_alert_history SET severity = @severity, trigger_value = @triggerValue, muted_at = NULL WHERE id = @historyId",
+                        "UPDATE product_alert_history SET severity = @severity, trigger_value = @triggerValue, muted_at = NULL, muted_by = NULL WHERE id = @historyId",
                         new { historyId, severity, triggerValue });
                 }
                 catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
@@ -150,15 +150,15 @@ namespace PharmacySystem.Data
             }
         }
 
-        public bool Mute(int historyId)
+        public bool Mute(int historyId, int personId)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
                 try
                 {
                     int rows = oConnection.Execute(
-                        "UPDATE product_alert_history SET muted_at = GETDATE() WHERE id = @historyId AND resolved_at IS NULL",
-                        new { historyId });
+                        "UPDATE product_alert_history SET muted_at = GETDATE(), muted_by = @personId WHERE id = @historyId AND resolved_at IS NULL",
+                        new { historyId, personId });
                     return rows > 0;
                 }
                 catch (SqlException ex) when (SqlErrorCodes.IsConnectivityError(ex))
@@ -181,7 +181,7 @@ namespace PharmacySystem.Data
                 try
                 {
                     int rows = oConnection.Execute(
-                        "UPDATE product_alert_history SET muted_at = NULL WHERE id = @historyId",
+                        "UPDATE product_alert_history SET muted_at = NULL, muted_by = NULL WHERE id = @historyId",
                         new { historyId });
                     return rows > 0;
                 }

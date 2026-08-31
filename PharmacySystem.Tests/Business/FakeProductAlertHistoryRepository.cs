@@ -17,6 +17,7 @@ namespace PharmacySystem.Tests.Business
         public List<int> Resolved { get; } = new List<int>();
         public (int HistoryId, int PersonId)? AcknowledgedWith { get; private set; }
         public List<int> Muted { get; } = new List<int>();
+        public (int HistoryId, int PersonId)? MutedWith { get; private set; }
         public List<int> Unmuted { get; } = new List<int>();
         public bool MuteResult { get; set; } = true;
         public bool UnmuteResult { get; set; } = true;
@@ -42,9 +43,10 @@ namespace PharmacySystem.Tests.Business
 
         public List<ProductAlertHistoryEntry> GetHistory(DateTime startDate, DateTime endDate) => HistoryResult;
 
-        public bool Mute(int historyId)
+        public bool Mute(int historyId, int personId)
         {
             Muted.Add(historyId);
+            MutedWith = (historyId, personId);
             return MuteResult;
         }
 

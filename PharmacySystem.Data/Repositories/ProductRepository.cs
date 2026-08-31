@@ -332,6 +332,15 @@ namespace PharmacySystem.Data
         public Product GetSellableById(int idProduct) =>
             QueryProducts(ProductSelect + " AND p.is_released = 1 AND p.id = @idProduct", new { idProduct }).FirstOrDefault();
 
+        // One active product by code / id, released or not - the purchase screen loads stock for a
+        // product that may not be on sale yet, so it must not filter on is_released. It also used
+        // to scan the whole catalogue in memory on every add-to-cart (DEF-33, purchase side).
+        public Product GetByCode(string code) =>
+            QueryProducts(ProductSelect + " AND p.code = @code", new { code }).FirstOrDefault();
+
+        public Product GetById(int idProduct) =>
+            QueryProducts(ProductSelect + " AND p.id = @idProduct", new { idProduct }).FirstOrDefault();
+
         private List<Product> QueryProducts(string sql, object param = null)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())

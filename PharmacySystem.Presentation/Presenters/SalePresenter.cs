@@ -256,6 +256,14 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
+            // The recipient document on a Boleta used to be free text checked only for emptiness
+            // (DEF-32). Apply the same country-agnostic format check the rest of the app uses.
+            if (!isFactura && !DocumentValidator.IsValid(_view.DocumentClient.Trim()))
+            {
+                _view.ShowMessage("El documento del cliente no tiene un formato válido");
+                return;
+            }
+
             if (isFactura)
             {
                 string recipientDocument = (_view.RecipientTaxId ?? "").Trim();
