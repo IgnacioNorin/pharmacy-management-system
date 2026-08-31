@@ -6,6 +6,15 @@ El formato sigue, a grandes rasgos, [Keep a Changelog](https://keepachangelog.co
 
 ### Cambiado
 
+- **Interfaz reescrita en WPF.** Toda la UI pasó de Windows Forms a WPF, pantalla
+  por pantalla detrás de las mismas interfaces `IView`; las capas de dominio,
+  datos, negocio y presentación no cambiaron. Ya no queda ningún formulario de
+  WinForms.
+- **Migración a .NET 10.** El proyecto pasó de .NET Framework 4.8 a
+  `net10.0` / `net10.0-windows`; el ejecutable adoptó el formato de proyecto
+  SDK-style. El acceso a datos usa `Microsoft.Data.SqlClient` (las cadenas de
+  conexión ahora requieren `TrustServerCertificate=True` contra un SQL Server con
+  certificado autofirmado). La exportación a PDF usa PDFsharp/MigraDoc 6.
 - **Los reportes ya no congelan la ventana.** Consultar un reporte (ventas,
   compras, productos, historial de alertas) corre en segundo plano: mientras
   dura, los botones de consulta quedan deshabilitados y el cursor pasa a

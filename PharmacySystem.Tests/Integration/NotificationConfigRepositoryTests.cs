@@ -1,5 +1,5 @@
 using System;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using PharmacySystem.Data;
 using PharmacySystem.Model;
 using Xunit;

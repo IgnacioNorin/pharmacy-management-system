@@ -3,15 +3,19 @@
 ## Requisitos del equipo cliente
 
 - Windows 10 / 11 (x64).
-- **.NET Framework 4.8** (viene con Windows 10 1903+ y Windows 11).
+- **.NET Desktop Runtime 10** ([descarga](https://dotnet.microsoft.com/download/dotnet/10.0)).
+  No hace falta si el paquete se arma con `-SelfContained` (ver abajo).
 - Acceso de red a una instancia de **SQL Server 2019 o superior** (puede ser
   local en el mismo equipo).
 
 ## 1. Armar el paquete (en el equipo de desarrollo)
 
 ```powershell
-# Desde la raíz del repositorio, con Visual Studio 2022 instalado
+# Desde la raíz del repositorio, con el SDK de .NET 10 instalado
 powershell -ExecutionPolicy Bypass -File deploy\package.ps1
+
+# Paquete autónomo (incluye el runtime, no requiere instalarlo en el cliente):
+powershell -ExecutionPolicy Bypass -File deploy\package.ps1 -SelfContained
 ```
 
 Genera `dist\PharmacySystem-<versión>\` y `dist\PharmacySystem-<versión>.zip`
