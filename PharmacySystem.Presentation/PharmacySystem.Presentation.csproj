@@ -17,8 +17,8 @@
        (cross-platform, fully managed - the old separate -GDI package is gone). Neither pulls in
        a UI type, so the project stays unit-testable without a Form. -->
   <ItemGroup>
-    <PackageReference Include="ClosedXML" Version="0.104.2" />
-    <PackageReference Include="PDFsharp-MigraDoc" Version="6.2.0" />
+    <PackageReference Include="ClosedXML" />
+    <PackageReference Include="PDFsharp-MigraDoc" />
   </ItemGroup>
 
 </Project>
