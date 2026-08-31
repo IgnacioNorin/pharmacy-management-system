@@ -32,8 +32,8 @@ namespace PharmacySystem.Wpf
         public PickerFactories Pickers { get; set; }
         public INotificationConfigService NotificationConfigService { get; set; }
 
-        // Opens the ticket print dialog for a sale id. Stays a callback because PrintSale is
-        // still a WinForms form in the exe.
-        public Action<int> PrintTicket { get; set; }
+        // Resolves one sale's ticket data (store, sale, details, HTML template) for
+        // PrintSaleWindow. The exe owns the sale services and the template resource.
+        public Func<int, PrintTicketData> TicketData { get; set; }
     }
 }

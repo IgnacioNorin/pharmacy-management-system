@@ -166,9 +166,8 @@ namespace PharmacySystem
         #region Shell
 
         // Everything the WPF shell's sidebar needs to open a screen, in one bundle so MainWindow
-        // (in PharmacySystem.Wpf) never references this class. printTicket opens the still-WinForms
-        // PrintSale dialog and is supplied by Program.
-        public static ShellServices CreateShellServices(System.Action<int> printTicket) => new ShellServices
+        // (in PharmacySystem.Wpf) never references this class.
+        public static ShellServices CreateShellServices() => new ShellServices
         {
             MainPresenter = CreateMainFormPresenter,
             HomePresenter = CreateHomePresenter,
@@ -187,7 +186,21 @@ namespace PharmacySystem
             ManagementFactories = CreateManagementFactories(),
             Pickers = CreatePickerFactories(),
             NotificationConfigService = _notificationConfigService,
-            PrintTicket = printTicket
+            TicketData = idSale =>
+            {
+                Sale sale = _saleService.GetById(idSale);
+                if (sale != null)
+                {
+                    sale.payments = _saleService.GetPaymentsBySaleId(idSale);
+                }
+                return new PrintTicketData
+                {
+                    Store = _storeService.ListStore(),
+                    Sale = sale,
+                    Details = sale == null ? null : _saleService.GetDetailsBySaleId(idSale),
+                    HtmlTemplate = Properties.Resources.Ticket
+                };
+            }
         };
 
         #endregion

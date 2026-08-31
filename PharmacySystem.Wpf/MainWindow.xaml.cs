@@ -215,7 +215,7 @@ namespace PharmacySystem.Wpf
             var hooks = new SaleShellHooks(
                 _services.Pickers,
                 _services.CreditNotePresenter,
-                _services.PrintTicket,
+                idSale => PrintSaleDialog.Show(OwnerHandle(), idSale, _services.TicketData),
                 CanNavigate("ventas.nota_credito"));
 
             SaleDialog.Show(OwnerHandle(),

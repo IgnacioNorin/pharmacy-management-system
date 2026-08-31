@@ -22,9 +22,7 @@ namespace PharmacySystem
 
             try
             {
-                // PrintSale is still a WinForms dialog; hand the shell a callback to open it.
-                var shellServices = CompositionRoot.CreateShellServices(
-                    idSale => { using (var print = new PrintSale(idSale)) print.ShowDialog(); });
+                var shellServices = CompositionRoot.CreateShellServices();
 
                 // Log in, run the shell, and when the shell closes come back to the login screen
                 // (log in as someone else without restarting). "Salir" on the login screen ends

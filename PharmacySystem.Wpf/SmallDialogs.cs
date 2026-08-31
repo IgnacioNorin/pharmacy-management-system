@@ -30,6 +30,16 @@ namespace PharmacySystem.Wpf
         }
     }
 
+    public static class PrintSaleDialog
+    {
+        public static void Show(IntPtr ownerHandle, int saleId, Func<int, PrintTicketData> dataProvider)
+        {
+            var window = new PrintSaleWindow(saleId, dataProvider);
+            if (ownerHandle != IntPtr.Zero) new WindowInteropHelper(window) { Owner = ownerHandle };
+            window.ShowDialog();
+        }
+    }
+
     public static class ManagementDialog
     {
         public static void Show(IntPtr ownerHandle,
