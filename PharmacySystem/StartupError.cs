@@ -1,5 +1,4 @@
 using System;
-using System.Configuration;
 using Microsoft.Data.SqlClient;
 using PharmacySystem.Infrastructure;
 
@@ -17,8 +16,9 @@ namespace PharmacySystem
 
         public const string Database =
             "No se pudo conectar con la base de datos.\n\n" +
-            "Verifique que el archivo ConnectionStrings.config exista junto al ejecutable, que sus " +
-            "datos sean correctos y que el servidor de base de datos este disponible.\n\n" +
+            "Verifique que exista la cadena de conexion (appsettings.Local.json junto al " +
+            "ejecutable, o la variable de entorno ConnectionStrings__connection), que sus datos " +
+            "sean correctos y que el servidor de base de datos este disponible.\n\n" +
             "El detalle quedo registrado en el archivo error.log.";
 
         // True if this exception, or any exception it wraps, points at a database or configuration
@@ -29,7 +29,7 @@ namespace PharmacySystem
         {
             for (Exception e = ex; e != null; e = e.InnerException)
             {
-                if (e is SqlException || e is ConfigurationException)
+                if (e is SqlException || e is MissingConfigurationException)
                 {
                     return true;
                 }
@@ -46,8 +46,8 @@ namespace PharmacySystem
         public static string DescribeForUser(Exception ex)
         {
             // A transient connection loss carries its own actionable message ("the server is
-            // unavailable, try again") - the ConnectionStrings.config advice in Database would
-            // only mislead, since the file is present and correct.
+            // unavailable, try again") - the appsettings advice in Database would only mislead,
+            // since the configuration is present and correct.
             for (Exception e = ex; e != null; e = e.InnerException)
             {
                 if (e is DataUnavailableException)

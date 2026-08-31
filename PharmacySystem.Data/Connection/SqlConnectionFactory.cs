@@ -1,9 +1,8 @@
 using System;
-using System.Configuration;
 using System.IO;
-using System.Linq;
-using System.Xml.Linq;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
+using PharmacySystem.Infrastructure;
 
 namespace PharmacySystem.Data
 {
@@ -23,51 +22,40 @@ namespace PharmacySystem.Data
             _connectionString = connectionString;
         }
 
-        // Reads the "connection" entry from the caller's configuration. Fails loudly when it is
-        // missing: a null connection string would otherwise surface much later as an opaque error
-        // from deep inside a repository.
-        public static SqlConnectionFactory FromConfiguration(string connectionName = DefaultConnectionName)
+        // Builds the application configuration: appsettings.json (checked in, placeholder) is
+        // overridden by appsettings.Local.json (git-ignored, real dev values) and then by
+        // environment variables (ConnectionStrings__connection), used by CI and deployments.
+        public static IConfiguration BuildConfiguration()
         {
-            // 1. Ambient config (App.config -> <assembly>.dll.config). This is what the running
-            //    application uses.
-            ConnectionStringSettings settings = ConfigurationManager.ConnectionStrings[connectionName];
-            if (settings != null && !string.IsNullOrWhiteSpace(settings.ConnectionString))
-            {
-                return new SqlConnectionFactory(settings.ConnectionString);
-            }
-
-            // 2. Fall back to ConnectionStrings.config next to the running assembly. The test host
-            //    (dotnet test / vstest) does not surface a test project's App.config through
-            //    ConfigurationManager, but the file is copied to the output directory all the same.
-            string fromFile = ReadConnectionStringFromFile(
-                Path.Combine(AppContext.BaseDirectory, "ConnectionStrings.config"), connectionName);
-            if (!string.IsNullOrWhiteSpace(fromFile))
-            {
-                return new SqlConnectionFactory(fromFile);
-            }
-
-            throw new ConfigurationErrorsException(
-                $"No connection string named '{connectionName}' was found in the configuration file.");
+            return new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: true)
+                .AddJsonFile("appsettings.Local.json", optional: true)
+                .AddEnvironmentVariables()
+                .Build();
         }
 
-        private static string ReadConnectionStringFromFile(string path, string connectionName)
+        // Reads the named connection string from configuration. Fails loudly when it is missing:
+        // a null connection string would otherwise surface much later as an opaque error from
+        // deep inside a repository.
+        public static SqlConnectionFactory FromConfiguration(string connectionName = DefaultConnectionName)
         {
-            if (!File.Exists(path))
+            return FromConfiguration(BuildConfiguration(), connectionName);
+        }
+
+        public static SqlConnectionFactory FromConfiguration(IConfiguration configuration, string connectionName = DefaultConnectionName)
+        {
+            if (configuration == null) throw new ArgumentNullException(nameof(configuration));
+
+            string connectionString = configuration.GetConnectionString(connectionName);
+            if (string.IsNullOrWhiteSpace(connectionString))
             {
-                return null;
+                throw new MissingConfigurationException(
+                    $"No connection string named '{connectionName}' was found. Set it in appsettings.Local.json " +
+                    "or in the ConnectionStrings__connection environment variable.");
             }
 
-            try
-            {
-                return XDocument.Load(path).Root?
-                    .Elements("add")
-                    .FirstOrDefault(e => string.Equals((string)e.Attribute("name"), connectionName, StringComparison.Ordinal))?
-                    .Attribute("connectionString")?.Value;
-            }
-            catch (System.Xml.XmlException)
-            {
-                return null;
-            }
+            return new SqlConnectionFactory(connectionString);
         }
 
         public SqlConnection Create()

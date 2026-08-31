@@ -57,7 +57,7 @@ New-Item -ItemType Directory -Path $pkgDir -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $pkgDir 'Database\Migrations') -Force | Out-Null
 
 # Application binaries (exclude dev-only artifacts).
-$exclude = @('*.pdb', '*.xml', 'ConnectionStrings.config')
+$exclude = @('*.pdb', '*.xml', 'appsettings.Local.json')
 Get-ChildItem -Path $publishDir -File | Where-Object {
     $name = $_.Name
     -not ($exclude | Where-Object { $name -like $_ })
@@ -68,7 +68,8 @@ Copy-Item (Join-Path $repoRoot 'Database\PharmacyDB.sql') (Join-Path $pkgDir 'Da
 Copy-Item (Join-Path $repoRoot 'Database\Migrations\*')    (Join-Path $pkgDir 'Database\Migrations')
 
 # Config template + docs.
-Copy-Item (Join-Path $repoRoot 'PharmacySystem\ConnectionStrings.config.example') $pkgDir
+$cfgExample = Join-Path $repoRoot (Join-Path 'PharmacySystem' 'appsettings.Local.json.example')
+Copy-Item $cfgExample $pkgDir
 Copy-Item (Join-Path $repoRoot 'CHANGELOG.md') $pkgDir
 Copy-Item (Join-Path $repoRoot 'DEPLOY.md')    $pkgDir
 
@@ -81,8 +82,9 @@ PharmacySystem $version
    - Actualizacion:      aplicar Database\Migrations\ en orden (backup primero).
 
 2. Configuracion
-   - Copiar ConnectionStrings.config.example a ConnectionStrings.config
+   - Copiar appsettings.Local.json.example a appsettings.Local.json
      (misma carpeta que PharmacySystem.exe) y completar servidor/base/credenciales.
+     Alternativa: variable de entorno ConnectionStrings__connection.
 
 3. Primer arranque
    - Ejecutar PharmacySystem.exe (requiere .NET Desktop Runtime 10 salvo que el

@@ -1,5 +1,4 @@
 using System;
-using System.Configuration;
 using PharmacySystem;
 using PharmacySystem.Infrastructure;
 using Xunit;
@@ -16,7 +15,7 @@ namespace PharmacySystem.UiTests
         public void IsDatabaseOrConfig_ConfigurationError_IsTrue()
         {
             Assert.True(StartupError.IsDatabaseOrConfig(
-                new ConfigurationErrorsException("No connection string named 'connection' was found.")));
+                new MissingConfigurationException("No connection string named 'connection' was found.")));
         }
 
         [Fact]
@@ -24,7 +23,7 @@ namespace PharmacySystem.UiTests
         {
             var wrapped = new TypeInitializationException(
                 "PharmacySystem.CompositionRoot",
-                new ConfigurationErrorsException("Unable to open configSource file 'ConnectionStrings.config'."));
+                new MissingConfigurationException("No connection string named 'connection' was found."));
 
             Assert.True(StartupError.IsDatabaseOrConfig(wrapped));
         }
@@ -47,7 +46,7 @@ namespace PharmacySystem.UiTests
         public void DescribeForUser_PicksTheDatabaseMessageForAConfigProblem()
         {
             Assert.Equal(StartupError.Database,
-                StartupError.DescribeForUser(new ConfigurationErrorsException("boom")));
+                StartupError.DescribeForUser(new MissingConfigurationException("boom")));
         }
 
         [Fact]
@@ -75,7 +74,7 @@ namespace PharmacySystem.UiTests
         [Fact]
         public void IsTransientDataFailure_PlainConfigOrDbError_IsFalse()
         {
-            Assert.False(StartupError.IsTransientDataFailure(new ConfigurationErrorsException("boom")));
+            Assert.False(StartupError.IsTransientDataFailure(new MissingConfigurationException("boom")));
             Assert.False(StartupError.IsTransientDataFailure(new InvalidOperationException("boom")));
         }
 

@@ -28,29 +28,10 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Preparar ConnectionStrings.config
-        shell: pwsh
-        run: |
-          # Los ConnectionStrings.config reales estan fuera de git. El build copia
-          # este archivo de contenido a la carpeta de salida y las pruebas de humo
-          # de UI construyen un SqlConnectionFactory a partir de el (sin ejecutar
-          # ninguna consulta). Un valor de marcador bien formado alcanza; las
-          # pruebas de integracion, que si tocan una base, quedan excluidas de esta
-          # corrida (ver el filtro mas abajo).
-          $targets = @(
-            'PharmacySystem',
-            'PharmacySystem.Tests',
-            'PharmacySystem.UiTests',
-            'PharmacySystem.DbMigrator'
-          )
-          foreach ($t in $targets) {
-            $example = Join-Path $t 'ConnectionStrings.config.example'
-            $dest    = Join-Path $t 'ConnectionStrings.config'
-            if ((Test-Path $example) -and -not (Test-Path $dest)) {
-              Copy-Item $example $dest
-              Write-Host "Copiado $dest"
-            }
-          }
+      # No hace falta preparar la cadena de conexion: appsettings.json (versionado,
+      # con la entrada vacia) viaja con el build, y ninguna prueba que no sea de
+      # integracion llega a construir un SqlConnectionFactory. Las de integracion,
+      # que si tocan una base, quedan excluidas por el filtro de mas abajo.
 
       - name: Restaurar
         run: dotnet restore PharmacySystem.sln

@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<connectionStrings>
-  <!-- Copy this file to ConnectionStrings.config (ignored by git) and fill in your own credentials. -->
-  <add name="connection" connectionString="Server=#HereYourServer#;database=PharmacyDB;User Id=#HereYourUser#;Password=#HereYourPassword#;TrustServerCertificate=True;" providerName="Microsoft.Data.SqlClient"/>
-</connectionStrings>

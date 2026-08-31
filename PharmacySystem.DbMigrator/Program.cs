@@ -1,6 +1,6 @@
 using System;
-using System.Configuration;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Reflection;
 using DbUp;
@@ -14,7 +14,7 @@ namespace PharmacySystem.DbMigrator
     // 013 slipped in).
     //
     // Connection string resolution, in order: first CLI argument, then the
-    // PHARMACY_DB_CONNECTION environment variable, then ConnectionStrings.config ("connection").
+    // PHARMACY_DB_CONNECTION environment variable, then appsettings[.Local].json ("connection").
     internal static class Program
     {
         private const string EmbeddedPrefix = "PharmacySystem.DbMigrator.Migrations.";
@@ -26,7 +26,7 @@ namespace PharmacySystem.DbMigrator
             {
                 Console.Error.WriteLine(
                     "No connection string. Pass it as the first argument, set PHARMACY_DB_CONNECTION, " +
-                    "or add a 'connection' entry to ConnectionStrings.config next to the executable.");
+                    "or add a 'connection' entry to appsettings.Local.json next to the executable.");
                 return 2;
             }
 
@@ -80,16 +80,14 @@ namespace PharmacySystem.DbMigrator
                 return fromEnv;
             }
 
-            try
-            {
-                return ConfigurationManager.ConnectionStrings["connection"]?.ConnectionString;
-            }
-            catch (ConfigurationErrorsException)
-            {
-                // No ConnectionStrings.config next to the exe - that is fine, the caller can
-                // still pass the connection string as an argument or env var.
-                return null;
-            }
+            IConfiguration config = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: true)
+                .AddJsonFile("appsettings.Local.json", optional: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            return config.GetConnectionString("connection");
         }
 
         // A database that predates this tool - or one created straight from PharmacyDB.sql, which
