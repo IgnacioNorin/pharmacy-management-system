@@ -29,7 +29,7 @@ namespace PharmacySystem
         private Button[] NavButtons => new[]
         {
             btnHome, btnSales, btnPurchases, btnManagement, btnSuppliers,
-            btnClients, btnUsers, btnRoles, btnReports, btnCashCount, btnAlerts
+            btnClients, btnUsers, btnRoles, btnReports, btnCashCount, btnAuditLog, btnAlerts
         };
 
         public MainForm(CurrentUser session = null)
@@ -144,6 +144,7 @@ namespace PharmacySystem
             btnRoles.Visible = p.Roles;
             btnReports.Visible = p.Reports;
             btnCashCount.Visible = p.CashCount;
+            btnAuditLog.Visible = p.AuditLog;
             btnAlerts.Visible = p.Alerts;
             if (!p.Alerts) lblAlertBadge.Visible = false;
 
@@ -172,9 +173,10 @@ namespace PharmacySystem
             y = PlaceItem(btnClients, y, itemGap);
             y = PlaceItem(btnUsers, y, itemGap);
             y = PlaceItem(btnRoles, y, itemGap);
-            y = PlaceGroupHeader(lblGroupConsulta, y, headerGapBefore, itemGap, btnReports, btnCashCount, btnAlerts);
+            y = PlaceGroupHeader(lblGroupConsulta, y, headerGapBefore, itemGap, btnReports, btnCashCount, btnAuditLog, btnAlerts);
             y = PlaceItem(btnReports, y, itemGap);
             y = PlaceItem(btnCashCount, y, itemGap);
+            y = PlaceItem(btnAuditLog, y, itemGap);
             PlaceItem(btnAlerts, y, itemGap);
         }
 
@@ -356,6 +358,16 @@ namespace PharmacySystem
             if (!CanNavigate("caja.acceso")) return;
 
             using (var modal = new ModalCashCount())
+            {
+                modal.ShowDialog(this);
+            }
+        }
+
+        private void btnAuditLog_Click(object sender, EventArgs e)
+        {
+            if (!CanNavigate("bitacora.acceso")) return;
+
+            using (var modal = new ModalSecurityLog())
             {
                 modal.ShowDialog(this);
             }
