@@ -1,6 +1,8 @@
 using System;
 using System.Windows.Forms;
 using PharmacySystem.Helpers;
+using PharmacySystem.Presentation;
+using PharmacySystem.Wpf;
 
 namespace PharmacySystem
 {
@@ -20,7 +22,26 @@ namespace PharmacySystem
 
             try
             {
-                Application.Run(new Login());
+                // Log in, run the shell, and when the shell closes come back to the login screen
+                // (log in as someone else without restarting). "Salir" on the login screen ends
+                // the loop and the app. LoginHost keeps the WPF types in PharmacySystem.Wpf.
+                while (true)
+                {
+                    CurrentUser session = LoginHost.RunLogin(
+                        CompositionRoot.CreateLoginPresenter,
+                        CompositionRoot.CreateCurrentUser,
+                        (personId, view) => CompositionRoot.CreateChangePasswordPresenter(view, personId));
+
+                    if (session == null)
+                    {
+                        break;
+                    }
+
+                    using (var main = new MainForm(session))
+                    {
+                        Application.Run(main);
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -29,6 +50,8 @@ namespace PharmacySystem
                 // initializer throw. Without this the app would die with the bare .NET dialog.
                 Report(ex, fatal: true);
             }
+
+            LoginHost.Shutdown();
         }
 
         // Logs every unhandled exception and shows the user a message they can act on. A database

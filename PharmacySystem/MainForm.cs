@@ -108,9 +108,9 @@ namespace PharmacySystem
             };
             link.LinkClicked += (s, e) =>
             {
-                // First screen ported to WPF. The presenter/service are unchanged - the WPF
-                // window implements the same IChangePasswordView. The login-forced path still
-                // uses the WinForms ModalChangePassword for now.
+                // Ported to WPF. The presenter/service are unchanged - the WPF window implements
+                // the same IChangePasswordView. The login-forced path (LoginWindow) uses the
+                // same ChangePasswordWindow.
                 ChangePasswordDialog.Show(
                     Handle,
                     mandatory: false,

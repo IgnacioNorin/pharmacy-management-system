@@ -123,12 +123,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Login.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Login.Designer.cs">
-      <DependentUpon>Login.cs</DependentUpon>
-    </Compile>
     <Compile Include="frmHome.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -136,9 +130,6 @@
       <DependentUpon>frmHome.cs</DependentUpon>
     </Compile>
     <Compile Include="CompositionRoot.cs" />
-    <Compile Include="ModalChangePassword.cs">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="ViewParse.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="StartupError.cs" />
@@ -150,9 +141,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="PrintSale.resx">
       <DependentUpon>PrintSale.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Login.resx">
-      <DependentUpon>Login.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmHome.resx">
       <DependentUpon>frmHome.cs</DependentUpon>

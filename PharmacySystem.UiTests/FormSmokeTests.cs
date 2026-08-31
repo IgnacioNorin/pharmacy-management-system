@@ -55,17 +55,8 @@ namespace PharmacySystem.UiTests
             });
         }
 
-        [Fact]
-        public void Login_ConstructsAndImplementsView()
-        {
-            StaThread.Run(() =>
-            {
-                using (var form = new Login())
-                {
-                    Assert.IsAssignableFrom<ILoginView>(form);
-                }
-            });
-        }
+        // Login was ported to WPF (PharmacySystem.Wpf.LoginWindow). LoginPresenter keeps its
+        // full unit-test coverage in PharmacySystem.Tests.
 
         // frmPurchase and frmSale were ported to WPF (PharmacySystem.Wpf.PurchaseWindow /
         // SaleWindow). PurchasePresenter / SalePresenter keep their full unit-test coverage in
