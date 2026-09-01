@@ -245,7 +245,17 @@ namespace PharmacySystem.Ui
 
         private void btnCalc_Click(object sender, RoutedEventArgs e) => _presenter.OnCalculateChangeRequested();
         private void btnMixedPayment_Click(object sender, RoutedEventArgs e) => _presenter.OnSplitPaymentRequested();
-        private void btnFinish_Click(object sender, RoutedEventArgs e) => _presenter.OnFinishSale();
+
+        private void btnFinish_Click(object sender, RoutedEventArgs e)
+        {
+            if (_lines.Count > 0 &&
+                MessageBox.Show(Host, $"¿Confirmar la venta por {txtTotal.Text}?", "Terminar venta",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            {
+                return;
+            }
+            _presenter.OnFinishSale();
+        }
 
         private void btnCreditNote_Click(object sender, RoutedEventArgs e) =>
             CreditNoteDialog.Show(OwnerHandle(), _hooks.CreditNoteFactory);

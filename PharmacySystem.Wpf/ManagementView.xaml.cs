@@ -410,8 +410,21 @@ namespace PharmacySystem.Ui
             }
         }
 
-        private void btnApplyPrice_Click(object sender, RoutedEventArgs e) => _productPricePresenter.OnApplyPrice();
-        private void btnUnrelease_Click(object sender, RoutedEventArgs e) => _productPricePresenter.OnUnrelease();
+        private void btnApplyPrice_Click(object sender, RoutedEventArgs e)
+        {
+            if (Confirm("¿Fijar el precio de venta y liberar el producto para la venta?"))
+                _productPricePresenter.OnApplyPrice();
+        }
+
+        private void btnUnrelease_Click(object sender, RoutedEventArgs e)
+        {
+            if (Confirm("¿Retirar el producto de la comercialización? Dejará de estar disponible para vender."))
+                _productPricePresenter.OnUnrelease();
+        }
+
+        private bool Confirm(string message) =>
+            MessageBox.Show(Host, message, "Confirmar",
+                MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
 
         #endregion
 

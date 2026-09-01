@@ -216,6 +216,15 @@ namespace PharmacySystem.Ui
             }
         }
 
-        private void btnFinish_Click(object sender, RoutedEventArgs e) => _presenter.OnFinishPurchase();
+        private void btnFinish_Click(object sender, RoutedEventArgs e)
+        {
+            if (_lines.Count > 0 &&
+                MessageBox.Show(Host, $"¿Registrar la compra?  ({lblTotal.Text})", "Registrar compra",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            {
+                return;
+            }
+            _presenter.OnFinishPurchase();
+        }
     }
 }

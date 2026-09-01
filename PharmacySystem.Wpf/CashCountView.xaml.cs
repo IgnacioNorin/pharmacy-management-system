@@ -55,7 +55,14 @@ namespace PharmacySystem.Ui
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 12, 0, 0) };
             var register = new Button { Content = "Registrar arqueo", Margin = new Thickness(0, 0, 8, 0) };
             register.SetResourceReference(FrameworkElement.StyleProperty, "PrimaryButton");
-            register.Click += (s, e) => _presenter.OnRegister();
+            register.Click += (s, e) =>
+            {
+                if (MessageBox.Show(Host, "¿Registrar el arqueo y cerrar el período?", "Arqueo de caja",
+                        MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                {
+                    _presenter.OnRegister();
+                }
+            };
             buttons.Children.Add(register);
             root.Children.Add(buttons);
 

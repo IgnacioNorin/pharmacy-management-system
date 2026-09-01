@@ -12,8 +12,14 @@ namespace PharmacySystem.Ui
     {
         public UserAction SelectedAction { get; private set; } = UserAction.None;
 
+        private readonly string _userName;
+        private readonly bool _isActive;
+
         public UserActionsWindow(string userName, string statusText, bool isActive)
         {
+            _userName = userName;
+            _isActive = isActive;
+
             Title = "Acciones de usuario";
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             ResizeMode = ResizeMode.NoResize;
@@ -55,8 +61,27 @@ namespace PharmacySystem.Ui
                 Margin = new Thickness(0, 0, 0, 8),
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };
-            btn.Click += (s, e) => { SelectedAction = action; DialogResult = true; };
+            btn.Click += (s, e) =>
+            {
+                if (MessageBox.Show(this, ConfirmText(action), "Confirmar",
+                        MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                {
+                    return;
+                }
+                SelectedAction = action;
+                DialogResult = true;
+            };
             return btn;
         }
+
+        private string ConfirmText(UserAction action) => action switch
+        {
+            UserAction.ResetPassword => $"¿Restablecer la contraseña de «{_userName}»? Se generará una contraseña temporal.",
+            UserAction.Unlock => $"¿Desbloquear la cuenta de «{_userName}»?",
+            UserAction.ToggleActive => _isActive
+                ? $"¿Suspender la cuenta de «{_userName}»? No podrá iniciar sesión."
+                : $"¿Reactivar la cuenta de «{_userName}»?",
+            _ => "¿Continuar?"
+        };
     }
 }
