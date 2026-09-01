@@ -5,8 +5,8 @@ namespace PharmacySystem.Presentation
     public class ProductPriceRow
     {
         public int Id { get; set; }
-        public string Code { get; set; }
-        public string Name { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
         public int Stock { get; set; }
         public decimal Cost { get; set; }
         // null until the product has been released (given a sale price).

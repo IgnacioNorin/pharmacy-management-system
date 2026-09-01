@@ -27,6 +27,12 @@ namespace PharmacySystem.Data
             _connectionFactory = connectionFactory;
         }
 
+        // Register / Update need the role. Callers in Business always set it; fail loudly rather
+        // than let a null slip through as an opaque error.
+        private static int RequirePersonType(Person person) =>
+            person.oPersonType?.idPersonType
+            ?? throw new ArgumentException("Person.oPersonType must be set.", nameof(person));
+
         public int Register(Person person)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
@@ -47,7 +53,7 @@ namespace PharmacySystem.Data
                         address = person.address,
                         phone = person.phone,
                         password = person.password,
-                        person_type_id = person.oPersonType.idPersonType
+                        person_type_id = RequirePersonType(person)
                     });
                 }
                 catch (Exception ex) when (SqlErrorCodes.IsUniqueViolation(ex))
@@ -80,7 +86,7 @@ namespace PharmacySystem.Data
                     parameters.Add("address", person.address);
                     parameters.Add("phone", person.phone);
                     parameters.Add("password", person.password);
-                    parameters.Add("person_type_id", person.oPersonType.idPersonType);
+                    parameters.Add("person_type_id", RequirePersonType(person));
                     parameters.Add("result", dbType: DbType.Boolean, direction: ParameterDirection.Output);
 
                     oConnection.Execute("sp_update_person", parameters, commandType: CommandType.StoredProcedure);
@@ -125,7 +131,7 @@ namespace PharmacySystem.Data
             }
         }
 
-        public Person GetByDocument(string document)
+        public Person? GetByDocument(string document)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
@@ -151,7 +157,7 @@ namespace PharmacySystem.Data
             }
         }
 
-        public Person GetById(int idPerson)
+        public Person? GetById(int idPerson)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {

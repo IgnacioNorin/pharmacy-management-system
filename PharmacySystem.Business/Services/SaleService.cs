@@ -23,7 +23,7 @@ namespace PharmacySystem.Business
 
         public List<SaleDetail> ListSaleDetail() => _repository.ListSaleDetail();
 
-        public Sale GetById(int saleId) => _repository.GetById(saleId);
+        public Sale? GetById(int saleId) => _repository.GetById(saleId);
 
         public List<SaleDetail> GetDetailsBySaleId(int saleId) => _repository.GetDetailsBySaleId(saleId);
 
@@ -44,7 +44,7 @@ namespace PharmacySystem.Business
             return id;
         }
 
-        public SaleLookup FindByDocument(string documentType, string documentNumber) =>
+        public SaleLookup? FindByDocument(string documentType, string documentNumber) =>
             _repository.FindByDocument(documentType, documentNumber);
 
         public List<SaleCreditDetail> GetCreditableLines(int saleId) =>

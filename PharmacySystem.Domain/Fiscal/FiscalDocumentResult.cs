@@ -7,10 +7,10 @@ namespace PharmacySystem.Fiscal
     {
         // Non-null only when the issuer assigns the folio (e.g. from a CAF range). Null keeps
         // the number already assigned by the local sequence.
-        public string DocumentNumber { get; set; }
+        public string? DocumentNumber { get; set; }
         public string Status { get; set; } = FiscalStatuses.Interno;
-        public string TrackId { get; set; }
-        public string Barcode { get; set; }
+        public string? TrackId { get; set; }
+        public string? Barcode { get; set; }
     }
 
     public static class FiscalStatuses

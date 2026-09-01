@@ -18,14 +18,14 @@ namespace PharmacySystem.Business
 
         public PasswordChangeResult ChangeOwnPassword(int personId, string currentPlain, string newPlain)
         {
-            Person person = _personRepository.GetById(personId);
+            Person? person = _personRepository.GetById(personId);
 
             if (person == null || !CurrentMatches(person, currentPlain))
             {
                 return PasswordChangeResult.WrongCurrent;
             }
 
-            if ((newPlain ?? string.Empty).Length < PasswordRules.MinLength)
+            if (string.IsNullOrEmpty(newPlain) || newPlain.Length < PasswordRules.MinLength)
             {
                 return PasswordChangeResult.TooShort;
             }
@@ -45,7 +45,7 @@ namespace PharmacySystem.Business
 
             _personRepository.SetPasswordAndFlag(targetId, PasswordHasher.Hash(tempPassword), true);
 
-            Person target = _personRepository.GetById(targetId);
+            Person? target = _personRepository.GetById(targetId);
             _attempts.Record(target?.document ?? string.Empty, true, "admin_reset", actorId, Environment.MachineName);
 
             return tempPassword;

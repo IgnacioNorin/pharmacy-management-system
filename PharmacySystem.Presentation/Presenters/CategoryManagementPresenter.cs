@@ -52,7 +52,7 @@ namespace PharmacySystem.Presentation
             Categories category = new Categories
             {
                 IdCategory = _view.CategoryId,
-                description = _view.Description?.Trim()
+                description = (_view.Description ?? string.Empty).Trim()
             };
 
             bool result;

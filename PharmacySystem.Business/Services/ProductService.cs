@@ -29,13 +29,13 @@ namespace PharmacySystem.Business
 
         public List<Product> ListSellable() => _repository.ListSellable();
 
-        public Product GetSellableByCode(string code) => _repository.GetSellableByCode(code);
+        public Product? GetSellableByCode(string code) => _repository.GetSellableByCode(code);
 
-        public Product GetSellableById(int idProduct) => _repository.GetSellableById(idProduct);
+        public Product? GetSellableById(int idProduct) => _repository.GetSellableById(idProduct);
 
-        public Product GetByCode(string code) => _repository.GetByCode(code);
+        public Product? GetByCode(string code) => _repository.GetByCode(code);
 
-        public Product GetById(int idProduct) => _repository.GetById(idProduct);
+        public Product? GetById(int idProduct) => _repository.GetById(idProduct);
 
         public bool Verify(int idProduct) => _repository.Verify(idProduct);
 

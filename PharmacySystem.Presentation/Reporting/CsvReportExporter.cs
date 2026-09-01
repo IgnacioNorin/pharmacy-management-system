@@ -45,7 +45,7 @@ namespace PharmacySystem.Presentation
                     {
                         ReportColumn<TRow> column = definition.Columns[i];
                         bool numeric = column.Type == ReportValueType.Currency || column.Type == ReportValueType.Integer;
-                        cells[i] = numeric ? CellText(column.Value(result.Totals), column.Type) : "";
+                        cells[i] = numeric ? CellText(column.Value(result.Totals!), column.Type) : "";
                     }
                     writer.WriteLine(string.Join(separator, cells.Select(v => Escape(v, separator))));
                 }
@@ -54,7 +54,7 @@ namespace PharmacySystem.Presentation
             }
         }
 
-        private static string CellText(object value, ReportValueType type)
+        private static string CellText(object? value, ReportValueType type)
         {
             if (value == null) return "";
             if (value is string s) return s;
@@ -65,7 +65,7 @@ namespace PharmacySystem.Presentation
                 // CLP has no minor unit: currency amounts are whole pesos.
                 case ReportValueType.Currency: return CultureInfoHelper.RoundMoney(Convert.ToDecimal(value)).ToString("0", CultureInfo.CurrentCulture);
                 case ReportValueType.Integer: return Convert.ToInt64(value).ToString(CultureInfo.CurrentCulture);
-                default: return value.ToString();
+                default: return value.ToString() ?? "";
             }
         }
 

@@ -110,7 +110,7 @@ namespace PharmacySystem.Business
                     AlertType type = TypeOf(alert.Severity);
                     currentKeys.Add((alert.ProductId, type));
 
-                    if (openByKey.TryGetValue((alert.ProductId, type), out ProductAlertHistoryEntry existing))
+                    if (openByKey.TryGetValue((alert.ProductId, type), out ProductAlertHistoryEntry? existing))
                     {
                         alert.HistoryId = existing.Id;
                         alert.AcknowledgedAt = existing.AcknowledgedAt;

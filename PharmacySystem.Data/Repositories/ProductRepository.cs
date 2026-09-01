@@ -19,6 +19,12 @@ namespace PharmacySystem.Data
             _connectionFactory = connectionFactory;
         }
 
+        // Register / Update need the category. Callers in Business always set it; fail loudly
+        // rather than let a null slip through as an opaque error.
+        private static int RequireCategory(Product obj) =>
+            obj.oCategory?.IdCategory
+            ?? throw new ArgumentException("Product.oCategory must be set.", nameof(obj));
+
         public int Register(Product obj)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
@@ -35,7 +41,7 @@ namespace PharmacySystem.Data
                         code = obj.code,
                         name = obj.name,
                         description = obj.description,
-                        category_id = obj.oCategory.IdCategory,
+                        category_id = RequireCategory(obj),
                         tax_affected = obj.taxAffected
                     });
                 }
@@ -72,7 +78,7 @@ namespace PharmacySystem.Data
                         code = obj.code,
                         name = obj.name,
                         description = obj.description,
-                        category_id = obj.oCategory.IdCategory,
+                        category_id = RequireCategory(obj),
                         tax_affected = obj.taxAffected
                     });
 
@@ -108,7 +114,7 @@ namespace PharmacySystem.Data
                     oConnection.Open();
                     using (SqlTransaction tx = oConnection.BeginTransaction())
                     {
-                        ProductPriceSnapshot current = oConnection.QueryFirstOrDefault<ProductPriceSnapshot>(
+                        ProductPriceSnapshot? current = oConnection.QueryFirstOrDefault<ProductPriceSnapshot>(
                             "SELECT is_released, ISNULL(average_cost, purchase_price) AS cost FROM product WHERE id = @idProduct",
                             new { idProduct }, tx);
 
@@ -326,22 +332,22 @@ namespace PharmacySystem.Data
 
         // One sellable product by code / id - the sale screen used to load the whole catalogue
         // and filter in memory on every scan and every add-to-cart (RNF-REN-01 / DEF-13).
-        public Product GetSellableByCode(string code) =>
+        public Product? GetSellableByCode(string code) =>
             QueryProducts(ProductSelect + " AND p.is_released = 1 AND p.code = @code", new { code }).FirstOrDefault();
 
-        public Product GetSellableById(int idProduct) =>
+        public Product? GetSellableById(int idProduct) =>
             QueryProducts(ProductSelect + " AND p.is_released = 1 AND p.id = @idProduct", new { idProduct }).FirstOrDefault();
 
         // One active product by code / id, released or not - the purchase screen loads stock for a
         // product that may not be on sale yet, so it must not filter on is_released. It also used
         // to scan the whole catalogue in memory on every add-to-cart (DEF-33, purchase side).
-        public Product GetByCode(string code) =>
+        public Product? GetByCode(string code) =>
             QueryProducts(ProductSelect + " AND p.code = @code", new { code }).FirstOrDefault();
 
-        public Product GetById(int idProduct) =>
+        public Product? GetById(int idProduct) =>
             QueryProducts(ProductSelect + " AND p.id = @idProduct", new { idProduct }).FirstOrDefault();
 
-        private List<Product> QueryProducts(string sql, object param = null)
+        private List<Product> QueryProducts(string sql, object? param = null)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {

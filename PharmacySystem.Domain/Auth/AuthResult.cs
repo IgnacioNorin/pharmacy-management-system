@@ -18,7 +18,7 @@ namespace PharmacySystem.Model
     public class AuthResult
     {
         public AuthStatus Status { get; private set; }
-        public Person Person { get; private set; }
+        public Person? Person { get; private set; }
         public int RetryAfterMinutes { get; private set; }
 
         public static AuthResult Invalid() => new AuthResult { Status = AuthStatus.InvalidCredentials };

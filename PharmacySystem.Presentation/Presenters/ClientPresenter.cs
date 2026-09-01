@@ -41,7 +41,7 @@ namespace PharmacySystem.Presentation
 
         public void OnSearch()
         {
-            _search = _view.SearchText?.Trim() ?? string.Empty;
+            _search = (_view.SearchText ?? string.Empty).Trim();
             LoadPage(1);
         }
 
@@ -95,14 +95,14 @@ namespace PharmacySystem.Presentation
             Client client = new Client
             {
                 idClient = _view.PersonId,
-                document = _view.Document?.Trim(),
-                name = _view.Name?.Trim(),
-                address = _view.Address?.Trim(),
-                phone = _view.Phone?.Trim(),
-                businessName = _view.BusinessName?.Trim(),
-                activity = _view.Activity?.Trim(),
-                commune = _view.Commune?.Trim(),
-                email = _view.Email?.Trim(),
+                document = (_view.Document ?? string.Empty).Trim(),
+                name = (_view.Name ?? string.Empty).Trim(),
+                address = (_view.Address ?? string.Empty).Trim(),
+                phone = (_view.Phone ?? string.Empty).Trim(),
+                businessName = (_view.BusinessName ?? string.Empty).Trim(),
+                activity = (_view.Activity ?? string.Empty).Trim(),
+                commune = (_view.Commune ?? string.Empty).Trim(),
+                email = (_view.Email ?? string.Empty).Trim(),
                 isCompany = _view.IsCompany
             };
 

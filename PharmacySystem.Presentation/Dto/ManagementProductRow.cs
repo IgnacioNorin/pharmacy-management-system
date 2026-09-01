@@ -5,12 +5,12 @@ namespace PharmacySystem.Presentation
     public class ManagementProductRow
     {
         public int Id { get; set; }
-        public string Code { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string CategoryText { get; set; }
-        public string Stock { get; set; }
-        public string ExpirationDateText { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string CategoryText { get; set; } = string.Empty;
+        public string Stock { get; set; } = string.Empty;
+        public string ExpirationDateText { get; set; } = string.Empty;
         public bool TaxAffected { get; set; } = true;
     }
 }

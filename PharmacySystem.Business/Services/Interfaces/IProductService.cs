@@ -11,10 +11,10 @@ namespace PharmacySystem.Business
         List<ProductLot> GetLots(int idProduct);
         PagedResult<Product> ListPaged(int pageNumber, int pageSize, string search);
         List<Product> ListSellable();
-        Product GetSellableByCode(string code);
-        Product GetSellableById(int idProduct);
-        Product GetByCode(string code);
-        Product GetById(int idProduct);
+        Product? GetSellableByCode(string code);
+        Product? GetSellableById(int idProduct);
+        Product? GetByCode(string code);
+        Product? GetById(int idProduct);
         bool Verify(int idProduct);
         bool Delete(int idProduct);
         List<ProductReportRow> Report(string categoryId);

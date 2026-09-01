@@ -78,8 +78,8 @@ namespace PharmacySystem.Presentation
             // Product details
             foreach (SaleDetail detail in saleDetails)
             {
-                string productName = detail.oProduct.name.Length > 20 ?
-                    detail.oProduct.name.Substring(0, 17) + "..." : detail.oProduct.name;
+                string name = detail.oProduct?.name ?? string.Empty;
+                string productName = name.Length > 20 ? name.Substring(0, 17) + "..." : name;
 
                 string priceStr = CultureInfoHelper.FormatAsCurrency(detail.salePrice);
                 string subtotalStr = CultureInfoHelper.FormatAsCurrency(detail.subtotal);

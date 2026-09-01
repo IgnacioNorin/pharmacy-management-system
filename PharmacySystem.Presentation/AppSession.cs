@@ -8,10 +8,10 @@ namespace PharmacySystem.Presentation
     // and refreshes Current whenever the session is re-resolved.
     public static class AppSession
     {
-        public static CurrentUser Current;
-        public static Person Person;
+        public static CurrentUser? Current;
+        public static Person? Person;
 
-        public static void Set(CurrentUser user)
+        public static void Set(CurrentUser? user)
         {
             Current = user;
             Person = user?.Person;

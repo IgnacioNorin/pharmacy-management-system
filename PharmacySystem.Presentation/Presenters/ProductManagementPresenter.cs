@@ -55,7 +55,7 @@ namespace PharmacySystem.Presentation
 
         public void OnSearch()
         {
-            _search = _view.SearchText?.Trim() ?? string.Empty;
+            _search = (_view.SearchText ?? string.Empty).Trim();
             LoadPage(1);
         }
 
@@ -105,9 +105,9 @@ namespace PharmacySystem.Presentation
             Product product = new Product
             {
                 idProduct = _view.ProductId,
-                code = _view.Code?.Trim(),
-                name = _view.Name?.Trim(),
-                description = _view.Description?.Trim(),
+                code = (_view.Code ?? string.Empty).Trim(),
+                name = (_view.Name ?? string.Empty).Trim(),
+                description = (_view.Description ?? string.Empty).Trim(),
                 taxAffected = _view.TaxAffected,
                 oCategory = new Categories { IdCategory = _view.SelectedCategoryId }
             };
@@ -176,7 +176,7 @@ namespace PharmacySystem.Presentation
                 Code = p.code,
                 Name = p.name,
                 Description = p.description,
-                CategoryText = p.oCategory.description,
+                CategoryText = p.oCategory?.description ?? string.Empty,
                 TaxAffected = p.taxAffected,
                 Stock = p.stock.ToString(),
                 ExpirationDateText = shortDate == epoch ? "" : shortDate

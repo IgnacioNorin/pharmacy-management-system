@@ -6,10 +6,10 @@ namespace PharmacySystem.Model
     public class SaleLookup
     {
         public int Id { get; set; }
-        public string DocumentType { get; set; }
-        public string DocumentNumber { get; set; }
+        public string DocumentType { get; set; } = string.Empty;
+        public string DocumentNumber { get; set; } = string.Empty;
         public DateTime Date { get; set; }
-        public string ClientName { get; set; }
+        public string ClientName { get; set; } = string.Empty;
         public decimal TotalAmount { get; set; }
         // true if at least one Nota de Credito already references this sale (fully or partially).
         public bool AlreadyCreditNoted { get; set; }
@@ -25,7 +25,7 @@ namespace PharmacySystem.Model
     {
         public int SourceDetailId { get; set; }
         public int ProductId { get; set; }
-        public string ProductName { get; set; }
+        public string ProductName { get; set; } = string.Empty;
         public decimal UnitPrice { get; set; }
         public bool TaxAffected { get; set; }
         public int SoldQuantity { get; set; }

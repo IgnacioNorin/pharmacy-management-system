@@ -7,20 +7,20 @@ namespace PharmacySystem.Model
     public class SaleReportRow
     {
         public DateTime DateRegistered { get; set; }
-        public string DocumentType { get; set; }
-        public string DocumentNumber { get; set; }
-        public string SellerDocument { get; set; }
-        public string SellerName { get; set; }
+        public string DocumentType { get; set; } = string.Empty;
+        public string DocumentNumber { get; set; } = string.Empty;
+        public string SellerDocument { get; set; } = string.Empty;
+        public string SellerName { get; set; } = string.Empty;
         // Client or, on a Factura, the receptor - the repository merges the two so there is one
         // pair of columns, not two.
-        public string ClientDocument { get; set; }
-        public string ClientName { get; set; }
+        public string ClientDocument { get; set; } = string.Empty;
+        public string ClientName { get; set; } = string.Empty;
         public decimal NetAmount { get; set; }
         public decimal TaxAmount { get; set; }
         public decimal ExemptAmount { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal AmountReceived { get; set; }
         public decimal ChangeAmount { get; set; }
-        public string PaymentMethod { get; set; }
+        public string PaymentMethod { get; set; } = string.Empty;
     }
 }

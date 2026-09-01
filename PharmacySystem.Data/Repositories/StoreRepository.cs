@@ -23,7 +23,7 @@ namespace PharmacySystem.Data
             {
                 try
                 {
-                    Store row = oConnection.Query<Store>(
+                    Store? row = oConnection.Query<Store>(
                         "SELECT document_store AS document, company_name AS companyName, email, phone, address, " +
                         "default_tax_rate AS defaultTaxRate, default_document_type AS defaultDocumentType " +
                         "FROM store WHERE id = 1")

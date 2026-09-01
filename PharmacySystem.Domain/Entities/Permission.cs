@@ -6,9 +6,9 @@ namespace PharmacySystem.Model
     public class Permission
     {
         public int Id { get; set; }
-        public string Code { get; set; }
-        public string Section { get; set; }
-        public string Description { get; set; }
-        public string ParentCode { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Section { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string? ParentCode { get; set; }
     }
 }

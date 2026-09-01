@@ -9,7 +9,7 @@ namespace PharmacySystem.Presentation
     // thing that works. Revisit only if a second subscriber shows up.
     public static class InventoryChangeNotifier
     {
-        public static event Action StockChanged;
+        public static event Action? StockChanged;
 
         public static void NotifyStockChanged() => StockChanged?.Invoke();
     }

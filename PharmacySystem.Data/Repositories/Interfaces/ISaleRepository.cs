@@ -9,12 +9,12 @@ namespace PharmacySystem.Data
     {
         List<Sale> ListSale();
         List<SaleDetail> ListSaleDetail();
-        Sale GetById(int saleId);
+        Sale? GetById(int saleId);
         List<SaleDetail> GetDetailsBySaleId(int saleId);
         List<SalePayment> GetPaymentsBySaleId(int saleId);
         int Register(Sale sale);
         void SaveFiscalResult(int saleId, FiscalDocumentResult result);
-        SaleLookup FindByDocument(string documentType, string documentNumber);
+        SaleLookup? FindByDocument(string documentType, string documentNumber);
         // The lines of a sale with how many units of each are still creditable.
         System.Collections.Generic.List<SaleCreditDetail> GetCreditableLines(int saleId);
         // Issues a Nota de Credito that credits the requested quantity of each given original line.

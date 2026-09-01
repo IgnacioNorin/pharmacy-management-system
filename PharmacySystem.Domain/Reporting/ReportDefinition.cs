@@ -49,13 +49,13 @@ namespace PharmacySystem.Model
     public class ReportResult<TRow>
     {
         public IReadOnlyList<TRow> Rows { get; }
-        public TRow Totals { get; }
+        public TRow? Totals { get; }
         public bool HasTotals { get; }
 
         public ReportResult(IReadOnlyList<TRow> rows)
         {
             Rows = rows ?? new List<TRow>();
-            Totals = default(TRow);
+            Totals = default;
             HasTotals = false;
         }
 

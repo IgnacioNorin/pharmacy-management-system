@@ -13,8 +13,8 @@ namespace PharmacySystem.Model
         public DateTime periodStart { get; set; }
         public DateTime periodEnd { get; set; }
         public int? userId { get; set; }
-        public string userName { get; set; }
-        public string notes { get; set; }
+        public string userName { get; set; } = string.Empty;
+        public string notes { get; set; } = string.Empty;
         public DateTime createdAt { get; set; }
 
         public List<CashCountLine> lines { get; set; } = new List<CashCountLine>();
@@ -34,7 +34,7 @@ namespace PharmacySystem.Model
 
     public class CashCountLine
     {
-        public string paymentMethod { get; set; }
+        public string paymentMethod { get; set; } = string.Empty;
         public decimal expectedAmount { get; set; }
         public decimal countedAmount { get; set; }
 

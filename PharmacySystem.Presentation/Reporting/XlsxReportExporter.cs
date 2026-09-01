@@ -49,7 +49,7 @@ namespace PharmacySystem.Presentation
                         ReportColumn<TRow> column = definition.Columns[c];
                         if (column.Type == ReportValueType.Currency || column.Type == ReportValueType.Integer)
                         {
-                            SetCell(sheet.Cell(row, c + 1), column.Value(result.Totals), column.Type);
+                            SetCell(sheet.Cell(row, c + 1), column.Value(result.Totals!), column.Type);
                         }
                     }
 

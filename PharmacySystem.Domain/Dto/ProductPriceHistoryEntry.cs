@@ -7,10 +7,10 @@ namespace PharmacySystem.Model
     {
         public DateTime ChangedAt { get; set; }
         // "liberacion" | "cambio" | "retiro"
-        public string EventType { get; set; }
+        public string EventType { get; set; } = string.Empty;
         public decimal SalePrice { get; set; }
         public decimal? Cost { get; set; }
-        public string UserName { get; set; }
-        public string Reason { get; set; }
+        public string UserName { get; set; } = string.Empty;
+        public string? Reason { get; set; }
     }
 }

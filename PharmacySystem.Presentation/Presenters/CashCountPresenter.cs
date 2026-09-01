@@ -18,7 +18,7 @@ namespace PharmacySystem.Presentation
 
         private const string Permission = "caja.acceso";
 
-        private CashCount _current;
+        private CashCount? _current;
 
         public CashCountPresenter(ICashCountView view, ICashCountService service, CurrentUser currentUser)
         {
@@ -69,7 +69,7 @@ namespace PharmacySystem.Presentation
                 periodStart = _current.periodStart,
                 periodEnd = _current.periodEnd,
                 userId = _currentUser?.PersonId,
-                notes = string.IsNullOrWhiteSpace(_view.Notes) ? null : _view.Notes.Trim(),
+                notes = string.IsNullOrWhiteSpace(_view.Notes) ? string.Empty : _view.Notes.Trim(),
                 lines = lines
             };
 
@@ -108,9 +108,9 @@ namespace PharmacySystem.Presentation
         private bool TryReadCounted(out List<CashCountLine> lines, out string error)
         {
             lines = new List<CashCountLine>();
-            error = null;
+            error = string.Empty;
 
-            foreach (CashCountLine source in _current.lines)
+            foreach (CashCountLine source in _current!.lines)
             {
                 string text = _view.GetCountedText(source.paymentMethod);
 

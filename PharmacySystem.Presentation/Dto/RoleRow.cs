@@ -5,7 +5,7 @@ namespace PharmacySystem.Presentation
     public class RoleRow
     {
         public int Id { get; set; }
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public bool IsSystem { get; set; }
 
         // Shown in the roles list.

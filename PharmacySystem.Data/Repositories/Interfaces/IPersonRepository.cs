@@ -11,8 +11,8 @@ namespace PharmacySystem.Data
         int Register(Person person);
         bool Update(Person person);
         List<Person> List();
-        Person GetByDocument(string document);
-        Person GetById(int idPerson);
+        Person? GetByDocument(string document);
+        Person? GetById(int idPerson);
         bool UpdatePassword(int idPerson, string hashedPassword);
         // Sets the password and the must_change_password flag in one statement. Used by the
         // password-change and admin-reset paths; UpdatePassword stays for the login self-heal,

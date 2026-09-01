@@ -5,7 +5,7 @@ namespace PharmacySystem.Model
     // sale.totalPay. See PaymentMethods for the method values.
     public class SalePayment
     {
-        public string paymentMethod { get; set; }
+        public string paymentMethod { get; set; } = string.Empty;
         public decimal amount { get; set; }
     }
 }

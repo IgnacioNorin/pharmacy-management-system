@@ -27,10 +27,10 @@ namespace PharmacySystem.Presentation
                 switch (result.Status)
                 {
                     case AuthStatus.Ok:
-                        _view.LoginSucceeded(result.Person);
+                        _view.LoginSucceeded(result.Person!);
                         break;
                     case AuthStatus.MustChangePassword:
-                        _view.RequirePasswordChange(result.Person);
+                        _view.RequirePasswordChange(result.Person!);
                         break;
                     case AuthStatus.LockedOut:
                         _view.ShowError($"Cuenta bloqueada temporalmente por intentos fallidos. Reintente en {result.RetryAfterMinutes} minuto(s).");

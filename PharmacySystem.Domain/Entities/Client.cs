@@ -6,14 +6,14 @@ namespace PharmacySystem.Model
     public class Client
     {
         public int idClient { get; set; }
-        public string document { get; set; }
-        public string name { get; set; }
-        public string address { get; set; }
-        public string phone { get; set; }
-        public string businessName { get; set; }
-        public string activity { get; set; }
-        public string commune { get; set; }
-        public string email { get; set; }
+        public string document { get; set; } = string.Empty;
+        public string name { get; set; } = string.Empty;
+        public string address { get; set; } = string.Empty;
+        public string phone { get; set; } = string.Empty;
+        public string businessName { get; set; } = string.Empty;
+        public string activity { get; set; } = string.Empty;
+        public string commune { get; set; } = string.Empty;
+        public string email { get; set; } = string.Empty;
         public bool isCompany { get; set; }
         public bool Estado { get; set; }
     }

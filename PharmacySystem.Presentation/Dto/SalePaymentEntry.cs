@@ -5,7 +5,7 @@ namespace PharmacySystem.Presentation
     // so the view never depends on PharmacySystem.Model.
     public class SalePaymentEntry
     {
-        public string Method { get; set; }
+        public string Method { get; set; } = string.Empty;
         public decimal Amount { get; set; }
 
         public SalePaymentEntry() { }

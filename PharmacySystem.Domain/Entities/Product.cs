@@ -9,10 +9,10 @@ namespace PharmacySystem.Model
     public class Product
     {
         public int idProduct { get; set; }
-        public string code { get; set; }
-        public string name { get; set; }
-        public string description { get; set; }
-        public Categories oCategory { get; set; }
+        public string code { get; set; } = string.Empty;
+        public string name { get; set; } = string.Empty;
+        public string description { get; set; } = string.Empty;
+        public Categories? oCategory { get; set; }
         public int stock { get; set; }
         public decimal  purchasePrice { get; set; }
         // Moving weighted average cost, recomputed on every purchase. 0 until the first purchase.

@@ -29,13 +29,13 @@ namespace PharmacySystem.Presentation
         //  - a fresh CurrentUser when the account is still active,
         //  - null when the account was deleted or deactivated (the caller sends them to login),
         //  - the same session unchanged on a transient data error (do not disrupt the session).
-        public CurrentUser RefreshSession(CurrentUser current)
+        public CurrentUser? RefreshSession(CurrentUser? current)
         {
             if (current == null) return null;
 
             try
             {
-                Person fresh = _personService.GetById(current.PersonId);
+                Person? fresh = _personService.GetById(current.PersonId);
                 if (fresh == null || !fresh.Estado)
                 {
                     return null;
@@ -51,7 +51,7 @@ namespace PharmacySystem.Presentation
 
         public void OnLoad(CurrentUser user)
         {
-            _view.SetUserName(user.Person.name, user.Person.oPersonType?.description);
+            _view.SetUserName(user.Person.name, user.Person.oPersonType?.description ?? string.Empty);
 
             // Sidebar visibility is driven by permissions now, not by the role. Gestión is a
             // container for three tabs, so its button shows if the user can reach any of them.
