@@ -77,7 +77,7 @@ namespace PharmacySystem.Ui
             if (refreshed == null)
             {
                 _sessionRefreshReady = false;
-                System.Windows.MessageBox.Show(this,
+                MessageBox.Show(this,
                     "Su sesión ya no es válida: la cuenta fue desactivada o eliminada.",
                     "Sesión finalizada",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);

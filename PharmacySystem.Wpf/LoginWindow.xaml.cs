@@ -65,7 +65,7 @@ namespace PharmacySystem.Ui
         }
 
         public void ShowError(string message) =>
-            System.Windows.MessageBox.Show(this, message, "Mensaje",
+            MessageBox.Show(this, message, "Mensaje",
                 System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Exclamation);
 
         private void btnEnter_Click(object sender, RoutedEventArgs e) => _presenter.OnLogin();
