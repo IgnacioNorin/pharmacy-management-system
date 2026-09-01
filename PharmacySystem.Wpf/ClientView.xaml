@@ -11,6 +11,23 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=Text}"/>
         </Style>
+
+        <!-- Long header text wraps instead of being clipped; the full label is also in a tooltip. -->
+        <Style x:Key="GridHeader" TargetType="DataGridColumnHeader"
+               BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+            <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=Content}"/>
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="GridCheckCell" TargetType="CheckBox">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
     </UserControl.Resources>
 
     <DockPanel Margin="24">
@@ -103,6 +120,7 @@
                   HeadersVisibility="Column" SelectionMode="Single"
                   GridLinesVisibility="Horizontal" RowHeaderWidth="0"
                   ColumnWidth="*"
+                  ColumnHeaderStyle="{StaticResource GridHeader}"
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                   SelectionChanged="dgClients_SelectionChanged">
             <DataGrid.Columns>
@@ -116,7 +134,9 @@
                                     ElementStyle="{StaticResource GridCell}"/>
                 <DataGridTextColumn Header="Email" Width="1.7*" Binding="{Binding Email}"
                                     ElementStyle="{StaticResource GridCell}"/>
-                <DataGridCheckBoxColumn Header="Empresa" Width="70" Binding="{Binding IsCompany}"/>
+                <DataGridCheckBoxColumn Header="Empresa" Width="Auto" MinWidth="96"
+                                        Binding="{Binding IsCompany}"
+                                        ElementStyle="{StaticResource GridCheckCell}"/>
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>
