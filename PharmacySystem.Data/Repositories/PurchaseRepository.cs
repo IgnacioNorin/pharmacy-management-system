@@ -35,10 +35,15 @@ namespace PharmacySystem.Data
                             "VALUES (@person_id, @supplier_id, @total_amount, @net_amount, @tax_amount, @exempt_amount, @tax_rate, @document_type, @document_number); " +
                             "SELECT SCOPE_IDENTITY();";
 
-                        object rawId = oConnection.ExecuteScalar<object>(insertPurchaseQuery, new
+                        Person person = purchase.oPerson
+                            ?? throw new ArgumentException("Purchase.oPerson must be set.", nameof(purchase));
+                        Supplier supplier = purchase.oSupplier
+                            ?? throw new ArgumentException("Purchase.oSupplier must be set.", nameof(purchase));
+
+                        object? rawId = oConnection.ExecuteScalar<object>(insertPurchaseQuery, new
                         {
-                            person_id = purchase.oPerson.idPerson,
-                            supplier_id = purchase.oSupplier.idSupplier,
+                            person_id = person.idPerson,
+                            supplier_id = supplier.idSupplier,
                             total_amount = purchase.totalAmount,
                             net_amount = purchase.netAmount,
                             tax_amount = purchase.taxAmount,
@@ -84,10 +89,13 @@ namespace PharmacySystem.Data
 
                             foreach (PurchaseDetail pd in purchase.oPurchaseDetail)
                             {
+                                Product product = pd.oProduct
+                                    ?? throw new ArgumentException("PurchaseDetail.oProduct must be set.", nameof(purchase));
+
                                 int purchaseDetailId = oConnection.ExecuteScalar<int>(insertDetailQuery, new
                                 {
                                     purchase_id = idPurchase,
-                                    product_id = pd.oProduct.idProduct,
+                                    product_id = product.idProduct,
                                     stock = pd.quantity,
                                     purchase_price = pd.purchasePrice,
                                     total_amount = pd.total,
@@ -96,7 +104,7 @@ namespace PharmacySystem.Data
 
                                 oConnection.Execute(insertLotQuery, new
                                 {
-                                    product_id = pd.oProduct.idProduct,
+                                    product_id = product.idProduct,
                                     purchase_detail_id = purchaseDetailId,
                                     quantity = pd.quantity,
                                     date_expired = pd.expirationDate,
@@ -108,7 +116,7 @@ namespace PharmacySystem.Data
                                     quantity = pd.quantity,
                                     purchase_price = pd.purchasePrice,
                                     date_expired = pd.expirationDate,
-                                    product_id = pd.oProduct.idProduct
+                                    product_id = product.idProduct
                                 }, objTransacion);
                             }
 

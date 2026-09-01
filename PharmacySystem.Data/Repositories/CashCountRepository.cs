@@ -164,7 +164,7 @@ namespace PharmacySystem.Data
                         sql,
                         (header, line) =>
                         {
-                            if (!byId.TryGetValue(header.id, out CashCount current))
+                            if (!byId.TryGetValue(header.id, out CashCount? current))
                             {
                                 current = header;
                                 current.lines = new List<CashCountLine>();

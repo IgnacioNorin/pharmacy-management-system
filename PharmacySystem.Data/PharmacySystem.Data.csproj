@@ -4,6 +4,10 @@
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>PharmacySystem.Data</RootNamespace>
     <AssemblyName>PharmacySystem.Data</AssemblyName>
+    <!-- Nullable reference types adopted incrementally, project by project. Once a project is
+         clean, its nullable warnings are promoted to errors so it cannot regress. -->
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>Nullable</WarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>

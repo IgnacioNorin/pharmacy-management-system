@@ -24,15 +24,15 @@ namespace PharmacySystem.Helpers
 
         private static readonly Mutex FileMutex = new Mutex(false, "PharmacySystem.ErrorLog");
 
-        private static ILoggerFactory _factory;
-        private static ILogger _logger;
+        private static ILoggerFactory? _factory;
+        private static ILogger? _logger;
 
         // Call once at startup with the application configuration. Reads the log file path from
         // "Logging:File:Path" and the minimum level from "Logging:LogLevel:Default"
         // (Trace/Debug/Information/Warning/Error/Critical), both optional.
-        public static void Initialize(IConfiguration configuration = null)
+        public static void Initialize(IConfiguration? configuration = null)
         {
-            string path = configuration?["Logging:File:Path"];
+            string? path = configuration?["Logging:File:Path"];
             if (string.IsNullOrWhiteSpace(path))
             {
                 path = LogFilePath;
@@ -57,12 +57,13 @@ namespace PharmacySystem.Helpers
             _logger = _factory.CreateLogger("PharmacySystem");
         }
 
-        // Exposed so hosting code (and future DI) can share the same factory.
-        public static ILoggerFactory LoggerFactory => _factory;
+        // Exposed so hosting code (and future DI) can share the same factory. Null until
+        // Initialize() has run.
+        public static ILoggerFactory? LoggerFactory => _factory;
 
         public static void LogError(Exception ex, [CallerMemberName] string memberName = "")
         {
-            ILogger logger = _logger;
+            ILogger? logger = _logger;
             if (logger != null)
             {
                 using (logger.BeginScope(new System.Collections.Generic.Dictionary<string, object> { ["SourceMember"] = memberName }))
@@ -75,7 +76,7 @@ namespace PharmacySystem.Helpers
             FallbackAppend(ex, memberName);
         }
 
-        private static LogEventLevel ParseLevel(string text)
+        private static LogEventLevel ParseLevel(string? text)
         {
             switch ((text ?? "").Trim().ToLowerInvariant())
             {

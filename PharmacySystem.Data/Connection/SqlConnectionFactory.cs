@@ -47,7 +47,7 @@ namespace PharmacySystem.Data
         {
             if (configuration == null) throw new ArgumentNullException(nameof(configuration));
 
-            string connectionString = configuration.GetConnectionString(connectionName);
+            string? connectionString = configuration.GetConnectionString(connectionName);
             if (string.IsNullOrWhiteSpace(connectionString))
             {
                 throw new MissingConfigurationException(

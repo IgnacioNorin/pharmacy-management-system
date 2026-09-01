@@ -47,7 +47,7 @@ namespace PharmacySystem.Data
         }
 
         // One sale by id. Used to print a ticket without loading the whole sale history (DEF-13).
-        public Sale GetById(int saleId)
+        public Sale? GetById(int saleId)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
@@ -136,7 +136,7 @@ namespace PharmacySystem.Data
         public List<SaleDetail> GetDetailsBySaleId(int saleId) =>
             QuerySaleDetails(SaleDetailSelect + " WHERE sd.sale_id = @saleId", new { saleId });
 
-        private List<SaleDetail> QuerySaleDetails(string sql, object param)
+        private List<SaleDetail> QuerySaleDetails(string sql, object? param)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
@@ -182,6 +182,9 @@ namespace PharmacySystem.Data
                               };
                         string primaryMethod = payments.OrderByDescending(p => p.amount).First().paymentMethod;
 
+                        Person seller = obj.oPerson
+                            ?? throw new ArgumentException("Sale.oPerson must be set.", nameof(obj));
+
                         // Receipt number comes from a sequence, generated inside the transaction
                         // so it is concurrency-safe (the old RIGHT(..., COUNT(*) + 1) handed the
                         // same number to two simultaneous sales).
@@ -196,7 +199,7 @@ namespace PharmacySystem.Data
                         int idSale = oConnection.ExecuteScalar<int>(insertSaleQuery, new
                         {
                             document_type = obj.typeDocument,
-                            user_id = obj.oPerson.idPerson,
+                            user_id = seller.idPerson,
                             document_client = obj.documentClient,
                             name_client = obj.nameClient,
                             total_amount = obj.totalPay,
@@ -241,6 +244,9 @@ namespace PharmacySystem.Data
 
                             foreach (SaleDetail dv in obj.oSaleDetail)
                             {
+                                Product lineProduct = dv.oProduct
+                                    ?? throw new ArgumentException("SaleDetail.oProduct must be set.", nameof(obj));
+
                                 // Stock is discounted in the same transaction as the sale rows.
                                 // The stock >= @amount guard makes an oversell (or a missing
                                 // product) update 0 rows, which aborts the whole sale - no
@@ -248,7 +254,7 @@ namespace PharmacySystem.Data
                                 int stockRows = oConnection.Execute(subtractStockQuery, new
                                 {
                                     amount = dv.amount,
-                                    product_id = dv.oProduct.idProduct
+                                    product_id = lineProduct.idProduct
                                 }, objTransacion);
 
                                 if (stockRows == 0)
@@ -260,7 +266,7 @@ namespace PharmacySystem.Data
                                 oConnection.Execute(insertDetailQuery, new
                                 {
                                     sale_id = idSale,
-                                    product_id = dv.oProduct.idProduct,
+                                    product_id = lineProduct.idProduct,
                                     stock = dv.amount,
                                     sale_price = dv.salePrice,
                                     subtotal = dv.subtotal,
@@ -269,7 +275,7 @@ namespace PharmacySystem.Data
 
                                 // Draw the sold units from the earliest-expiring lots (FEFO), so
                                 // product.stock and the lots stay in sync.
-                                ConsumeLotsFefo(oConnection, objTransacion, dv.oProduct.idProduct, dv.amount);
+                                ConsumeLotsFefo(oConnection, objTransacion, lineProduct.idProduct, dv.amount);
                             }
 
                             objTransacion.Commit();
@@ -335,7 +341,7 @@ namespace PharmacySystem.Data
             }
         }
 
-        public SaleLookup FindByDocument(string documentType, string documentNumber)
+        public SaleLookup? FindByDocument(string documentType, string documentNumber)
         {
             using (SqlConnection oConnection = _connectionFactory.Create())
             {
@@ -364,18 +370,18 @@ namespace PharmacySystem.Data
 
         private class OriginalSaleRow
         {
-            public string DocumentType { get; set; }
-            public string DocumentClient { get; set; }
-            public string NameClient { get; set; }
+            public string DocumentType { get; set; } = string.Empty;
+            public string DocumentClient { get; set; } = string.Empty;
+            public string NameClient { get; set; } = string.Empty;
             public decimal TotalAmount { get; set; }
             public decimal NetAmount { get; set; }
             public decimal TaxAmount { get; set; }
             public decimal ExemptAmount { get; set; }
-            public string RecipientTaxId { get; set; }
-            public string RecipientBusinessName { get; set; }
-            public string RecipientActivity { get; set; }
-            public string RecipientAddress { get; set; }
-            public string RecipientCommune { get; set; }
+            public string? RecipientTaxId { get; set; }
+            public string? RecipientBusinessName { get; set; }
+            public string? RecipientActivity { get; set; }
+            public string? RecipientAddress { get; set; }
+            public string? RecipientCommune { get; set; }
             public int? ClientId { get; set; }
         }
 
@@ -392,7 +398,7 @@ namespace PharmacySystem.Data
 
         private class SalePaymentRow
         {
-            public string PaymentMethod { get; set; }
+            public string PaymentMethod { get; set; } = string.Empty;
             public decimal Amount { get; set; }
         }
 
@@ -448,7 +454,7 @@ namespace PharmacySystem.Data
                 SqlTransaction tx = oConnection.BeginTransaction();
                 try
                 {
-                    OriginalSaleRow original = oConnection.QueryFirstOrDefault<OriginalSaleRow>(
+                    OriginalSaleRow? original = oConnection.QueryFirstOrDefault<OriginalSaleRow>(
                         "SELECT document_type AS DocumentType, document_client AS DocumentClient, name_client AS NameClient, " +
                         "total_amount AS TotalAmount, net_amount AS NetAmount, tax_amount AS TaxAmount, exempt_amount AS ExemptAmount, " +
                         "recipient_tax_id AS RecipientTaxId, recipient_business_name AS RecipientBusinessName, " +
@@ -478,7 +484,7 @@ namespace PharmacySystem.Data
                     var byId = originalLines.ToDictionary(l => l.Id);
                     foreach (KeyValuePair<int, int> req in requested)
                     {
-                        if (!byId.TryGetValue(req.Key, out OriginalDetailRow src) ||
+                        if (!byId.TryGetValue(req.Key, out OriginalDetailRow? src) ||
                             req.Value > src.Amount - src.AlreadyCredited)
                         {
                             tx.Rollback();
