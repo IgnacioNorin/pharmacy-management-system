@@ -10,9 +10,10 @@ using PharmacySystem.Presentation;
 
 namespace PharmacySystem.Ui
 {
-    // WPF port of ModalCashCount. "Arqueo de caja": one row per payment method with its expected
-    // total and an editable "counted" field, a live totals line and a notes box. Built in code.
-    public class CashCountWindow : Wpf.Ui.Controls.FluentWindow, ICashCountView
+    // "Arqueo de caja": one row per payment method with its expected total and an editable
+    // "counted" field, a live totals line and a notes box. Built in code, hosted inline in
+    // MainWindow's content area.
+    public class CashCountView : System.Windows.Controls.UserControl, ICashCountView
     {
         private class RowCtl
         {
@@ -28,19 +29,12 @@ namespace PharmacySystem.Ui
         private readonly TextBlock _lblPeriod = new TextBlock { Margin = new Thickness(0, 0, 0, 10) };
         private readonly TextBlock _lblTotals = new TextBlock { FontWeight = FontWeights.Bold, Margin = new Thickness(0, 8, 0, 0) };
 
-        public CashCountWindow(Func<ICashCountView, CashCountPresenter> presenterFactory)
+        public CashCountView(Func<ICashCountView, CashCountPresenter> presenterFactory)
         {
-            Title = "Arqueo de caja";
-            WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            ResizeMode = ResizeMode.NoResize;
-            ShowInTaskbar = false;
-            SizeToContent = SizeToContent.WidthAndHeight;
-            FontFamily = new FontFamily("Segoe UI");
-            FontSize = 13;
-
             _presenter = presenterFactory(this);
 
-            var root = new StackPanel { Margin = new Thickness(16), Width = 460 };
+            var root = new StackPanel { Margin = new Thickness(24), Width = 460, HorizontalAlignment = HorizontalAlignment.Left };
+            root.Children.Add(new TextBlock { Text = "Arqueo de caja", FontSize = 22, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 16) });
             root.Children.Add(_lblPeriod);
 
             var header = new Grid();
@@ -59,17 +53,18 @@ namespace PharmacySystem.Ui
             root.Children.Add(_notes);
 
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 12, 0, 0) };
-            var register = new Button { Content = "Registrar arqueo", Width = 150, Height = 30, Margin = new Thickness(0, 0, 8, 0) };
+            var register = new Button { Content = "Registrar arqueo", Margin = new Thickness(0, 0, 8, 0) };
             register.Click += (s, e) => _presenter.OnRegister();
-            var close = new Button { Content = "Cerrar", Width = 90, Height = 30, IsCancel = true };
             buttons.Children.Add(register);
-            buttons.Children.Add(close);
             root.Children.Add(buttons);
 
             Content = root;
 
             Loaded += (s, e) => _presenter.OnLoad();
         }
+
+        // The hosting window, for owning message boxes.
+        private Window Host => Window.GetWindow(this)!;
 
         private static void AddCell(Grid grid, int col, int row, string text, bool bold = false)
         {
@@ -138,12 +133,11 @@ namespace PharmacySystem.Ui
         }
 
         public void ShowMessage(string message) =>
-            MessageBox.Show(this, message, "Arqueo de caja", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Host, message, "Arqueo de caja", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        public void CountRegistered()
-        {
-            DialogResult = true;
-        }
+        // Hosted inline: no dialog to close. Reload so the screen reflects the just-registered
+        // state (fresh period, expected totals, cleared counted fields).
+        public void CountRegistered() => _presenter.OnLoad();
 
         #endregion
 

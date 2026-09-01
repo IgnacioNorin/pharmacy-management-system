@@ -40,39 +40,6 @@ namespace PharmacySystem.Ui
         }
     }
 
-    public static class ManagementDialog
-    {
-        public static void Show(IntPtr ownerHandle,
-            ManagementPresenterFactories factories, ManagementPermissions permissions,
-            string? pendingProductCode = null)
-        {
-            var window = new ManagementWindow(factories, permissions, pendingProductCode);
-            if (ownerHandle != IntPtr.Zero) new WindowInteropHelper(window) { Owner = ownerHandle };
-            window.ShowDialog();
-        }
-    }
-
-    public static class ReportDialog
-    {
-        public static void Show(IntPtr ownerHandle,
-            Func<IReportView, ReportPresenter> presenterFactory, ReportPermissions permissions)
-        {
-            var window = new ReportWindow(presenterFactory, permissions);
-            if (ownerHandle != IntPtr.Zero) new WindowInteropHelper(window) { Owner = ownerHandle };
-            window.ShowDialog();
-        }
-    }
-
-    public static class CashCountDialog
-    {
-        public static void Show(IntPtr ownerHandle, Func<ICashCountView, CashCountPresenter> presenterFactory)
-        {
-            var window = new CashCountWindow(presenterFactory);
-            if (ownerHandle != IntPtr.Zero) new WindowInteropHelper(window) { Owner = ownerHandle };
-            window.ShowDialog();
-        }
-    }
-
     public static class NotificationConfigDialog
     {
         public static void Show(IntPtr ownerHandle, bool canConfigure,

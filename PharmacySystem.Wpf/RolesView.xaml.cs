@@ -10,18 +10,21 @@ namespace PharmacySystem.Ui
     // WPF port of frmRoles. Implements the same IRolesView; RolesPresenter is unchanged. The
     // permission tree's cascade ("checking pulls in ancestors, unchecking clears descendants")
     // is applied here on the CheckBox check events, guarded against re-entrancy.
-    public partial class RolesWindow : Wpf.Ui.Controls.FluentWindow, IRolesView
+    public partial class RolesView : UserControl, IRolesView
     {
         private readonly RolesPresenter _presenter;
         private List<PermNodeVm> _permRoots = new List<PermNodeVm>();
         private bool _suppressCascade;
 
-        public RolesWindow(Func<IRolesView, RolesPresenter> presenterFactory)
+        public RolesView(Func<IRolesView, RolesPresenter> presenterFactory)
         {
             InitializeComponent();
             _presenter = presenterFactory(this);
             Loaded += (s, e) => _presenter.OnLoad();
         }
+
+        // The hosting window, for owning message boxes.
+        private Window Host => Window.GetWindow(this)!;
 
         #region IRolesView
 
@@ -32,7 +35,7 @@ namespace PharmacySystem.Ui
             _permRoots.SelectMany(r => r.DescendantsAndSelf()).Where(n => n.IsChecked).Select(n => n.Id).ToList();
 
         public bool ConfirmDeleteRole() =>
-            MessageBox.Show(this, "¿Eliminar el rol seleccionado?", "Mensaje",
+            MessageBox.Show(Host, "¿Eliminar el rol seleccionado?", "Mensaje",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
 
         public void LoadRoles(IEnumerable<RoleRow> roles)
@@ -73,7 +76,7 @@ namespace PharmacySystem.Ui
         public void ClearRoleNameInput() => txtRoleName.Clear();
 
         public void ShowMessage(string message) =>
-            MessageBox.Show(this, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Host, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Information);
 
         #endregion
 

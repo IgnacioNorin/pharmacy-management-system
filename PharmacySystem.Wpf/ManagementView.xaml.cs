@@ -15,7 +15,7 @@ namespace PharmacySystem.Ui
     // Productos (IProductManagementView), Categorías (ICategoryManagementView), Precios
     // (IProductPriceView) and Tienda (IStoreManagementView). The presenter/service/repository
     // layers are unchanged; a tab the role can't use is removed on load.
-    public partial class ManagementWindow : Wpf.Ui.Controls.FluentWindow,
+    public partial class ManagementView : System.Windows.Controls.UserControl,
         ICategoryManagementView, IProductManagementView, IProductPriceView, IStoreManagementView
     {
         private readonly ManagementPresenterFactories _factories;
@@ -46,7 +46,7 @@ namespace PharmacySystem.Ui
         // the presenters have loaded.
         private string? _pendingProductCode;
 
-        public ManagementWindow(ManagementPresenterFactories factories, ManagementPermissions permissions, string? pendingProductCode = null)
+        public ManagementView(ManagementPresenterFactories factories, ManagementPermissions permissions, string? pendingProductCode = null)
         {
             InitializeComponent();
 
@@ -67,6 +67,9 @@ namespace PharmacySystem.Ui
 
             Loaded += ManagementWindow_Loaded;
         }
+
+        // The hosting window, for owning message boxes and the lots dialog.
+        private Window Host => Window.GetWindow(this)!;
 
         private void ManagementWindow_Loaded(object sender, RoutedEventArgs e)
         {
@@ -168,10 +171,10 @@ namespace PharmacySystem.Ui
 
         // Shared by three of the four view interfaces.
         public void ShowMessage(string message) =>
-            MessageBox.Show(this, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            MessageBox.Show(Host, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 
         public void ShowValidationErrors(IReadOnlyList<string> errors) =>
-            MessageBox.Show(this, string.Join("\n", errors), "Errores de Validación",
+            MessageBox.Show(Host, string.Join("\n", errors), "Errores de Validación",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
 
         #region ICategoryManagementView
@@ -189,7 +192,7 @@ namespace PharmacySystem.Ui
         }
 
         bool ICategoryManagementView.ConfirmDelete() =>
-            MessageBox.Show(this, "¿Desea eliminar la categoria?", "Mensaje",
+            MessageBox.Show(Host, "¿Desea eliminar la categoria?", "Mensaje",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
 
         public void LoadCategories(IEnumerable<CategoryRow> categories)
@@ -264,7 +267,7 @@ namespace PharmacySystem.Ui
         }
 
         bool IProductManagementView.ConfirmDelete() =>
-            MessageBox.Show(this, "¿Desea eliminar el producto?", "Mensaje",
+            MessageBox.Show(Host, "¿Desea eliminar el producto?", "Mensaje",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
 
         public void LoadCategoryOptions(IEnumerable<ComboBoxItem> options) => FillCategoryCombo(options);
@@ -338,13 +341,13 @@ namespace PharmacySystem.Ui
         {
             if (_productId <= 0)
             {
-                MessageBox.Show(this, "Seleccione un producto de la grilla primero.", "Lotes",
+                MessageBox.Show(Host, "Seleccione un producto de la grilla primero.", "Lotes",
                     MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
             IReadOnlyList<ProductLot> lots = _factories.LotsProvider(_productId);
-            var window = new ProductLotsWindow(txtNameProduct.Text, lots) { Owner = this };
+            var window = new ProductLotsWindow(txtNameProduct.Text, lots) { Owner = Host };
             window.ShowDialog();
         }
 
@@ -458,10 +461,10 @@ namespace PharmacySystem.Ui
         }
 
         public void ShowInfo(string message) =>
-            MessageBox.Show(this, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Host, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Information);
 
         public void ShowError(string message) =>
-            MessageBox.Show(this, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            MessageBox.Show(Host, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 
         private void btnSaveStore_Click(object sender, RoutedEventArgs e) => _storePresenter.OnSave();
 

@@ -1,0 +1,58 @@
+<UserControl x:Class="PharmacySystem.Ui.RolesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:PharmacySystem.Ui"
+             Background="{DynamicResource AppCanvasBrush}">
+
+    <DockPanel Margin="24">
+
+        <TextBlock DockPanel.Dock="Top" Text="Roles y permisos" FontSize="22" FontWeight="Bold"
+                   Margin="0,0,0,16"/>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="260"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Roles list + role actions -->
+            <GroupBox Grid.Column="0" Header="Roles" Margin="0,0,12,0" Padding="8">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBox x:Name="txtRoleName" Width="150" Height="24"/>
+                            <Button x:Name="btnNewRole" Content="Nuevo" Margin="6,0,0,0" Click="btnNewRole_Click"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Button x:Name="btnRenameRole" Content="Renombrar" Click="btnRenameRole_Click"/>
+                            <Button x:Name="btnDeleteRole" Content="Eliminar" Margin="6,0,0,0" Click="btnDeleteRole_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <ListBox x:Name="lstRoles" BorderThickness="0" SelectionChanged="lstRoles_SelectionChanged"/>
+                </DockPanel>
+            </GroupBox>
+
+            <!-- Permission tree -->
+            <GroupBox Grid.Column="1" Header="Permisos del rol" Padding="8">
+                <DockPanel>
+                    <Button x:Name="btnSavePermissions" DockPanel.Dock="Bottom" Content="Guardar permisos"
+                            HorizontalAlignment="Right" Margin="0,8,0,0" Click="btnSavePermissions_Click"/>
+                    <TreeView x:Name="tvPermissions" BorderThickness="0"
+                              CheckBox.Checked="Permission_CheckChanged"
+                              CheckBox.Unchecked="Permission_CheckChanged">
+                        <TreeView.ItemContainerStyle>
+                            <Style TargetType="TreeViewItem">
+                                <Setter Property="IsExpanded" Value="True"/>
+                            </Style>
+                        </TreeView.ItemContainerStyle>
+                        <TreeView.Resources>
+                            <HierarchicalDataTemplate DataType="{x:Type local:PermNodeVm}" ItemsSource="{Binding Children}">
+                                <CheckBox Content="{Binding Description}" IsChecked="{Binding IsChecked, Mode=TwoWay}"/>
+                            </HierarchicalDataTemplate>
+                        </TreeView.Resources>
+                    </TreeView>
+                </DockPanel>
+            </GroupBox>
+        </Grid>
+    </DockPanel>
+</UserControl>

@@ -188,8 +188,7 @@ namespace PharmacySystem.Ui
                 code =>
                 {
                     if (!CanNavigate("productos.acceso")) return;
-                    ManagementDialog.Show(OwnerHandle(), _services.ManagementFactories, BuildManagementPermissions(), code);
-                    CheckNotifications();
+                    Navigate(btnManagement, new ManagementView(_services.ManagementFactories, BuildManagementPermissions(), code));
                 }));
         }
 
@@ -207,25 +206,23 @@ namespace PharmacySystem.Ui
         private void btnSuppliers_Click(object sender, RoutedEventArgs e)
         {
             if (!CanNavigate("proveedores.acceso")) return;
-            SupplierDialog.Show(OwnerHandle(), CanNavigate("proveedores.gestionar"), _services.SupplierPresenter);
+            Navigate(btnSuppliers, new SupplierView(CanNavigate("proveedores.gestionar"), _services.SupplierPresenter));
         }
 
         private void btnManagement_Click(object sender, RoutedEventArgs e)
         {
             if (!(CanNavigate("productos.acceso") || CanNavigate("categorias.acceso") || CanNavigate("tienda.acceso"))) return;
             CheckNotifications();
-            ManagementDialog.Show(OwnerHandle(), _services.ManagementFactories, BuildManagementPermissions());
-            CheckNotifications();
+            Navigate(btnManagement, new ManagementView(_services.ManagementFactories, BuildManagementPermissions()));
         }
 
         private void btnPurchases_Click(object sender, RoutedEventArgs e)
         {
             if (!CanNavigate("compras.acceso")) return;
             CheckNotifications();
-            PurchaseDialog.Show(OwnerHandle(),
+            Navigate(btnPurchases, new PurchaseView(
                 v => _services.PurchasePresenter(v, _session.PersonId),
-                _services.Pickers);
-            CheckNotifications();
+                _services.Pickers));
         }
 
         private void btnSales_Click(object sender, RoutedEventArgs e)
@@ -247,13 +244,13 @@ namespace PharmacySystem.Ui
         private void btnUsers_Click(object sender, RoutedEventArgs e)
         {
             if (!CanNavigate("usuarios.acceso")) return;
-            UserDialog.Show(OwnerHandle(), CanNavigate("usuarios.gestionar"), _services.UserPresenter);
+            Navigate(btnUsers, new UserView(CanNavigate("usuarios.gestionar"), _services.UserPresenter));
         }
 
         private void btnRoles_Click(object sender, RoutedEventArgs e)
         {
             if (!CanNavigate("roles.gestionar")) return;
-            RolesDialog.Show(OwnerHandle(), _services.RolesPresenter);
+            Navigate(btnRoles, new RolesView(_services.RolesPresenter));
         }
 
         private void btnReports_Click(object sender, RoutedEventArgs e)
@@ -272,19 +269,19 @@ namespace PharmacySystem.Ui
                 AlertHistoryExport = CanNavigate("reportes.alertas.exportar")
             };
 
-            ReportDialog.Show(OwnerHandle(), _services.ReportPresenter, reportPermissions);
+            Navigate(btnReports, new ReportView(_services.ReportPresenter, reportPermissions));
         }
 
         private void btnCashCount_Click(object sender, RoutedEventArgs e)
         {
             if (!CanNavigate("caja.acceso")) return;
-            CashCountDialog.Show(OwnerHandle(), _services.CashCountPresenter);
+            Navigate(btnCashCount, new CashCountView(_services.CashCountPresenter));
         }
 
         private void btnAuditLog_Click(object sender, RoutedEventArgs e)
         {
             if (!CanNavigate("bitacora.acceso")) return;
-            SecurityLogDialog.Show(OwnerHandle(), _services.SecurityLogPresenter);
+            Navigate(btnAuditLog, new SecurityLogView(_services.SecurityLogPresenter));
         }
 
         private void btnAlerts_Click(object sender, RoutedEventArgs e)
@@ -305,8 +302,8 @@ namespace PharmacySystem.Ui
 
             if (canOpenProduct && !string.IsNullOrEmpty(selectedProductCode))
             {
-                ManagementDialog.Show(OwnerHandle(), _services.ManagementFactories,
-                    BuildManagementPermissions(), selectedProductCode);
+                Navigate(btnManagement, new ManagementView(_services.ManagementFactories,
+                    BuildManagementPermissions(), selectedProductCode));
             }
 
             CheckNotifications();

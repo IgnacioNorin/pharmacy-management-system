@@ -19,7 +19,7 @@ namespace PharmacySystem.Ui
     // export button backed by IReportExporter. The presenter runs each consult on a thread-pool
     // thread, so date/combo inputs are snapshotted on the UI thread before the run and the grid
     // writes are marshalled back onto the dispatcher.
-    public partial class ReportWindow : Wpf.Ui.Controls.FluentWindow, IReportView
+    public partial class ReportView : System.Windows.Controls.UserControl, IReportView
     {
         private readonly ReportPresenter _presenter;
         private readonly ReportPermissions _permissions;
@@ -47,7 +47,7 @@ namespace PharmacySystem.Ui
         private DateTime _saleStart, _saleEnd, _purchaseStart, _purchaseEnd, _alertStart, _alertEnd;
         private string _supplierId = "0", _categoryId = "0", _saleClientId = "0";
 
-        public ReportWindow(Func<IReportView, ReportPresenter> presenterFactory, ReportPermissions permissions)
+        public ReportView(Func<IReportView, ReportPresenter> presenterFactory, ReportPermissions permissions)
         {
             InitializeComponent();
 
@@ -55,6 +55,9 @@ namespace PharmacySystem.Ui
             _presenter = presenterFactory(this);
             Loaded += ReportWindow_Loaded;
         }
+
+        // The hosting window, for owning message boxes and the save-file dialog.
+        private Window Host => Window.GetWindow(this)!;
 
         private void ReportWindow_Loaded(object sender, RoutedEventArgs e)
         {
@@ -234,7 +237,7 @@ namespace PharmacySystem.Ui
             catch (Exception ex)
             {
                 Logger.LogError(ex);
-                MessageBox.Show(this, "No se pudo generar el reporte: " + ex.Message, "Mensaje",
+                MessageBox.Show(Host, "No se pudo generar el reporte: " + ex.Message, "Mensaje",
                     MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
             finally
@@ -289,7 +292,7 @@ namespace PharmacySystem.Ui
         {
             if (rowCount == 0)
             {
-                MessageBox.Show(this, "No existen datos para exportar", "Mensaje",
+                MessageBox.Show(Host, "No existen datos para exportar", "Mensaje",
                     MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 return;
             }
@@ -300,7 +303,7 @@ namespace PharmacySystem.Ui
                 Filter = string.Join("|", Exporters.Select(x => x.FilterLabel + "|*." + x.Extension)),
                 FilterIndex = 1
             };
-            if (dialog.ShowDialog(this) != true) return;
+            if (dialog.ShowDialog(Host) != true) return;
 
             string extension = System.IO.Path.GetExtension(dialog.FileName).TrimStart('.').ToLowerInvariant();
             IReportExporter exporter =
@@ -313,18 +316,18 @@ namespace PharmacySystem.Ui
                 {
                     write(exporter, stream);
                 }
-                MessageBox.Show(this, "Reporte generado", "Mensaje", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(Host, "Reporte generado", "Mensaje", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (System.IO.IOException ex)
             {
                 Logger.LogError(ex);
-                MessageBox.Show(this, "No se pudo escribir el archivo. Verifica que no esté abierto en otra aplicación.",
+                MessageBox.Show(Host, "No se pudo escribir el archivo. Verifica que no esté abierto en otra aplicación.",
                     "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex);
-                MessageBox.Show(this, "Error al generar el reporte: " + ex.Message, "Mensaje",
+                MessageBox.Show(Host, "Error al generar el reporte: " + ex.Message, "Mensaje",
                     MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
             finally

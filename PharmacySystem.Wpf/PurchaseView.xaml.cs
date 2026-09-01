@@ -4,15 +4,17 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
 using PharmacySystem.Helpers;
 using PharmacySystem.Presentation;
 using PharmacySystem.Validators;
 
 namespace PharmacySystem.Ui
 {
-    // WPF port of frmPurchase. Implements the same IPurchaseView; PurchasePresenter owns the cart
-    // and is unchanged. Supplier / product lookups go through the WPF pickers.
-    public partial class PurchaseWindow : Wpf.Ui.Controls.FluentWindow, IPurchaseView
+    // "Compras" screen. Hosted inline in MainWindow's content area (not a modal window).
+    // Implements the same IPurchaseView; PurchasePresenter owns the cart and is unchanged.
+    // Supplier / product lookups go through the WPF pickers.
+    public partial class PurchaseView : UserControl, IPurchaseView, INavGuard
     {
         public class PurchaseLineVm
         {
@@ -31,7 +33,7 @@ namespace PharmacySystem.Ui
         private int _selectedProductId;
         private int _supplierId;
 
-        public PurchaseWindow(Func<IPurchaseView, PurchasePresenter> presenterFactory, PickerFactories pickers)
+        public PurchaseView(Func<IPurchaseView, PurchasePresenter> presenterFactory, PickerFactories pickers)
         {
             InitializeComponent();
 
@@ -44,6 +46,20 @@ namespace PharmacySystem.Ui
             dgCart.ItemsSource = _lines;
 
             _presenter = presenterFactory(this);
+        }
+
+        // The hosting window, for owning message boxes and sub-dialogs.
+        private Window Host => Window.GetWindow(this)!;
+
+        private IntPtr OwnerHandle() => new WindowInteropHelper(Host).Handle;
+
+        // INavGuard: a cart with lines is unsaved work.
+        public bool CanNavigateAway()
+        {
+            if (_lines.Count == 0) return true;
+            return MessageBox.Show(Host,
+                "Hay una compra en curso. ¿Desea descartarla y salir de la pantalla?",
+                "Compra en curso", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
         }
 
         #region IPurchaseView
@@ -97,11 +113,11 @@ namespace PharmacySystem.Ui
         }
 
         public void ShowValidationErrors(IReadOnlyList<string> errors) =>
-            MessageBox.Show(this, string.Join("\n", errors), "Errores de validación",
+            MessageBox.Show(Host, string.Join("\n", errors), "Errores de validación",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
 
         public void ShowMessage(string message) =>
-            MessageBox.Show(this, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            MessageBox.Show(Host, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 
         public void FocusDocumentNumber() => txtDocNumber.Focus();
 
@@ -201,7 +217,5 @@ namespace PharmacySystem.Ui
         }
 
         private void btnFinish_Click(object sender, RoutedEventArgs e) => _presenter.OnFinishPurchase();
-
-        private IntPtr OwnerHandle() => new System.Windows.Interop.WindowInteropHelper(this).Handle;
     }
 }

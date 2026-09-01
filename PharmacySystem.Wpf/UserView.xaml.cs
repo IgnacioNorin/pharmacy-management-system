@@ -15,14 +15,14 @@ namespace PharmacySystem.Ui
     // WPF port of frmUser. Implements the same IUserView; UserPresenter is unchanged. The grid is
     // filtered through the default collection view so _rows stays intact and the presenter's
     // index-based ReplaceRow / RemoveRow keep working while a search filter is active.
-    public partial class UserWindow : Wpf.Ui.Controls.FluentWindow, IUserView
+    public partial class UserView : UserControl, IUserView
     {
         private readonly UserPresenter _presenter;
         private readonly ObservableCollection<UserRow> _rows = new ObservableCollection<UserRow>();
 
         private int _userId;
 
-        public UserWindow(bool canManage, Func<IUserView, UserPresenter> presenterFactory)
+        public UserView(bool canManage, Func<IUserView, UserPresenter> presenterFactory)
         {
             InitializeComponent();
 
@@ -33,6 +33,9 @@ namespace PharmacySystem.Ui
             _presenter = presenterFactory(this);
             Loaded += (s, e) => _presenter.OnLoad();
         }
+
+        // The hosting window, for owning message boxes and the "Acciones" dialog.
+        private Window Host => Window.GetWindow(this)!;
 
         #region IUserView
 
@@ -59,7 +62,7 @@ namespace PharmacySystem.Ui
         }
 
         public bool ConfirmDelete() =>
-            MessageBox.Show(this, "¿Desea eliminar el usuario?", "Mensaje",
+            MessageBox.Show(Host, "¿Desea eliminar el usuario?", "Mensaje",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
 
         public void LoadRoleOptions(IEnumerable<ComboBoxItem> options)
@@ -98,20 +101,20 @@ namespace PharmacySystem.Ui
         }
 
         public void ShowMessage(string message) =>
-            MessageBox.Show(this, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            MessageBox.Show(Host, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 
         public void ShowValidationErrors(IReadOnlyList<string> errors) =>
-            MessageBox.Show(this, string.Join("\n", errors), "Errores de validación",
+            MessageBox.Show(Host, string.Join("\n", errors), "Errores de validación",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
 
         public void ShowPasswordMismatch() =>
-            MessageBox.Show(this, "Las contraseñas no coinciden\nRevise nuevamente", "Mensaje",
+            MessageBox.Show(Host, "Las contraseñas no coinciden\nRevise nuevamente", "Mensaje",
                 MessageBoxButton.OK, MessageBoxImage.Exclamation);
 
         public void ShowTemporaryPassword(string tempPassword)
         {
             try { Clipboard.SetText(tempPassword); } catch { /* clipboard may be unavailable */ }
-            MessageBox.Show(this,
+            MessageBox.Show(Host,
                 $"Contraseña temporal: {tempPassword}\n\nYa se copió al portapapeles. Comuníquesela al usuario: " +
                 "deberá cambiarla al iniciar sesión.",
                 "Contraseña restablecida", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -164,7 +167,7 @@ namespace PharmacySystem.Ui
 
             dgUsers.SelectedItem = row; // so the presenter's SelectedIndex / UserId point at it
 
-            var dialog = new UserActionsWindow(row.Name ?? "", row.StatusText ?? "", row.StatusText != "Inactivo") { Owner = this };
+            var dialog = new UserActionsWindow(row.Name ?? "", row.StatusText ?? "", row.StatusText != "Inactivo") { Owner = Host };
             if (dialog.ShowDialog() != true) return;
 
             switch (dialog.SelectedAction)

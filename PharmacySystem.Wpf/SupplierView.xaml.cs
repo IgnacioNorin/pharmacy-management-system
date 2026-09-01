@@ -7,10 +7,11 @@ using PharmacySystem.Presentation;
 
 namespace PharmacySystem.Ui
 {
-    // WPF port of frmSupplier. Implements the same ISupplierView; SupplierPresenter is unchanged
+    // "Proveedores" screen, hosted inline in MainWindow. Implements the same ISupplierView;
+    // SupplierPresenter is unchanged
     // (server-paged, synchronous). Row selection loads the supplier into the form; the pager and
     // the search box drive the presenter's paging.
-    public partial class SupplierWindow : Wpf.Ui.Controls.FluentWindow, ISupplierView
+    public partial class SupplierView : UserControl, ISupplierView
     {
         private sealed class SupplierRowVm
         {
@@ -25,7 +26,7 @@ namespace PharmacySystem.Ui
         private int _editingId;
         private int _selectedIndex;
 
-        public SupplierWindow(bool canManage, Func<ISupplierView, SupplierPresenter> presenterFactory)
+        public SupplierView(bool canManage, Func<ISupplierView, SupplierPresenter> presenterFactory)
         {
             InitializeComponent();
 
@@ -36,6 +37,9 @@ namespace PharmacySystem.Ui
 
             Loaded += (s, e) => _presenter.OnLoad();
         }
+
+        // The hosting window, for owning message boxes.
+        private Window Host => Window.GetWindow(this)!;
 
         #region ISupplierView
 
@@ -61,7 +65,7 @@ namespace PharmacySystem.Ui
         }
 
         public bool ConfirmDelete() =>
-            MessageBox.Show(this, "¿Desea eliminar el proveedor?", "Mensaje",
+            MessageBox.Show(Host, "¿Desea eliminar el proveedor?", "Mensaje",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
 
         public void LoadSuppliers(IEnumerable<SupplierRow> suppliers)
@@ -104,10 +108,10 @@ namespace PharmacySystem.Ui
         }
 
         public void ShowMessage(string message) =>
-            MessageBox.Show(this, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            MessageBox.Show(Host, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 
         public void ShowValidationErrors(IReadOnlyList<string> errors) =>
-            MessageBox.Show(this, string.Join("\n", errors), "Errores de Validación",
+            MessageBox.Show(Host, string.Join("\n", errors), "Errores de Validación",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
 
         #endregion
