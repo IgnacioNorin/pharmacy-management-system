@@ -8,15 +8,16 @@ using PharmacySystem.Validators;
 
 namespace PharmacySystem.Ui
 {
-    // WPF port of frmClient. Implements the same IClientView; ClientPresenter is unchanged
-    // (synchronous - the page query is 50 rows). Row selection loads the client into the form;
-    // the pager and the search box drive the presenter's paging.
-    public partial class ClientWindow : Wpf.Ui.Controls.FluentWindow, IClientView
+    // "Clientes" screen. Hosted inline in MainWindow's content area (not a modal window).
+    // Implements the same IClientView; ClientPresenter is unchanged (synchronous - the page
+    // query is 50 rows). Row selection loads the client into the form; the pager and the search
+    // box drive the presenter's paging.
+    public partial class ClientView : UserControl, IClientView
     {
         private readonly ClientPresenter _presenter;
         private int _editingId;
 
-        public ClientWindow(bool canManage, Func<IClientView, ClientPresenter> presenterFactory)
+        public ClientView(bool canManage, Func<IClientView, ClientPresenter> presenterFactory)
         {
             InitializeComponent();
 
@@ -27,6 +28,10 @@ namespace PharmacySystem.Ui
 
             Loaded += (s, e) => _presenter.OnLoad();
         }
+
+        // The hosting window, for owning message boxes. Non-null in practice: every path that
+        // reads it runs from a user action after the view is in MainWindow's visual tree.
+        private Window Host => Window.GetWindow(this)!;
 
         #region IClientView
 
@@ -66,7 +71,7 @@ namespace PharmacySystem.Ui
         }
 
         public bool ConfirmDelete() =>
-            MessageBox.Show(this, "¿Desea eliminar el cliente?", "Mensaje",
+            MessageBox.Show(Host, "¿Desea eliminar el cliente?", "Mensaje",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
 
         public void LoadClients(IEnumerable<ClientRow> clients)
@@ -106,10 +111,10 @@ namespace PharmacySystem.Ui
         }
 
         public void ShowMessage(string message) =>
-            MessageBox.Show(this, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            MessageBox.Show(Host, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 
         public void ShowValidationErrors(IReadOnlyList<string> errors) =>
-            MessageBox.Show(this, string.Join("\n", errors), "Errores de validación",
+            MessageBox.Show(Host, string.Join("\n", errors), "Errores de validación",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
 
         #endregion

@@ -159,9 +159,21 @@ namespace PharmacySystem.Ui
             Store = CanNavigate("tienda.acceso")
         };
 
+        // Swaps the content area and moves the "active" marker to the sidebar button that opened
+        // it. Sections still under the modal-dialog model pass navButton = null (no marker).
+        private void Navigate(System.Windows.Controls.Button? navButton, System.Windows.Controls.Control view)
+        {
+            if (_activeNav != null) _activeNav.Tag = null;
+            _activeNav = navButton;
+            if (navButton != null) navButton.Tag = "active";
+            contentHost.Content = view;
+        }
+
+        private System.Windows.Controls.Button? _activeNav;
+
         private void OpenHome()
         {
-            contentHost.Content = new HomeView(
+            Navigate(btnHome, new HomeView(
                 _services.HomePresenter,
                 () => _session,
                 () => btnSales_Click(this, new RoutedEventArgs()),
@@ -172,7 +184,7 @@ namespace PharmacySystem.Ui
                     if (!CanNavigate("productos.acceso")) return;
                     ManagementDialog.Show(OwnerHandle(), _services.ManagementFactories, BuildManagementPermissions(), code);
                     CheckNotifications();
-                });
+                }));
         }
 
         #region Sidebar navigation
@@ -183,7 +195,7 @@ namespace PharmacySystem.Ui
         {
             if (!CanNavigate("clientes.acceso")) return;
             CheckNotifications();
-            ClientDialog.Show(OwnerHandle(), CanNavigate("clientes.gestionar"), _services.ClientPresenter);
+            Navigate(btnClients, new ClientView(CanNavigate("clientes.gestionar"), _services.ClientPresenter));
         }
 
         private void btnSuppliers_Click(object sender, RoutedEventArgs e)
