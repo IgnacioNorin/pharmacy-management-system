@@ -48,4 +48,12 @@
         <Setter Property="FontSize" Value="11" />
     </Style>
 
+    <!-- App-wide button sizing. The Fluent button needs more room than the old fixed
+         Width/Height="26" values gave it (text was clipping); enforce a comfortable minimum
+         so screens that still carry legacy sizes render correctly. -->
+    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="Padding" Value="10,4" />
+    </Style>
+
 </ResourceDictionary>
