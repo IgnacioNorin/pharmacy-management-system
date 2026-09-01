@@ -11,10 +11,11 @@
     <ProjectReference Include="..\PharmacySystem.Presentation\PharmacySystem.Presentation.csproj" />
   </ItemGroup>
 
-  <!-- PrintSaleWindow: thermal-printer plaintext path (System.Drawing.Printing) and the spooler
-       check (System.ServiceProcess.ServiceController). System.Printing and Microsoft.CSharp come
-       with the WindowsDesktop SDK. -->
+  <!-- PrintSaleWindow: renders the HTML ticket in WebView2 (Edge/Chromium) and prints through
+       its browser print dialog; the thermal plain-text path uses System.Drawing.Printing and the
+       spooler check uses System.ServiceProcess.ServiceController. -->
   <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" />
     <PackageReference Include="System.ServiceProcess.ServiceController" />
   </ItemGroup>
 
