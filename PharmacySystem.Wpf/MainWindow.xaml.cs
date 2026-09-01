@@ -161,8 +161,14 @@ namespace PharmacySystem.Ui
 
         // Swaps the content area and moves the "active" marker to the sidebar button that opened
         // it. Sections still under the modal-dialog model pass navButton = null (no marker).
+        // A view holding unsaved work (INavGuard) can veto the switch.
         private void Navigate(System.Windows.Controls.Button? navButton, System.Windows.Controls.Control view)
         {
+            if (contentHost.Content is INavGuard guard && !guard.CanNavigateAway())
+            {
+                return;
+            }
+
             if (_activeNav != null) _activeNav.Tag = null;
             _activeNav = navButton;
             if (navButton != null) navButton.Tag = "active";
@@ -226,16 +232,16 @@ namespace PharmacySystem.Ui
         {
             if (!CanNavigate("ventas.acceso")) return;
             CheckNotifications();
+
             var hooks = new SaleShellHooks(
                 _services.Pickers,
                 _services.CreditNotePresenter,
                 idSale => PrintSaleDialog.Show(OwnerHandle(), idSale, _services.TicketData),
                 CanNavigate("ventas.nota_credito"));
 
-            SaleDialog.Show(OwnerHandle(),
+            Navigate(btnSales, new SaleView(
                 v => _services.SalePresenter(v, _session.PersonId),
-                hooks);
-            CheckNotifications();
+                hooks));
         }
 
         private void btnUsers_Click(object sender, RoutedEventArgs e)
