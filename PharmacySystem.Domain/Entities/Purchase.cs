@@ -9,8 +9,8 @@ namespace PharmacySystem.Model
     public class Purchase
     {
         public int idPurchase { get; set; }
-        public Person oPerson { get; set; }
-        public Supplier oSupplier { get; set; }
+        public Person? oPerson { get; set; }
+        public Supplier? oSupplier { get; set; }
         public decimal totalAmount { get; set; }
         // VAT breakdown of the invoice. Line prices are entered VAT-included, so the net is
         // backed out (net = total / (1 + taxRate/100)) and taxRate is captured at purchase time.
@@ -18,8 +18,8 @@ namespace PharmacySystem.Model
         public decimal taxAmount { get; set; }
         public decimal exemptAmount { get; set; }
         public decimal taxRate { get; set; }
-        public string documentType { get; set; }
-        public string documentNumber { get; set; }
-        public List<PurchaseDetail> oPurchaseDetail { get; set; }
+        public string documentType { get; set; } = string.Empty;
+        public string documentNumber { get; set; } = string.Empty;
+        public List<PurchaseDetail> oPurchaseDetail { get; set; } = new List<PurchaseDetail>();
     }
 }

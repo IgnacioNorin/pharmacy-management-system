@@ -9,7 +9,7 @@ namespace PharmacySystem.Model
     public class TypePerson
     {
         public int idPersonType { get; set; }
-        public string description { get; set; }
+        public string description { get; set; } = string.Empty;
 
         // person_type.is_system: 1 for the four built-in roles, which the roles admin screen
         // must not let be renamed or deleted. Only populated where a query selects it.

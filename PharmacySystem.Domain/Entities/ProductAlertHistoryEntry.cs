@@ -9,15 +9,15 @@ namespace PharmacySystem.Model
     {
         public int Id { get; set; }
         public int ProductId { get; set; }
-        public string ProductCode { get; set; }
-        public string ProductName { get; set; }
+        public string ProductCode { get; set; } = string.Empty;
+        public string ProductName { get; set; } = string.Empty;
         public AlertType AlertType { get; set; }
         public AlertSeverity Severity { get; set; }
         public decimal? TriggerValue { get; set; }
         public DateTime DetectedAt { get; set; }
         public DateTime? ResolvedAt { get; set; }
         public int? AcknowledgedBy { get; set; }
-        public string AcknowledgedByName { get; set; }
+        public string? AcknowledgedByName { get; set; }
         public DateTime? AcknowledgedAt { get; set; }
 
         // Fase 5 (mute): silences this specific open row - same product, same type, same
