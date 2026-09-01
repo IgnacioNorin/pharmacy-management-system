@@ -33,7 +33,7 @@ namespace PharmacySystem.Presentation
 
             var document = new Document();
 
-            Style normal = document.Styles["Normal"];
+            Style normal = document.Styles["Normal"]!;
             normal.Font.Name = "Arial";
             normal.Font.Size = 7;
 
@@ -103,7 +103,7 @@ namespace PharmacySystem.Presentation
                     ReportColumn<TRow> column = definition.Columns[c];
                     if (IsNumeric(column.Type))
                     {
-                        Paragraph cell = totalsRow.Cells[c].AddParagraph(DisplayValue(column.Value(result.Totals), column.Type));
+                        Paragraph cell = totalsRow.Cells[c].AddParagraph(DisplayValue(column.Value(result.Totals!), column.Type));
                         cell.Format.Alignment = ParagraphAlignment.Right;
                     }
                 }
@@ -125,7 +125,7 @@ namespace PharmacySystem.Presentation
         private static bool IsNumeric(ReportValueType type) =>
             type == ReportValueType.Currency || type == ReportValueType.Integer;
 
-        private static string DisplayValue(object value, ReportValueType type)
+        private static string DisplayValue(object? value, ReportValueType type)
         {
             if (value == null) return "";
             if (value is string s) return s;
@@ -135,7 +135,7 @@ namespace PharmacySystem.Presentation
             {
                 case ReportValueType.Currency: return CultureInfoHelper.FormatAsCurrency(Convert.ToDecimal(value));
                 case ReportValueType.Integer: return Convert.ToInt64(value).ToString(CultureInfo.CurrentCulture);
-                default: return value.ToString();
+                default: return value.ToString() ?? "";
             }
         }
     }

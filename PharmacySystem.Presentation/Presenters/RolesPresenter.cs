@@ -247,7 +247,7 @@ namespace PharmacySystem.Presentation
         // same rule; this is here so the user gets a precise message instead of a generic failure.
         private bool WouldOrphanRoleAdmin(int roleId, IReadOnlyCollection<int> toSave)
         {
-            Permission roleAdmin = _catalogue.FirstOrDefault(
+            Permission? roleAdmin = _catalogue.FirstOrDefault(
                 p => string.Equals(p.Code, RoleAdminCode, StringComparison.OrdinalIgnoreCase));
             if (roleAdmin == null || toSave.Contains(roleAdmin.Id))
             {
@@ -260,7 +260,7 @@ namespace PharmacySystem.Presentation
 
         // Builds the permission forest under parentCode (null = section roots), preserving the
         // catalogue order the repository already returns.
-        private List<PermissionNode> BuildTree(string parentCode, HashSet<int> granted)
+        private List<PermissionNode> BuildTree(string? parentCode, HashSet<int> granted)
         {
             List<PermissionNode> nodes = new List<PermissionNode>();
             foreach (Permission p in _catalogue.Where(p => IsChildOf(p, parentCode)))
@@ -277,7 +277,7 @@ namespace PharmacySystem.Presentation
             return nodes;
         }
 
-        private static bool IsChildOf(Permission p, string parentCode) =>
+        private static bool IsChildOf(Permission p, string? parentCode) =>
             string.IsNullOrEmpty(parentCode)
                 ? string.IsNullOrEmpty(p.ParentCode)
                 : string.Equals(p.ParentCode, parentCode, StringComparison.OrdinalIgnoreCase);
@@ -293,12 +293,12 @@ namespace PharmacySystem.Presentation
             HashSet<int> result = new HashSet<int>(checkedIds ?? Enumerable.Empty<int>());
             foreach (int id in result.ToList())
             {
-                if (!byId.TryGetValue(id, out Permission current))
+                if (!byId.TryGetValue(id, out Permission? current))
                 {
                     continue;
                 }
-                string parent = current.ParentCode;
-                while (!string.IsNullOrEmpty(parent) && byCode.TryGetValue(parent, out Permission ancestor))
+                string? parent = current.ParentCode;
+                while (!string.IsNullOrEmpty(parent) && byCode.TryGetValue(parent, out Permission? ancestor))
                 {
                     result.Add(ancestor.Id);
                     parent = ancestor.ParentCode;

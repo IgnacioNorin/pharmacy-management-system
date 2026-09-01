@@ -56,7 +56,7 @@ namespace PharmacySystem.Presentation
 
         public void OnProductCodeEntered(string code)
         {
-            Product product = _productService.GetByCode(code);
+            Product? product = _productService.GetByCode(code);
             if (product != null)
             {
                 _view.SetSelectedProduct(product.idProduct, product.code, product.name);
@@ -99,7 +99,7 @@ namespace PharmacySystem.Presentation
 
             decimal subTotal = _view.Amount * pricePurchase;
 
-            Product product = _productService.GetById(_view.SelectedProductId);
+            Product? product = _productService.GetById(_view.SelectedProductId);
 
             var line = new PurchaseCartLine
             {

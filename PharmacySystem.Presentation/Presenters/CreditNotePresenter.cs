@@ -48,7 +48,7 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            SaleLookup sale = _service.FindByDocument(type, number);
+            SaleLookup? sale = _service.FindByDocument(type, number);
             if (sale == null)
             {
                 _view.ShowMessage("No se encontró el comprobante.");

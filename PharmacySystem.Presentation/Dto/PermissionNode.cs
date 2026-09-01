@@ -8,7 +8,7 @@ namespace PharmacySystem.Presentation
     public class PermissionNode
     {
         public int Id { get; set; }
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
         public bool Checked { get; set; }
         public List<PermissionNode> Children { get; } = new List<PermissionNode>();
     }

@@ -40,7 +40,7 @@ namespace PharmacySystem.Presentation
 
         public void OnSearch()
         {
-            _search = _view.SearchText?.Trim() ?? string.Empty;
+            _search = (_view.SearchText ?? string.Empty).Trim();
             LoadPage(1);
         }
 
@@ -93,10 +93,10 @@ namespace PharmacySystem.Presentation
             Supplier supplier = new Supplier
             {
                 idSupplier = _view.SupplierId,
-                document = _view.Document?.Trim(),
-                companyName = _view.CompanyName?.Trim(),
-                email = _view.Email?.Trim(),
-                phone = _view.Phone?.Trim()
+                document = (_view.Document ?? string.Empty).Trim(),
+                companyName = (_view.CompanyName ?? string.Empty).Trim(),
+                email = (_view.Email ?? string.Empty).Trim(),
+                phone = (_view.Phone ?? string.Empty).Trim()
             };
 
             if (supplier.idSupplier == 0)

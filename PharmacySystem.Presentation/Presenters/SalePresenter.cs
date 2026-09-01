@@ -38,10 +38,10 @@ namespace PharmacySystem.Presentation
         private readonly int _idPerson;
         private readonly List<SaleCartLine> _cart = new List<SaleCartLine>();
         // The client picked from ModalPerson, or null for a walk-in / consumidor final.
-        private ClientRow _selectedClient;
+        private ClientRow? _selectedClient;
         // The "pago mixto" split the cashier entered, and the cart total it was entered for.
         // Cleared whenever the cart changes so it can never be applied to a different total.
-        private List<SalePaymentEntry> _paymentSplit;
+        private List<SalePaymentEntry>? _paymentSplit;
         private decimal _paymentSplitTotal;
 
         public SalePresenter(ISaleView view, ISaleService saleService, IProductService productService, IStoreService storeService, CurrentUser session, int idPerson)
@@ -66,7 +66,7 @@ namespace PharmacySystem.Presentation
         {
             // Only released products can be sold; an unreleased one (in stock but not priced) is
             // invisible to the sale screen.
-            Product product = _productService.GetSellableByCode(code);
+            Product? product = _productService.GetSellableByCode(code);
             if (product != null)
             {
                 _view.SetSelectedProduct(product.idProduct, product.code, product.name, product.stock, CultureInfoHelper.FormatAsCurrency(product.salePrice));
@@ -107,7 +107,7 @@ namespace PharmacySystem.Presentation
 
             decimal subTotal = _view.Amount * priceSale;
 
-            Product cartProduct = _productService.GetSellableById(_view.SelectedProductId);
+            Product? cartProduct = _productService.GetSellableById(_view.SelectedProductId);
 
             var line = new SaleCartLine
             {
@@ -152,7 +152,7 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            IReadOnlyList<SalePaymentEntry> result = _view.PromptPaymentSplit(total, _paymentSplit, PaymentMethods.Selectable);
+            IReadOnlyList<SalePaymentEntry>? result = _view.PromptPaymentSplit(total, _paymentSplit, PaymentMethods.Selectable);
             if (result == null)
             {
                 return;

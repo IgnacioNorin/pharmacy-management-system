@@ -53,7 +53,7 @@ namespace PharmacySystem.Presentation
             _users.FirstOrDefault(u => u.idPerson == userId)?.oPersonType?.idPersonType ?? 0;
 
         private string DocumentOf(int userId) =>
-            _users.FirstOrDefault(u => u.idPerson == userId)?.document;
+            _users.FirstOrDefault(u => u.idPerson == userId)?.document ?? string.Empty;
 
         private int ActorId => _currentUser?.PersonId ?? 0;
 
@@ -84,7 +84,7 @@ namespace PharmacySystem.Presentation
                 Id = p.idPerson,
                 Document = p.document,
                 Name = p.name,
-                RoleText = p.oPersonType.description,
+                RoleText = p.oPersonType?.description ?? string.Empty,
                 StatusText = StatusFor(p.Estado, p.document)
             }));
         }
@@ -139,8 +139,8 @@ namespace PharmacySystem.Presentation
             Person person = new Person
             {
                 idPerson = _view.UserId,
-                document = _view.Document?.Trim(),
-                name = _view.Name?.Trim(),
+                document = (_view.Document ?? string.Empty).Trim(),
+                name = (_view.Name ?? string.Empty).Trim(),
                 address = "",
                 phone = "",
                 password = _view.Password,
@@ -319,7 +319,7 @@ namespace PharmacySystem.Presentation
                 return;
             }
 
-            Person target = _users.FirstOrDefault(u => u.idPerson == _view.UserId);
+            Person? target = _users.FirstOrDefault(u => u.idPerson == _view.UserId);
             if (target == null)
             {
                 return;

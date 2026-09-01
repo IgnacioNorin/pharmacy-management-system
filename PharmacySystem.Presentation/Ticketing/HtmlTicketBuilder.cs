@@ -17,7 +17,7 @@ namespace PharmacySystem.Presentation
     // are encoding-independent (the .html resource is Windows-1252).
     public static class HtmlTicketBuilder
     {
-        public static string Build(string template, Store store, Sale sale, List<SaleDetail> saleDetails)
+        public static string Build(string template, Store? store, Sale sale, List<SaleDetail>? saleDetails)
         {
             string t = template;
 
@@ -42,7 +42,7 @@ namespace PharmacySystem.Presentation
             return t;
         }
 
-        private static string Enc(string s) => WebUtility.HtmlEncode(s ?? string.Empty);
+        private static string Enc(string? s) => WebUtility.HtmlEncode(s ?? string.Empty);
 
         private static string Money(decimal v) => Enc(CultureInfoHelper.FormatAsCurrency(v));
 
@@ -78,7 +78,7 @@ namespace PharmacySystem.Presentation
             return sb.ToString();
         }
 
-        private static string DetailRows(List<SaleDetail> saleDetails)
+        private static string DetailRows(List<SaleDetail>? saleDetails)
         {
             var sb = new StringBuilder();
             foreach (SaleDetail detail in saleDetails ?? Enumerable.Empty<SaleDetail>())
@@ -93,12 +93,12 @@ namespace PharmacySystem.Presentation
             return sb.ToString();
         }
 
-        private static string VatRows(Store store, Sale sale)
+        private static string VatRows(Store? store, Sale sale)
         {
             var sb = new StringBuilder();
             sb.AppendLine(Row("Neto:", Money(sale.netAmount)));
             string ivaLabel = (store?.defaultTaxRate ?? 0m) > 0m
-                ? "IVA (" + store.defaultTaxRate.ToString("0.##") + "%):"
+                ? "IVA (" + store!.defaultTaxRate.ToString("0.##") + "%):"
                 : "IVA:";
             sb.AppendLine(Row(ivaLabel, Money(sale.taxAmount)));
             if (sale.exemptAmount > 0m)

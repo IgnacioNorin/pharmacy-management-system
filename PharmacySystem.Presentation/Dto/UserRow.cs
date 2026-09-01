@@ -8,10 +8,10 @@ namespace PharmacySystem.Presentation
     public class UserRow
     {
         public int Id { get; set; }
-        public string Document { get; set; }
-        public string Name { get; set; }
-        public string RoleText { get; set; }
+        public string Document { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string RoleText { get; set; } = string.Empty;
         // "Activo" / "Inactivo" (person.status = 0) / "Bloqueado" (locked out by failed logins).
-        public string StatusText { get; set; }
+        public string StatusText { get; set; } = string.Empty;
     }
 }
