@@ -8,6 +8,7 @@ using System.Windows.Interop;
 using System.Windows.Threading;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
+using Wpf.Ui.Controls;
 
 namespace PharmacySystem.Ui
 {
@@ -15,7 +16,7 @@ namespace PharmacySystem.Ui
     // the alert badge and its 5-minute refresh, and the session re-check on activation. Every
     // screen it opens is a modal WPF dialog (see the XxxDialog helpers); the only persistent
     // content is HomeView. MainFormPresenter / HomePresenter are unchanged.
-    public partial class MainWindow : Window, IMainFormView
+    public partial class MainWindow : FluentWindow, IMainFormView
     {
         private readonly ShellServices _services;
         private readonly MainFormPresenter _presenter;
@@ -76,9 +77,10 @@ namespace PharmacySystem.Ui
             if (refreshed == null)
             {
                 _sessionRefreshReady = false;
-                MessageBox.Show(this,
+                System.Windows.MessageBox.Show(this,
                     "Su sesión ya no es válida: la cuenta fue desactivada o eliminada.",
-                    "Sesión finalizada", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "Sesión finalizada",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 Close();
                 return;
             }
