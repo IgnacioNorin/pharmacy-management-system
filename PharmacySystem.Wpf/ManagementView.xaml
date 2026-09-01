@@ -3,16 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="{DynamicResource AppCanvasBrush}">
         <UserControl.Resources>
-        <Style TargetType="DataGrid">
-            <Setter Property="AutoGenerateColumns" Value="False"/>
-            <Setter Property="IsReadOnly" Value="True"/>
-            <Setter Property="CanUserAddRows" Value="False"/>
-            <Setter Property="CanUserDeleteRows" Value="False"/>
-            <Setter Property="HeadersVisibility" Value="Column"/>
-            <Setter Property="SelectionMode" Value="Single"/>
-            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
-            <Setter Property="RowHeaderWidth" Value="0"/>
-        </Style>
         <Style x:Key="SectionTitle" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Margin" Value="0,0,0,6"/>
@@ -52,7 +42,7 @@
                         <Button x:Name="btnProductLots" Content="Ver lotes" Width="100" Height="26" Margin="16,0,0,0" Click="btnProductLots_Click"/>
                     </StackPanel>
 
-                    <DataGrid x:Name="dgProduct" SelectionChanged="dgProduct_SelectionChanged">
+                    <DataGrid x:Name="dgProduct" AutoGenerateColumns="False" SelectionChanged="dgProduct_SelectionChanged">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Código" Width="90" Binding="{Binding Code}"/>
                             <DataGridTextColumn Header="Nombre" Width="*" Binding="{Binding Name}"/>
@@ -94,7 +84,7 @@
 
                 <DockPanel Grid.Column="0" Margin="0,0,10,0">
                     <TextBlock DockPanel.Dock="Top" Text="Lista de Categorías" Style="{StaticResource SectionTitle}"/>
-                    <DataGrid x:Name="dgCategory" SelectionChanged="dgCategory_SelectionChanged">
+                    <DataGrid x:Name="dgCategory" AutoGenerateColumns="False" SelectionChanged="dgCategory_SelectionChanged">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Descripción" Width="*" Binding="{Binding Description}"/>
                         </DataGrid.Columns>
@@ -129,7 +119,7 @@
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Por liberar (en stock, sin precio de venta)" Style="{StaticResource SectionTitle}"/>
-                <DataGrid x:Name="dgReleasable" Grid.Row="1" Grid.Column="0" Margin="0,0,10,8"
+                <DataGrid x:Name="dgReleasable" Grid.Row="1" Grid.Column="0" Margin="0,0,10,8" AutoGenerateColumns="False"
                           SelectionChanged="dgPrice_SelectionChanged">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Código" Width="80" Binding="{Binding Code}"/>
@@ -143,7 +133,7 @@
                 </DataGrid>
 
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="En comercialización" Style="{StaticResource SectionTitle}"/>
-                <DataGrid x:Name="dgCommercialized" Grid.Row="3" Grid.Column="0" Margin="0,0,10,0"
+                <DataGrid x:Name="dgCommercialized" Grid.Row="3" Grid.Column="0" Margin="0,0,10,0" AutoGenerateColumns="False"
                           SelectionChanged="dgPrice_SelectionChanged">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Código" Width="80" Binding="{Binding Code}"/>
@@ -173,7 +163,7 @@
 
                 <DockPanel Grid.Row="2" Grid.Column="1" Grid.RowSpan="2">
                     <TextBlock DockPanel.Dock="Top" Text="Historial de precios del producto seleccionado" Style="{StaticResource SectionTitle}"/>
-                    <DataGrid x:Name="dgPriceHistory">
+                    <DataGrid x:Name="dgPriceHistory" AutoGenerateColumns="False">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Fecha" Width="130" Binding="{Binding Date}"/>
                             <DataGridTextColumn Header="Evento" Width="120" Binding="{Binding Event}"/>

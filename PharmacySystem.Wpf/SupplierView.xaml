@@ -68,12 +68,9 @@
 
         <GroupBox Header="Listado de proveedores" Padding="8">
         <DataGrid x:Name="dgData"
-                  AutoGenerateColumns="False" IsReadOnly="True"
-                  CanUserAddRows="False" CanUserDeleteRows="False"
-                  HeadersVisibility="Column" SelectionMode="Single"
-                  GridLinesVisibility="Horizontal" RowHeaderWidth="0"
-                  Background="White" RowBackground="White" BorderThickness="0"
-                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                  AutoGenerateColumns="False"
+
+                  HorizontalScrollBarVisibility="Disabled"
                   SelectionChanged="dgData_SelectionChanged">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Número Documento" Width="1.2*" Binding="{Binding Document}"/>

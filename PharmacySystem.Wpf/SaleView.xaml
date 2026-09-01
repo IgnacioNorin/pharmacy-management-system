@@ -117,11 +117,8 @@
         <!-- Cart -->
         <GroupBox Header="Detalle de la venta" Padding="8">
         <DataGrid x:Name="dgCart"
-                  AutoGenerateColumns="False" IsReadOnly="True"
-                  CanUserAddRows="False" HeadersVisibility="Column"
-                  SelectionMode="Single" GridLinesVisibility="Horizontal" RowHeaderWidth="0"
-                  Background="White" RowBackground="White" BorderThickness="0"
-                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                  AutoGenerateColumns="False"
+                  HorizontalScrollBarVisibility="Disabled">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Producto" Width="*" Binding="{Binding Name}"/>
                 <DataGridTextColumn Header="Cantidad" Width="110" Binding="{Binding QuantityText}"/>

@@ -19,12 +19,9 @@
 
         <GroupBox Header="Eventos" Padding="8">
         <DataGrid x:Name="dgEvents"
-                  AutoGenerateColumns="False" IsReadOnly="True"
-                  CanUserAddRows="False" CanUserDeleteRows="False"
-                  HeadersVisibility="Column" SelectionMode="Single"
-                  GridLinesVisibility="Horizontal" RowHeaderWidth="0"
-                  Background="White" RowBackground="White" BorderThickness="0"
-                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                  AutoGenerateColumns="False"
+
+                  HorizontalScrollBarVisibility="Disabled">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Fecha y hora" Width="160"
                                     Binding="{Binding At, StringFormat=dd/MM/yyyy HH:mm:ss}"/>

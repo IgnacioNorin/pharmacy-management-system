@@ -3,18 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="{DynamicResource AppCanvasBrush}">
     <UserControl.Resources>
-        <Style TargetType="DataGrid">
-            <Setter Property="AutoGenerateColumns" Value="True"/>
-            <Setter Property="IsReadOnly" Value="True"/>
-            <Setter Property="CanUserAddRows" Value="False"/>
-            <Setter Property="CanUserDeleteRows" Value="False"/>
-            <Setter Property="HeadersVisibility" Value="Column"/>
-            <Setter Property="SelectionMode" Value="Single"/>
-            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
-            <Setter Property="RowHeaderWidth" Value="0"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="RowBackground" Value="White"/>
-        </Style>
         <Style x:Key="TotalsStrip" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Margin" Value="0,8,0,0"/>
@@ -48,7 +36,7 @@
                     <Button x:Name="btnExportSale" Content="Exportar" Click="btnExportSale_Click"/>
                 </WrapPanel>
                 <TextBlock x:Name="lblSaleTotals" DockPanel.Dock="Bottom" Style="{StaticResource TotalsStrip}"/>
-                <DataGrid x:Name="dgSale"/>
+                <DataGrid x:Name="dgSale" AutoGenerateColumns="True"/>
             </DockPanel>
         </TabItem>
 
@@ -66,7 +54,7 @@
                     <Button x:Name="btnExportPurchases" Content="Exportar" Click="btnExportPurchases_Click"/>
                 </WrapPanel>
                 <TextBlock x:Name="lblPurchaseTotals" DockPanel.Dock="Bottom" Style="{StaticResource TotalsStrip}"/>
-                <DataGrid x:Name="dgPurchase"/>
+                <DataGrid x:Name="dgPurchase" AutoGenerateColumns="True"/>
             </DockPanel>
         </TabItem>
 
@@ -80,7 +68,7 @@
                     <Button x:Name="btnExportProduct" Content="Exportar" Click="btnExportProduct_Click"/>
                 </WrapPanel>
                 <TextBlock x:Name="lblProductTotals" DockPanel.Dock="Bottom" Style="{StaticResource TotalsStrip}"/>
-                <DataGrid x:Name="dgProduct"/>
+                <DataGrid x:Name="dgProduct" AutoGenerateColumns="True"/>
             </DockPanel>
         </TabItem>
 
@@ -95,7 +83,7 @@
                     <Button x:Name="btnConsultAlertHistory" Style="{StaticResource PrimaryButton}" Content="Consultar" Margin="0,0,8,0" Click="btnConsultAlertHistory_Click"/>
                     <Button x:Name="btnExportAlertHistory" Content="Exportar" Click="btnExportAlertHistory_Click"/>
                 </WrapPanel>
-                <DataGrid x:Name="dgAlertHistory"/>
+                <DataGrid x:Name="dgAlertHistory" AutoGenerateColumns="True"/>
             </DockPanel>
         </TabItem>
         </TabControl>

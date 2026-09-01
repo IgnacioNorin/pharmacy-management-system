@@ -83,11 +83,8 @@
                     <TextBlock DockPanel.Dock="Top" Text="Requiere atención"
                                FontWeight="Bold" Margin="0,0,0,10"/>
                     <DataGrid x:Name="dgAttention"
-                              AutoGenerateColumns="False" IsReadOnly="True"
-                              CanUserAddRows="False" CanUserDeleteRows="False"
-                              HeadersVisibility="Column" SelectionMode="Single"
-                              GridLinesVisibility="Horizontal" RowHeaderWidth="0"
-                              Background="Transparent" BorderThickness="0"
+                              AutoGenerateColumns="False"
+
                               MouseDoubleClick="dgAttention_MouseDoubleClick">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Severidad" Width="90" Binding="{Binding Severity}">

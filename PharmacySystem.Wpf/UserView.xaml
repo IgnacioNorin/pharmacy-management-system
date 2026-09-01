@@ -53,11 +53,8 @@
 
         <GroupBox Header="Listado de usuarios" Padding="8">
         <DataGrid x:Name="dgUsers"
-                  AutoGenerateColumns="False" IsReadOnly="True"
-                  CanUserAddRows="False" HeadersVisibility="Column"
-                  SelectionMode="Single" GridLinesVisibility="Horizontal" RowHeaderWidth="0"
-                  Background="White" RowBackground="White" BorderThickness="0"
-                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                  AutoGenerateColumns="False"
+                  HorizontalScrollBarVisibility="Disabled"
                   SelectionChanged="dgUsers_SelectionChanged">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Documento" Width="1.2*" Binding="{Binding Document}"/>
