@@ -112,13 +112,15 @@
             <TextBlock x:Name="lblPage" VerticalAlignment="Center" Margin="16,0,0,0" Foreground="Gray"/>
         </StackPanel>
 
-        <!-- Master list: key columns only, always fits the viewport (no horizontal scroll).
-             Full record -> detail panel below. -->
+        <!-- Master list in its own panel, matching the detail panel below. Key columns only,
+             always fits the viewport (no horizontal scroll); full record -> detail panel. -->
+        <GroupBox Header="Listado de clientes" Padding="8">
         <DataGrid x:Name="dgClients"
                   AutoGenerateColumns="False" IsReadOnly="True"
                   CanUserAddRows="False" CanUserDeleteRows="False"
                   HeadersVisibility="Column" SelectionMode="Single"
                   GridLinesVisibility="Horizontal" RowHeaderWidth="0"
+                  Background="White" RowBackground="White" BorderThickness="0"
                   ColumnWidth="*"
                   ColumnHeaderStyle="{StaticResource GridHeader}"
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -139,5 +141,6 @@
                                         ElementStyle="{StaticResource GridCheckCell}"/>
             </DataGrid.Columns>
         </DataGrid>
+        </GroupBox>
     </DockPanel>
 </UserControl>
