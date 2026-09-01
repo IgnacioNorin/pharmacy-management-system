@@ -15,7 +15,7 @@ namespace PharmacySystem.Ui
     // Productos (IProductManagementView), Categorías (ICategoryManagementView), Precios
     // (IProductPriceView) and Tienda (IStoreManagementView). The presenter/service/repository
     // layers are unchanged; a tab the role can't use is removed on load.
-    public partial class ManagementWindow : Window,
+    public partial class ManagementWindow : Wpf.Ui.Controls.FluentWindow,
         ICategoryManagementView, IProductManagementView, IProductPriceView, IStoreManagementView
     {
         private readonly ManagementPresenterFactories _factories;

@@ -16,7 +16,7 @@ namespace PharmacySystem.Ui
     // the layout), and a thermal printer, if one is detected, offers the plain-text path instead.
     // PharmacyTicketBuilder / HtmlTicketBuilder are unchanged; the sale rows and the HTML template
     // are handed in by the exe.
-    public partial class PrintSaleWindow : Window
+    public partial class PrintSaleWindow : Wpf.Ui.Controls.FluentWindow
     {
         private readonly int _saleId;
         private readonly Func<int, PrintTicketData> _dataProvider;

@@ -12,7 +12,7 @@ namespace PharmacySystem.Ui
 {
     // WPF port of ModalCashCount. "Arqueo de caja": one row per payment method with its expected
     // total and an editable "counted" field, a live totals line and a notes box. Built in code.
-    public class CashCountWindow : Window, ICashCountView
+    public class CashCountWindow : Wpf.Ui.Controls.FluentWindow, ICashCountView
     {
         private class RowCtl
         {

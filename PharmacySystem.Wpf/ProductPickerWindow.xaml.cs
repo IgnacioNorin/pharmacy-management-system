@@ -9,7 +9,7 @@ namespace PharmacySystem.Ui
     // WPF port of ModalProduct. Read-only picker: implements IProductPickerView (initial load
     // only); the origin ("frmSale" / "frmPurchase") that decides which products show is baked
     // into the presenter by the caller. Filtering and selection stay in the view.
-    public partial class ProductPickerWindow : Window, IProductPickerView
+    public partial class ProductPickerWindow : Wpf.Ui.Controls.FluentWindow, IProductPickerView
     {
         private readonly ProductPickerPresenter _presenter;
         private List<ProductPickerRow> _all = new List<ProductPickerRow>();

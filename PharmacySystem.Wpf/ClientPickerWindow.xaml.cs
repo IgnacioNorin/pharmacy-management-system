@@ -9,7 +9,7 @@ namespace PharmacySystem.Ui
     // WPF port of ModalPerson. Read-only client picker: implements IClientPickerView (initial
     // load only); filtering and selection stay in the view. Picked is the full ClientRow so a
     // caller that needs the fiscal profile has it.
-    public partial class ClientPickerWindow : Window, IClientPickerView
+    public partial class ClientPickerWindow : Wpf.Ui.Controls.FluentWindow, IClientPickerView
     {
         private readonly ClientPickerPresenter _presenter;
         private List<ClientRow> _all = new List<ClientRow>();

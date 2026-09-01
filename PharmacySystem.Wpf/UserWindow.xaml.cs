@@ -15,7 +15,7 @@ namespace PharmacySystem.Ui
     // WPF port of frmUser. Implements the same IUserView; UserPresenter is unchanged. The grid is
     // filtered through the default collection view so _rows stays intact and the presenter's
     // index-based ReplaceRow / RemoveRow keep working while a search filter is active.
-    public partial class UserWindow : Window, IUserView
+    public partial class UserWindow : Wpf.Ui.Controls.FluentWindow, IUserView
     {
         private readonly UserPresenter _presenter;
         private readonly ObservableCollection<UserRow> _rows = new ObservableCollection<UserRow>();

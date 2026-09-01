@@ -8,7 +8,7 @@ namespace PharmacySystem.Ui
 {
     // WPF port of ModalConfignotification. Two thresholds (días "por vencer", stock crítico) and
     // a Save button. Built in code.
-    public class NotificationConfigWindow : Window, INotificationConfigView
+    public class NotificationConfigWindow : Wpf.Ui.Controls.FluentWindow, INotificationConfigView
     {
         private readonly NotificationConfigPresenter _presenter;
         private readonly TextBox _days = new TextBox { Width = 120, Height = 24 };

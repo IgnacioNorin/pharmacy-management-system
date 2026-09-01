@@ -19,7 +19,7 @@ namespace PharmacySystem.Ui
     // export button backed by IReportExporter. The presenter runs each consult on a thread-pool
     // thread, so date/combo inputs are snapshotted on the UI thread before the run and the grid
     // writes are marshalled back onto the dispatcher.
-    public partial class ReportWindow : Window, IReportView
+    public partial class ReportWindow : Wpf.Ui.Controls.FluentWindow, IReportView
     {
         private readonly ReportPresenter _presenter;
         private readonly ReportPermissions _permissions;

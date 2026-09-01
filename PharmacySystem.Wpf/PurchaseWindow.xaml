@@ -1,6 +1,8 @@
-<Window x:Class="PharmacySystem.Ui.PurchaseWindow"
+<ui:FluentWindow x:Class="PharmacySystem.Ui.PurchaseWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        WindowCornerPreference="Round"
         Title="Registrar compra"
         Height="700" Width="920"
         MinHeight="560" MinWidth="760"
@@ -108,4 +110,4 @@
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>
-</Window>
+</ui:FluentWindow>

@@ -10,7 +10,7 @@ namespace PharmacySystem.Ui
 {
     // WPF port of frmCreditNote. Implements the same ICreditNoteView; CreditNotePresenter is
     // unchanged. Search a sale, choose how many units of each line to credit, generate.
-    public partial class CreditNoteWindow : Window, ICreditNoteView
+    public partial class CreditNoteWindow : Wpf.Ui.Controls.FluentWindow, ICreditNoteView
     {
         // Grid row model. ToCredit is edited in place; the presenter reads it back on generate.
         public class CreditLineVm

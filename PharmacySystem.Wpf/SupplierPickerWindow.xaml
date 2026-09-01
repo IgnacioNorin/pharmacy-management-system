@@ -1,6 +1,8 @@
-<Window x:Class="PharmacySystem.Ui.SupplierPickerWindow"
+<ui:FluentWindow x:Class="PharmacySystem.Ui.SupplierPickerWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        WindowCornerPreference="Round"
         Title="Seleccionar proveedor"
         Height="480" Width="700"
         MinHeight="320" MinWidth="520"
@@ -33,4 +35,4 @@
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>
-</Window>
+</ui:FluentWindow>

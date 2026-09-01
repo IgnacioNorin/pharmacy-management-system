@@ -10,7 +10,7 @@ namespace PharmacySystem.Ui
     // WPF port of frmSupplier. Implements the same ISupplierView; SupplierPresenter is unchanged
     // (server-paged, synchronous). Row selection loads the supplier into the form; the pager and
     // the search box drive the presenter's paging.
-    public partial class SupplierWindow : Window, ISupplierView
+    public partial class SupplierWindow : Wpf.Ui.Controls.FluentWindow, ISupplierView
     {
         private sealed class SupplierRowVm
         {

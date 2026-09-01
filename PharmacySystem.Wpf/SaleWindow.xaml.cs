@@ -12,7 +12,7 @@ namespace PharmacySystem.Ui
     // WPF port of frmSale. Implements the same ISaleView; SalePresenter owns the cart and the
     // payment split and is unchanged. Client / product lookups, the "pago mixto" dialog, the
     // credit-note screen and the ticket print all go through the shell hooks / WPF dialogs.
-    public partial class SaleWindow : Window, ISaleView
+    public partial class SaleWindow : Wpf.Ui.Controls.FluentWindow, ISaleView
     {
         public class SaleLineVm
         {

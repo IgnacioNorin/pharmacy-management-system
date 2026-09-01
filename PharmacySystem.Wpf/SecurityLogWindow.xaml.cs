@@ -10,7 +10,7 @@ namespace PharmacySystem.Ui
     // WPF port of ModalSecurityLog. Implements the same ISecurityLogView; the presenter runs the
     // query off the UI thread (SecurityLogPresenter.OnConsultAsync) and the await resumes here on
     // the dispatcher, so ShowEvents/ShowError touch the grid on the UI thread with no marshalling.
-    public partial class SecurityLogWindow : Window, ISecurityLogView
+    public partial class SecurityLogWindow : Wpf.Ui.Controls.FluentWindow, ISecurityLogView
     {
         private readonly SecurityLogPresenter _presenter;
 

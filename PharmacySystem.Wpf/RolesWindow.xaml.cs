@@ -10,7 +10,7 @@ namespace PharmacySystem.Ui
     // WPF port of frmRoles. Implements the same IRolesView; RolesPresenter is unchanged. The
     // permission tree's cascade ("checking pulls in ancestors, unchecking clears descendants")
     // is applied here on the CheckBox check events, guarded against re-entrancy.
-    public partial class RolesWindow : Window, IRolesView
+    public partial class RolesWindow : Wpf.Ui.Controls.FluentWindow, IRolesView
     {
         private readonly RolesPresenter _presenter;
         private List<PermNodeVm> _permRoots = new List<PermNodeVm>();

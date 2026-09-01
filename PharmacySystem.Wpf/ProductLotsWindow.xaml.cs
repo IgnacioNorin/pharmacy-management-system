@@ -9,7 +9,7 @@ namespace PharmacySystem.Ui
     // WPF port of ModalProductLots. Read-only list of a product's lots: units on hand, expiry and
     // purchase cost per batch. Pure display - the lots are handed in by the caller (the WinForms
     // shell resolves them from the shared ProductService).
-    public class ProductLotsWindow : Window
+    public class ProductLotsWindow : Wpf.Ui.Controls.FluentWindow
     {
         private sealed class LotRowVm
         {

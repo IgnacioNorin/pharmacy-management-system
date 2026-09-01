@@ -11,7 +11,7 @@ namespace PharmacySystem.Ui
     // WPF port of frmClient. Implements the same IClientView; ClientPresenter is unchanged
     // (synchronous - the page query is 50 rows). Row selection loads the client into the form;
     // the pager and the search box drive the presenter's paging.
-    public partial class ClientWindow : Window, IClientView
+    public partial class ClientWindow : Wpf.Ui.Controls.FluentWindow, IClientView
     {
         private readonly ClientPresenter _presenter;
         private int _editingId;

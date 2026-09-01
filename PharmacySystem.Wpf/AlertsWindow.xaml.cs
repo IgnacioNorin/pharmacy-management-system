@@ -16,7 +16,7 @@ namespace PharmacySystem.Ui
     // (if any) the user picked to view, and lets the user acknowledge or mute an alert by calling
     // straight into the notification service it is handed - no Presenter of its own, same as the
     // WinForms version.
-    public partial class AlertsWindow : Window
+    public partial class AlertsWindow : Wpf.Ui.Controls.FluentWindow
     {
         // One grid row. Mutable fields (status / button captions) raise change notifications so an
         // acknowledge or mute updates the row in place without rebuilding the grid.

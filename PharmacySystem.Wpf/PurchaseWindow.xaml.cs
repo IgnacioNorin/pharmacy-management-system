@@ -12,7 +12,7 @@ namespace PharmacySystem.Ui
 {
     // WPF port of frmPurchase. Implements the same IPurchaseView; PurchasePresenter owns the cart
     // and is unchanged. Supplier / product lookups go through the WPF pickers.
-    public partial class PurchaseWindow : Window, IPurchaseView
+    public partial class PurchaseWindow : Wpf.Ui.Controls.FluentWindow, IPurchaseView
     {
         public class PurchaseLineVm
         {
