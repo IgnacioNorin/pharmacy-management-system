@@ -44,9 +44,9 @@ namespace PharmacySystem.Wpf
 
         // Set by the alerts click-through: jump to the Productos tab filtered to this code once
         // the presenters have loaded.
-        private string _pendingProductCode;
+        private string? _pendingProductCode;
 
-        public ManagementWindow(ManagementPresenterFactories factories, ManagementPermissions permissions, string pendingProductCode = null)
+        public ManagementWindow(ManagementPresenterFactories factories, ManagementPermissions permissions, string? pendingProductCode = null)
         {
             InitializeComponent();
 
@@ -129,7 +129,7 @@ namespace PharmacySystem.Wpf
 
         private static int ComboInt(ComboBox combo)
         {
-            object value = (combo.SelectedItem as ComboBoxItem)?.Value;
+            object? value = (combo.SelectedItem as ComboBoxItem)?.Value;
             return value != null && int.TryParse(value.ToString(), out int id) ? id : 0;
         }
 

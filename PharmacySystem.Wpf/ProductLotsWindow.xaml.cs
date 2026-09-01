@@ -13,10 +13,10 @@ namespace PharmacySystem.Wpf
     {
         private sealed class LotRowVm
         {
-            public string Cantidad { get; set; }
-            public string Vencimiento { get; set; }
-            public string CostoUnitario { get; set; }
-            public string Valor { get; set; }
+            public string Cantidad { get; set; } = string.Empty;
+            public string Vencimiento { get; set; } = string.Empty;
+            public string CostoUnitario { get; set; } = string.Empty;
+            public string Valor { get; set; } = string.Empty;
         }
 
         public ProductLotsWindow(string productName, IReadOnlyList<ProductLot> lots)

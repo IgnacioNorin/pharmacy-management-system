@@ -16,7 +16,7 @@ namespace PharmacySystem.UiTests
         [InlineData(null, 0)]
         [InlineData("not-a-number", 0)]
         [InlineData("3.5", 0)]
-        public void Int_ParsesOrFallsBackToZero(string text, int expected)
+        public void Int_ParsesOrFallsBackToZero(string? text, int expected)
         {
             Assert.Equal(expected, ViewParse.Int(text));
         }

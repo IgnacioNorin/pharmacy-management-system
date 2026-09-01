@@ -27,7 +27,7 @@ namespace PharmacySystem
         // TypeInitializationException.
         public static bool IsDatabaseOrConfig(Exception ex)
         {
-            for (Exception e = ex; e != null; e = e.InnerException)
+            for (Exception? e = ex; e != null; e = e.InnerException)
             {
                 if (e is SqlException || e is MissingConfigurationException)
                 {
@@ -48,7 +48,7 @@ namespace PharmacySystem
             // A transient connection loss carries its own actionable message ("the server is
             // unavailable, try again") - the appsettings advice in Database would only mislead,
             // since the configuration is present and correct.
-            for (Exception e = ex; e != null; e = e.InnerException)
+            for (Exception? e = ex; e != null; e = e.InnerException)
             {
                 if (e is DataUnavailableException)
                 {
@@ -66,7 +66,7 @@ namespace PharmacySystem
         // loading a grid shows a message instead of closing the application.
         public static bool IsTransientDataFailure(Exception ex)
         {
-            for (Exception e = ex; e != null; e = e.InnerException)
+            for (Exception? e = ex; e != null; e = e.InnerException)
             {
                 if (e is DataUnavailableException)
                 {

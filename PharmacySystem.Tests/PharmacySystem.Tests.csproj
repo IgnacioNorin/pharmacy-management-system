@@ -5,6 +5,11 @@
     <IsPackable>false</IsPackable>
     <RootNamespace>PharmacySystem.Tests</RootNamespace>
     <AssemblyName>PharmacySystem.Tests</AssemblyName>
+    <!-- Test code opts out of nullable: the annotations add churn without the safety payoff
+         they give production code (a test that dereferences null just fails, loudly, in CI). -->
+    <Nullable>disable</Nullable>
+    <WarningsAsErrors />
+    <NoWarn>$(NoWarn);CS8632</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

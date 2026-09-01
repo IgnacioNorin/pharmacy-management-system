@@ -10,30 +10,30 @@ namespace PharmacySystem.Wpf
     // types from Presentation IView types, so they cross the assembly boundary cleanly.
     public sealed class ShellServices
     {
-        public Func<IMainFormView, MainFormPresenter> MainPresenter { get; set; }
-        public Func<IHomeView, HomePresenter> HomePresenter { get; set; }
+        public required Func<IMainFormView, MainFormPresenter> MainPresenter { get; set; }
+        public required Func<IHomeView, HomePresenter> HomePresenter { get; set; }
 
-        public Func<IClientView, ClientPresenter> ClientPresenter { get; set; }
-        public Func<ISupplierView, SupplierPresenter> SupplierPresenter { get; set; }
-        public Func<IUserView, UserPresenter> UserPresenter { get; set; }
-        public Func<IRolesView, RolesPresenter> RolesPresenter { get; set; }
-        public Func<IReportView, ReportPresenter> ReportPresenter { get; set; }
-        public Func<ICashCountView, CashCountPresenter> CashCountPresenter { get; set; }
-        public Func<ISecurityLogView, SecurityLogPresenter> SecurityLogPresenter { get; set; }
-        public Func<INotificationConfigView, NotificationConfigPresenter> NotificationConfigPresenter { get; set; }
-        public Func<IChangePasswordView, int, ChangePasswordPresenter> ChangePasswordPresenter { get; set; }
+        public required Func<IClientView, ClientPresenter> ClientPresenter { get; set; }
+        public required Func<ISupplierView, SupplierPresenter> SupplierPresenter { get; set; }
+        public required Func<IUserView, UserPresenter> UserPresenter { get; set; }
+        public required Func<IRolesView, RolesPresenter> RolesPresenter { get; set; }
+        public required Func<IReportView, ReportPresenter> ReportPresenter { get; set; }
+        public required Func<ICashCountView, CashCountPresenter> CashCountPresenter { get; set; }
+        public required Func<ISecurityLogView, SecurityLogPresenter> SecurityLogPresenter { get; set; }
+        public required Func<INotificationConfigView, NotificationConfigPresenter> NotificationConfigPresenter { get; set; }
+        public required Func<IChangePasswordView, int, ChangePasswordPresenter> ChangePasswordPresenter { get; set; }
 
         // These take the acting person's id (resolved from the live session by the shell).
-        public Func<IPurchaseView, int, PurchasePresenter> PurchasePresenter { get; set; }
-        public Func<ISaleView, int, SalePresenter> SalePresenter { get; set; }
-        public Func<ICreditNoteView, CreditNotePresenter> CreditNotePresenter { get; set; }
+        public required Func<IPurchaseView, int, PurchasePresenter> PurchasePresenter { get; set; }
+        public required Func<ISaleView, int, SalePresenter> SalePresenter { get; set; }
+        public required Func<ICreditNoteView, CreditNotePresenter> CreditNotePresenter { get; set; }
 
-        public ManagementPresenterFactories ManagementFactories { get; set; }
-        public PickerFactories Pickers { get; set; }
-        public INotificationConfigService NotificationConfigService { get; set; }
+        public required ManagementPresenterFactories ManagementFactories { get; set; }
+        public required PickerFactories Pickers { get; set; }
+        public required INotificationConfigService NotificationConfigService { get; set; }
 
         // Resolves one sale's ticket data (store, sale, details, HTML template) for
         // PrintSaleWindow. The exe owns the sale services and the template resource.
-        public Func<int, PrintTicketData> TicketData { get; set; }
+        public required Func<int, PrintTicketData> TicketData { get; set; }
     }
 }

@@ -15,14 +15,14 @@ namespace PharmacySystem.Wpf
     // or null if cancelled.
     public class SalePaymentsWindow : Window
     {
-        public IReadOnlyList<SalePaymentEntry> Result { get; private set; }
+        public IReadOnlyList<SalePaymentEntry>? Result { get; private set; }
 
         private readonly decimal _total;
         private readonly Dictionary<string, TextBox> _amountByMethod =
             new Dictionary<string, TextBox>(StringComparer.OrdinalIgnoreCase);
         private readonly TextBlock _summary = new TextBlock { Margin = new Thickness(0, 8, 0, 0) };
 
-        public SalePaymentsWindow(decimal total, IReadOnlyList<SalePaymentEntry> current, IReadOnlyList<string> methods)
+        public SalePaymentsWindow(decimal total, IReadOnlyList<SalePaymentEntry>? current, IReadOnlyList<string> methods)
         {
             _total = total;
 

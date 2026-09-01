@@ -18,11 +18,11 @@ namespace PharmacySystem.Wpf
     {
         public sealed class AttentionRowVm
         {
-            public string Severity { get; set; }
-            public Brush SeverityBrush { get; set; }
-            public string Product { get; set; }
-            public string Detail { get; set; }
-            public string Code { get; set; }
+            public string Severity { get; set; } = string.Empty;
+            public Brush SeverityBrush { get; set; } = Brushes.Transparent;
+            public string Product { get; set; } = string.Empty;
+            public string Detail { get; set; } = string.Empty;
+            public string Code { get; set; } = string.Empty;
         }
 
         private readonly HomePresenter _presenter;

@@ -66,13 +66,13 @@ namespace PharmacySystem.Wpf
         // Re-checks the session whenever focus returns to the shell - a permission revoked by an
         // admin in another session then takes effect on the next navigation instead of only after
         // logout (DEF-21). Throttled, and skips the burst during construction.
-        private void MainWindow_Activated(object sender, EventArgs e)
+        private void MainWindow_Activated(object? sender, EventArgs e)
         {
             if (!_sessionRefreshReady || _session == null) return;
             if ((DateTime.Now - _lastSessionRefresh).TotalSeconds < 3) return;
             _lastSessionRefresh = DateTime.Now;
 
-            CurrentUser refreshed = _presenter.RefreshSession(_session);
+            CurrentUser? refreshed = _presenter.RefreshSession(_session);
             if (refreshed == null)
             {
                 _sessionRefreshReady = false;
@@ -162,9 +162,9 @@ namespace PharmacySystem.Wpf
             contentHost.Content = new HomeView(
                 _services.HomePresenter,
                 () => _session,
-                () => btnSales_Click(this, null),
-                () => btnPurchases_Click(this, null),
-                () => btnManagement_Click(this, null),
+                () => btnSales_Click(this, new RoutedEventArgs()),
+                () => btnPurchases_Click(this, new RoutedEventArgs()),
+                () => btnManagement_Click(this, new RoutedEventArgs()),
                 code =>
                 {
                     if (!CanNavigate("productos.acceso")) return;
@@ -273,7 +273,7 @@ namespace PharmacySystem.Wpf
 
             bool canOpenProduct = CanNavigate("productos.acceso");
 
-            string selectedProductCode = AlertsDialog.Show(
+            string? selectedProductCode = AlertsDialog.Show(
                 OwnerHandle(),
                 _currentAlerts,
                 _services.NotificationConfigService,

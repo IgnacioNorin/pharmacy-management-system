@@ -16,10 +16,10 @@ namespace PharmacySystem.Wpf
     {
         public class SaleLineVm
         {
-            public string Name { get; set; }
-            public string QuantityText { get; set; }
-            public string PriceText { get; set; }
-            public string SubTotalText { get; set; }
+            public string Name { get; set; } = string.Empty;
+            public string QuantityText { get; set; } = string.Empty;
+            public string PriceText { get; set; } = string.Empty;
+            public string SubTotalText { get; set; } = string.Empty;
         }
 
         private readonly SalePresenter _presenter;
@@ -75,21 +75,21 @@ namespace PharmacySystem.Wpf
         public void SetPaymentMethodOptions(IReadOnlyList<string> options, string selected) =>
             FillCombo(cboPaymentMethod, options, selected);
 
-        public IReadOnlyList<SalePaymentEntry> PromptPaymentSplit(decimal total,
-            IReadOnlyList<SalePaymentEntry> current, IReadOnlyList<string> methods)
+        public IReadOnlyList<SalePaymentEntry>? PromptPaymentSplit(decimal total,
+            IReadOnlyList<SalePaymentEntry>? current, IReadOnlyList<string> methods)
         {
             var window = new SalePaymentsWindow(total, current, methods) { Owner = this };
             return window.ShowDialog() == true ? window.Result : null;
         }
 
-        public void ShowPaymentSplit(IReadOnlyList<SalePaymentEntry> split)
+        public void ShowPaymentSplit(IReadOnlyList<SalePaymentEntry>? split)
         {
             bool mixed = split != null && split.Count > 1;
             cboPaymentMethod.IsEnabled = !mixed;
             btnMixedPayment.Content = mixed ? "Editar pago mixto…" : "Pago mixto…";
             lblMixedPayment.Text = mixed
                 ? "Pago mixto: " + string.Join("  +  ",
-                      SelectMethods(split))
+                      SelectMethods(split!))
                 : "";
         }
 
@@ -196,14 +196,14 @@ namespace PharmacySystem.Wpf
 
         private void btnPickClient_Click(object sender, RoutedEventArgs e)
         {
-            ClientRow picked = ClientPickerDialog.Show(OwnerHandle(), _hooks.Pickers.Client);
+            ClientRow? picked = ClientPickerDialog.Show(OwnerHandle(), _hooks.Pickers.Client);
             if (picked != null)
                 _presenter.OnClientSelected(picked);
         }
 
         private void btnPickProduct_Click(object sender, RoutedEventArgs e)
         {
-            ProductPickerRow picked = ProductPickerDialog.Show(OwnerHandle(),
+            ProductPickerRow? picked = ProductPickerDialog.Show(OwnerHandle(),
                 v => _hooks.Pickers.Product(v, "frmSale"));
             if (picked != null)
                 SetSelectedProduct(picked.Id, picked.Code, picked.Name, picked.Stock,

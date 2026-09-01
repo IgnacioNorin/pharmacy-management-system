@@ -22,29 +22,29 @@ namespace PharmacySystem.Wpf
         // acknowledge or mute updates the row in place without rebuilding the grid.
         public sealed class AlertRowVm : INotifyPropertyChanged
         {
-            public string SeverityLabel { get; set; }
-            public Brush SeverityBrush { get; set; }
-            public string Product { get; set; }
-            public string Detail { get; set; }
-            public string Code { get; set; }
+            public string SeverityLabel { get; set; } = string.Empty;
+            public Brush SeverityBrush { get; set; } = Brushes.Transparent;
+            public string Product { get; set; } = string.Empty;
+            public string Detail { get; set; } = string.Empty;
+            public string Code { get; set; } = string.Empty;
             public int? HistoryId { get; set; }
 
-            private string _status;
+            private string _status = string.Empty;
             public string Status { get => _status; set { _status = value; Raise(nameof(Status)); } }
 
-            private string _ackText;
+            private string _ackText = string.Empty;
             public string AckText { get => _ackText; set { _ackText = value; Raise(nameof(AckText)); } }
 
             private bool _ackEnabled;
             public bool AckEnabled { get => _ackEnabled; set { _ackEnabled = value; Raise(nameof(AckEnabled)); } }
 
-            private string _muteText;
+            private string _muteText = string.Empty;
             public string MuteText { get => _muteText; set { _muteText = value; Raise(nameof(MuteText)); } }
 
             private bool _muteEnabled;
             public bool MuteEnabled { get => _muteEnabled; set { _muteEnabled = value; Raise(nameof(MuteEnabled)); } }
 
-            public event PropertyChangedEventHandler PropertyChanged;
+            public event PropertyChangedEventHandler? PropertyChanged;
             private void Raise(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
@@ -57,7 +57,7 @@ namespace PharmacySystem.Wpf
         private readonly ObservableCollection<AlertRowVm> _rows = new ObservableCollection<AlertRowVm>();
 
         // The product code the user clicked "Ver" on; null if the window was just closed.
-        public string SelectedProductCode { get; private set; }
+        public string? SelectedProductCode { get; private set; }
 
         public AlertsWindow(
             IReadOnlyList<ProductAlert> alerts,
@@ -158,12 +158,12 @@ namespace PharmacySystem.Wpf
             }
         }
 
-        private static AlertRowVm RowOf(object sender) =>
+        private static AlertRowVm? RowOf(object sender) =>
             (sender as FrameworkElement)?.DataContext as AlertRowVm;
 
         private void btnView_Click(object sender, RoutedEventArgs e)
         {
-            AlertRowVm row = RowOf(sender);
+            AlertRowVm? row = RowOf(sender);
             if (row == null) return;
 
             // product.code is nullable: no code -> nothing to search for in Gestión (DEF-17).
@@ -181,7 +181,7 @@ namespace PharmacySystem.Wpf
 
         private void btnAck_Click(object sender, RoutedEventArgs e)
         {
-            AlertRowVm row = RowOf(sender);
+            AlertRowVm? row = RowOf(sender);
             if (row == null || _notificationService == null || row.HistoryId == null) return;
 
             if (!_canAcknowledge)
@@ -208,7 +208,7 @@ namespace PharmacySystem.Wpf
 
         private void btnMute_Click(object sender, RoutedEventArgs e)
         {
-            AlertRowVm row = RowOf(sender);
+            AlertRowVm? row = RowOf(sender);
             if (row == null || _notificationService == null || row.HistoryId == null) return;
 
             if (!_canMute)

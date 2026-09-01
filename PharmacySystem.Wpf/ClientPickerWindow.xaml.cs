@@ -14,7 +14,7 @@ namespace PharmacySystem.Wpf
         private readonly ClientPickerPresenter _presenter;
         private List<ClientRow> _all = new List<ClientRow>();
 
-        public ClientRow Picked { get; private set; }
+        public ClientRow? Picked { get; private set; }
 
         public ClientPickerWindow(Func<IClientPickerView, ClientPickerPresenter> presenterFactory)
         {

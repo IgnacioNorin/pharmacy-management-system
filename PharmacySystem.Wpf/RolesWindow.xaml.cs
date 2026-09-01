@@ -50,7 +50,7 @@ namespace PharmacySystem.Wpf
             _suppressCascade = false;
         }
 
-        private static PermNodeVm ToVm(PermissionNode node, PermNodeVm parent)
+        private static PermNodeVm ToVm(PermissionNode node, PermNodeVm? parent)
         {
             var vm = new PermNodeVm { Id = node.Id, Description = node.Description, IsChecked = node.Checked, Parent = parent };
             foreach (PermissionNode child in node.Children)
@@ -85,7 +85,7 @@ namespace PharmacySystem.Wpf
             _suppressCascade = true;
             if (node.IsChecked)
             {
-                for (PermNodeVm ancestor = node.Parent; ancestor != null; ancestor = ancestor.Parent)
+                for (PermNodeVm? ancestor = node.Parent; ancestor != null; ancestor = ancestor.Parent)
                     ancestor.IsChecked = true;
             }
             else

@@ -34,7 +34,7 @@ namespace PharmacySystem
                 // the loop and the app. LoginHost/ShellHost keep the WPF types in PharmacySystem.Wpf.
                 while (true)
                 {
-                    CurrentUser session = LoginHost.RunLogin(
+                    CurrentUser? session = LoginHost.RunLogin(
                         CompositionRoot.CreateLoginPresenter,
                         CompositionRoot.CreateCurrentUser,
                         (personId, view) => CompositionRoot.CreateChangePasswordPresenter(view, personId));
@@ -61,7 +61,7 @@ namespace PharmacySystem
         // Logs every unhandled exception and shows the user a message they can act on. A database
         // or configuration problem is always terminal (it will not fix itself mid-session); any
         // other UI-thread error is reported and the app keeps running.
-        private static void Report(Exception ex, bool fatal)
+        private static void Report(Exception? ex, bool fatal)
         {
             if (ex == null)
             {

@@ -8,9 +8,9 @@ namespace PharmacySystem.Wpf
     // not resolve.
     public sealed class PrintTicketData
     {
-        public Store Store { get; set; }
-        public Sale Sale { get; set; }
-        public List<SaleDetail> Details { get; set; }
-        public string HtmlTemplate { get; set; }
+        public required Store Store { get; set; }
+        public Sale? Sale { get; set; }
+        public List<SaleDetail>? Details { get; set; }
+        public required string HtmlTemplate { get; set; }
     }
 }

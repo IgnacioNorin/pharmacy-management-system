@@ -16,9 +16,9 @@ namespace PharmacySystem.Wpf
     {
         private class RowCtl
         {
-            public string Method;
-            public TextBox Counted;
-            public TextBlock Diff;
+            public string Method = string.Empty;
+            public TextBox Counted = null!;
+            public TextBlock Diff = null!;
         }
 
         private readonly CashCountPresenter _presenter;
@@ -37,6 +37,8 @@ namespace PharmacySystem.Wpf
             SizeToContent = SizeToContent.WidthAndHeight;
             FontFamily = new FontFamily("Segoe UI");
             FontSize = 13;
+
+            _presenter = presenterFactory(this);
 
             var root = new StackPanel { Margin = new Thickness(16), Width = 460 };
             root.Children.Add(_lblPeriod);
@@ -66,7 +68,6 @@ namespace PharmacySystem.Wpf
 
             Content = root;
 
-            _presenter = presenterFactory(this);
             Loaded += (s, e) => _presenter.OnLoad();
         }
 
