@@ -35,7 +35,7 @@
             <!-- Permission tree -->
             <GroupBox Grid.Column="1" Header="Permisos del rol" Padding="8">
                 <DockPanel>
-                    <Button x:Name="btnSavePermissions" DockPanel.Dock="Bottom" Content="Guardar permisos"
+                    <Button x:Name="btnSavePermissions" Style="{StaticResource PrimaryButton}" DockPanel.Dock="Bottom" Content="Guardar permisos"
                             HorizontalAlignment="Right" Margin="0,8,0,0" Click="btnSavePermissions_Click"/>
                     <TreeView x:Name="tvPermissions" BorderThickness="0"
                               CheckBox.Checked="Permission_CheckChanged"

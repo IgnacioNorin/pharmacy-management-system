@@ -81,7 +81,7 @@
                 <TextBlock x:Name="lblVat" Foreground="Gray"/>
                 <TextBlock x:Name="lblTotal" FontWeight="Bold" FontSize="16" Text="Total: 0"/>
             </StackPanel>
-            <Button x:Name="btnFinish" Content="Registrar compra" Width="180" Height="34"
+            <Button x:Name="btnFinish" Style="{StaticResource PrimaryButton}" Content="Registrar compra" Width="180" Height="34"
                     HorizontalAlignment="Right" Click="btnFinish_Click"/>
         </Grid>
 

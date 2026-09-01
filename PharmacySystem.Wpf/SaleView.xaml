@@ -110,7 +110,7 @@
                 </StackPanel>
             </StackPanel>
 
-            <Button Grid.Column="1" x:Name="btnFinish" Content="Terminar venta" Width="170" Height="46"
+            <Button Grid.Column="1" x:Name="btnFinish" Style="{StaticResource PrimaryButton}" Content="Terminar venta" Width="170" Height="46"
                     VerticalAlignment="Bottom" Click="btnFinish_Click"/>
         </Grid>
 

@@ -96,9 +96,9 @@
 
                 <StackPanel Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="2" Orientation="Horizontal"
                             HorizontalAlignment="Right" Margin="0,6,0,2">
-                    <Button x:Name="btnSave" Content="Guardar" Width="120" Height="30" Click="btnSave_Click"/>
-                    <Button x:Name="btnClearForm" Content="Limpiar" Width="100" Height="30" Margin="8,0,0,0" Click="btnClearForm_Click"/>
-                    <Button x:Name="btnDelete" Content="Eliminar" Width="100" Height="30" Margin="8,0,0,0" Click="btnDelete_Click"/>
+                    <Button x:Name="btnSave" Style="{StaticResource PrimaryButton}" Content="Guardar" Click="btnSave_Click"/>
+                    <Button x:Name="btnClearForm" Content="Limpiar" Margin="8,0,0,0" Click="btnClearForm_Click"/>
+                    <Button x:Name="btnDelete" Content="Eliminar" Margin="8,0,0,0" Click="btnDelete_Click"/>
                 </StackPanel>
             </Grid>
         </GroupBox>

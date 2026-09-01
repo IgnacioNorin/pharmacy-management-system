@@ -51,7 +51,7 @@
 
                 <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal"
                             HorizontalAlignment="Right" Margin="0,8,0,2">
-                    <Button x:Name="btnSave" Content="Guardar" Click="btnSave_Click"/>
+                    <Button x:Name="btnSave" Style="{StaticResource PrimaryButton}" Content="Guardar" Click="btnSave_Click"/>
                     <Button x:Name="btnClearForm" Content="Limpiar" Margin="8,0,0,0" Click="btnClearForm_Click"/>
                     <Button x:Name="btnDelete" Content="Eliminar" Margin="8,0,0,0" Click="btnDelete_Click"/>
                 </StackPanel>

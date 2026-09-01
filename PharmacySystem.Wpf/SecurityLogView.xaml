@@ -13,7 +13,7 @@
             <DatePicker x:Name="dpFrom" Width="130"/>
             <TextBlock Text="Hasta:" VerticalAlignment="Center" Margin="16,0,6,0"/>
             <DatePicker x:Name="dpTo" Width="130"/>
-            <Button x:Name="btnConsult" Content="Consultar" Margin="16,0,0,0" Click="btnConsult_Click"/>
+            <Button x:Name="btnConsult" Style="{StaticResource PrimaryButton}" Content="Consultar" Margin="16,0,0,0" Click="btnConsult_Click"/>
             <TextBlock x:Name="lblCount" VerticalAlignment="Center" Margin="16,0,0,0" Foreground="Gray"/>
         </StackPanel>
 

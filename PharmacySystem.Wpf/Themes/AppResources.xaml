@@ -56,4 +56,28 @@
         <Setter Property="Padding" Value="10,4" />
     </Style>
 
+    <!-- Input controls: the Fluent look needs ~32px; screens carrying legacy Height="24" were
+         rendering cramped. MinHeight is a floor, so the old values stop mattering. -->
+    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+        <Setter Property="MinHeight" Value="32" />
+    </Style>
+    <Style TargetType="PasswordBox" BasedOn="{StaticResource {x:Type PasswordBox}}">
+        <Setter Property="MinHeight" Value="32" />
+    </Style>
+    <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+        <Setter Property="MinHeight" Value="32" />
+    </Style>
+    <Style TargetType="DatePicker" BasedOn="{StaticResource {x:Type DatePicker}}">
+        <Setter Property="MinHeight" Value="32" />
+    </Style>
+
+    <!-- Primary call-to-action: the accent-filled button, usable on a plain <Button>. -->
+    <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="Padding" Value="14,4" />
+        <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorSecondaryBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+    </Style>
+
 </ResourceDictionary>

@@ -44,7 +44,7 @@
                     <DatePicker x:Name="dpSaleEnd" Width="120" Margin="0,0,16,0"/>
                     <TextBlock Text="Cliente:" VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <ComboBox x:Name="cboSaleClient" Width="200" Margin="0,0,16,0" DisplayMemberPath="Text"/>
-                    <Button x:Name="btnConsultSale" Content="Consultar" Margin="0,0,8,0" Click="btnConsultSale_Click"/>
+                    <Button x:Name="btnConsultSale" Style="{StaticResource PrimaryButton}" Content="Consultar" Margin="0,0,8,0" Click="btnConsultSale_Click"/>
                     <Button x:Name="btnExportSale" Content="Exportar" Click="btnExportSale_Click"/>
                 </WrapPanel>
                 <TextBlock x:Name="lblSaleTotals" DockPanel.Dock="Bottom" Style="{StaticResource TotalsStrip}"/>
@@ -62,7 +62,7 @@
                     <DatePicker x:Name="dpPurchaseEnd" Width="120" Margin="0,0,16,0"/>
                     <TextBlock Text="Proveedor:" VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <ComboBox x:Name="cboSupplier" Width="200" Margin="0,0,16,0" DisplayMemberPath="Text"/>
-                    <Button x:Name="btnConsultPurchase" Content="Consultar" Margin="0,0,8,0" Click="btnConsultPurchase_Click"/>
+                    <Button x:Name="btnConsultPurchase" Style="{StaticResource PrimaryButton}" Content="Consultar" Margin="0,0,8,0" Click="btnConsultPurchase_Click"/>
                     <Button x:Name="btnExportPurchases" Content="Exportar" Click="btnExportPurchases_Click"/>
                 </WrapPanel>
                 <TextBlock x:Name="lblPurchaseTotals" DockPanel.Dock="Bottom" Style="{StaticResource TotalsStrip}"/>
@@ -76,7 +76,7 @@
                     <TextBlock Text="Reporte de Productos" Style="{StaticResource ReportTitle}"/>
                     <TextBlock Text="Categoría:" VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <ComboBox x:Name="cboCategory" Width="200" Margin="0,0,16,0" DisplayMemberPath="Text"/>
-                    <Button x:Name="btnConsultProduct" Content="Consultar" Margin="0,0,8,0" Click="btnConsultProduct_Click"/>
+                    <Button x:Name="btnConsultProduct" Style="{StaticResource PrimaryButton}" Content="Consultar" Margin="0,0,8,0" Click="btnConsultProduct_Click"/>
                     <Button x:Name="btnExportProduct" Content="Exportar" Click="btnExportProduct_Click"/>
                 </WrapPanel>
                 <TextBlock x:Name="lblProductTotals" DockPanel.Dock="Bottom" Style="{StaticResource TotalsStrip}"/>
@@ -92,7 +92,7 @@
                     <DatePicker x:Name="dpAlertStart" Width="120" Margin="0,0,16,0"/>
                     <TextBlock Text="Fecha Fin:" VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <DatePicker x:Name="dpAlertEnd" Width="120" Margin="0,0,16,0"/>
-                    <Button x:Name="btnConsultAlertHistory" Content="Consultar" Margin="0,0,8,0" Click="btnConsultAlertHistory_Click"/>
+                    <Button x:Name="btnConsultAlertHistory" Style="{StaticResource PrimaryButton}" Content="Consultar" Margin="0,0,8,0" Click="btnConsultAlertHistory_Click"/>
                     <Button x:Name="btnExportAlertHistory" Content="Exportar" Click="btnExportAlertHistory_Click"/>
                 </WrapPanel>
                 <DataGrid x:Name="dgAlertHistory"/>

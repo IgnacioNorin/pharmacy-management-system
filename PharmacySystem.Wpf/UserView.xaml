@@ -44,7 +44,7 @@
                 <ComboBox  Grid.Row="2" Grid.Column="1" x:Name="cboRole" Margin="0,4,16,4"
                            DisplayMemberPath="Text"/>
                 <StackPanel Grid.Row="2" Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4">
-                    <Button x:Name="btnSave" Content="Guardar" Click="btnSave_Click"/>
+                    <Button x:Name="btnSave" Style="{StaticResource PrimaryButton}" Content="Guardar" Click="btnSave_Click"/>
                     <Button x:Name="btnClearForm" Content="Limpiar" Margin="8,0,0,0" Click="btnClearForm_Click"/>
                     <Button x:Name="btnDelete" Content="Eliminar" Margin="8,0,0,0" Click="btnDelete_Click"/>
                 </StackPanel>
