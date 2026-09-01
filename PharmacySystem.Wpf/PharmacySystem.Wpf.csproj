@@ -3,12 +3,19 @@
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
-    <RootNamespace>PharmacySystem.Wpf</RootNamespace>
+    <!-- CLR namespace is PharmacySystem.Ui (not .Wpf) so generated XAML code does not bind the
+         'Wpf' in 'Wpf.Ui.Controls' to this project's own namespace. Assembly name is unchanged. -->
+    <RootNamespace>PharmacySystem.Ui</RootNamespace>
     <AssemblyName>PharmacySystem.Wpf</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PharmacySystem.Presentation\PharmacySystem.Presentation.csproj" />
+  </ItemGroup>
+
+  <!-- Fluent design system (controls, theme dictionaries, FluentWindow). MIT licensed. -->
+  <ItemGroup>
+    <PackageReference Include="WPF-UI" />
   </ItemGroup>
 
   <!-- PrintSaleWindow: renders the HTML ticket in WebView2 (Edge/Chromium) and prints through

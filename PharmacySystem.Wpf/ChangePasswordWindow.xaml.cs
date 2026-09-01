@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Windows;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of ModalChangePassword. Implements the same IChangePasswordView the presenter
     // already drives, so the presenter, service and everything below are unchanged. Shown

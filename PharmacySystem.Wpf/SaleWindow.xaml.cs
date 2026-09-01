@@ -7,7 +7,7 @@ using System.Windows.Controls;
 using PharmacySystem.Helpers;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of frmSale. Implements the same ISaleView; SalePresenter owns the cart and the
     // payment split and is unchanged. Client / product lookups, the "pago mixto" dialog, the

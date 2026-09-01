@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of frmRoles. Implements the same IRolesView; RolesPresenter is unchanged. The
     // permission tree's cascade ("checking pulls in ancestors, unchecking clears descendants")

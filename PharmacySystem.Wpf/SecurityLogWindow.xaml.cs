@@ -5,7 +5,7 @@ using System.Windows;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of ModalSecurityLog. Implements the same ISecurityLogView; the presenter runs the
     // query off the UI thread (SecurityLogPresenter.OnConsultAsync) and the await resumes here on

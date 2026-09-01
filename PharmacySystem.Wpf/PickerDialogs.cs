@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Interop;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // Entry points the shell (WinForms today, WPF later) calls to open the WPF picker windows
     // modally over an owner. Each returns the picked row, or null if the dialog was cancelled.

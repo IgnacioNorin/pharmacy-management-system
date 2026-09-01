@@ -8,7 +8,7 @@ using System.Windows.Media;
 using PharmacySystem.Helpers;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of ModalCashCount. "Arqueo de caja": one row per payment method with its expected
     // total and an editable "counted" field, a live totals line and a notes box. Built in code.

@@ -1,4 +1,4 @@
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // Per-report-type permissions the WinForms shell resolves from MainForm.Session and hands to
     // ReportWindow, since the WPF project can't reach the session itself. A tab is dropped when

@@ -5,7 +5,7 @@ using System.Windows;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of ModalSupplier. Read-only picker: implements ISupplierPickerView (just the
     // initial load); filtering and selection are view concerns, as in the original.

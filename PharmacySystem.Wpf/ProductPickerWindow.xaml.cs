@@ -4,7 +4,7 @@ using System.Linq;
 using System.Windows;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of ModalProduct. Read-only picker: implements IProductPickerView (initial load
     // only); the origin ("frmSale" / "frmPurchase") that decides which products show is baked

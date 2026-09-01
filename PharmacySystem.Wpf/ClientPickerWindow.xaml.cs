@@ -4,7 +4,7 @@ using System.Linq;
 using System.Windows;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of ModalPerson. Read-only client picker: implements IClientPickerView (initial
     // load only); filtering and selection stay in the view. Picked is the full ClientRow so a

@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of ModalProductLots. Read-only list of a product's lots: units on hand, expiry and
     // purchase cost per batch. Pure display - the lots are handed in by the caller (the WinForms

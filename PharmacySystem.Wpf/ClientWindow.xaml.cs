@@ -6,7 +6,7 @@ using System.Windows.Controls;
 using PharmacySystem.Presentation;
 using PharmacySystem.Validators;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of frmClient. Implements the same IClientView; ClientPresenter is unchanged
     // (synchronous - the page query is 50 rows). Row selection loads the client into the form;

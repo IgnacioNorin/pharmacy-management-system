@@ -1,38 +1,52 @@
-<Window x:Class="PharmacySystem.Wpf.LoginWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Iniciar sesión"
-        Height="300" Width="420"
-        ResizeMode="NoResize"
-        WindowStartupLocation="CenterScreen"
-        Background="White"
-        FontFamily="Segoe UI" FontSize="13">
-    <Grid Margin="28">
+<ui:FluentWindow x:Class="PharmacySystem.Ui.LoginWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 Title="Iniciar sesión"
+                 Height="440" Width="400"
+                 ResizeMode="NoResize"
+                 WindowStartupLocation="CenterScreen"
+                 ExtendsContentIntoTitleBar="True"
+                 WindowBackdropType="Mica"
+                 WindowCornerPreference="Round">
+
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="PharmacySystem" FontSize="20" FontWeight="Bold"
-                   HorizontalAlignment="Center" Margin="0,0,0,20"
-                   Foreground="#0B2545"/>
+        <ui:TitleBar Grid.Row="0" Title="PharmacySystem" ShowMaximize="False" ShowMinimize="False"/>
 
-        <TextBlock Grid.Row="1" Text="Número Documento:" Margin="0,0,0,2"/>
-        <TextBox   Grid.Row="2" x:Name="txtDocument" Height="26" Margin="0,0,0,12"/>
+        <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="32,0,32,24">
 
-        <TextBlock Grid.Row="3" Text="Contraseña:" Margin="0,0,0,2"/>
-        <PasswordBox Grid.Row="4" x:Name="txtPassword" Height="26"/>
+            <Border Width="56" Height="56" CornerRadius="28"
+                    Background="{DynamicResource BrandNavyBrush}"
+                    HorizontalAlignment="Center" Margin="0,0,0,14">
+                <ui:SymbolIcon Symbol="ShieldKeyhole24" FontSize="26" Foreground="White"/>
+            </Border>
 
-        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button x:Name="btnEnter" Content="Ingresar" Width="110" Height="30" IsDefault="True"
-                    Margin="0,0,8,0" Click="btnEnter_Click"/>
-            <Button x:Name="btnExit" Content="Salir" Width="90" Height="30" IsCancel="True"
-                    Click="btnExit_Click"/>
+            <TextBlock Text="Iniciar sesión" FontSize="20" FontWeight="Bold"
+                       HorizontalAlignment="Center"/>
+            <TextBlock Text="Ingresa tus credenciales para continuar"
+                       Foreground="{DynamicResource MutedTextBrush}" FontSize="12"
+                       HorizontalAlignment="Center" Margin="0,2,0,22"/>
+
+            <TextBlock Text="Número de documento" FontWeight="SemiBold" Margin="0,0,0,4"/>
+            <ui:TextBox x:Name="txtDocument" PlaceholderText="Ej. 12345678"
+                        Icon="{ui:SymbolIcon Person24}" Margin="0,0,0,14"/>
+
+            <TextBlock Text="Contraseña" FontWeight="SemiBold" Margin="0,0,0,4"/>
+            <ui:PasswordBox x:Name="txtPassword" PlaceholderText="Tu contraseña"
+                            Icon="{ui:SymbolIcon Key24}"/>
+
+            <ui:Button x:Name="btnEnter" Content="Ingresar" Appearance="Primary"
+                       Icon="{ui:SymbolIcon ArrowRight24}"
+                       HorizontalAlignment="Stretch" Margin="0,22,0,0"
+                       IsDefault="True" Click="btnEnter_Click"/>
+            <ui:Button x:Name="btnExit" Content="Salir" Appearance="Secondary"
+                       HorizontalAlignment="Stretch" Margin="0,8,0,0"
+                       IsCancel="True" Click="btnExit_Click"/>
         </StackPanel>
     </Grid>
-</Window>
+</ui:FluentWindow>

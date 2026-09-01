@@ -9,7 +9,7 @@ using System.Windows.Threading;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of MainForm. The application shell: sidebar navigation, the signed-in user header,
     // the alert badge and its 5-minute refresh, and the session re-check on activation. Every

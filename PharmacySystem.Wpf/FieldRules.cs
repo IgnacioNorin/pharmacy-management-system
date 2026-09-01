@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using PharmacySystem.Validators;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF-side mirror of PharmacySystem.Validators.Validations.rules (which lives in the WinForms
     // exe and can't be referenced here). Same predicates and same user-facing messages, so a

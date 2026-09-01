@@ -2,7 +2,7 @@ using System;
 using System.Windows.Interop;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // Entry point the WinForms shell calls to open the WPF "Proveedores" screen modally over a
     // WinForms owner while the shell is still WinForms.

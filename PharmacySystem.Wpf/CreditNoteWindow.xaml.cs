@@ -6,7 +6,7 @@ using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of frmCreditNote. Implements the same ICreditNoteView; CreditNotePresenter is
     // unchanged. Search a sale, choose how many units of each line to credit, generate.

@@ -9,7 +9,7 @@ using Microsoft.Web.WebView2.Wpf;
 using PharmacySystem.Helpers;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of PrintSale. Renders the HTML ticket in WebView2 (Edge/Chromium) and prints it:
     // the default path opens the browser print dialog (pick "Microsoft Print to PDF" to preview

@@ -9,7 +9,7 @@ using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using ComboBoxItem = PharmacySystem.Model.ComboBoxItem;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of frmManagement. One window, four tabs, each a passive view for its own presenter:
     // Productos (IProductManagementView), Categorías (ICategoryManagementView), Precios

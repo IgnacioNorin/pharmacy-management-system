@@ -2,7 +2,7 @@ using System;
 using System.Windows.Interop;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // Entry point the WinForms shell calls while the app is part WinForms, part WPF: shows the
     // WPF change-password window modally over a WinForms owner and reports whether the password

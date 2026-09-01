@@ -9,7 +9,7 @@ using PharmacySystem.Business;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of ModalAlerts. Notification center for the alerts rework: renders the alert list
     // MainForm already computed via MainFormPresenter.RefreshAlerts(), reports back which product

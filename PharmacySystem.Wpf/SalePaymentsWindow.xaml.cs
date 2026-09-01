@@ -8,7 +8,7 @@ using System.Windows.Media;
 using PharmacySystem.Helpers;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of ModalSalePayments. "Pago mixto": one amount box per method; the amounts must
     // sum to the sale total. Built entirely in code (no XAML). Result is the non-zero entries,

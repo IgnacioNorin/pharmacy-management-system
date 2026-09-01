@@ -3,7 +3,7 @@ using PharmacySystem.Business;
 using PharmacySystem.Data;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
-using PharmacySystem.Wpf;
+using PharmacySystem.Ui;
 
 namespace PharmacySystem
 {
@@ -152,7 +152,7 @@ namespace PharmacySystem
         public static MainFormPresenter CreateMainFormPresenter(IMainFormView view) =>
             new MainFormPresenter(view, _notificationConfigService, _personService, _permissionService);
 
-        // The notification center (PharmacySystem.Wpf.AlertsWindow) isn't a Presenter/View screen -
+        // The notification center (PharmacySystem.Ui.AlertsWindow) isn't a Presenter/View screen -
         // it just needs the service directly to acknowledge or mute an alert.
         public static INotificationConfigService NotificationConfigService => _notificationConfigService;
 
@@ -212,7 +212,7 @@ namespace PharmacySystem
         #region Shell
 
         // Everything the WPF shell's sidebar needs to open a screen, in one bundle so MainWindow
-        // (in PharmacySystem.Wpf) never references this class.
+        // (in PharmacySystem.Ui) never references this class.
         public static ShellServices CreateShellServices() => new ShellServices
         {
             MainPresenter = CreateMainFormPresenter,

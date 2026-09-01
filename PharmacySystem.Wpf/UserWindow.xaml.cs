@@ -10,7 +10,7 @@ using PharmacySystem.Presentation;
 using PharmacySystem.Validators;
 using ComboBoxItem = PharmacySystem.Model.ComboBoxItem;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of frmUser. Implements the same IUserView; UserPresenter is unchanged. The grid is
     // filtered through the default collection view so _rows stays intact and the presenter's

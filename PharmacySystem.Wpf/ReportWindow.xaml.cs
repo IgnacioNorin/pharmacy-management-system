@@ -12,7 +12,7 @@ using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 using ComboBoxItem = PharmacySystem.Model.ComboBoxItem;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of frmReport. Four report tabs (Ventas / Compras / Productos / Historial de
     // alertas), each with its own date range / filter, a read-only grid, a totals strip, and an

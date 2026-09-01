@@ -1,7 +1,7 @@
 using System;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // The WPF sale/purchase windows open sub-pickers (supplier, product, client). They cannot
     // reach CompositionRoot (it lives in the WinForms exe), so the shell hands them the presenter

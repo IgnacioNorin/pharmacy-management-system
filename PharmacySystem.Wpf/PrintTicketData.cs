@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using PharmacySystem.Model;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // Everything PrintSaleWindow needs for one sale's ticket, resolved by the exe (which owns the
     // sale services and the HTML template resource) and handed in. Sale is null when the id does

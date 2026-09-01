@@ -2,7 +2,7 @@ using System;
 using PharmacySystem.Business;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // Everything MainWindow's sidebar needs to open a screen, bundled so the WPF shell does not
     // reference the exe's CompositionRoot. Built once by CompositionRoot.CreateShellServices()

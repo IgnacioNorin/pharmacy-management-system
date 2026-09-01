@@ -5,7 +5,7 @@ using PharmacySystem.Business;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     public static class AlertsDialog
     {

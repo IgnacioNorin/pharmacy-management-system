@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of ModalConfignotification. Two thresholds (días "por vencer", stock crítico) and
     // a Save button. Built in code.

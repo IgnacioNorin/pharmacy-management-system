@@ -8,7 +8,7 @@ using PharmacySystem.Helpers;
 using PharmacySystem.Presentation;
 using PharmacySystem.Validators;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of frmPurchase. Implements the same IPurchaseView; PurchasePresenter owns the cart
     // and is unchanged. Supplier / product lookups go through the WPF pickers.

@@ -8,7 +8,7 @@ using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of frmHome. Landing content hosted inside MainWindow: the day's sales plus the
     // same active-alert computation the bell badge runs. HomePresenter is unchanged. Navigation

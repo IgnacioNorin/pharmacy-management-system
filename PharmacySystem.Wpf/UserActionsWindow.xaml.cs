@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     public enum UserAction { None, ResetPassword, Unlock, ToggleActive }
 

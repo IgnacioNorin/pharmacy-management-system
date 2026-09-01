@@ -1,4 +1,4 @@
-<Window x:Class="PharmacySystem.Wpf.SupplierWindow"
+<Window x:Class="PharmacySystem.Ui.SupplierWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Proveedores"

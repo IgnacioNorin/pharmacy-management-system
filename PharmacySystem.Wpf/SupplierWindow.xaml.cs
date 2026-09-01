@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of frmSupplier. Implements the same ISupplierView; SupplierPresenter is unchanged
     // (server-paged, synchronous). Row selection loads the supplier into the form; the pager and
