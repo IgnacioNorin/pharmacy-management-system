@@ -9,7 +9,7 @@ namespace PharmacySystem.Wpf
     // modally over an owner. Each returns the picked row, or null if the dialog was cancelled.
     public static class SupplierPickerDialog
     {
-        public static SupplierRow Show(IntPtr ownerHandle, Func<ISupplierPickerView, SupplierPickerPresenter> presenterFactory)
+        public static SupplierRow? Show(IntPtr ownerHandle, Func<ISupplierPickerView, SupplierPickerPresenter> presenterFactory)
         {
             if (presenterFactory == null) throw new ArgumentNullException(nameof(presenterFactory));
 
@@ -29,7 +29,7 @@ namespace PharmacySystem.Wpf
 
     public static class ProductPickerDialog
     {
-        public static ProductPickerRow Show(IntPtr ownerHandle, Func<IProductPickerView, ProductPickerPresenter> presenterFactory)
+        public static ProductPickerRow? Show(IntPtr ownerHandle, Func<IProductPickerView, ProductPickerPresenter> presenterFactory)
         {
             if (presenterFactory == null) throw new ArgumentNullException(nameof(presenterFactory));
 
@@ -44,7 +44,7 @@ namespace PharmacySystem.Wpf
 
     public static class ClientPickerDialog
     {
-        public static ClientRow Show(IntPtr ownerHandle, Func<IClientPickerView, ClientPickerPresenter> presenterFactory)
+        public static ClientRow? Show(IntPtr ownerHandle, Func<IClientPickerView, ClientPickerPresenter>? presenterFactory)
         {
             if (presenterFactory == null) throw new ArgumentNullException(nameof(presenterFactory));
 

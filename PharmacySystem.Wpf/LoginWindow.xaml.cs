@@ -16,7 +16,7 @@ namespace PharmacySystem.Wpf
         private readonly Func<int, IChangePasswordView, ChangePasswordPresenter> _changePasswordFactory;
 
         // The signed-in user's session; null until a login succeeds.
-        public CurrentUser Result { get; private set; }
+        public CurrentUser? Result { get; private set; }
 
         public LoginWindow(
             Func<ILoginView, LoginPresenter> presenterFactory,

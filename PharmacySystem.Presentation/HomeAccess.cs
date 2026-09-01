@@ -15,7 +15,7 @@ namespace PharmacySystem.Presentation
 
         public bool QuickActionsPanel => NewSale || NewPurchase || ManageProducts;
 
-        public static HomeAccess Resolve(CurrentUser session)
+        public static HomeAccess Resolve(CurrentUser? session)
         {
             bool Can(string permission) => session?.Can(permission) ?? false;
 

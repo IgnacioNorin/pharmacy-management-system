@@ -16,8 +16,8 @@ namespace PharmacySystem.Wpf
         public class CreditLineVm
         {
             public int SourceDetailId { get; set; }
-            public string Product { get; set; }
-            public string PriceText { get; set; }
+            public string Product { get; set; } = string.Empty;
+            public string PriceText { get; set; } = string.Empty;
             public int Sold { get; set; }
             public int Credited { get; set; }
             public int Remaining { get; set; }

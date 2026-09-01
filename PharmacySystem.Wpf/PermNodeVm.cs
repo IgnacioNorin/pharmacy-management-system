@@ -11,8 +11,8 @@ namespace PharmacySystem.Wpf
     public class PermNodeVm : INotifyPropertyChanged
     {
         public int Id { get; set; }
-        public string Description { get; set; }
-        public PermNodeVm Parent { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public PermNodeVm? Parent { get; set; }
         public ObservableCollection<PermNodeVm> Children { get; } = new ObservableCollection<PermNodeVm>();
 
         private bool _isChecked;
@@ -35,8 +35,8 @@ namespace PharmacySystem.Wpf
                     yield return d;
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        private void OnPropertyChanged([CallerMemberName] string name = null) =>
+        public event PropertyChangedEventHandler? PropertyChanged;
+        private void OnPropertyChanged([CallerMemberName] string? name = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

@@ -11,7 +11,7 @@ namespace PharmacySystem.UiTests
     {
         public static void Run(Action action)
         {
-            ExceptionDispatchInfo capturedException = null;
+            ExceptionDispatchInfo? capturedException = null;
 
             var thread = new Thread(() =>
             {

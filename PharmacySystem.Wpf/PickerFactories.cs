@@ -11,12 +11,12 @@ namespace PharmacySystem.Wpf
     {
         public Func<ISupplierPickerView, SupplierPickerPresenter> Supplier { get; }
         public Func<IProductPickerView, string, ProductPickerPresenter> Product { get; }
-        public Func<IClientPickerView, ClientPickerPresenter> Client { get; }
+        public Func<IClientPickerView, ClientPickerPresenter>? Client { get; }
 
         public PickerFactories(
             Func<ISupplierPickerView, SupplierPickerPresenter> supplier,
             Func<IProductPickerView, string, ProductPickerPresenter> product,
-            Func<IClientPickerView, ClientPickerPresenter> client = null)
+            Func<IClientPickerView, ClientPickerPresenter>? client = null)
         {
             Supplier = supplier;
             Product = product;

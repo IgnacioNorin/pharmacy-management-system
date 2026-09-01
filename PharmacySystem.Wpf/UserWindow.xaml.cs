@@ -140,7 +140,7 @@ namespace PharmacySystem.Wpf
             string term = txtSearch.Text.Trim();
             ICollectionView view = CollectionViewSource.GetDefaultView(_rows);
             view.Filter = string.IsNullOrEmpty(term)
-                ? (Predicate<object>)null
+                ? (Predicate<object>?)null
                 : o => o is UserRow r &&
                        ((r.Document ?? "").IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0
                         || (r.Name ?? "").IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0

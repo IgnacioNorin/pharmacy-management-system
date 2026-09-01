@@ -33,14 +33,14 @@ namespace PharmacySystem.Wpf
 
         // Last consulted report per tab, kept typed so an export walks the same definition the
         // grid does (the exporters add the totals row; the grid stays without it).
-        private ReportDefinition<SaleReportRow> _saleDefinition;
-        private ReportResult<SaleReportRow> _saleResult;
-        private ReportDefinition<PurchaseReportRow> _purchaseDefinition;
-        private ReportResult<PurchaseReportRow> _purchaseResult;
-        private ReportDefinition<ProductReportRow> _productDefinition;
-        private ReportResult<ProductReportRow> _productResult;
-        private ReportDefinition<ProductAlertHistoryEntry> _alertHistoryDefinition;
-        private ReportResult<ProductAlertHistoryEntry> _alertHistoryResult;
+        private ReportDefinition<SaleReportRow> _saleDefinition = null!;
+        private ReportResult<SaleReportRow> _saleResult = null!;
+        private ReportDefinition<PurchaseReportRow> _purchaseDefinition = null!;
+        private ReportResult<PurchaseReportRow> _purchaseResult = null!;
+        private ReportDefinition<ProductReportRow> _productDefinition = null!;
+        private ReportResult<ProductReportRow> _productResult = null!;
+        private ReportDefinition<ProductAlertHistoryEntry> _alertHistoryDefinition = null!;
+        private ReportResult<ProductAlertHistoryEntry> _alertHistoryResult = null!;
 
         // Snapshot of the filter inputs, taken on the UI thread right before a consult runs;
         // the IReportView getters return these because the presenter reads them off-thread.
@@ -182,11 +182,11 @@ namespace PharmacySystem.Wpf
 
             IEnumerable<string> parts = definition.Columns
                 .Where(c => c.Type == ReportValueType.Currency || c.Type == ReportValueType.Integer)
-                .Select(c => c.Header + " " + FormatCell(c.Value(result.Totals), c.Type));
+                .Select(c => c.Header + " " + FormatCell(c.Value(result.Totals!), c.Type));
             return "Totales:      " + string.Join("       ", parts);
         }
 
-        private static string FormatCell(object value, ReportValueType type)
+        private static string FormatCell(object? value, ReportValueType type)
         {
             if (value == null) return "";
             if (value is string s) return s;
@@ -196,7 +196,7 @@ namespace PharmacySystem.Wpf
             {
                 case ReportValueType.Currency: return CultureInfoHelper.FormatAsCurrency(Convert.ToDecimal(value));
                 case ReportValueType.Integer: return Convert.ToInt64(value).ToString();
-                default: return value.ToString();
+                default: return value.ToString() ?? "";
             }
         }
 

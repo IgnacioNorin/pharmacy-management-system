@@ -11,7 +11,7 @@ namespace PharmacySystem.Wpf
     // WPF dialogs opened later from MainForm rely on.
     public static class LoginHost
     {
-        private static System.Windows.Application _app;
+        private static System.Windows.Application? _app;
 
         private static void EnsureApplication()
         {
@@ -26,7 +26,7 @@ namespace PharmacySystem.Wpf
             };
         }
 
-        public static CurrentUser RunLogin(
+        public static CurrentUser? RunLogin(
             Func<ILoginView, LoginPresenter> presenterFactory,
             Func<Person, CurrentUser> sessionFactory,
             Func<int, IChangePasswordView, ChangePasswordPresenter> changePasswordFactory)

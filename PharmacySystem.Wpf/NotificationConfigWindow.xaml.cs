@@ -25,6 +25,8 @@ namespace PharmacySystem.Wpf
             FontFamily = new FontFamily("Segoe UI");
             FontSize = 13;
 
+            _presenter = presenterFactory(this);
+
             var root = new StackPanel { Margin = new Thickness(16), Width = 360 };
 
             root.Children.Add(Row("Días para \"por vencer\":", _days));
@@ -39,7 +41,6 @@ namespace PharmacySystem.Wpf
 
             Content = root;
 
-            _presenter = presenterFactory(this);
             Loaded += (s, e) => _presenter.OnLoad();
         }
 

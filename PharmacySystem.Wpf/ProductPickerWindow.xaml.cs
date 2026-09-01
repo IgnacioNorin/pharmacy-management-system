@@ -14,7 +14,7 @@ namespace PharmacySystem.Wpf
         private readonly ProductPickerPresenter _presenter;
         private List<ProductPickerRow> _all = new List<ProductPickerRow>();
 
-        public ProductPickerRow Picked { get; private set; }
+        public ProductPickerRow? Picked { get; private set; }
 
         public ProductPickerWindow(Func<IProductPickerView, ProductPickerPresenter> presenterFactory)
         {

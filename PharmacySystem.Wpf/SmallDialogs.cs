@@ -11,7 +11,7 @@ namespace PharmacySystem.Wpf
     {
         // Opens the notification center modally over a WinForms owner and returns the product code
         // the user clicked "Ver" on, or null if the window was just closed.
-        public static string Show(
+        public static string? Show(
             IntPtr ownerHandle,
             IReadOnlyList<ProductAlert> alerts,
             INotificationConfigService notificationService,
@@ -44,7 +44,7 @@ namespace PharmacySystem.Wpf
     {
         public static void Show(IntPtr ownerHandle,
             ManagementPresenterFactories factories, ManagementPermissions permissions,
-            string pendingProductCode = null)
+            string? pendingProductCode = null)
         {
             var window = new ManagementWindow(factories, permissions, pendingProductCode);
             if (ownerHandle != IntPtr.Zero) new WindowInteropHelper(window) { Owner = ownerHandle };

@@ -74,7 +74,7 @@ namespace PharmacySystem.DbMigrator
                 return args[0];
             }
 
-            string fromEnv = Environment.GetEnvironmentVariable("PHARMACY_DB_CONNECTION");
+            string? fromEnv = Environment.GetEnvironmentVariable("PHARMACY_DB_CONNECTION");
             if (!string.IsNullOrWhiteSpace(fromEnv))
             {
                 return fromEnv;
@@ -87,7 +87,10 @@ namespace PharmacySystem.DbMigrator
                 .AddEnvironmentVariables()
                 .Build();
 
-            return config.GetConnectionString("connection");
+            return config.GetConnectionString("connection")
+                ?? throw new InvalidOperationException(
+                    "No se encontró la cadena de conexión 'connection'. Pásela como argumento, " +
+                    "en PHARMACY_DB_CONNECTION o en appsettings.Local.json.");
         }
 
         // A database that predates this tool - or one created straight from PharmacyDB.sql, which

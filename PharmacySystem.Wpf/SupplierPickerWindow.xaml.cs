@@ -14,7 +14,7 @@ namespace PharmacySystem.Wpf
         private readonly SupplierPickerPresenter _presenter;
         private List<SupplierRow> _all = new List<SupplierRow>();
 
-        public SupplierRow Picked { get; private set; }
+        public SupplierRow? Picked { get; private set; }
 
         public SupplierPickerWindow(Func<ISupplierPickerView, SupplierPickerPresenter> presenterFactory)
         {

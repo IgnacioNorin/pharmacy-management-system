@@ -16,12 +16,12 @@ namespace PharmacySystem.Wpf
     {
         public class PurchaseLineVm
         {
-            public string Code { get; set; }
-            public string Name { get; set; }
-            public string QuantityText { get; set; }
-            public string ExpiryText { get; set; }
-            public string PriceText { get; set; }
-            public string SubTotalText { get; set; }
+            public string Code { get; set; } = string.Empty;
+            public string Name { get; set; } = string.Empty;
+            public string QuantityText { get; set; } = string.Empty;
+            public string ExpiryText { get; set; } = string.Empty;
+            public string PriceText { get; set; } = string.Empty;
+            public string SubTotalText { get; set; } = string.Empty;
         }
 
         private readonly PurchasePresenter _presenter;
@@ -164,7 +164,7 @@ namespace PharmacySystem.Wpf
 
         private void btnPickSupplier_Click(object sender, RoutedEventArgs e)
         {
-            SupplierRow picked = SupplierPickerDialog.Show(OwnerHandle(), _pickers.Supplier);
+            SupplierRow? picked = SupplierPickerDialog.Show(OwnerHandle(), _pickers.Supplier);
             if (picked != null)
             {
                 txtSupplierName.Text = picked.CompanyName;
@@ -175,7 +175,7 @@ namespace PharmacySystem.Wpf
 
         private void btnPickProduct_Click(object sender, RoutedEventArgs e)
         {
-            ProductPickerRow picked = ProductPickerDialog.Show(OwnerHandle(),
+            ProductPickerRow? picked = ProductPickerDialog.Show(OwnerHandle(),
                 v => _pickers.Product(v, "frmPurchase"));
             if (picked != null)
             {

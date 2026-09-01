@@ -20,8 +20,10 @@ namespace PharmacySystem.Wpf
     {
         private readonly int _saleId;
         private readonly Func<int, PrintTicketData> _dataProvider;
-        private PrintTicketData _data;
-        private string _ticketHtml;
+        // Set in the Loaded handler, which closes the window if the data does not resolve, so
+        // every other method runs only when it is populated.
+        private PrintTicketData _data = null!;
+        private string _ticketHtml = string.Empty;
         private bool _webViewReady;
 
         public PrintSaleWindow(int saleId, Func<int, PrintTicketData> dataProvider)
@@ -94,7 +96,7 @@ namespace PharmacySystem.Wpf
         }
 
         private void WebView_CoreWebView2InitializationCompleted(
-            object sender, CoreWebView2InitializationCompletedEventArgs e)
+            object? sender, CoreWebView2InitializationCompletedEventArgs e)
         {
             if (!e.IsSuccess)
             {
@@ -191,7 +193,7 @@ namespace PharmacySystem.Wpf
         {
             try
             {
-                string ticketText = PharmacyTicketBuilder.Build(_data.Store, _data.Sale, _data.Details);
+                string ticketText = PharmacyTicketBuilder.Build(_data.Store, _data.Sale!, _data.Details!);
                 if (ticketText.StartsWith("Error:"))
                 {
                     MessageBox.Show(this, ticketText, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -206,7 +208,7 @@ namespace PharmacySystem.Wpf
                         float y = 0;
                         float left = e.MarginBounds.Left;
                         float top = e.MarginBounds.Top;
-                        float lineHeight = font.GetHeight(e.Graphics);
+                        float lineHeight = font.GetHeight(e.Graphics!);
 
                         foreach (string line in ticketText.Split('\n'))
                         {
@@ -215,7 +217,7 @@ namespace PharmacySystem.Wpf
                                 e.HasMorePages = true;
                                 return;
                             }
-                            e.Graphics.DrawString(line, font, Brushes.Black, left, top + y);
+                            e.Graphics!.DrawString(line, font, Brushes.Black, left, top + y);
                             y += lineHeight;
                         }
                     }
