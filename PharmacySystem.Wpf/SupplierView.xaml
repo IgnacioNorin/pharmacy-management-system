@@ -34,7 +34,7 @@
                         <Setter Property="VerticalAlignment" Value="Center"/>
                         <Setter Property="Margin" Value="0,4,8,4"/>
                     </Style>
-                    <Style TargetType="TextBox">
+                    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
                         <Setter Property="Margin" Value="0,4,16,4"/>
                     </Style>
                 </Grid.Resources>

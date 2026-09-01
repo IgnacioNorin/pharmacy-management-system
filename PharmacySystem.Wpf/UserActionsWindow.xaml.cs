@@ -9,7 +9,7 @@ namespace PharmacySystem.Ui
 
     // WPF port of ModalUserActions. Dumb dialog: shows the user's name/state and returns which
     // per-user admin action the operator picked. Built in code (no XAML).
-    public class UserActionsWindow : Wpf.Ui.Controls.FluentWindow
+    public class UserActionsWindow : System.Windows.Window
     {
         public UserAction SelectedAction { get; private set; } = UserAction.None;
 

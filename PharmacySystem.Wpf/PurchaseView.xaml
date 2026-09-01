@@ -24,7 +24,7 @@
                 </Grid.RowDefinitions>
                 <Grid.Resources>
                     <Style TargetType="TextBlock"><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Margin" Value="0,4,8,4"/></Style>
-                    <Style TargetType="TextBox"><Setter Property="Margin" Value="0,4,16,4"/></Style>
+                    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}"><Setter Property="Margin" Value="0,4,16,4"/></Style>
                 </Grid.Resources>
 
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Tipo documento"/>
@@ -58,7 +58,7 @@
                 </Grid.ColumnDefinitions>
                 <Grid.Resources>
                     <Style TargetType="TextBlock"><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Margin" Value="0,0,6,0"/></Style>
-                    <Style TargetType="TextBox"><Setter Property="Margin" Value="0,0,12,0"/></Style>
+                    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}"><Setter Property="Margin" Value="0,0,12,0"/></Style>
                 </Grid.Resources>
 
                 <TextBlock Grid.Column="0" Text="Código"/>

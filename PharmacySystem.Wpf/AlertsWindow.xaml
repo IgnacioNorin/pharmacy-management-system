@@ -31,15 +31,7 @@
                    FontStyle="Italic" Foreground="DimGray" Visibility="Collapsed"
                    VerticalAlignment="Top"/>
 
-        <DataGrid x:Name="dgData"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  HeadersVisibility="Column"
-                  SelectionMode="Single"
-                  GridLinesVisibility="Horizontal"
-                  RowHeaderWidth="0">
+        <DataGrid x:Name="dgData" AutoGenerateColumns="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Severidad" Width="90" Binding="{Binding SeverityLabel}">
                     <DataGridTextColumn.ElementStyle>
@@ -66,7 +58,7 @@
                             <Button Content="{Binding AckText}" IsEnabled="{Binding AckEnabled}"
                                     Margin="2" Padding="4,1" Click="btnAck_Click">
                                 <Button.Style>
-                                    <Style TargetType="Button">
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding AckText}" Value="">
                                                 <Setter Property="Visibility" Value="Hidden"/>
@@ -84,7 +76,7 @@
                             <Button Content="{Binding MuteText}" IsEnabled="{Binding MuteEnabled}"
                                     Margin="2" Padding="4,1" Click="btnMute_Click">
                                 <Button.Style>
-                                    <Style TargetType="Button">
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding MuteText}" Value="">
                                                 <Setter Property="Visibility" Value="Hidden"/>

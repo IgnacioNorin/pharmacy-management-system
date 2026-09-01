@@ -13,7 +13,7 @@ namespace PharmacySystem.Ui
     // WPF port of ModalSalePayments. "Pago mixto": one amount box per method; the amounts must
     // sum to the sale total. Built entirely in code (no XAML). Result is the non-zero entries,
     // or null if cancelled.
-    public class SalePaymentsWindow : Wpf.Ui.Controls.FluentWindow
+    public class SalePaymentsWindow : System.Windows.Window
     {
         public IReadOnlyList<SalePaymentEntry>? Result { get; private set; }
 
