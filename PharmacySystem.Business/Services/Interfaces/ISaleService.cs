@@ -8,11 +8,11 @@ namespace PharmacySystem.Business
     {
         List<Sale> ListSale();
         List<SaleDetail> ListSaleDetail();
-        Sale GetById(int saleId);
+        Sale? GetById(int saleId);
         List<SaleDetail> GetDetailsBySaleId(int saleId);
         List<SalePayment> GetPaymentsBySaleId(int saleId);
         int Register(Sale sale);
-        SaleLookup FindByDocument(string documentType, string documentNumber);
+        SaleLookup? FindByDocument(string documentType, string documentNumber);
         List<SaleCreditDetail> GetCreditableLines(int saleId);
         CreditNoteResult CreateCreditNote(int originalSaleId, int userId, string reason,
             IReadOnlyList<CreditNoteLineRequest> lines);

@@ -45,7 +45,7 @@ namespace PharmacySystem.Business
                 return AuthResult.Locked(RemainingMinutes(document));
             }
 
-            Person person = _personRepository.GetByDocument(document);
+            Person? person = _personRepository.GetByDocument(document);
 
             if (person == null || !PasswordMatches(person, password) || !person.Estado)
             {

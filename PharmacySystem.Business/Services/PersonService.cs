@@ -27,16 +27,17 @@ namespace PharmacySystem.Business
         {
             // A blank password on an edit means "keep the current one": pass null straight
             // through so sp_update_person leaves person.password untouched, instead of storing
-            // the hash of an empty string and locking the user out.
-            person.password = string.IsNullOrWhiteSpace(person.password) ? null : HashIfNeeded(person.password);
+            // the hash of an empty string and locking the user out. This is the one place the
+            // field is deliberately null (null! opts out of the non-null contract here).
+            person.password = string.IsNullOrWhiteSpace(person.password) ? null! : HashIfNeeded(person.password);
             return _repository.Update(person);
         }
 
         public List<Person> List() => _repository.List();
 
-        public Person GetByDocument(string document) => _repository.GetByDocument(document);
+        public Person? GetByDocument(string document) => _repository.GetByDocument(document);
 
-        public Person GetById(int idPerson) => _repository.GetById(idPerson);
+        public Person? GetById(int idPerson) => _repository.GetById(idPerson);
 
         public bool UpdatePassword(int idPerson, string hashedPassword) => _repository.UpdatePassword(idPerson, hashedPassword);
 

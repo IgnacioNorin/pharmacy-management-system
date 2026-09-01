@@ -29,9 +29,9 @@ namespace PharmacySystem.Business
         public bool SaveRolePermissions(int personTypeId, IEnumerable<int> permissionIds) =>
             _repository.SetRolePermissions(personTypeId, permissionIds);
 
-        public int CreateRole(string description) => _repository.CreateRole(description?.Trim());
+        public int CreateRole(string description) => _repository.CreateRole((description ?? string.Empty).Trim());
 
-        public bool RenameRole(int personTypeId, string description) => _repository.RenameRole(personTypeId, description?.Trim());
+        public bool RenameRole(int personTypeId, string description) => _repository.RenameRole(personTypeId, (description ?? string.Empty).Trim());
 
         public bool DeleteRole(int personTypeId) => _repository.DeleteRole(personTypeId);
     }
