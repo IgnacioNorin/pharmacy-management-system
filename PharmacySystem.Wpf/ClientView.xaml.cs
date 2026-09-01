@@ -15,18 +15,28 @@ namespace PharmacySystem.Ui
     public partial class ClientView : UserControl, IClientView
     {
         private readonly ClientPresenter _presenter;
+        private readonly bool _canManage;
         private int _editingId;
 
         public ClientView(bool canManage, Func<IClientView, ClientPresenter> presenterFactory)
         {
             InitializeComponent();
 
+            _canManage = canManage;
             _presenter = presenterFactory(this);
-
-            btnSave.IsEnabled = canManage;
-            btnDelete.IsEnabled = canManage;
+            UpdateActionState();
 
             Loaded += (s, e) => _presenter.OnLoad();
+        }
+
+        // "Agregar" with the form empty, "Guardar cambios" while a row is selected. Eliminar is
+        // only reachable with a selection.
+        private void UpdateActionState()
+        {
+            bool editing = _editingId != 0;
+            btnSave.Content = editing ? "Guardar cambios" : "Agregar";
+            btnSave.IsEnabled = _canManage;
+            btnDelete.IsEnabled = _canManage && editing;
         }
 
         // The hosting window, for owning message boxes. Non-null in practice: every path that
@@ -80,6 +90,8 @@ namespace PharmacySystem.Ui
             dgClients.ItemsSource = clients.ToList();
             dgClients.SelectedIndex = -1;
             dgClients.SelectionChanged += dgClients_SelectionChanged;
+            _editingId = 0;
+            UpdateActionState();
         }
 
         public void SetPageInfo(int currentPage, int totalPages, int totalCount)
@@ -108,6 +120,7 @@ namespace PharmacySystem.Ui
             dgClients.SelectionChanged -= dgClients_SelectionChanged;
             dgClients.SelectedIndex = -1;
             dgClients.SelectionChanged += dgClients_SelectionChanged;
+            UpdateActionState();
         }
 
         public void ShowMessage(string message) =>
@@ -123,6 +136,8 @@ namespace PharmacySystem.Ui
         {
             if (!(dgClients.SelectedItem is ClientRow row))
             {
+                _editingId = 0;
+                UpdateActionState();
                 return;
             }
 
@@ -136,6 +151,7 @@ namespace PharmacySystem.Ui
             txtCommune.Text = row.Commune ?? "";
             txtEmail.Text = row.Email ?? "";
             chkIsCompany.IsChecked = row.IsCompany;
+            UpdateActionState();
         }
 
         private void btnSearch_Click(object sender, RoutedEventArgs e) => _presenter.OnSearch();
@@ -146,7 +162,16 @@ namespace PharmacySystem.Ui
             _presenter.OnSearch();
         }
 
-        private void btnSave_Click(object sender, RoutedEventArgs e) => _presenter.OnSave();
+        private void btnSave_Click(object sender, RoutedEventArgs e)
+        {
+            if (_editingId != 0 &&
+                MessageBox.Show(Host, "¿Guardar los cambios en el cliente seleccionado?", "Confirmar",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            {
+                return;
+            }
+            _presenter.OnSave();
+        }
         private void btnClearForm_Click(object sender, RoutedEventArgs e) => ClearForm();
         private void btnDelete_Click(object sender, RoutedEventArgs e) => _presenter.OnDelete();
 

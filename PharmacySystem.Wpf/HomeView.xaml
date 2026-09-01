@@ -4,90 +4,119 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              Background="{DynamicResource AppCanvasBrush}">
 
-    <Grid Margin="24">
+    <UserControl.Resources>
+        <Style x:Key="StatCard" TargetType="ui:Card" BasedOn="{StaticResource {x:Type ui:Card}}">
+            <Setter Property="Padding" Value="18,16"/>
+            <Setter Property="MinHeight" Value="104"/>
+        </Style>
+        <Style x:Key="StatCaption" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="StatValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="28"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="0,8,0,2"/>
+        </Style>
+        <Style x:Key="StatSub" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+        <Style x:Key="StatGlyph" TargetType="ui:SymbolIcon">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="28">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="16"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Inicio" FontSize="22" FontWeight="Bold" Margin="0,0,0,16"/>
+        <TextBlock Grid.Row="0" Text="Inicio" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
 
-        <WrapPanel Grid.Row="1" x:Name="tilesPanel">
-            <ui:Card x:Name="tileSales" Style="{DynamicResource DashboardTile}">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="Receipt24" FontSize="15"
-                                       Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,6,0"/>
-                        <TextBlock Text="VENTAS DE HOY" Style="{DynamicResource TileCaption}"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                    <TextBlock x:Name="lblSalesValue" Text="$0" Style="{DynamicResource TileValue}"/>
-                    <TextBlock x:Name="lblSalesSub" Text="0 operaciones" Style="{DynamicResource TileSub}"/>
-                </StackPanel>
-            </ui:Card>
-
-            <ui:Card x:Name="tileAlerts" Style="{DynamicResource DashboardTile}">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="Alert24" FontSize="15"
-                                       Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,6,0"/>
-                        <TextBlock Text="ALERTAS ABIERTAS" Style="{DynamicResource TileCaption}"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                    <TextBlock x:Name="lblAlertsValue" Text="0" Style="{DynamicResource TileValue}"
-                               Foreground="{DynamicResource StatusDangerBrush}"/>
-                    <TextBlock x:Name="lblAlertsSub" Text="0 urgentes · 0 pendientes" Style="{DynamicResource TileSub}"/>
-                </StackPanel>
-            </ui:Card>
-
-            <ui:Card x:Name="tileExpiring" Style="{DynamicResource DashboardTile}">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="CalendarClock24" FontSize="15"
-                                       Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,6,0"/>
-                        <TextBlock Text="POR VENCER" Style="{DynamicResource TileCaption}"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                    <TextBlock x:Name="lblExpiringValue" Text="0" Style="{DynamicResource TileValue}"
-                               Foreground="{DynamicResource StatusWarningBrush}"/>
-                    <TextBlock Text="productos con fecha próxima" Style="{DynamicResource TileSub}"/>
-                </StackPanel>
-            </ui:Card>
-
-            <ui:Card x:Name="tileStock" Style="{DynamicResource DashboardTile}">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="BoxMultiple24" FontSize="15"
-                                       Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,6,0"/>
-                        <TextBlock Text="STOCK CRÍTICO" Style="{DynamicResource TileCaption}"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                    <TextBlock x:Name="lblStockValue" Text="0" Style="{DynamicResource TileValue}"
-                               Foreground="{DynamicResource StatusDangerBrush}"/>
-                    <TextBlock Text="por debajo del umbral" Style="{DynamicResource TileSub}"/>
-                </StackPanel>
-            </ui:Card>
-        </WrapPanel>
-
-        <Grid Grid.Row="3">
+        <!-- Stat row: four equal cards, always fill the width -->
+        <Grid Grid.Row="1" Margin="0,0,0,20">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <ui:Card x:Name="tileSales" Grid.Column="0" Style="{StaticResource StatCard}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Receipt24" Style="{StaticResource StatGlyph}"/>
+                        <TextBlock Text="VENTAS DE HOY" Style="{StaticResource StatCaption}"/>
+                    </StackPanel>
+                    <TextBlock x:Name="lblSalesValue" Text="$0" Style="{StaticResource StatValue}"/>
+                    <TextBlock x:Name="lblSalesSub" Text="0 operaciones" Style="{StaticResource StatSub}"/>
+                </StackPanel>
+            </ui:Card>
+
+            <ui:Card x:Name="tileAlerts" Grid.Column="2" Style="{StaticResource StatCard}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Alert24" Style="{StaticResource StatGlyph}"/>
+                        <TextBlock Text="ALERTAS ABIERTAS" Style="{StaticResource StatCaption}"/>
+                    </StackPanel>
+                    <TextBlock x:Name="lblAlertsValue" Text="0" Style="{StaticResource StatValue}"
+                               Foreground="{DynamicResource StatusDangerBrush}"/>
+                    <TextBlock x:Name="lblAlertsSub" Text="0 urgentes · 0 pendientes" Style="{StaticResource StatSub}"/>
+                </StackPanel>
+            </ui:Card>
+
+            <ui:Card x:Name="tileExpiring" Grid.Column="4" Style="{StaticResource StatCard}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="CalendarClock24" Style="{StaticResource StatGlyph}"/>
+                        <TextBlock Text="POR VENCER" Style="{StaticResource StatCaption}"/>
+                    </StackPanel>
+                    <TextBlock x:Name="lblExpiringValue" Text="0" Style="{StaticResource StatValue}"
+                               Foreground="{DynamicResource StatusWarningBrush}"/>
+                    <TextBlock Text="productos con fecha próxima" Style="{StaticResource StatSub}"/>
+                </StackPanel>
+            </ui:Card>
+
+            <ui:Card x:Name="tileStock" Grid.Column="6" Style="{StaticResource StatCard}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="BoxMultiple24" Style="{StaticResource StatGlyph}"/>
+                        <TextBlock Text="STOCK CRÍTICO" Style="{StaticResource StatCaption}"/>
+                    </StackPanel>
+                    <TextBlock x:Name="lblStockValue" Text="0" Style="{StaticResource StatValue}"
+                               Foreground="{DynamicResource StatusDangerBrush}"/>
+                    <TextBlock Text="por debajo del umbral" Style="{StaticResource StatSub}"/>
+                </StackPanel>
+            </ui:Card>
+        </Grid>
+
+        <!-- Content: attention list + quick actions -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="20"/>
                 <ColumnDefinition Width="300"/>
             </Grid.ColumnDefinitions>
 
-            <ui:Card x:Name="pnlAttention" Grid.Column="0" Padding="16">
+            <ui:Card x:Name="pnlAttention" Grid.Column="0" Padding="18"
+                     VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Top" Text="Requiere atención"
-                               FontWeight="Bold" Margin="0,0,0,10"/>
-                    <DataGrid x:Name="dgAttention"
-                              AutoGenerateColumns="False"
-
+                               FontSize="15" FontWeight="Bold" Margin="0,0,0,12"/>
+                    <DataGrid x:Name="dgAttention" AutoGenerateColumns="False"
                               MouseDoubleClick="dgAttention_MouseDoubleClick">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Severidad" Width="90" Binding="{Binding Severity}">
+                            <DataGridTextColumn Header="Severidad" Width="110" Binding="{Binding Severity}">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="FontWeight" Value="Bold"/>
@@ -96,25 +125,28 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Producto" Width="200" Binding="{Binding Product}"/>
-                            <DataGridTextColumn Header="Detalle" Width="*" Binding="{Binding Detail}"/>
+                            <DataGridTextColumn Header="Producto" Width="1.4*" Binding="{Binding Product}"/>
+                            <DataGridTextColumn Header="Detalle" Width="2*" Binding="{Binding Detail}"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
             </ui:Card>
 
-            <ui:Card x:Name="pnlQuickActions" Grid.Column="2" Padding="16" VerticalAlignment="Top">
+            <ui:Card x:Name="pnlQuickActions" Grid.Column="2" Padding="18" VerticalAlignment="Top">
                 <StackPanel>
-                    <TextBlock Text="Acciones rápidas" FontWeight="Bold" Margin="0,0,0,10"/>
+                    <TextBlock Text="Acciones rápidas" FontSize="15" FontWeight="Bold" Margin="0,0,0,12"/>
                     <ui:Button x:Name="btnNewSale" Content="Nueva venta" Appearance="Primary"
                                Icon="{ui:SymbolIcon Cart24}"
-                               HorizontalAlignment="Stretch" Click="btnNewSale_Click"/>
+                               HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                               Click="btnNewSale_Click"/>
                     <ui:Button x:Name="btnNewPurchase" Content="Nueva compra" Appearance="Secondary"
                                Icon="{ui:SymbolIcon Receipt24}"
-                               HorizontalAlignment="Stretch" Margin="0,8,0,0" Click="btnNewPurchase_Click"/>
+                               HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                               Margin="0,10,0,0" Click="btnNewPurchase_Click"/>
                     <ui:Button x:Name="btnManageProducts" Content="Gestionar productos" Appearance="Secondary"
                                Icon="{ui:SymbolIcon BoxMultiple24}"
-                               HorizontalAlignment="Stretch" Margin="0,8,0,0" Click="btnManageProducts_Click"/>
+                               HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                               Margin="0,10,0,0" Click="btnManageProducts_Click"/>
                 </StackPanel>
             </ui:Card>
         </Grid>

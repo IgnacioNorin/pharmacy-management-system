@@ -23,6 +23,7 @@ namespace PharmacySystem.Ui
         }
 
         private readonly SupplierPresenter _presenter;
+        private readonly bool _canManage;
         private int _editingId;
         private int _selectedIndex;
 
@@ -30,12 +31,21 @@ namespace PharmacySystem.Ui
         {
             InitializeComponent();
 
+            _canManage = canManage;
             _presenter = presenterFactory(this);
-
-            btnSave.IsEnabled = canManage;
-            btnDelete.IsEnabled = canManage;
+            UpdateActionState();
 
             Loaded += (s, e) => _presenter.OnLoad();
+        }
+
+        // "Agregar" with the form empty, "Guardar cambios" while a row is selected. Eliminar is
+        // only reachable with a selection.
+        private void UpdateActionState()
+        {
+            bool editing = _editingId != 0;
+            btnSave.Content = editing ? "Guardar cambios" : "Agregar";
+            btnSave.IsEnabled = _canManage;
+            btnDelete.IsEnabled = _canManage && editing;
         }
 
         // The hosting window, for owning message boxes.
@@ -81,6 +91,8 @@ namespace PharmacySystem.Ui
             }).ToList();
             dgData.SelectedIndex = -1;
             dgData.SelectionChanged += dgData_SelectionChanged;
+            _editingId = 0;
+            UpdateActionState();
         }
 
         public void SetPageInfo(int currentPage, int totalPages, int totalCount)
@@ -105,6 +117,7 @@ namespace PharmacySystem.Ui
             dgData.SelectionChanged -= dgData_SelectionChanged;
             dgData.SelectedIndex = -1;
             dgData.SelectionChanged += dgData_SelectionChanged;
+            UpdateActionState();
         }
 
         public void ShowMessage(string message) =>
@@ -121,6 +134,8 @@ namespace PharmacySystem.Ui
             if (!(dgData.SelectedItem is SupplierRowVm row))
             {
                 _selectedIndex = 0;
+                _editingId = 0;
+                UpdateActionState();
                 return;
             }
 
@@ -130,9 +145,19 @@ namespace PharmacySystem.Ui
             txtCompanyName.Text = row.CompanyName;
             txtEmail.Text = row.Email;
             txtPhone.Text = row.Phone;
+            UpdateActionState();
         }
 
-        private void btnSave_Click(object sender, RoutedEventArgs e) => _presenter.OnSave();
+        private void btnSave_Click(object sender, RoutedEventArgs e)
+        {
+            if (_editingId != 0 &&
+                MessageBox.Show(Host, "¿Guardar los cambios en el proveedor seleccionado?", "Confirmar",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            {
+                return;
+            }
+            _presenter.OnSave();
+        }
         private void btnDelete_Click(object sender, RoutedEventArgs e) => _presenter.OnDelete();
         private void btnClearForm_Click(object sender, RoutedEventArgs e) => ClearForm();
         private void btnSearch_Click(object sender, RoutedEventArgs e) => _presenter.OnSearch();

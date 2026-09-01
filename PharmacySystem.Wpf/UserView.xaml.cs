@@ -19,6 +19,7 @@ namespace PharmacySystem.Ui
     {
         private readonly UserPresenter _presenter;
         private readonly ObservableCollection<UserRow> _rows = new ObservableCollection<UserRow>();
+        private readonly bool _canManage;
 
         private int _userId;
 
@@ -26,12 +27,22 @@ namespace PharmacySystem.Ui
         {
             InitializeComponent();
 
+            _canManage = canManage;
             dgUsers.ItemsSource = _rows;
-            btnSave.IsEnabled = canManage;
-            btnDelete.IsEnabled = canManage;
 
             _presenter = presenterFactory(this);
+            UpdateActionState();
             Loaded += (s, e) => _presenter.OnLoad();
+        }
+
+        // "Agregar" with the form empty, "Guardar cambios" while a row is selected. Eliminar is
+        // only reachable with a selection.
+        private void UpdateActionState()
+        {
+            bool editing = _userId != 0;
+            btnSave.Content = editing ? "Guardar cambios" : "Agregar";
+            btnSave.IsEnabled = _canManage;
+            btnDelete.IsEnabled = _canManage && editing;
         }
 
         // The hosting window, for owning message boxes and the "Acciones" dialog.
@@ -75,6 +86,8 @@ namespace PharmacySystem.Ui
         {
             _rows.Clear();
             foreach (UserRow row in users) _rows.Add(row);
+            _userId = 0;
+            UpdateActionState();
         }
 
         public void AddRow(UserRow row) => _rows.Add(row);
@@ -98,6 +111,7 @@ namespace PharmacySystem.Ui
             txtConfirm.Clear();
             if (cboRole.Items.Count > 0) cboRole.SelectedIndex = 0;
             dgUsers.SelectedIndex = -1;
+            UpdateActionState();
         }
 
         public void ShowMessage(string message) =>
@@ -124,7 +138,12 @@ namespace PharmacySystem.Ui
 
         private void dgUsers_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (!(dgUsers.SelectedItem is UserRow row)) return;
+            if (!(dgUsers.SelectedItem is UserRow row))
+            {
+                _userId = 0;
+                UpdateActionState();
+                return;
+            }
 
             _userId = row.Id;
             txtDocument.Text = row.Document ?? "";
@@ -136,6 +155,8 @@ namespace PharmacySystem.Ui
             {
                 if (item.Text == row.RoleText) { cboRole.SelectedItem = item; break; }
             }
+
+            UpdateActionState();
         }
 
         private void btnSearch_Click(object sender, RoutedEventArgs e)
@@ -157,7 +178,17 @@ namespace PharmacySystem.Ui
             CollectionViewSource.GetDefaultView(_rows).Filter = null;
         }
 
-        private void btnSave_Click(object sender, RoutedEventArgs e) => _presenter.OnSave();
+        private void btnSave_Click(object sender, RoutedEventArgs e)
+        {
+            if (_userId != 0 &&
+                MessageBox.Show(Host, "¿Guardar los cambios en el usuario seleccionado?", "Confirmar",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            {
+                return;
+            }
+            _presenter.OnSave();
+        }
+
         private void btnClearForm_Click(object sender, RoutedEventArgs e) => ClearForm();
         private void btnDelete_Click(object sender, RoutedEventArgs e) => _presenter.OnDelete();
 
