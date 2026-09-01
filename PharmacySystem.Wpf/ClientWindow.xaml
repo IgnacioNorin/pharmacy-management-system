@@ -2,6 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica"
         WindowCornerPreference="Round"
         Title="Clientes"
         Height="680" Width="1000"
@@ -9,6 +11,9 @@
         WindowStartupLocation="CenterOwner"
         ShowInTaskbar="False"
         FontFamily="Segoe UI" FontSize="13">
+    <DockPanel>
+        <ui:TitleBar DockPanel.Dock="Top" Title="Clientes"/>
+
     <DockPanel Margin="12">
 
         <!-- Search -->
@@ -107,5 +112,6 @@
                 <DataGridCheckBoxColumn Header="Empresa" Width="70" Binding="{Binding IsCompany}"/>
             </DataGrid.Columns>
         </DataGrid>
+    </DockPanel>
     </DockPanel>
 </ui:FluentWindow>

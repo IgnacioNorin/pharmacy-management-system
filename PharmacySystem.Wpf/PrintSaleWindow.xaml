@@ -2,6 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica"
         WindowCornerPreference="Round"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         Title="Imprimir venta"
@@ -11,6 +13,9 @@
         ShowInTaskbar="False"
         Background="#F5F6F8"
         FontFamily="Segoe UI" FontSize="13">
+    <DockPanel>
+        <ui:TitleBar DockPanel.Dock="Top" Title="Imprimir venta"/>
+
     <DockPanel Margin="8">
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,8">
             <Button x:Name="btnPrint" Content="Imprimir" Width="120" Height="32" Click="btnPrint_Click"/>
@@ -18,5 +23,6 @@
         <Border BorderBrush="#D8DCE2" BorderThickness="1" Background="White">
             <wv2:WebView2 x:Name="webView"/>
         </Border>
+    </DockPanel>
     </DockPanel>
 </ui:FluentWindow>

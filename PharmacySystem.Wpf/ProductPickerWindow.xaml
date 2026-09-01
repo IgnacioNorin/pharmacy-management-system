@@ -2,6 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica"
         WindowCornerPreference="Round"
         Title="Seleccionar producto"
         Height="500" Width="820"
@@ -9,6 +11,9 @@
         WindowStartupLocation="CenterOwner"
         ShowInTaskbar="False"
         FontFamily="Segoe UI" FontSize="13">
+    <DockPanel>
+        <ui:TitleBar DockPanel.Dock="Top" Title="Seleccionar producto"/>
+
     <DockPanel Margin="12">
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
             <TextBlock Text="Buscar:" VerticalAlignment="Center" Margin="0,0,6,0"/>
@@ -35,5 +40,6 @@
                 <DataGridTextColumn Header="Stock" Width="70" Binding="{Binding Stock}"/>
             </DataGrid.Columns>
         </DataGrid>
+    </DockPanel>
     </DockPanel>
 </ui:FluentWindow>

@@ -2,6 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica"
         WindowCornerPreference="Round"
         Title="Registrar venta"
         Height="760" Width="960"
@@ -9,7 +11,7 @@
         WindowStartupLocation="CenterOwner"
         ShowInTaskbar="False"
         FontFamily="Segoe UI" FontSize="13">
-    <Window.Resources>
+        <ui:FluentWindow.Resources>
         <Style x:Key="Lbl" TargetType="TextBlock">
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Margin" Value="0,4,8,4"/>
@@ -18,7 +20,10 @@
             <Setter Property="Height" Value="24"/>
             <Setter Property="Margin" Value="0,4,16,4"/>
         </Style>
-    </Window.Resources>
+    </ui:FluentWindow.Resources>
+
+    <DockPanel>
+        <ui:TitleBar DockPanel.Dock="Top" Title="Registrar venta"/>
 
     <DockPanel Margin="12">
 
@@ -138,5 +143,6 @@
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
+    </DockPanel>
     </DockPanel>
 </ui:FluentWindow>

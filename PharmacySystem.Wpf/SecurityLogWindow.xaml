@@ -2,6 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica"
         WindowCornerPreference="Round"
         Title="Bitácora de acciones"
         Height="560" Width="920"
@@ -9,6 +11,9 @@
         WindowStartupLocation="CenterOwner"
         ShowInTaskbar="False"
         FontFamily="Segoe UI" FontSize="13">
+    <DockPanel>
+        <ui:TitleBar DockPanel.Dock="Top" Title="Bitácora de acciones"/>
+
     <DockPanel Margin="12">
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
             <TextBlock Text="Desde:" VerticalAlignment="Center" Margin="0,0,6,0"/>
@@ -40,5 +45,6 @@
                 <DataGridTextColumn Header="Equipo" Width="110" Binding="{Binding Station}"/>
             </DataGrid.Columns>
         </DataGrid>
+    </DockPanel>
     </DockPanel>
 </ui:FluentWindow>

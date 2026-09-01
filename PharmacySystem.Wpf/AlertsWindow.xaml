@@ -2,6 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica"
         WindowCornerPreference="Round"
         Title="Notificaciones"
         Height="470" Width="860"
@@ -10,6 +12,9 @@
         ShowInTaskbar="False"
         Background="White"
         FontFamily="Segoe UI" FontSize="13">
+    <DockPanel>
+        <ui:TitleBar DockPanel.Dock="Top" Title="Notificaciones"/>
+
     <DockPanel Margin="16">
         <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
             <TextBlock Text="Centro de notificaciones" FontSize="16" FontWeight="Bold"
@@ -93,5 +98,6 @@
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
+    </DockPanel>
     </DockPanel>
 </ui:FluentWindow>
