@@ -3,7 +3,7 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  Title="Iniciar sesión"
-                 Height="440" Width="400"
+                 Height="460" Width="760"
                  ResizeMode="NoResize"
                  WindowStartupLocation="CenterScreen"
                  ExtendsContentIntoTitleBar="True"
@@ -11,26 +11,32 @@
                  WindowCornerPreference="Round">
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="270"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="PharmacySystem" ShowMaximize="False" ShowMinimize="False"/>
+        <!-- Brand panel, full height -->
+        <Border Grid.Column="0" Background="{DynamicResource BrandNavyBrush}">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24">
+                <Border Width="72" Height="72" CornerRadius="36"
+                        Background="#1A3A63" HorizontalAlignment="Center">
+                    <ui:SymbolIcon Symbol="ShieldKeyhole24" FontSize="34" Foreground="White"/>
+                </Border>
+                <TextBlock Text="PharmacySystem" Foreground="White" FontSize="18" FontWeight="Bold"
+                           HorizontalAlignment="Center" Margin="0,16,0,4"/>
+                <TextBlock Text="Gestión de farmacia y punto de venta"
+                           Foreground="#9FB6D1" FontSize="12" TextAlignment="Center"
+                           TextWrapping="Wrap" MaxWidth="190"/>
+            </StackPanel>
+        </Border>
 
-        <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="32,0,32,24">
-
-            <Border Width="56" Height="56" CornerRadius="28"
-                    Background="{DynamicResource BrandNavyBrush}"
-                    HorizontalAlignment="Center" Margin="0,0,0,14">
-                <ui:SymbolIcon Symbol="ShieldKeyhole24" FontSize="26" Foreground="White"/>
-            </Border>
-
-            <TextBlock Text="Iniciar sesión" FontSize="20" FontWeight="Bold"
-                       HorizontalAlignment="Center"/>
+        <!-- Form -->
+        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="40,0">
+            <TextBlock Text="Iniciar sesión" FontSize="20" FontWeight="Bold"/>
             <TextBlock Text="Ingresa tus credenciales para continuar"
                        Foreground="{DynamicResource MutedTextBrush}" FontSize="12"
-                       HorizontalAlignment="Center" Margin="0,2,0,22"/>
+                       Margin="0,2,0,22"/>
 
             <TextBlock Text="Número de documento" FontWeight="SemiBold" Margin="0,0,0,4"/>
             <ui:TextBox x:Name="txtDocument" PlaceholderText="Ej. 12345678"
@@ -48,5 +54,9 @@
                        HorizontalAlignment="Stretch" Margin="0,8,0,0"
                        IsCancel="True" Click="btnExit_Click"/>
         </StackPanel>
+
+        <!-- Caption buttons only; window is draggable by the whole top strip -->
+        <ui:TitleBar Grid.ColumnSpan="2" VerticalAlignment="Top" Title=""
+                     ShowMaximize="False" ShowMinimize="False"/>
     </Grid>
 </ui:FluentWindow>
