@@ -3,6 +3,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="{DynamicResource AppCanvasBrush}">
 
+    <UserControl.Resources>
+        <!-- Grid cells never overflow the viewport: proportional columns, ellipsis on long
+             values, full value on hover. The complete record lives in the detail panel below. -->
+        <Style x:Key="GridCell" TargetType="TextBlock">
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=Text}"/>
+        </Style>
+    </UserControl.Resources>
+
     <DockPanel Margin="24">
 
         <TextBlock DockPanel.Dock="Top" Text="Clientes" FontSize="22" FontWeight="Bold"
@@ -17,7 +27,7 @@
             <Button x:Name="btnClearSearch" Content="Limpiar" Width="90" Height="26" Margin="6,0,0,0" Click="btnClearSearch_Click"/>
         </StackPanel>
 
-        <!-- Edit form -->
+        <!-- Detail panel: the full record for the selected row / the new-record form. -->
         <GroupBox DockPanel.Dock="Bottom" Header="Datos del cliente" Margin="0,10,0,0" Padding="8">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -85,22 +95,27 @@
             <TextBlock x:Name="lblPage" VerticalAlignment="Center" Margin="16,0,0,0" Foreground="Gray"/>
         </StackPanel>
 
-        <!-- Grid -->
+        <!-- Master list: key columns only, always fits the viewport (no horizontal scroll).
+             Full record -> detail panel below. -->
         <DataGrid x:Name="dgClients"
                   AutoGenerateColumns="False" IsReadOnly="True"
                   CanUserAddRows="False" CanUserDeleteRows="False"
                   HeadersVisibility="Column" SelectionMode="Single"
                   GridLinesVisibility="Horizontal" RowHeaderWidth="0"
+                  ColumnWidth="*"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                   SelectionChanged="dgClients_SelectionChanged">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Documento" Width="110" Binding="{Binding Document}"/>
-                <DataGridTextColumn Header="Nombre" Width="*" Binding="{Binding Name}"/>
-                <DataGridTextColumn Header="Dirección" Width="140" Binding="{Binding Address}"/>
-                <DataGridTextColumn Header="Teléfono" Width="100" Binding="{Binding Phone}"/>
-                <DataGridTextColumn Header="Razón social" Width="140" Binding="{Binding BusinessName}"/>
-                <DataGridTextColumn Header="Giro" Width="110" Binding="{Binding Activity}"/>
-                <DataGridTextColumn Header="Comuna" Width="100" Binding="{Binding Commune}"/>
-                <DataGridTextColumn Header="Email" Width="150" Binding="{Binding Email}"/>
+                <DataGridTextColumn Header="Documento" Width="1.1*" Binding="{Binding Document}"
+                                    ElementStyle="{StaticResource GridCell}"/>
+                <DataGridTextColumn Header="Nombre" Width="2*" Binding="{Binding Name}"
+                                    ElementStyle="{StaticResource GridCell}"/>
+                <DataGridTextColumn Header="Teléfono" Width="1*" Binding="{Binding Phone}"
+                                    ElementStyle="{StaticResource GridCell}"/>
+                <DataGridTextColumn Header="Comuna" Width="1*" Binding="{Binding Commune}"
+                                    ElementStyle="{StaticResource GridCell}"/>
+                <DataGridTextColumn Header="Email" Width="1.7*" Binding="{Binding Email}"
+                                    ElementStyle="{StaticResource GridCell}"/>
                 <DataGridCheckBoxColumn Header="Empresa" Width="70" Binding="{Binding IsCompany}"/>
             </DataGrid.Columns>
         </DataGrid>
