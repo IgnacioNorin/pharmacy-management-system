@@ -14,6 +14,17 @@ Sistema de gestión integral para farmacias que incluye punto de venta (POS), co
 - **Reportes:** ventas, compras, inventario e historial de alertas, con exportación a Excel.
 - **Pantalla de inicio:** tablero con ventas del día, alertas abiertas y accesos rápidos.
 
+## Interfaz
+
+UI de escritorio con **WPF + [WPF-UI](https://github.com/lepoco/wpfui)** (diseño Fluent, MIT). El shell tiene una barra lateral fija y las secciones se cargan **dentro del área de contenido** (navegación tipo web, no ventanas apiladas); el ítem activo queda resaltado. Quedan como ventana emergente solo los diálogos que devuelven un valor o son transitorios: selectores de cliente/producto/proveedor, pago mixto, nota de crédito, impresión de ticket, cambio de contraseña y el centro de notificaciones.
+
+Detalles de diseño:
+
+- Tema Fluent claro con un color de acento de marca; todas las grillas comparten un estilo único (encabezado, líneas, filas alternas, selección de fila completa).
+- Los cuadros de mensaje (`MessageBox`) usan un diálogo propio acorde al tema, no el cuadro nativo de Windows.
+- Las acciones que impactan datos (terminar venta, registrar compra, registrar arqueo, fijar/retirar precio, eliminar, editar, acciones de cuenta) piden confirmación.
+- En los ABM, "Eliminar" queda deshabilitado hasta seleccionar una fila, y "Guardar" cambia a "Guardar cambios" (con confirmación) al editar una fila existente.
+
 ## Arquitectura
 
 El proyecto sigue una arquitectura MVP (Model-View-Presenter) organizada en capas, cada una en su propio proyecto de la solución:
@@ -24,7 +35,7 @@ El proyecto sigue una arquitectura MVP (Model-View-Presenter) organizada en capa
 | `PharmacySystem.Data` | Acceso a datos: repositorios (Dapper), fábrica de conexión y logging. |
 | `PharmacySystem.Business` | Servicios con la lógica de negocio, sobre las interfaces de `Data`. |
 | `PharmacySystem.Presentation` | Presenters, interfaces `IView` y DTOs de presentación — testable sin UI. |
-| `PharmacySystem.Wpf` | Ventanas WPF que implementan las interfaces `IView` (pantallas, shell, login, impresión de ticket). |
+| `PharmacySystem.Wpf` | Capa de UI (WPF + WPF-UI): `UserControl` por sección + shell `FluentWindow` + los diálogos modales, todos implementando las interfaces `IView`. El namespace CLR es `PharmacySystem.Ui` (el nombre del ensamblado sigue siendo `PharmacySystem.Wpf`). |
 | `PharmacySystem` | Ejecutable delgado: `Program.cs` (arranque login → shell) y `CompositionRoot.cs` con el cableado manual de dependencias. |
 | `PharmacySystem.Tests` | Pruebas unitarias (Presenters/Business con fakes) y de integración (repositorios contra base real). |
 | `PharmacySystem.UiTests` | Pruebas "smoke" de helpers de UI (`ViewParse`, `StartupError`, `HomeAccess`). |
@@ -34,8 +45,8 @@ Dentro de `Data`, `Business` y `Presentation`, los archivos están organizados e
 ## Tecnologías
 
 - **Framework:** .NET 10 (`net10.0` / `net10.0-windows`)
-- **Lenguaje:** C#
-- **UI:** WPF
+- **Lenguaje:** C# (nullable reference types en toda la solución)
+- **UI:** WPF + WPF-UI (Fluent design)
 - **Base de datos:** SQL Server (probado con SQL Server 2019+)
 - **Acceso a datos:** Dapper + `Microsoft.Data.SqlClient`
 - **Pruebas:** xUnit
