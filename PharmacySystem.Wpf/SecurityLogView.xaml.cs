@@ -5,16 +5,16 @@ using System.Windows;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of ModalSecurityLog. Implements the same ISecurityLogView; the presenter runs the
     // query off the UI thread (SecurityLogPresenter.OnConsultAsync) and the await resumes here on
     // the dispatcher, so ShowEvents/ShowError touch the grid on the UI thread with no marshalling.
-    public partial class SecurityLogWindow : Window, ISecurityLogView
+    public partial class SecurityLogView : System.Windows.Controls.UserControl, ISecurityLogView
     {
         private readonly SecurityLogPresenter _presenter;
 
-        public SecurityLogWindow(Func<ISecurityLogView, SecurityLogPresenter> presenterFactory)
+        public SecurityLogView(Func<ISecurityLogView, SecurityLogPresenter> presenterFactory)
         {
             InitializeComponent();
 
@@ -25,6 +25,9 @@ namespace PharmacySystem.Wpf
 
             Loaded += async (s, e) => await ConsultAsync();
         }
+
+        // The hosting window, for owning message boxes.
+        private Window Host => Window.GetWindow(this)!;
 
         public DateTime StartDate => (dpFrom.SelectedDate ?? DateTime.Today.AddDays(-30)).Date;
         public DateTime EndDate => (dpTo.SelectedDate ?? DateTime.Today).Date;
@@ -38,7 +41,7 @@ namespace PharmacySystem.Wpf
         }
 
         public void ShowError(string message) =>
-            MessageBox.Show(this, message, "Bitácora", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Host, message, "Bitácora", MessageBoxButton.OK, MessageBoxImage.Warning);
 
         private async void btnConsult_Click(object sender, RoutedEventArgs e) => await ConsultAsync();
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // The four presenters behind ManagementWindow's tabs plus the lots lookup, bundled so the
     // WinForms shell can wire them from CompositionRoot without the WPF project referencing it.

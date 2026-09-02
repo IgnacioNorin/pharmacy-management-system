@@ -8,14 +8,15 @@ using System.Windows.Interop;
 using System.Windows.Threading;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
+using Wpf.Ui.Controls;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of MainForm. The application shell: sidebar navigation, the signed-in user header,
     // the alert badge and its 5-minute refresh, and the session re-check on activation. Every
     // screen it opens is a modal WPF dialog (see the XxxDialog helpers); the only persistent
     // content is HomeView. MainFormPresenter / HomePresenter are unchanged.
-    public partial class MainWindow : Window, IMainFormView
+    public partial class MainWindow : FluentWindow, IMainFormView
     {
         private readonly ShellServices _services;
         private readonly MainFormPresenter _presenter;
@@ -78,7 +79,8 @@ namespace PharmacySystem.Wpf
                 _sessionRefreshReady = false;
                 MessageBox.Show(this,
                     "Su sesión ya no es válida: la cuenta fue desactivada o eliminada.",
-                    "Sesión finalizada", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "Sesión finalizada",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 Close();
                 return;
             }
@@ -157,9 +159,27 @@ namespace PharmacySystem.Wpf
             Store = CanNavigate("tienda.acceso")
         };
 
+        // Swaps the content area and moves the "active" marker to the sidebar button that opened
+        // it. Sections still under the modal-dialog model pass navButton = null (no marker).
+        // A view holding unsaved work (INavGuard) can veto the switch.
+        private void Navigate(System.Windows.Controls.Button? navButton, System.Windows.Controls.Control view)
+        {
+            if (contentHost.Content is INavGuard guard && !guard.CanNavigateAway())
+            {
+                return;
+            }
+
+            if (_activeNav != null) _activeNav.Tag = null;
+            _activeNav = navButton;
+            if (navButton != null) navButton.Tag = "active";
+            contentHost.Content = view;
+        }
+
+        private System.Windows.Controls.Button? _activeNav;
+
         private void OpenHome()
         {
-            contentHost.Content = new HomeView(
+            Navigate(btnHome, new HomeView(
                 _services.HomePresenter,
                 () => _session,
                 () => btnSales_Click(this, new RoutedEventArgs()),
@@ -168,9 +188,8 @@ namespace PharmacySystem.Wpf
                 code =>
                 {
                     if (!CanNavigate("productos.acceso")) return;
-                    ManagementDialog.Show(OwnerHandle(), _services.ManagementFactories, BuildManagementPermissions(), code);
-                    CheckNotifications();
-                });
+                    Navigate(btnManagement, new ManagementView(_services.ManagementFactories, BuildManagementPermissions(), code));
+                }));
         }
 
         #region Sidebar navigation
@@ -181,59 +200,57 @@ namespace PharmacySystem.Wpf
         {
             if (!CanNavigate("clientes.acceso")) return;
             CheckNotifications();
-            ClientDialog.Show(OwnerHandle(), CanNavigate("clientes.gestionar"), _services.ClientPresenter);
+            Navigate(btnClients, new ClientView(CanNavigate("clientes.gestionar"), _services.ClientPresenter));
         }
 
         private void btnSuppliers_Click(object sender, RoutedEventArgs e)
         {
             if (!CanNavigate("proveedores.acceso")) return;
-            SupplierDialog.Show(OwnerHandle(), CanNavigate("proveedores.gestionar"), _services.SupplierPresenter);
+            Navigate(btnSuppliers, new SupplierView(CanNavigate("proveedores.gestionar"), _services.SupplierPresenter));
         }
 
         private void btnManagement_Click(object sender, RoutedEventArgs e)
         {
             if (!(CanNavigate("productos.acceso") || CanNavigate("categorias.acceso") || CanNavigate("tienda.acceso"))) return;
             CheckNotifications();
-            ManagementDialog.Show(OwnerHandle(), _services.ManagementFactories, BuildManagementPermissions());
-            CheckNotifications();
+            Navigate(btnManagement, new ManagementView(_services.ManagementFactories, BuildManagementPermissions()));
         }
 
         private void btnPurchases_Click(object sender, RoutedEventArgs e)
         {
             if (!CanNavigate("compras.acceso")) return;
             CheckNotifications();
-            PurchaseDialog.Show(OwnerHandle(),
+            Navigate(btnPurchases, new PurchaseView(
                 v => _services.PurchasePresenter(v, _session.PersonId),
-                _services.Pickers);
-            CheckNotifications();
+                _services.Pickers));
         }
 
         private void btnSales_Click(object sender, RoutedEventArgs e)
         {
             if (!CanNavigate("ventas.acceso")) return;
             CheckNotifications();
+
             var hooks = new SaleShellHooks(
                 _services.Pickers,
                 _services.CreditNotePresenter,
                 idSale => PrintSaleDialog.Show(OwnerHandle(), idSale, _services.TicketData),
                 CanNavigate("ventas.nota_credito"));
 
-            SaleDialog.Show(OwnerHandle(),
+            Navigate(btnSales, new SaleView(
                 v => _services.SalePresenter(v, _session.PersonId),
-                hooks);
-            CheckNotifications();
+                hooks));
         }
 
         private void btnUsers_Click(object sender, RoutedEventArgs e)
         {
             if (!CanNavigate("usuarios.acceso")) return;
-            UserDialog.Show(OwnerHandle(), CanNavigate("usuarios.gestionar"), _services.UserPresenter);
+            Navigate(btnUsers, new UserView(CanNavigate("usuarios.gestionar"), _services.UserPresenter));
         }
 
         private void btnRoles_Click(object sender, RoutedEventArgs e)
         {
             if (!CanNavigate("roles.gestionar")) return;
-            RolesDialog.Show(OwnerHandle(), _services.RolesPresenter);
+            Navigate(btnRoles, new RolesView(_services.RolesPresenter));
         }
 
         private void btnReports_Click(object sender, RoutedEventArgs e)
@@ -252,19 +269,19 @@ namespace PharmacySystem.Wpf
                 AlertHistoryExport = CanNavigate("reportes.alertas.exportar")
             };
 
-            ReportDialog.Show(OwnerHandle(), _services.ReportPresenter, reportPermissions);
+            Navigate(btnReports, new ReportView(_services.ReportPresenter, reportPermissions));
         }
 
         private void btnCashCount_Click(object sender, RoutedEventArgs e)
         {
             if (!CanNavigate("caja.acceso")) return;
-            CashCountDialog.Show(OwnerHandle(), _services.CashCountPresenter);
+            Navigate(btnCashCount, new CashCountView(_services.CashCountPresenter));
         }
 
         private void btnAuditLog_Click(object sender, RoutedEventArgs e)
         {
             if (!CanNavigate("bitacora.acceso")) return;
-            SecurityLogDialog.Show(OwnerHandle(), _services.SecurityLogPresenter);
+            Navigate(btnAuditLog, new SecurityLogView(_services.SecurityLogPresenter));
         }
 
         private void btnAlerts_Click(object sender, RoutedEventArgs e)
@@ -285,8 +302,8 @@ namespace PharmacySystem.Wpf
 
             if (canOpenProduct && !string.IsNullOrEmpty(selectedProductCode))
             {
-                ManagementDialog.Show(OwnerHandle(), _services.ManagementFactories,
-                    BuildManagementPermissions(), selectedProductCode);
+                Navigate(btnManagement, new ManagementView(_services.ManagementFactories,
+                    BuildManagementPermissions(), selectedProductCode));
             }
 
             CheckNotifications();

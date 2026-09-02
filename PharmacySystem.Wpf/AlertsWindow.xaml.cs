@@ -9,14 +9,14 @@ using PharmacySystem.Business;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of ModalAlerts. Notification center for the alerts rework: renders the alert list
     // MainForm already computed via MainFormPresenter.RefreshAlerts(), reports back which product
     // (if any) the user picked to view, and lets the user acknowledge or mute an alert by calling
     // straight into the notification service it is handed - no Presenter of its own, same as the
     // WinForms version.
-    public partial class AlertsWindow : Window
+    public partial class AlertsWindow : Wpf.Ui.Controls.FluentWindow
     {
         // One grid row. Mutable fields (status / button captions) raise change notifications so an
         // acknowledge or mute updates the row in place without rebuilding the grid.

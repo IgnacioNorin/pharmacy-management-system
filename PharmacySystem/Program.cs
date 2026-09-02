@@ -3,7 +3,7 @@ using System.Windows.Forms;
 using PharmacySystem.Data;
 using PharmacySystem.Helpers;
 using PharmacySystem.Presentation;
-using PharmacySystem.Wpf;
+using PharmacySystem.Ui;
 
 namespace PharmacySystem
 {
@@ -31,7 +31,7 @@ namespace PharmacySystem
 
                 // Log in, run the shell, and when the shell closes come back to the login screen
                 // (log in as someone else without restarting). "Salir" on the login screen ends
-                // the loop and the app. LoginHost/ShellHost keep the WPF types in PharmacySystem.Wpf.
+                // the loop and the app. LoginHost/ShellHost keep the WPF types in PharmacySystem.Ui.
                 while (true)
                 {
                     CurrentUser? session = LoginHost.RunLogin(

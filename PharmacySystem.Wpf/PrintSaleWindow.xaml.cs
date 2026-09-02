@@ -9,14 +9,14 @@ using Microsoft.Web.WebView2.Wpf;
 using PharmacySystem.Helpers;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of PrintSale. Renders the HTML ticket in WebView2 (Edge/Chromium) and prints it:
     // the default path opens the browser print dialog (pick "Microsoft Print to PDF" to preview
     // the layout), and a thermal printer, if one is detected, offers the plain-text path instead.
     // PharmacyTicketBuilder / HtmlTicketBuilder are unchanged; the sale rows and the HTML template
     // are handed in by the exe.
-    public partial class PrintSaleWindow : Window
+    public partial class PrintSaleWindow : Wpf.Ui.Controls.FluentWindow
     {
         private readonly int _saleId;
         private readonly Func<int, PrintTicketData> _dataProvider;

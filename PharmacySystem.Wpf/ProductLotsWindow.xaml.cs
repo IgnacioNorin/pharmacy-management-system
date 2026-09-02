@@ -4,12 +4,12 @@ using System.Windows.Controls;
 using PharmacySystem.Helpers;
 using PharmacySystem.Model;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of ModalProductLots. Read-only list of a product's lots: units on hand, expiry and
     // purchase cost per batch. Pure display - the lots are handed in by the caller (the WinForms
     // shell resolves them from the shared ProductService).
-    public class ProductLotsWindow : Window
+    public class ProductLotsWindow : System.Windows.Window
     {
         private sealed class LotRowVm
         {
@@ -22,24 +22,14 @@ namespace PharmacySystem.Wpf
         public ProductLotsWindow(string productName, IReadOnlyList<ProductLot> lots)
         {
             Title = "Lotes de " + productName;
-            Width = 560;
-            Height = 360;
+            Width = 600;
+            Height = 400;
+            MinWidth = 460;
+            MinHeight = 300;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             ShowInTaskbar = false;
-            Background = System.Windows.Media.Brushes.White;
-            FontFamily = new System.Windows.Media.FontFamily("Segoe UI");
-            FontSize = 13;
 
-            var grid = new DataGrid
-            {
-                AutoGenerateColumns = false,
-                IsReadOnly = true,
-                CanUserAddRows = false,
-                CanUserDeleteRows = false,
-                HeadersVisibility = DataGridHeadersVisibility.Column,
-                GridLinesVisibility = DataGridGridLinesVisibility.Horizontal,
-                RowHeaderWidth = 0
-            };
+            var grid = new DataGrid { AutoGenerateColumns = false };
             grid.Columns.Add(new DataGridTextColumn { Header = "Cantidad", Width = 90, Binding = new System.Windows.Data.Binding("Cantidad") });
             grid.Columns.Add(new DataGridTextColumn { Header = "Vencimiento", Width = 130, Binding = new System.Windows.Data.Binding("Vencimiento") });
             grid.Columns.Add(new DataGridTextColumn { Header = "Costo unitario", Width = 130, Binding = new System.Windows.Data.Binding("CostoUnitario") });
@@ -76,8 +66,18 @@ namespace PharmacySystem.Wpf
                 ? "Este producto no tiene lotes con stock."
                 : $"{rows.Count} lote(s)  ·  {totalUnits} u.  ·  valor {CultureInfoHelper.FormatAsCurrency(totalValue)}";
 
-            var root = new DockPanel { Margin = new Thickness(10) };
+            var heading = new TextBlock
+            {
+                Text = "Lotes de " + productName,
+                FontSize = 18,
+                FontWeight = FontWeights.Bold,
+                Margin = new Thickness(0, 0, 0, 12)
+            };
+
+            var root = new DockPanel { Margin = new Thickness(20) };
+            DockPanel.SetDock(heading, Dock.Top);
             DockPanel.SetDock(footer, Dock.Bottom);
+            root.Children.Add(heading);
             root.Children.Add(footer);
             root.Children.Add(grid);
             Content = root;

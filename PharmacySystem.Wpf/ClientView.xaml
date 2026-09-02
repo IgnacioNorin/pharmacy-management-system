@@ -1,13 +1,12 @@
-<Window x:Class="PharmacySystem.Wpf.ClientWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Clientes"
-        Height="680" Width="1000"
-        MinHeight="520" MinWidth="820"
-        WindowStartupLocation="CenterOwner"
-        ShowInTaskbar="False"
-        FontFamily="Segoe UI" FontSize="13">
-    <DockPanel Margin="12">
+<UserControl x:Class="PharmacySystem.Ui.ClientView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource AppCanvasBrush}">
+
+    <DockPanel Margin="24">
+
+        <TextBlock DockPanel.Dock="Top" Text="Clientes" FontSize="22" FontWeight="Bold"
+                   Margin="0,0,0,16"/>
 
         <!-- Search -->
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
@@ -18,7 +17,7 @@
             <Button x:Name="btnClearSearch" Content="Limpiar" Width="90" Height="26" Margin="6,0,0,0" Click="btnClearSearch_Click"/>
         </StackPanel>
 
-        <!-- Edit form -->
+        <!-- Detail panel: the full record for the selected row / the new-record form. -->
         <GroupBox DockPanel.Dock="Bottom" Header="Datos del cliente" Margin="0,10,0,0" Padding="8">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -39,8 +38,7 @@
                         <Setter Property="VerticalAlignment" Value="Center"/>
                         <Setter Property="Margin" Value="0,4,8,4"/>
                     </Style>
-                    <Style TargetType="TextBox">
-                        <Setter Property="Height" Value="24"/>
+                    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
                         <Setter Property="Margin" Value="0,4,16,4"/>
                     </Style>
                 </Grid.Resources>
@@ -70,9 +68,9 @@
 
                 <StackPanel Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="2" Orientation="Horizontal"
                             HorizontalAlignment="Right" Margin="0,6,0,2">
-                    <Button x:Name="btnSave" Content="Guardar" Width="120" Height="30" Click="btnSave_Click"/>
-                    <Button x:Name="btnClearForm" Content="Limpiar" Width="100" Height="30" Margin="8,0,0,0" Click="btnClearForm_Click"/>
-                    <Button x:Name="btnDelete" Content="Eliminar" Width="100" Height="30" Margin="8,0,0,0" Click="btnDelete_Click"/>
+                    <Button x:Name="btnSave" Style="{StaticResource PrimaryButton}" Content="Guardar" Click="btnSave_Click"/>
+                    <Button x:Name="btnClearForm" Content="Limpiar" Margin="8,0,0,0" Click="btnClearForm_Click"/>
+                    <Button x:Name="btnDelete" Content="Eliminar" Margin="8,0,0,0" Click="btnDelete_Click"/>
                 </StackPanel>
             </Grid>
         </GroupBox>
@@ -86,24 +84,30 @@
             <TextBlock x:Name="lblPage" VerticalAlignment="Center" Margin="16,0,0,0" Foreground="Gray"/>
         </StackPanel>
 
-        <!-- Grid -->
+        <!-- Master list in its own panel, matching the detail panel below. Key columns only,
+             always fits the viewport (no horizontal scroll); full record -> detail panel. -->
+        <GroupBox Header="Listado de clientes" Padding="8">
         <DataGrid x:Name="dgClients"
-                  AutoGenerateColumns="False" IsReadOnly="True"
-                  CanUserAddRows="False" CanUserDeleteRows="False"
-                  HeadersVisibility="Column" SelectionMode="Single"
-                  GridLinesVisibility="Horizontal" RowHeaderWidth="0"
+                  AutoGenerateColumns="False"
+                  ColumnWidth="*"
+                  HorizontalScrollBarVisibility="Disabled"
                   SelectionChanged="dgClients_SelectionChanged">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Documento" Width="110" Binding="{Binding Document}"/>
-                <DataGridTextColumn Header="Nombre" Width="*" Binding="{Binding Name}"/>
-                <DataGridTextColumn Header="Dirección" Width="140" Binding="{Binding Address}"/>
-                <DataGridTextColumn Header="Teléfono" Width="100" Binding="{Binding Phone}"/>
-                <DataGridTextColumn Header="Razón social" Width="140" Binding="{Binding BusinessName}"/>
-                <DataGridTextColumn Header="Giro" Width="110" Binding="{Binding Activity}"/>
-                <DataGridTextColumn Header="Comuna" Width="100" Binding="{Binding Commune}"/>
-                <DataGridTextColumn Header="Email" Width="150" Binding="{Binding Email}"/>
-                <DataGridCheckBoxColumn Header="Empresa" Width="70" Binding="{Binding IsCompany}"/>
+                <DataGridTextColumn Header="Documento" Width="1.1*" Binding="{Binding Document}"
+                                    ElementStyle="{StaticResource GridCell}"/>
+                <DataGridTextColumn Header="Nombre" Width="2*" Binding="{Binding Name}"
+                                    ElementStyle="{StaticResource GridCell}"/>
+                <DataGridTextColumn Header="Teléfono" Width="1*" Binding="{Binding Phone}"
+                                    ElementStyle="{StaticResource GridCell}"/>
+                <DataGridTextColumn Header="Comuna" Width="1*" Binding="{Binding Commune}"
+                                    ElementStyle="{StaticResource GridCell}"/>
+                <DataGridTextColumn Header="Email" Width="1.7*" Binding="{Binding Email}"
+                                    ElementStyle="{StaticResource GridCell}"/>
+                <DataGridCheckBoxColumn Header="Empresa" Width="Auto" MinWidth="96"
+                                        Binding="{Binding IsCompany}"
+                                        ElementStyle="{StaticResource GridCheckCell}"/>
             </DataGrid.Columns>
         </DataGrid>
+        </GroupBox>
     </DockPanel>
-</Window>
+</UserControl>

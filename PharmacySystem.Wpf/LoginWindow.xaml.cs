@@ -2,14 +2,15 @@ using System;
 using System.Windows;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
+using Wpf.Ui.Controls;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of Login. Implements the same ILoginView; LoginPresenter is unchanged. Shown
     // modally by Program.Main: on a successful login it exposes the resolved CurrentUser in
     // Result and closes with DialogResult = true, and Program launches the (still WinForms)
     // MainForm. "Salir" closes with DialogResult = false and the app exits.
-    public partial class LoginWindow : Window, ILoginView
+    public partial class LoginWindow : FluentWindow, ILoginView
     {
         private readonly LoginPresenter _presenter;
         private readonly Func<Person, CurrentUser> _sessionFactory;
@@ -64,7 +65,8 @@ namespace PharmacySystem.Wpf
         }
 
         public void ShowError(string message) =>
-            MessageBox.Show(this, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            MessageBox.Show(this, message, "Mensaje",
+                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Exclamation);
 
         private void btnEnter_Click(object sender, RoutedEventArgs e) => _presenter.OnLogin();
 

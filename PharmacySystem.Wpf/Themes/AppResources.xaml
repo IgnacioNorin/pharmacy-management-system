@@ -1,0 +1,131 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+
+    <!-- The app's design tokens. The WPF-UI Fluent theme and control dictionaries are merged
+         ahead of this one, in code, by LoginHost.EnsureApplication (this project has no App.xaml).
+         Keep this file free of ThemesDictionary/ControlsDictionary so the theme is owned in one
+         place. -->
+
+    <!-- Brand palette -->
+    <Color x:Key="BrandNavyColor">#FF0B2545</Color>
+    <Color x:Key="BrandNavyDeepColor">#FF081B34</Color>
+    <SolidColorBrush x:Key="BrandNavyBrush" Color="{StaticResource BrandNavyColor}" />
+    <SolidColorBrush x:Key="BrandNavyDeepBrush" Color="{StaticResource BrandNavyDeepColor}" />
+
+    <!-- Surfaces -->
+    <SolidColorBrush x:Key="AppCanvasBrush" Color="#FFF5F6F8" />
+    <SolidColorBrush x:Key="CardStrokeBrush" Color="#FFD8DCE2" />
+
+    <!-- Status accents (shared with the alert severity model) -->
+    <SolidColorBrush x:Key="StatusDangerBrush" Color="#FFA73E38" />
+    <SolidColorBrush x:Key="StatusWarningBrush" Color="#FFB06A22" />
+    <SolidColorBrush x:Key="StatusSuccessBrush" Color="#FF2E7D32" />
+    <SolidColorBrush x:Key="MutedTextBrush" Color="#FF6B7684" />
+
+    <!-- Dashboard tile: the Fluent card look with a fixed footprint. -->
+    <Style x:Key="DashboardTile" TargetType="ui:Card"
+           BasedOn="{StaticResource {x:Type ui:Card}}">
+        <Setter Property="Width" Value="230" />
+        <Setter Property="Margin" Value="0,0,14,14" />
+        <Setter Property="Padding" Value="16,14" />
+    </Style>
+
+    <Style x:Key="TileCaption" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style x:Key="TileValue" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="26" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Margin" Value="0,6,0,2" />
+    </Style>
+
+    <Style x:Key="TileSub" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
+        <Setter Property="FontSize" Value="11" />
+    </Style>
+
+    <!-- App-wide button sizing. The Fluent button needs more room than the old fixed
+         Width/Height="26" values gave it (text was clipping); enforce a comfortable minimum
+         so screens that still carry legacy sizes render correctly. -->
+    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="Padding" Value="10,4" />
+    </Style>
+
+    <!-- Input controls: the Fluent look needs ~32px; screens carrying legacy Height="24" were
+         rendering cramped. MinHeight is a floor, so the old values stop mattering. -->
+    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+        <Setter Property="MinHeight" Value="32" />
+    </Style>
+    <Style TargetType="PasswordBox" BasedOn="{StaticResource {x:Type PasswordBox}}">
+        <Setter Property="MinHeight" Value="32" />
+    </Style>
+    <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+        <Setter Property="MinHeight" Value="32" />
+    </Style>
+    <Style TargetType="DatePicker" BasedOn="{StaticResource {x:Type DatePicker}}">
+        <Setter Property="MinHeight" Value="32" />
+    </Style>
+
+    <!-- Primary call-to-action: the accent-filled button, usable on a plain <Button>. -->
+    <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="Padding" Value="14,4" />
+        <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorSecondaryBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+    </Style>
+
+    <!-- ============ Data grids: one look for every list in the app ============ -->
+
+    <!-- Long header text wraps instead of being clipped; full label also in a tooltip. -->
+    <Style x:Key="GridHeader" TargetType="DataGridColumnHeader"
+           BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+        <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=Content}" />
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" TextWrapping="Wrap" FontWeight="SemiBold" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Opt-in text-cell style: ellipsis on overflow, full value on hover. -->
+    <Style x:Key="GridCell" TargetType="TextBlock">
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=Text}" />
+    </Style>
+
+    <Style x:Key="GridCheckCell" TargetType="CheckBox">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <!-- The shared frame: colours, gridlines, header row, selection. Applied to every DataGrid.
+         Behaviour that differs per screen (AutoGenerateColumns, ColumnWidth, the
+         horizontal-scroll lock on the ABM lists) stays on the individual grid. -->
+    <Style TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+        <Setter Property="Background" Value="White" />
+        <Setter Property="RowBackground" Value="White" />
+        <Setter Property="AlternatingRowBackground" Value="#FFFAFBFC" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="GridLinesVisibility" Value="Horizontal" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource CardStrokeBrush}" />
+        <Setter Property="HeadersVisibility" Value="Column" />
+        <Setter Property="RowHeaderWidth" Value="0" />
+        <Setter Property="SelectionMode" Value="Single" />
+        <Setter Property="SelectionUnit" Value="FullRow" />
+        <Setter Property="IsReadOnly" Value="True" />
+        <Setter Property="CanUserAddRows" Value="False" />
+        <Setter Property="CanUserDeleteRows" Value="False" />
+        <Setter Property="ColumnHeaderStyle" Value="{StaticResource GridHeader}" />
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
+    </Style>
+
+</ResourceDictionary>

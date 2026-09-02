@@ -10,29 +10,43 @@ using PharmacySystem.Presentation;
 using PharmacySystem.Validators;
 using ComboBoxItem = PharmacySystem.Model.ComboBoxItem;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of frmUser. Implements the same IUserView; UserPresenter is unchanged. The grid is
     // filtered through the default collection view so _rows stays intact and the presenter's
     // index-based ReplaceRow / RemoveRow keep working while a search filter is active.
-    public partial class UserWindow : Window, IUserView
+    public partial class UserView : UserControl, IUserView
     {
         private readonly UserPresenter _presenter;
         private readonly ObservableCollection<UserRow> _rows = new ObservableCollection<UserRow>();
+        private readonly bool _canManage;
 
         private int _userId;
 
-        public UserWindow(bool canManage, Func<IUserView, UserPresenter> presenterFactory)
+        public UserView(bool canManage, Func<IUserView, UserPresenter> presenterFactory)
         {
             InitializeComponent();
 
+            _canManage = canManage;
             dgUsers.ItemsSource = _rows;
-            btnSave.IsEnabled = canManage;
-            btnDelete.IsEnabled = canManage;
 
             _presenter = presenterFactory(this);
+            UpdateActionState();
             Loaded += (s, e) => _presenter.OnLoad();
         }
+
+        // "Agregar" with the form empty, "Guardar cambios" while a row is selected. Eliminar is
+        // only reachable with a selection.
+        private void UpdateActionState()
+        {
+            bool editing = _userId != 0;
+            btnSave.Content = editing ? "Guardar cambios" : "Agregar";
+            btnSave.IsEnabled = _canManage;
+            btnDelete.IsEnabled = _canManage && editing;
+        }
+
+        // The hosting window, for owning message boxes and the "Acciones" dialog.
+        private Window Host => Window.GetWindow(this)!;
 
         #region IUserView
 
@@ -59,7 +73,7 @@ namespace PharmacySystem.Wpf
         }
 
         public bool ConfirmDelete() =>
-            MessageBox.Show(this, "¿Desea eliminar el usuario?", "Mensaje",
+            MessageBox.Show(Host, "¿Desea eliminar el usuario?", "Mensaje",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
 
         public void LoadRoleOptions(IEnumerable<ComboBoxItem> options)
@@ -72,6 +86,8 @@ namespace PharmacySystem.Wpf
         {
             _rows.Clear();
             foreach (UserRow row in users) _rows.Add(row);
+            _userId = 0;
+            UpdateActionState();
         }
 
         public void AddRow(UserRow row) => _rows.Add(row);
@@ -95,23 +111,24 @@ namespace PharmacySystem.Wpf
             txtConfirm.Clear();
             if (cboRole.Items.Count > 0) cboRole.SelectedIndex = 0;
             dgUsers.SelectedIndex = -1;
+            UpdateActionState();
         }
 
         public void ShowMessage(string message) =>
-            MessageBox.Show(this, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            MessageBox.Show(Host, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 
         public void ShowValidationErrors(IReadOnlyList<string> errors) =>
-            MessageBox.Show(this, string.Join("\n", errors), "Errores de validación",
+            MessageBox.Show(Host, string.Join("\n", errors), "Errores de validación",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
 
         public void ShowPasswordMismatch() =>
-            MessageBox.Show(this, "Las contraseñas no coinciden\nRevise nuevamente", "Mensaje",
+            MessageBox.Show(Host, "Las contraseñas no coinciden\nRevise nuevamente", "Mensaje",
                 MessageBoxButton.OK, MessageBoxImage.Exclamation);
 
         public void ShowTemporaryPassword(string tempPassword)
         {
             try { Clipboard.SetText(tempPassword); } catch { /* clipboard may be unavailable */ }
-            MessageBox.Show(this,
+            MessageBox.Show(Host,
                 $"Contraseña temporal: {tempPassword}\n\nYa se copió al portapapeles. Comuníquesela al usuario: " +
                 "deberá cambiarla al iniciar sesión.",
                 "Contraseña restablecida", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -121,7 +138,12 @@ namespace PharmacySystem.Wpf
 
         private void dgUsers_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (!(dgUsers.SelectedItem is UserRow row)) return;
+            if (!(dgUsers.SelectedItem is UserRow row))
+            {
+                _userId = 0;
+                UpdateActionState();
+                return;
+            }
 
             _userId = row.Id;
             txtDocument.Text = row.Document ?? "";
@@ -133,6 +155,8 @@ namespace PharmacySystem.Wpf
             {
                 if (item.Text == row.RoleText) { cboRole.SelectedItem = item; break; }
             }
+
+            UpdateActionState();
         }
 
         private void btnSearch_Click(object sender, RoutedEventArgs e)
@@ -154,7 +178,17 @@ namespace PharmacySystem.Wpf
             CollectionViewSource.GetDefaultView(_rows).Filter = null;
         }
 
-        private void btnSave_Click(object sender, RoutedEventArgs e) => _presenter.OnSave();
+        private void btnSave_Click(object sender, RoutedEventArgs e)
+        {
+            if (_userId != 0 &&
+                MessageBox.Show(Host, "¿Guardar los cambios en el usuario seleccionado?", "Confirmar",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            {
+                return;
+            }
+            _presenter.OnSave();
+        }
+
         private void btnClearForm_Click(object sender, RoutedEventArgs e) => ClearForm();
         private void btnDelete_Click(object sender, RoutedEventArgs e) => _presenter.OnDelete();
 
@@ -164,7 +198,7 @@ namespace PharmacySystem.Wpf
 
             dgUsers.SelectedItem = row; // so the presenter's SelectedIndex / UserId point at it
 
-            var dialog = new UserActionsWindow(row.Name ?? "", row.StatusText ?? "", row.StatusText != "Inactivo") { Owner = this };
+            var dialog = new UserActionsWindow(row.Name ?? "", row.StatusText ?? "", row.StatusText != "Inactivo") { Owner = Host };
             if (dialog.ShowDialog() != true) return;
 
             switch (dialog.SelectedAction)

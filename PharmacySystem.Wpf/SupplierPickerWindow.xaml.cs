@@ -5,11 +5,11 @@ using System.Windows;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of ModalSupplier. Read-only picker: implements ISupplierPickerView (just the
     // initial load); filtering and selection are view concerns, as in the original.
-    public partial class SupplierPickerWindow : Window, ISupplierPickerView
+    public partial class SupplierPickerWindow : Wpf.Ui.Controls.FluentWindow, ISupplierPickerView
     {
         private readonly SupplierPickerPresenter _presenter;
         private List<SupplierRow> _all = new List<SupplierRow>();

@@ -3,12 +3,12 @@ using System.ComponentModel;
 using System.Windows;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // WPF port of ModalChangePassword. Implements the same IChangePasswordView the presenter
     // already drives, so the presenter, service and everything below are unchanged. Shown
     // modally over the WinForms shell via ChangePasswordDialog while the migration is partial.
-    public partial class ChangePasswordWindow : Window, IChangePasswordView
+    public partial class ChangePasswordWindow : Wpf.Ui.Controls.FluentWindow, IChangePasswordView
     {
         private readonly ChangePasswordPresenter _presenter;
         private readonly bool _mandatory;

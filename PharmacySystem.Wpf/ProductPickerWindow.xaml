@@ -1,12 +1,19 @@
-<Window x:Class="PharmacySystem.Wpf.ProductPickerWindow"
+<ui:FluentWindow x:Class="PharmacySystem.Ui.ProductPickerWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica"
+        WindowCornerPreference="Round"
         Title="Seleccionar producto"
         Height="500" Width="820"
         MinHeight="340" MinWidth="620"
         WindowStartupLocation="CenterOwner"
         ShowInTaskbar="False"
         FontFamily="Segoe UI" FontSize="13">
+    <DockPanel>
+        <ui:TitleBar DockPanel.Dock="Top" Title="Seleccionar producto"/>
+
     <DockPanel Margin="12">
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
             <TextBlock Text="Buscar:" VerticalAlignment="Center" Margin="0,0,6,0"/>
@@ -34,4 +41,5 @@
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>
-</Window>
+    </DockPanel>
+</ui:FluentWindow>

@@ -1,6 +1,10 @@
-<Window x:Class="PharmacySystem.Wpf.AlertsWindow"
+<ui:FluentWindow x:Class="PharmacySystem.Ui.AlertsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica"
+        WindowCornerPreference="Round"
         Title="Notificaciones"
         Height="470" Width="860"
         MinHeight="320" MinWidth="640"
@@ -8,6 +12,9 @@
         ShowInTaskbar="False"
         Background="White"
         FontFamily="Segoe UI" FontSize="13">
+    <DockPanel>
+        <ui:TitleBar DockPanel.Dock="Top" Title="Notificaciones"/>
+
     <DockPanel Margin="16">
         <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
             <TextBlock Text="Centro de notificaciones" FontSize="16" FontWeight="Bold"
@@ -24,15 +31,7 @@
                    FontStyle="Italic" Foreground="DimGray" Visibility="Collapsed"
                    VerticalAlignment="Top"/>
 
-        <DataGrid x:Name="dgData"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  HeadersVisibility="Column"
-                  SelectionMode="Single"
-                  GridLinesVisibility="Horizontal"
-                  RowHeaderWidth="0">
+        <DataGrid x:Name="dgData" AutoGenerateColumns="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Severidad" Width="90" Binding="{Binding SeverityLabel}">
                     <DataGridTextColumn.ElementStyle>
@@ -59,7 +58,7 @@
                             <Button Content="{Binding AckText}" IsEnabled="{Binding AckEnabled}"
                                     Margin="2" Padding="4,1" Click="btnAck_Click">
                                 <Button.Style>
-                                    <Style TargetType="Button">
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding AckText}" Value="">
                                                 <Setter Property="Visibility" Value="Hidden"/>
@@ -77,7 +76,7 @@
                             <Button Content="{Binding MuteText}" IsEnabled="{Binding MuteEnabled}"
                                     Margin="2" Padding="4,1" Click="btnMute_Click">
                                 <Button.Style>
-                                    <Style TargetType="Button">
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding MuteText}" Value="">
                                                 <Setter Property="Visibility" Value="Hidden"/>
@@ -92,4 +91,5 @@
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>
-</Window>
+    </DockPanel>
+</ui:FluentWindow>

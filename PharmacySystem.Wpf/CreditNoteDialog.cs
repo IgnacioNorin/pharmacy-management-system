@@ -2,7 +2,7 @@ using System;
 using System.Windows.Interop;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // Entry point the WinForms shell (frmSale) calls to open the WPF "Nota de crédito" window
     // modally over a WinForms owner while the shell is still WinForms.

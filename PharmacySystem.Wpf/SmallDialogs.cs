@@ -5,7 +5,7 @@ using PharmacySystem.Business;
 using PharmacySystem.Model;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     public static class AlertsDialog
     {
@@ -35,39 +35,6 @@ namespace PharmacySystem.Wpf
         public static void Show(IntPtr ownerHandle, int saleId, Func<int, PrintTicketData> dataProvider)
         {
             var window = new PrintSaleWindow(saleId, dataProvider);
-            if (ownerHandle != IntPtr.Zero) new WindowInteropHelper(window) { Owner = ownerHandle };
-            window.ShowDialog();
-        }
-    }
-
-    public static class ManagementDialog
-    {
-        public static void Show(IntPtr ownerHandle,
-            ManagementPresenterFactories factories, ManagementPermissions permissions,
-            string? pendingProductCode = null)
-        {
-            var window = new ManagementWindow(factories, permissions, pendingProductCode);
-            if (ownerHandle != IntPtr.Zero) new WindowInteropHelper(window) { Owner = ownerHandle };
-            window.ShowDialog();
-        }
-    }
-
-    public static class ReportDialog
-    {
-        public static void Show(IntPtr ownerHandle,
-            Func<IReportView, ReportPresenter> presenterFactory, ReportPermissions permissions)
-        {
-            var window = new ReportWindow(presenterFactory, permissions);
-            if (ownerHandle != IntPtr.Zero) new WindowInteropHelper(window) { Owner = ownerHandle };
-            window.ShowDialog();
-        }
-    }
-
-    public static class CashCountDialog
-    {
-        public static void Show(IntPtr ownerHandle, Func<ICashCountView, CashCountPresenter> presenterFactory)
-        {
-            var window = new CashCountWindow(presenterFactory);
             if (ownerHandle != IntPtr.Zero) new WindowInteropHelper(window) { Owner = ownerHandle };
             window.ShowDialog();
         }

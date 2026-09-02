@@ -1,0 +1,38 @@
+<UserControl x:Class="PharmacySystem.Ui.SecurityLogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource AppCanvasBrush}">
+
+    <DockPanel Margin="24">
+
+        <TextBlock DockPanel.Dock="Top" Text="Bitácora de acciones" FontSize="22" FontWeight="Bold"
+                   Margin="0,0,0,16"/>
+
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Desde:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <DatePicker x:Name="dpFrom" Width="130"/>
+            <TextBlock Text="Hasta:" VerticalAlignment="Center" Margin="16,0,6,0"/>
+            <DatePicker x:Name="dpTo" Width="130"/>
+            <Button x:Name="btnConsult" Style="{StaticResource PrimaryButton}" Content="Consultar" Margin="16,0,0,0" Click="btnConsult_Click"/>
+            <TextBlock x:Name="lblCount" VerticalAlignment="Center" Margin="16,0,0,0" Foreground="Gray"/>
+        </StackPanel>
+
+        <GroupBox Header="Eventos" Padding="8">
+        <DataGrid x:Name="dgEvents"
+                  AutoGenerateColumns="False"
+
+                  HorizontalScrollBarVisibility="Disabled">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Fecha y hora" Width="160"
+                                    Binding="{Binding At, StringFormat=dd/MM/yyyy HH:mm:ss}"/>
+                <DataGridTextColumn Header="Usuario" Width="1.2*" Binding="{Binding ActorName}"/>
+                <DataGridTextColumn Header="Acción" Width="1.2*" Binding="{Binding Action}"/>
+                <DataGridTextColumn Header="Entidad" Width="1*" Binding="{Binding Entity}"/>
+                <DataGridTextColumn Header="Id" Width="55" Binding="{Binding EntityId}"/>
+                <DataGridTextColumn Header="Detalle" Width="2.6*" Binding="{Binding Summary}"/>
+                <DataGridTextColumn Header="Equipo" Width="1*" Binding="{Binding Station}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        </GroupBox>
+    </DockPanel>
+</UserControl>

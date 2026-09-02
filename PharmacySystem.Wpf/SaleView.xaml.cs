@@ -4,15 +4,17 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
 using PharmacySystem.Helpers;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
-    // WPF port of frmSale. Implements the same ISaleView; SalePresenter owns the cart and the
-    // payment split and is unchanged. Client / product lookups, the "pago mixto" dialog, the
-    // credit-note screen and the ticket print all go through the shell hooks / WPF dialogs.
-    public partial class SaleWindow : Window, ISaleView
+    // "Ventas" screen (POS). Hosted inline in MainWindow's content area (not a modal window).
+    // Implements the same ISaleView; SalePresenter owns the cart and the payment split and is
+    // unchanged. Client / product lookups, the "pago mixto" dialog, the credit-note screen and
+    // the ticket print still go through the shell hooks / WPF dialogs.
+    public partial class SaleView : UserControl, ISaleView, INavGuard
     {
         public class SaleLineVm
         {
@@ -29,7 +31,7 @@ namespace PharmacySystem.Wpf
         private int _selectedProductId;
         private int _selectedStock;
 
-        public SaleWindow(Func<ISaleView, SalePresenter> presenterFactory, SaleShellHooks hooks)
+        public SaleView(Func<ISaleView, SalePresenter> presenterFactory, SaleShellHooks hooks)
         {
             InitializeComponent();
 
@@ -39,6 +41,20 @@ namespace PharmacySystem.Wpf
 
             _presenter = presenterFactory(this);
             Loaded += (s, e) => _presenter.OnLoad();
+        }
+
+        // The hosting window, for owning message boxes and sub-dialogs.
+        private Window Host => Window.GetWindow(this)!;
+
+        private IntPtr OwnerHandle() => new WindowInteropHelper(Host).Handle;
+
+        // INavGuard: a cart with lines is unsaved work.
+        public bool CanNavigateAway()
+        {
+            if (_lines.Count == 0) return true;
+            return MessageBox.Show(Host,
+                "Hay una venta en curso. ¿Desea descartarla y salir de la pantalla?",
+                "Venta en curso", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
         }
 
         #region ISaleView
@@ -67,7 +83,7 @@ namespace PharmacySystem.Wpf
         public string RecipientCommune => txtRecCommune.Text;
 
         public void ShowMessage(string message) =>
-            MessageBox.Show(this, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            MessageBox.Show(Host, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 
         public void SetDocumentTypeOptions(IReadOnlyList<string> options, string selected) =>
             FillCombo(cboDocType, options, selected);
@@ -78,7 +94,7 @@ namespace PharmacySystem.Wpf
         public IReadOnlyList<SalePaymentEntry>? PromptPaymentSplit(decimal total,
             IReadOnlyList<SalePaymentEntry>? current, IReadOnlyList<string> methods)
         {
-            var window = new SalePaymentsWindow(total, current, methods) { Owner = this };
+            var window = new SalePaymentsWindow(total, current, methods) { Owner = Host };
             return window.ShowDialog() == true ? window.Result : null;
         }
 
@@ -171,7 +187,7 @@ namespace PharmacySystem.Wpf
 
         public void SaleRegistered(int idSale)
         {
-            if (MessageBox.Show(this, "La venta fue registrada\n¿Desea imprimir el ticket ahora?", "Mensaje",
+            if (MessageBox.Show(Host, "La venta fue registrada\n¿Desea imprimir el ticket ahora?", "Mensaje",
                     MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
                 _hooks.PrintTicket?.Invoke(idSale);
@@ -229,11 +245,19 @@ namespace PharmacySystem.Wpf
 
         private void btnCalc_Click(object sender, RoutedEventArgs e) => _presenter.OnCalculateChangeRequested();
         private void btnMixedPayment_Click(object sender, RoutedEventArgs e) => _presenter.OnSplitPaymentRequested();
-        private void btnFinish_Click(object sender, RoutedEventArgs e) => _presenter.OnFinishSale();
+
+        private void btnFinish_Click(object sender, RoutedEventArgs e)
+        {
+            if (_lines.Count > 0 &&
+                MessageBox.Show(Host, $"¿Confirmar la venta por {txtTotal.Text}?", "Terminar venta",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            {
+                return;
+            }
+            _presenter.OnFinishSale();
+        }
 
         private void btnCreditNote_Click(object sender, RoutedEventArgs e) =>
             CreditNoteDialog.Show(OwnerHandle(), _hooks.CreditNoteFactory);
-
-        private IntPtr OwnerHandle() => new System.Windows.Interop.WindowInteropHelper(this).Handle;
     }
 }

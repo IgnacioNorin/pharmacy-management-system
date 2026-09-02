@@ -5,12 +5,13 @@ using System.Windows;
 using System.Windows.Controls;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
-    // WPF port of frmSupplier. Implements the same ISupplierView; SupplierPresenter is unchanged
+    // "Proveedores" screen, hosted inline in MainWindow. Implements the same ISupplierView;
+    // SupplierPresenter is unchanged
     // (server-paged, synchronous). Row selection loads the supplier into the form; the pager and
     // the search box drive the presenter's paging.
-    public partial class SupplierWindow : Window, ISupplierView
+    public partial class SupplierView : UserControl, ISupplierView
     {
         private sealed class SupplierRowVm
         {
@@ -22,20 +23,33 @@ namespace PharmacySystem.Wpf
         }
 
         private readonly SupplierPresenter _presenter;
+        private readonly bool _canManage;
         private int _editingId;
         private int _selectedIndex;
 
-        public SupplierWindow(bool canManage, Func<ISupplierView, SupplierPresenter> presenterFactory)
+        public SupplierView(bool canManage, Func<ISupplierView, SupplierPresenter> presenterFactory)
         {
             InitializeComponent();
 
+            _canManage = canManage;
             _presenter = presenterFactory(this);
-
-            btnSave.IsEnabled = canManage;
-            btnDelete.IsEnabled = canManage;
+            UpdateActionState();
 
             Loaded += (s, e) => _presenter.OnLoad();
         }
+
+        // "Agregar" with the form empty, "Guardar cambios" while a row is selected. Eliminar is
+        // only reachable with a selection.
+        private void UpdateActionState()
+        {
+            bool editing = _editingId != 0;
+            btnSave.Content = editing ? "Guardar cambios" : "Agregar";
+            btnSave.IsEnabled = _canManage;
+            btnDelete.IsEnabled = _canManage && editing;
+        }
+
+        // The hosting window, for owning message boxes.
+        private Window Host => Window.GetWindow(this)!;
 
         #region ISupplierView
 
@@ -61,7 +75,7 @@ namespace PharmacySystem.Wpf
         }
 
         public bool ConfirmDelete() =>
-            MessageBox.Show(this, "¿Desea eliminar el proveedor?", "Mensaje",
+            MessageBox.Show(Host, "¿Desea eliminar el proveedor?", "Mensaje",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
 
         public void LoadSuppliers(IEnumerable<SupplierRow> suppliers)
@@ -77,6 +91,8 @@ namespace PharmacySystem.Wpf
             }).ToList();
             dgData.SelectedIndex = -1;
             dgData.SelectionChanged += dgData_SelectionChanged;
+            _editingId = 0;
+            UpdateActionState();
         }
 
         public void SetPageInfo(int currentPage, int totalPages, int totalCount)
@@ -101,13 +117,14 @@ namespace PharmacySystem.Wpf
             dgData.SelectionChanged -= dgData_SelectionChanged;
             dgData.SelectedIndex = -1;
             dgData.SelectionChanged += dgData_SelectionChanged;
+            UpdateActionState();
         }
 
         public void ShowMessage(string message) =>
-            MessageBox.Show(this, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            MessageBox.Show(Host, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 
         public void ShowValidationErrors(IReadOnlyList<string> errors) =>
-            MessageBox.Show(this, string.Join("\n", errors), "Errores de Validación",
+            MessageBox.Show(Host, string.Join("\n", errors), "Errores de Validación",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
 
         #endregion
@@ -117,6 +134,8 @@ namespace PharmacySystem.Wpf
             if (!(dgData.SelectedItem is SupplierRowVm row))
             {
                 _selectedIndex = 0;
+                _editingId = 0;
+                UpdateActionState();
                 return;
             }
 
@@ -126,9 +145,19 @@ namespace PharmacySystem.Wpf
             txtCompanyName.Text = row.CompanyName;
             txtEmail.Text = row.Email;
             txtPhone.Text = row.Phone;
+            UpdateActionState();
         }
 
-        private void btnSave_Click(object sender, RoutedEventArgs e) => _presenter.OnSave();
+        private void btnSave_Click(object sender, RoutedEventArgs e)
+        {
+            if (_editingId != 0 &&
+                MessageBox.Show(Host, "¿Guardar los cambios en el proveedor seleccionado?", "Confirmar",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            {
+                return;
+            }
+            _presenter.OnSave();
+        }
         private void btnDelete_Click(object sender, RoutedEventArgs e) => _presenter.OnDelete();
         private void btnClearForm_Click(object sender, RoutedEventArgs e) => ClearForm();
         private void btnSearch_Click(object sender, RoutedEventArgs e) => _presenter.OnSearch();

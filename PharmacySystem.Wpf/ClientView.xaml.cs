@@ -6,27 +6,42 @@ using System.Windows.Controls;
 using PharmacySystem.Presentation;
 using PharmacySystem.Validators;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
-    // WPF port of frmClient. Implements the same IClientView; ClientPresenter is unchanged
-    // (synchronous - the page query is 50 rows). Row selection loads the client into the form;
-    // the pager and the search box drive the presenter's paging.
-    public partial class ClientWindow : Window, IClientView
+    // "Clientes" screen. Hosted inline in MainWindow's content area (not a modal window).
+    // Implements the same IClientView; ClientPresenter is unchanged (synchronous - the page
+    // query is 50 rows). Row selection loads the client into the form; the pager and the search
+    // box drive the presenter's paging.
+    public partial class ClientView : UserControl, IClientView
     {
         private readonly ClientPresenter _presenter;
+        private readonly bool _canManage;
         private int _editingId;
 
-        public ClientWindow(bool canManage, Func<IClientView, ClientPresenter> presenterFactory)
+        public ClientView(bool canManage, Func<IClientView, ClientPresenter> presenterFactory)
         {
             InitializeComponent();
 
+            _canManage = canManage;
             _presenter = presenterFactory(this);
-
-            btnSave.IsEnabled = canManage;
-            btnDelete.IsEnabled = canManage;
+            UpdateActionState();
 
             Loaded += (s, e) => _presenter.OnLoad();
         }
+
+        // "Agregar" with the form empty, "Guardar cambios" while a row is selected. Eliminar is
+        // only reachable with a selection.
+        private void UpdateActionState()
+        {
+            bool editing = _editingId != 0;
+            btnSave.Content = editing ? "Guardar cambios" : "Agregar";
+            btnSave.IsEnabled = _canManage;
+            btnDelete.IsEnabled = _canManage && editing;
+        }
+
+        // The hosting window, for owning message boxes. Non-null in practice: every path that
+        // reads it runs from a user action after the view is in MainWindow's visual tree.
+        private Window Host => Window.GetWindow(this)!;
 
         #region IClientView
 
@@ -66,7 +81,7 @@ namespace PharmacySystem.Wpf
         }
 
         public bool ConfirmDelete() =>
-            MessageBox.Show(this, "¿Desea eliminar el cliente?", "Mensaje",
+            MessageBox.Show(Host, "¿Desea eliminar el cliente?", "Mensaje",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
 
         public void LoadClients(IEnumerable<ClientRow> clients)
@@ -75,6 +90,8 @@ namespace PharmacySystem.Wpf
             dgClients.ItemsSource = clients.ToList();
             dgClients.SelectedIndex = -1;
             dgClients.SelectionChanged += dgClients_SelectionChanged;
+            _editingId = 0;
+            UpdateActionState();
         }
 
         public void SetPageInfo(int currentPage, int totalPages, int totalCount)
@@ -103,13 +120,14 @@ namespace PharmacySystem.Wpf
             dgClients.SelectionChanged -= dgClients_SelectionChanged;
             dgClients.SelectedIndex = -1;
             dgClients.SelectionChanged += dgClients_SelectionChanged;
+            UpdateActionState();
         }
 
         public void ShowMessage(string message) =>
-            MessageBox.Show(this, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            MessageBox.Show(Host, message, "Mensaje", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 
         public void ShowValidationErrors(IReadOnlyList<string> errors) =>
-            MessageBox.Show(this, string.Join("\n", errors), "Errores de validación",
+            MessageBox.Show(Host, string.Join("\n", errors), "Errores de validación",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
 
         #endregion
@@ -118,6 +136,8 @@ namespace PharmacySystem.Wpf
         {
             if (!(dgClients.SelectedItem is ClientRow row))
             {
+                _editingId = 0;
+                UpdateActionState();
                 return;
             }
 
@@ -131,6 +151,7 @@ namespace PharmacySystem.Wpf
             txtCommune.Text = row.Commune ?? "";
             txtEmail.Text = row.Email ?? "";
             chkIsCompany.IsChecked = row.IsCompany;
+            UpdateActionState();
         }
 
         private void btnSearch_Click(object sender, RoutedEventArgs e) => _presenter.OnSearch();
@@ -141,7 +162,16 @@ namespace PharmacySystem.Wpf
             _presenter.OnSearch();
         }
 
-        private void btnSave_Click(object sender, RoutedEventArgs e) => _presenter.OnSave();
+        private void btnSave_Click(object sender, RoutedEventArgs e)
+        {
+            if (_editingId != 0 &&
+                MessageBox.Show(Host, "¿Guardar los cambios en el cliente seleccionado?", "Confirmar",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            {
+                return;
+            }
+            _presenter.OnSave();
+        }
         private void btnClearForm_Click(object sender, RoutedEventArgs e) => ClearForm();
         private void btnDelete_Click(object sender, RoutedEventArgs e) => _presenter.OnDelete();
 

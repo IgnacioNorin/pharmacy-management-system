@@ -1,12 +1,19 @@
-<Window x:Class="PharmacySystem.Wpf.CreditNoteWindow"
+<ui:FluentWindow x:Class="PharmacySystem.Ui.CreditNoteWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica"
+        WindowCornerPreference="Round"
         Title="Nota de crédito"
         Height="600" Width="720"
         MinHeight="480" MinWidth="600"
         WindowStartupLocation="CenterOwner"
         ShowInTaskbar="False"
         FontFamily="Segoe UI" FontSize="13">
+    <DockPanel>
+        <ui:TitleBar DockPanel.Dock="Top" Title="Nota de crédito"/>
+
     <DockPanel Margin="12">
 
         <!-- Lookup -->
@@ -71,4 +78,5 @@
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>
-</Window>
+    </DockPanel>
+</ui:FluentWindow>

@@ -1,7 +1,7 @@
 using System;
 using PharmacySystem.Presentation;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // Everything the WPF sale window needs from the (still WinForms) shell and that it cannot
     // build itself: the sub-picker factories, the credit-note presenter factory, the "print

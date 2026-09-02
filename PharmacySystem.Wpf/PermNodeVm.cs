@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace PharmacySystem.Wpf
+namespace PharmacySystem.Ui
 {
     // One node of the roles permission tree. IsChecked is a plain bindable flag; the cascade
     // ("no child without its parent") is applied by RolesWindow at the tree level, mirroring
