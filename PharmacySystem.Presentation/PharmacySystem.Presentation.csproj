@@ -18,6 +18,7 @@
        a UI type, so the project stays unit-testable without a Form. -->
   <ItemGroup>
     <PackageReference Include="ClosedXML" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" VersionOverride="10.0.11" />
     <PackageReference Include="PDFsharp-MigraDoc" />
   </ItemGroup>
 
