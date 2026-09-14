@@ -22,6 +22,7 @@
        its browser print dialog; the thermal plain-text path uses System.Drawing.Printing and the
        spooler check uses System.ServiceProcess.ServiceController. -->
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" VersionOverride="10.0.12" />
     <PackageReference Include="Microsoft.Web.WebView2" />
     <PackageReference Include="System.ServiceProcess.ServiceController" />
   </ItemGroup>
